@@ -1,0 +1,6 @@
+{
+  "name": "Atal v1",
+  "description": "Scaffold inicial técnico minimalista para Atal v1.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
