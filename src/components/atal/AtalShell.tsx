@@ -49,6 +49,10 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
 
   useEffect(() => {
+    ['/', '/patients', '/plans', '/exercises', '/activity', '/assistant', '/settings', '/exports'].forEach((href) => router.prefetch(href));
+  }, [router]);
+
+  useEffect(() => {
     setMenuOpen(false);
     setSearchOpen(false);
     setNotificationsOpen(false);
@@ -97,7 +101,7 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
           </div>
         </header>
 
-        <motion.div key={pathname} initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: reduceMotion ? 0 : .28, ease: [0.22, 1, 0.36, 1] }}>{children}</motion.div>
+        <div className="atal-route-content">{children}</div>
       </div>
 
       <AnimatePresence>

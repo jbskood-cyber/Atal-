@@ -361,6 +361,64 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .atal-selector-footer { bottom: 82px; }
 }
 
+/* Mobile polish and performance closure — keep last in cascade. */
+body { font-family: var(--font-atal), ui-sans-serif, system-ui, sans-serif; font-weight: 470; letter-spacing: -.018em; }
+button, input, textarea { font: inherit; }
+.atal-route-content { min-height: 1px; }
+
+@media (max-width: 1023px) {
+  .atal-content { padding: 2px 17px 84px; }
+  .atal-mobile-header { padding: max(11px, env(safe-area-inset-top)) 17px 9px; }
+  .atal-logo__mark { width: 29px; height: 29px; }
+  .atal-logo__name { font-size: 21px; letter-spacing: -.045em; }
+  .atal-logo__descriptor { margin-top: 3px; font-size: 5.5px; letter-spacing: .17em; }
+  .atal-icon-button, .atal-new-button { width: 33px; height: 33px; border-radius: 10px; }
+  .atal-icon-button svg, .atal-new-button svg { width: 18px; height: 18px; }
+  .atal-mobile-page-title, .atal-page-heading h1, .atal-form-heading h1 { margin-bottom: 15px; font-size: 23px; line-height: 1.08; letter-spacing: -.045em; }
+  .atal-form-heading { margin-bottom: 15px; }
+  .atal-form-heading p { margin-top: 5px; font-size: 9px; line-height: 1.45; }
+  .atal-search { height: 38px; padding: 0 10px; border-radius: 10px; }
+  .atal-search input { font-size: 11px; }
+  .atal-segments { margin: 10px 0; gap: 7px; }
+  .atal-segments button { min-height: 32px; font-size: 9px; }
+  .atal-dense-row { min-height: 51px; gap: 8px; padding-top: 5px; padding-bottom: 5px; }
+  .atal-dense-row b { font-size: 11.5px; letter-spacing: -.022em; }
+  .atal-dense-row small { margin-top: 2px; font-size: 8px; }
+  .atal-plan-row { min-height: 66px; }
+  .atal-plan-row b { font-size: 12px; }
+  .atal-plan-row small { font-size: 8px; }
+  .atal-avatar--md { width: 38px; height: 38px; flex-basis: 38px; font-size: 12px; }
+  .atal-avatar--lg { width: 57px; height: 57px; font-size: 17px; }
+  .atal-filter-scroll button { min-height: 31px; padding: 0 10px; font-size: 8px; }
+  .atal-field input, .atal-phone-field, .atal-suffix-field, .atal-icon-field, .atal-app-select { height: 38px; border-radius: 10px; font-size: 10px; }
+  .atal-field textarea { min-height: 76px; font-size: 10px; }
+  .atal-field > span, .atal-clinical-form legend { font-size: 9.5px; }
+  .atal-clinical-form { gap: 17px; }
+  .atal-clinical-form fieldset { gap: 10px; }
+  .atal-patient-picker { min-height: 50px; }
+  .atal-submit-button { min-height: 39px; font-size: 10px; }
+  .atal-tabbar { gap: 5px; margin-bottom: 16px; }
+  .atal-tabbar button { min-height: 30px; font-size: 8px; }
+  .atal-profile-hero h1, .atal-plan-identity h1 { font-size: 18px; }
+  .atal-profile-section h2, .atal-plan-editor h2, .atal-plan-settings h2 { font-size: 12px; }
+
+  .atal-mobile-dock { bottom: max(9px, env(safe-area-inset-bottom)); width: min(calc(100vw - 22px), 480px); grid-template-columns: minmax(0, 1fr) 54px; gap: 8px; padding: 0; }
+  .atal-nav-slot, .atal-mobile-dock .atal-primary-nav, .atal-mobile-dock .atal-ai-button { height: 55px; }
+  .atal-mobile-dock .atal-primary-nav { border-radius: 18px; }
+  .atal-mobile-dock .atal-primary-nav a, .atal-mobile-dock .atal-primary-nav button { width: auto; height: 100%; border-radius: 14px; }
+  .atal-mobile-dock .atal-primary-nav svg { width: 18px; height: 18px; }
+  .atal-mobile-dock .atal-primary-nav span, .atal-ai-button span { font-size: 6.5px; font-weight: 650; }
+  .atal-mobile-dock .atal-ai-button { width: 54px; border-radius: 18px; }
+  .atal-mobile-dock .atal-ai-button svg { width: 20px; height: 20px; }
+  .atal-nav-slot .atal-more-menu { inset: auto 0 0 0; width: 100%; min-height: 176px; max-height: 176px; grid-template-rows: repeat(4, 1fr); gap: 2px; padding: 7px; border-radius: 18px; overflow: hidden; }
+  .atal-nav-slot .atal-more-menu a { display: grid; width: 100%; height: auto; min-height: 0; grid-template-columns: 28px minmax(0, 1fr) 14px; align-items: center; justify-content: stretch; gap: 8px; padding: 0 8px; border-radius: 11px; font-size: 9.5px; line-height: 1; overflow: hidden; }
+  .atal-nav-slot .atal-more-menu a > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .atal-more-icon { display: flex; width: 26px; height: 26px; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; }
+  .atal-more-icon svg { width: 14px !important; height: 14px !important; }
+  .atal-nav-slot .atal-more-menu a > svg:last-child { width: 12px; height: 12px; }
+  body:has(input:focus, textarea:focus, [contenteditable="true"]:focus) .atal-mobile-dock { opacity: 0; pointer-events: none; transform: translate(-50%, 14px); }
+}
+
 @media (min-width: 1024px) {
   .atal-flow-page { max-width: 920px; padding-top: 8px; padding-right: 70px; padding-left: 70px; }
   .atal-flow-topbar { grid-template-columns: 44px 1fr 44px; margin-bottom: 18px; }
