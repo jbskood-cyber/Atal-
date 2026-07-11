@@ -114,7 +114,7 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
               </motion.nav>
             ) : (
               <motion.div key="secondary" className="atal-more-menu" role="dialog" aria-label="Más secciones" initial={{ opacity: 0, scale: .96, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96, y: 14 }} transition={{ duration: reduceMotion ? 0 : .22, ease: [0.22, 1, 0.36, 1] }}>
-                {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span><ChevronRight /></Link>)}
+                {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={isActive(href) ? 'is-active' : ''}><span className="atal-more-icon"><Icon /></span><span>{label}</span><ChevronRight /></Link>)}
               </motion.div>
             )}
           </AnimatePresence>

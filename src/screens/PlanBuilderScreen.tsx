@@ -6,6 +6,7 @@ import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Plus, RefreshCw, 
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
+import { AppSelect } from '@/src/components/atal/AppSelect';
 import { exercises, patients } from '@/src/data/atal-demo';
 
 export function PlanBuilderScreen() {
@@ -34,7 +35,7 @@ export function PlanBuilderScreen() {
       <fieldset><label className="atal-field atal-field--full"><span>Paciente</span><button type="button" className="atal-patient-picker" onClick={() => setPatientIndex((value) => (value + 1) % 4)}><Avatar name={patient.name} /><span><b>{patient.name}</b><small>{patient.diagnosis}</small></span><ChevronRight /></button></label>
         <label className="atal-field atal-field--full"><span>Título del plan</span><input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej. Rehabilitación funcional — Fase 1" /></label>
         <label className="atal-field atal-field--full"><span>Diagnóstico o área de enfoque</span><div className="atal-icon-field"><input value={focus} onChange={(event) => setFocus(event.target.value)} placeholder="Ej. Dolor lumbar inespecífico" /><Search /></div></label>
-        <div className="atal-field-grid"><label className="atal-field"><span>Duración total</span><div className="atal-icon-field"><CalendarDays /><select value={duration} onChange={(event) => setDuration(event.target.value)}><option>4 semanas</option><option>6 semanas</option><option>8 semanas</option></select></div></label><label className="atal-field"><span>Frecuencia</span><div className="atal-icon-field"><RefreshCw /><select value={frequency} onChange={(event) => setFrequency(event.target.value)}><option>2 veces por semana</option><option>3 veces por semana</option><option>Diario</option></select></div></label></div>
+        <div className="atal-field-grid"><label className="atal-field"><span>Duración total</span><AppSelect label="Duración total" value={duration} options={['4 semanas','6 semanas','8 semanas']} onChange={setDuration} icon={<CalendarDays/>}/></label><label className="atal-field"><span>Frecuencia</span><AppSelect label="Frecuencia" value={frequency} options={['2 veces por semana','3 veces por semana','Diario']} onChange={setFrequency} icon={<RefreshCw/>}/></label></div>
         <label className="atal-field atal-field--full"><span>Objetivo del plan</span><textarea maxLength={200} value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="Describe el objetivo principal del plan de rehabilitación…" /><small className="atal-character-count">{goal.length}/200</small></label>
       </fieldset>
       <fieldset><legend>Plantillas rápidas</legend><div className="atal-template-row"><button type="button" onClick={() => { setTitle('Rehabilitación lumbar — Fase 1'); setFocus('Lumbalgia crónica'); }}><Star /> Lumbalgia crónica</button><button type="button" onClick={() => setFocus('Dolor de hombro')}>Dolor de hombro</button><button type="button" onClick={() => setFocus('Cervicalgia')}>Cervicalgia</button></div></fieldset>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CalendarDays, ChevronRight, FileText, MessageCircle, Pencil, Plus, Target, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChevronRight, Eye, FileText, MessageCircle, Pencil, Plus, Target, TrendingUp } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { patients, type Patient } from '@/src/data/atal-demo';
@@ -49,7 +49,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
           ))}
         </nav>
 
-        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} editing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push('/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onExport={() => router.push('/exports')} />}
+        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} editing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push('/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onExport={() => router.push('/exports')} onPreview={() => router.push(`/patients/${patient.id}/portal-preview`)} />}
         {tab === 'history' && <History />}
         {tab === 'notes' && <Notes />}
         {tab === 'metrics' && <Metrics patient={patient} />}
@@ -58,8 +58,8 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
   );
 }
 
-function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onExport }: { patient: Patient; diagnosis: string; editing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onExport: () => void }) {
-  return <div className="atal-profile-body">
+function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onExport, onPreview }: { patient: Patient; diagnosis: string; editing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onExport: () => void; onPreview: () => void }) {
+  return <div className="atal-profile-body"><button type="button" className="atal-patient-preview-cta" onClick={onPreview}><Eye/><span><b>Vista del paciente</b><small>Previsualiza localmente su plan y seguimiento</small></span><ChevronRight/></button>
     <section className="atal-profile-section">
       <div className="atal-section-title"><h2>Diagnóstico / Motivo</h2><button type="button" onClick={onEdit} aria-label="Editar diagnóstico"><Pencil size={17} /></button></div>
       {editing ? <input className="atal-inline-edit" value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} onBlur={onEdit} autoFocus /> : <><p className="atal-profile-lead">{diagnosis}</p><small>Seguimiento clínico demostrativo.</small></>}

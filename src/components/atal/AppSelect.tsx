@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import { Check, ChevronDown, X } from 'lucide-react';
+export function AppSelect({ label, value, options, icon, onChange }: { label: string; value: string; options: string[]; icon?: React.ReactNode; onChange: (value: string) => void }) { const [open,setOpen]=useState(false); return <><button type="button" className="atal-app-select" onClick={()=>setOpen(true)}>{icon}<span>{value}</span><ChevronDown/></button>{open&&<div className="atal-select-overlay" onMouseDown={()=>setOpen(false)}><section onMouseDown={e=>e.stopPropagation()}><header><h2>{label}</h2><button type="button" onClick={()=>setOpen(false)}><X/></button></header>{options.map(option=><button type="button" key={option} className={option===value?'is-selected':''} onClick={()=>{onChange(option);setOpen(false)}}><span>{option}</span>{option===value&&<Check/>}</button>)}</section></div>}</>; }
