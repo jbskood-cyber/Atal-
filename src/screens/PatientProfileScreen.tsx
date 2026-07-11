@@ -35,7 +35,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
         <div className="atal-flow-topbar">
           <button type="button" onClick={() => router.push('/patients')} aria-label="Volver a pacientes"><ArrowLeft /></button>
           <span>Expediente del paciente</span>
-          <button type="button" aria-label="Más opciones">•••</button>
+          <button type="button" aria-label="Más opciones" onClick={() => setTab('history')}>•••</button>
         </div>
 
         <section className="atal-profile-hero">
@@ -49,7 +49,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
           ))}
         </nav>
 
-        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} editing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push('/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} />}
+        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} editing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push('/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onExport={() => router.push('/exports')} />}
         {tab === 'history' && <History />}
         {tab === 'notes' && <Notes />}
         {tab === 'metrics' && <Metrics patient={patient} />}
@@ -58,7 +58,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
   );
 }
 
-function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, onCreatePlan }: { patient: Patient; diagnosis: string; editing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void }) {
+function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onExport }: { patient: Patient; diagnosis: string; editing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onExport: () => void }) {
   return <div className="atal-profile-body">
     <section className="atal-profile-section">
       <div className="atal-section-title"><h2>Diagnóstico / Motivo</h2><button type="button" onClick={onEdit} aria-label="Editar diagnóstico"><Pencil size={17} /></button></div>
@@ -75,16 +75,16 @@ function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, on
       <MetricRow icon={<TrendingUp />} label="Rango (Flexión)" value="110° → 126°" />
     </section>
     <section className="atal-profile-section">
-      <div className="atal-section-title"><h2>Reportes recientes</h2><button type="button">Ver todo</button></div>
-      <ReportRow title="Progreso funcional" date="Hoy, 8:45 a.m." />
-      <ReportRow title="Reporte de evaluación" date="Ayer, 5:30 p.m." />
+      <div className="atal-section-title"><h2>Reportes recientes</h2><button type="button" onClick={onActivity}>Ver todo</button></div>
+      <ReportRow title="Progreso funcional" date="Hoy, 8:45 a.m." onClick={onActivity} />
+      <ReportRow title="Reporte de evaluación" date="Ayer, 5:30 p.m." onClick={onActivity} />
     </section>
-    <div className="atal-profile-actions"><button type="button"><MessageCircle /> WhatsApp</button><button type="button"><FileText /> PDF</button><button type="button" className="is-primary" onClick={onCreatePlan}>Crear plan <Plus /></button></div>
+    <div className="atal-profile-actions"><button type="button" onClick={() => window.open('https://wa.me/?text=Seguimiento%20desde%20Atal', '_blank')}><MessageCircle /> WhatsApp</button><button type="button" onClick={onExport}><FileText /> PDF</button><button type="button" className="is-primary" onClick={onCreatePlan}>Crear plan <Plus /></button></div>
   </div>;
 }
 
 function MetricRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="atal-metric-row"><span>{icon}</span><b>{label}</b><strong>{value}</strong><i><span /><span /><span /><span /></i></div>; }
-function ReportRow({ title, date }: { title: string; date: string }) { return <button type="button" className="atal-report-row"><span><FileText /></span><span><b>{title}</b><small>{date}</small></span><ChevronRight /></button>; }
+function ReportRow({ title, date, onClick }: { title: string; date: string; onClick: () => void }) { return <button type="button" className="atal-report-row" onClick={onClick}><span><FileText /></span><span><b>{title}</b><small>{date}</small></span><ChevronRight /></button>; }
 function History() { return <div className="atal-panel-placeholder"><CalendarDays /><h2>Historial clínico</h2><p>Evaluación inicial, seguimientos y cambios del plan organizados cronológicamente.</p><button type="button">Registrar seguimiento</button></div>; }
 function Notes() { const [value, setValue] = useState('Paciente con evolución favorable y buena tolerancia a la carga.'); return <div className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea value={value} onChange={(event) => setValue(event.target.value)} /><small>{value.length}/500</small><button type="button">Guardar nota</button></div>; }
 function Metrics({ patient }: { patient: Patient }) { return <div className="atal-profile-section"><h2>Progreso del paciente</h2><div className="atal-large-metrics"><span><strong>{patient.progress}%</strong><small>Progreso del plan</small></span><span><strong>{patient.adherence}%</strong><small>Adherencia</small></span><span><strong>2/10</strong><small>Dolor actual</small></span></div></div>; }
