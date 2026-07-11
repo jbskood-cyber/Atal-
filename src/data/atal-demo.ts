@@ -30,18 +30,6 @@ export type Exercise = {
   image: string;
 };
 
-export type TrackingEntry = {
-  id: string;
-  patient: string;
-  diagnosis: string;
-  pain: number;
-  fatigue: number;
-  adherence: number;
-  time: string;
-  status: 'new' | 'attention' | 'reviewed';
-  plan: string;
-};
-
 export const patients: Patient[] = [
   { id: 'p01', name: 'Paciente Demo 01', diagnosis: 'Caso demostrativo A', plan: 'Plan 4/12', progress: 78, time: 'Hoy, 9:22', status: 'active', adherence: 78 },
   { id: 'p02', name: 'Paciente Demo 02', diagnosis: 'Caso demostrativo B', plan: 'Plan 2/8', progress: 25, time: 'Hoy, 8:47', status: 'attention', adherence: 92 },
@@ -97,12 +85,3 @@ export const statusColor: Record<PatientStatus, string> = {
   attention: '#f4a61d',
   archived: '#7f8582',
 };
-
-export const trackingEntries: TrackingEntry[] = [
-  { id: 'r01', patient: 'Paciente Demo 01', diagnosis: 'Movilidad funcional', pain: 4, fatigue: 5, adherence: 87, time: '9:22 a.m.', status: 'new', plan: 'Rehabilitación — Fase 1' },
-  { id: 'r02', patient: 'Paciente Demo 02', diagnosis: 'Rodilla · Postquirúrgico', pain: 6, fatigue: 6, adherence: 62, time: '8:47 a.m.', status: 'attention', plan: 'Plan funcional — Fase 2' },
-  { id: 'r03', patient: 'Paciente Demo 03', diagnosis: 'Hombro · Tendinopatía', pain: 3, fatigue: 3, adherence: 92, time: '8:15 a.m.', status: 'new', plan: 'Movilidad — Fase 1' },
-  { id: 'r04', patient: 'Paciente Demo 04', diagnosis: 'Cervicalgia', pain: 5, fatigue: 4, adherence: 78, time: 'Ayer, 7:32 p.m.', status: 'attention', plan: 'Control postural' },
-  { id: 'r05', patient: 'Paciente Demo 05', diagnosis: 'Telehealth · Lumbalgia', pain: 2, fatigue: 2, adherence: 95, time: 'Ayer, 6:10 p.m.', status: 'reviewed', plan: 'Fuerza progresiva' },
-  { id: 'r06', patient: 'Paciente Demo 06', diagnosis: 'Tobillo · Movilidad', pain: 3, fatigue: 4, adherence: 84, time: 'Ayer, 5:30 p.m.', status: 'new', plan: 'Retorno gradual' },
-];

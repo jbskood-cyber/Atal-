@@ -22,8 +22,11 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
     if (!saved) return;
     const draft = JSON.parse(saved) as Partial<Patient>;
     const created = { ...patients[0], ...draft, id: 'p-new', plan: 'Sin plan', progress: 0, adherence: 0, time: 'Ahora' };
-    setPatient(created);
-    setDiagnosis(created.diagnosis);
+    const timeoutId = setTimeout(() => {
+      setPatient(created);
+      setDiagnosis(created.diagnosis);
+    }, 0);
+    return () => clearTimeout(timeoutId);
   }, [patientId]);
 
   return (

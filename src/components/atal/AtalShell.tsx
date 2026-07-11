@@ -57,8 +57,8 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
               <span>{label}</span>
             </Link>
           ))}
-          <Link href="/reports" className={isActive('/reports') ? 'is-active' : ''}><FileText size={22} strokeWidth={1.7} /><span>Reportes</span></Link>
-          <Link href="/tracking" className={isActive('/tracking') ? 'is-active' : ''}><ArrowUpDown size={22} strokeWidth={1.7} /><span>Seguimiento</span></Link>
+          <button type="button" onClick={() => futureSection('Reportes')}><FileText size={22} strokeWidth={1.7} /><span>Reportes</span></button>
+          <Link href="/exercises" className={isActive('/exercises') ? 'is-active' : ''}><ArrowUpDown size={22} strokeWidth={1.7} /><span>Actividad</span></Link>
           <button type="button" onClick={() => futureSection('Exportaciones')}><FileDown size={22} strokeWidth={1.7} /><span>Exportaciones</span></button>
           <button type="button" onClick={() => futureSection('Ajustes')}><Settings size={22} strokeWidth={1.7} /><span>Ajustes</span></button>
         </nav>
@@ -93,7 +93,7 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
           {primary.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} aria-label={label} className={isActive(href) ? 'is-active' : ''}><Icon size={27} strokeWidth={1.7} /></Link>
           ))}
-          <button type="button" aria-label="Más secciones" className={menuOpen || pathname.startsWith('/exercises') || pathname.startsWith('/tracking') || pathname.startsWith('/reports') ? 'is-active' : ''} onClick={() => setMenuOpen((open) => !open)}><ArrowUpDown size={29} strokeWidth={1.6} /></button>
+          <button type="button" aria-label="Más secciones" className={menuOpen || pathname.startsWith('/exercises') ? 'is-active' : ''} onClick={() => setMenuOpen((open) => !open)}><ArrowUpDown size={29} strokeWidth={1.6} /></button>
         </nav>
         <button type="button" aria-label="Atal IA" onClick={() => futureSection('Atal IA')} className="atal-ai-button"><Sparkles size={27} strokeWidth={1.7} /></button>
       </div>
@@ -102,7 +102,7 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
         <div className="atal-more-menu" role="dialog" aria-label="Más secciones">
           <button className="atal-more-menu__close" type="button" onClick={() => setMenuOpen(false)} aria-label="Cerrar"><X size={20} /></button>
           {secondary.map(({ href, label, icon: Icon }, index) =>
-            index < 3 ? (
+            index === 0 ? (
               <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={isActive(href) ? 'is-active' : ''}><Icon size={25} strokeWidth={1.7} /><span>{label}</span></Link>
             ) : (
               <button key={label} type="button" onClick={() => futureSection(label)}><Icon size={25} strokeWidth={1.7} /><span>{label}</span></button>
