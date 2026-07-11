@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   Activity,
@@ -41,7 +40,6 @@ const secondary = [
 export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
   const pathname = usePathname() ?? '/';
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -49,7 +47,7 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
 
   useEffect(() => {
-    ['/', '/patients', '/plans', '/exercises', '/activity', '/assistant', '/settings', '/exports'].forEach((href) => router.prefetch(href));
+    ['/', '/patients', '/patients/new', '/patients/p01', '/plans', '/plans/new', '/plans/pl01', '/exercises', '/exercises/new', '/exercises/e01', '/activity', '/activity/p01', '/assistant', '/settings', '/exports'].forEach((href) => router.prefetch(href));
   }, [router]);
 
   useEffect(() => {
@@ -104,39 +102,33 @@ export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: ()
         <div className="atal-route-content">{children}</div>
       </div>
 
-      <AnimatePresence>
-        {menuOpen && <motion.button type="button" aria-label="Cerrar menú" className="atal-nav-backdrop" onClick={() => setMenuOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />}
-      </AnimatePresence>
+      {menuOpen && <button type="button" aria-label="Cerrar menú" className="atal-nav-backdrop" onClick={() => setMenuOpen(false)} />}
 
       <div className="atal-mobile-dock">
         <div className="atal-nav-slot">
-          <AnimatePresence mode="wait" initial={false}>
             {!menuOpen ? (
-              <motion.nav key="primary" aria-label="Navegación principal" className="atal-primary-nav" initial={{ opacity: 0, scale: .97, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .97, y: 8 }} transition={{ duration: reduceMotion ? 0 : .2 }}>
+              <nav aria-label="Navegación principal" className="atal-primary-nav">
                 {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
                 <button type="button" aria-label="Más secciones" className={menuOpen || isActive('/activity') || isActive('/exercises') || isActive('/settings') ? 'is-active' : ''} onClick={() => setMenuOpen(true)}><ArrowUpDown /><span>Más</span></button>
-              </motion.nav>
+              </nav>
             ) : (
-              <motion.div key="secondary" className="atal-more-menu" role="dialog" aria-label="Más secciones" initial={{ opacity: 0, scale: .96, y: 14 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96, y: 14 }} transition={{ duration: reduceMotion ? 0 : .22, ease: [0.22, 1, 0.36, 1] }}>
-                {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={isActive(href) ? 'is-active' : ''}><span className="atal-more-icon"><Icon /></span><span>{label}</span><ChevronRight /></Link>)}
-              </motion.div>
+              <div className="atal-more-menu" role="dialog" aria-label="Más secciones">
+                {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} prefetch onClick={() => setMenuOpen(false)} className={`atal-secondary-link ${isActive(href) ? 'is-active' : ''}`}><span className="atal-more-icon"><Icon /></span><span>{label}</span><ChevronRight /></Link>)}
+              </div>
             )}
-          </AnimatePresence>
         </div>
         <Link href="/assistant" aria-label="Atal IA" className={isActive('/assistant') ? 'atal-ai-button is-active' : 'atal-ai-button'}><Sparkles /><span>Atal IA</span></Link>
       </div>
 
-      <AnimatePresence>
-        {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
-        {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} />}
-        {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
-      </AnimatePresence>
+      {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
+      {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} />}
+      {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
     </div>
   );
 }
 
 function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return <motion.div className="atal-overlay" onMouseDown={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><motion.section className="atal-native-sheet" onMouseDown={(event) => event.stopPropagation()} initial={{ y: 32, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 32, opacity: 0 }} transition={{ type: 'spring', stiffness: 360, damping: 32 }}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</motion.section></motion.div>;
+  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
 }
 
 function SearchPanel({ onClose }: { onClose: () => void }) {

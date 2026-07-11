@@ -419,6 +419,80 @@ button, input, textarea { font: inherit; }
   body:has(input:focus, textarea:focus, [contenteditable="true"]:focus) .atal-mobile-dock { opacity: 0; pointer-events: none; transform: translate(-50%, 14px); }
 }
 
+/* Aggressive mobile density and isolated secondary navigation. */
+.atal-instant-loading { display: grid; gap: 8px; padding: 14px; }
+.atal-instant-loading span, .atal-instant-loading i { display: block; border-radius: 9px; background: linear-gradient(90deg, #eef3f0 25%, #f8faf9 45%, #eef3f0 65%); background-size: 220% 100%; animation: atal-skeleton 1s linear infinite; }
+.atal-instant-loading span { width: 38%; height: 24px; }
+.atal-instant-loading i { height: 46px; }
+@keyframes atal-skeleton { to { background-position: -220% 0; } }
+
+@media (max-width: 1023px) {
+  .atal-content { padding: 0 13px 72px; }
+  .atal-mobile-header { min-height: 48px; padding: max(8px, env(safe-area-inset-top)) 13px 7px; }
+  .atal-logo { gap: 7px; }
+  .atal-logo__mark { width: 25px; height: 25px; }
+  .atal-logo__name { font-size: 18px; }
+  .atal-logo__descriptor { margin-top: 2px; font-size: 4.8px; }
+  .atal-icon-button, .atal-new-button { width: 29px; height: 29px; border-radius: 9px; }
+  .atal-icon-button svg, .atal-new-button svg { width: 16px; height: 16px; }
+  .atal-mobile-page-title, .atal-page-heading h1, .atal-form-heading h1 { margin-bottom: 11px; font-size: 19px; line-height: 1.05; }
+  .atal-form-heading { margin-bottom: 11px; }
+  .atal-form-heading p { margin-top: 4px; font-size: 8px; }
+  .atal-flow-topbar { min-height: 30px; margin-bottom: 6px; font-size: 9px; }
+  .atal-flow-topbar > button { width: 29px; height: 29px; }
+  .atal-section { margin-top: 17px; }
+  .atal-section-heading h2 { font-size: 13px; }
+  .atal-search { height: 33px; padding: 0 9px; border-radius: 9px; }
+  .atal-search svg { width: 15px; }
+  .atal-search input { font-size: 9.5px; }
+  .atal-segments { margin: 8px 0; gap: 5px; }
+  .atal-segments button { min-height: 28px; border-radius: 8px; font-size: 8px; }
+  .atal-list-meta { min-height: 28px; font-size: 8px; }
+  .atal-dense-row { min-height: 44px; gap: 7px; padding-top: 4px; padding-bottom: 4px; border-radius: 8px; }
+  .atal-dense-row b { font-size: 10px; }
+  .atal-dense-row small { margin-top: 1px; font-size: 7px; line-height: 1.25; }
+  .atal-dense-row > svg { width: 14px; }
+  .atal-plan-row { min-height: 57px; padding-top: 5px; padding-bottom: 5px; }
+  .atal-plan-row b { font-size: 10.5px; }
+  .atal-plan-row small { font-size: 7px; }
+  .atal-avatar--md { width: 33px; height: 33px; flex-basis: 33px; font-size: 10px; }
+  .atal-avatar--lg { width: 49px; height: 49px; font-size: 14px; }
+  .atal-filter-scroll { gap: 5px; }
+  .atal-filter-scroll button { min-height: 27px; padding: 0 8px; border-radius: 8px; font-size: 7px; }
+  .atal-field input, .atal-phone-field, .atal-suffix-field, .atal-icon-field, .atal-app-select { height: 33px; border-radius: 9px; font-size: 9px; }
+  .atal-field textarea { min-height: 64px; padding: 8px; font-size: 9px; }
+  .atal-field > span, .atal-clinical-form legend { font-size: 8px; }
+  .atal-clinical-form { gap: 13px; }
+  .atal-clinical-form fieldset { gap: 8px; }
+  .atal-patient-picker { min-height: 44px; }
+  .atal-submit-button { min-height: 34px; border-radius: 9px; font-size: 9px; }
+  .atal-tabbar { gap: 4px; margin-bottom: 12px; }
+  .atal-tabbar button { min-height: 26px; font-size: 7px; }
+  .atal-profile-hero { gap: 9px; padding: 8px 0 12px; }
+  .atal-profile-hero h1, .atal-plan-identity h1 { font-size: 16px; }
+  .atal-profile-body { gap: 14px; }
+  .atal-profile-section h2, .atal-plan-editor h2, .atal-plan-settings h2 { font-size: 10.5px; }
+  .atal-active-plan { min-height: 55px; }
+  .atal-exercise-list > div > button:first-child { min-height: 51px; }
+  .atal-exercise-list > div img { width: 65px; height: 40px; flex-basis: 65px; }
+
+  .atal-mobile-dock { bottom: max(7px, env(safe-area-inset-bottom)); width: min(calc(100vw - 18px), 440px); grid-template-columns: minmax(0, 1fr) 48px; gap: 7px; }
+  .atal-nav-slot, .atal-mobile-dock .atal-primary-nav, .atal-mobile-dock .atal-ai-button { height: 49px; }
+  .atal-mobile-dock .atal-primary-nav { border-radius: 16px; }
+  .atal-mobile-dock .atal-primary-nav svg { width: 16px; height: 16px; }
+  .atal-mobile-dock .atal-primary-nav span, .atal-ai-button span { font-size: 5.8px; }
+  .atal-mobile-dock .atal-ai-button { width: 48px; border-radius: 16px; }
+  .atal-mobile-dock .atal-ai-button svg { width: 18px; height: 18px; }
+
+  .atal-nav-slot .atal-more-menu { position: absolute; inset: auto 0 0 0; display: grid; width: 100%; height: 158px; min-height: 158px; max-height: 158px; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 6px; border-radius: 16px; overflow: hidden; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link { all: unset; box-sizing: border-box; display: grid; position: relative; width: 100%; min-width: 0; height: 100%; grid-template-columns: 24px minmax(0, 1fr) 11px; align-items: center; gap: 7px; padding: 0 7px; border-radius: 9px; color: var(--ink); background: transparent; font-family: var(--font-atal), ui-sans-serif, system-ui, sans-serif; font-size: 8.5px; font-weight: 650; line-height: 1; text-decoration: none; cursor: pointer; overflow: hidden; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link.is-active { color: var(--green-dark); background: rgba(234,247,241,.9); }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon { all: unset; box-sizing: border-box; display: flex; position: static; width: 23px; height: 23px; align-items: center; justify-content: center; border-radius: 7px; color: var(--green); background: var(--mint); overflow: hidden; }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon svg { display: block; width: 13px !important; height: 13px !important; margin: 0; transform: none; }
+  .atal-nav-slot .atal-secondary-link > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .atal-nav-slot .atal-secondary-link > svg:last-child { position: static; display: block; width: 10px; height: 10px; margin: 0; transform: none; color: #94a098; }
+}
+
 @media (min-width: 1024px) {
   .atal-flow-page { max-width: 920px; padding-top: 8px; padding-right: 70px; padding-left: 70px; }
   .atal-flow-topbar { grid-template-columns: 44px 1fr 44px; margin-bottom: 18px; }
