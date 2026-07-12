@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --green: #00a66a;
-  --green-dark: #08724d;
-  --mint: #eaf7f1;
-  --ink: #111d18;
+  --green: #16a36a;
+  --green-dark: #0d7d51;
+  --mint: #e8f5ef;
+  --ink: #0f1416;
   --muted: #6c7771;
   --line: #e2e8e5;
   --surface: #ffffff;
@@ -16,6 +16,26 @@
   --type-sm: 13px;
   --type-body: 15px;
   --type-title: 31px;
+}
+
+/* Atal Brand System v1 — B001/B002. */
+.atal-logo { gap: 8px; }
+.atal-logo__mark { color: var(--green); stroke-width: initial; }
+.atal-logo__name { color: var(--ink); font-family: var(--font-atal), sans-serif; font-weight: 600; letter-spacing: -.035em; }
+.atal-logo__descriptor { color: var(--green); font-family: var(--font-atal), sans-serif; font-weight: 600; letter-spacing: .22em; }
+
+@media (max-width: 1023px) {
+  .atal-mobile-dock .atal-primary-nav a,
+  .atal-mobile-dock .atal-primary-nav button { color: #0f1416; }
+  .atal-mobile-dock .atal-primary-nav span,
+  .atal-ai-button span { color: #0f1416; font-size: 7px; font-weight: 600; }
+  .atal-mobile-dock .atal-primary-nav .is-active { color: var(--green); }
+  .atal-mobile-dock .atal-primary-nav .is-active span { color: #0f1416; font-weight: 600; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link { grid-template-columns: 30px minmax(0, 1fr) 13px; gap: 9px; padding: 0 10px; color: #0f1416; font-size: 10.5px; font-weight: 600; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link.is-active { color: #0f1416; background: rgba(15,20,22,.045); }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon { width: 28px; height: 28px; color: #0f1416; background: transparent; border-radius: 0; }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon svg { width: 19px !important; height: 19px !important; stroke-width: 2.15; }
+  .atal-nav-slot .atal-secondary-link > svg:last-child { width: 12px; height: 12px; color: #6c7771; }
 }
 
 /* Visual closure: native mobile controls, patient preview and compact density */
@@ -593,4 +613,29 @@ button:active, a:active { transform: scale(.975); }
   .atal-activity-summary { grid-template-columns: 1fr 1fr; }
   .atal-activity-summary article { padding: 10px; }.atal-activity-summary article > span { display: none; }
   .atal-activity-feed time { display: none; }
+}
+
+/* B001/B002 final cascade contract — official light brand. */
+body { font-family: var(--font-atal), ui-sans-serif, system-ui, sans-serif; color: #0f1416; }
+.atal-logo { gap: 8px; }
+.atal-logo__mark { color: #16a36a; }
+.atal-logo__name { color: #0f1416; font-family: var(--font-atal), sans-serif; font-weight: 600; letter-spacing: -.035em; }
+.atal-logo__descriptor { color: #16a36a; font-family: var(--font-atal), sans-serif; font-weight: 600; letter-spacing: .22em; }
+
+@media (max-width: 1023px) {
+  .atal-mobile-dock { width: min(calc(100vw - 18px), 440px); grid-template-columns: minmax(0, 1fr) 48px; gap: 7px; }
+  .atal-nav-slot, .atal-mobile-dock .atal-primary-nav, .atal-mobile-dock .atal-ai-button { height: 49px; }
+  .atal-mobile-dock .atal-ai-button { width: 48px; border-radius: 16px; }
+  .atal-mobile-dock .atal-primary-nav { border-radius: 16px; }
+  .atal-mobile-dock .atal-primary-nav a, .atal-mobile-dock .atal-primary-nav button { color: #0f1416; }
+  .atal-mobile-dock .atal-primary-nav span, .atal-ai-button span { color: #0f1416; font-size: 7.2px; font-weight: 600; }
+  .atal-mobile-dock .atal-primary-nav .is-active { color: #16a36a; }
+  .atal-mobile-dock .atal-primary-nav .is-active span { color: #0f1416; }
+  .atal-nav-slot .atal-more-menu { width: 100%; height: 174px; min-height: 174px; max-height: 174px; padding: 7px 10px; border-radius: 18px; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link { all: unset; box-sizing: border-box; display: grid; width: 100%; min-width: 0; height: 100%; grid-template-columns: 31px minmax(0,1fr) 13px; align-items: center; gap: 10px; padding: 0 10px; border-radius: 10px; color: #0f1416; font-family: var(--font-atal), sans-serif; font-size: 11px; font-weight: 600; line-height: 1; cursor: pointer; overflow: hidden; }
+  .atal-nav-slot .atal-more-menu .atal-secondary-link.is-active { color: #0f1416; background: rgba(15,20,22,.045); }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon { all: unset; box-sizing: border-box; display: flex; width: 29px; height: 29px; align-items: center; justify-content: center; color: #0f1416; background: transparent; }
+  .atal-nav-slot .atal-secondary-link .atal-more-icon svg { display: block; width: 20px !important; height: 20px !important; stroke-width: 2.15; }
+  .atal-nav-slot .atal-secondary-link > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .atal-nav-slot .atal-secondary-link > svg:last-child { display: block; width: 12px; height: 12px; color: #6c7771; }
 }

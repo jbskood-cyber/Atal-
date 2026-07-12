@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { Manrope } from 'next/font/google';
+import { Poppins } from 'next/font/google';
 import './globals.css';
 
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-atal', display: 'swap' });
+const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-atal', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Atal Fisioterapia',
@@ -19,7 +19,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es-MX">
-      <body className={manrope.variable} suppressHydrationWarning>{children}</body>
+      <body className={poppins.variable} suppressHydrationWarning>{children}</body>
     </html>
   );
 }
