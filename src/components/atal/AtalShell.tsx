@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   Activity,
   ArrowUpDown,
@@ -37,7 +37,18 @@ const secondary = [
   { href: '/settings', label: 'Ajustes', icon: Settings },
 ];
 
+const PersistentShellContext = createContext(false);
+
 export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
+  const isPersistent = useContext(PersistentShellContext);
+  return isPersistent ? <>{children}</> : <AtalShellFrame onNew={onNew}>{children}</AtalShellFrame>;
+}
+
+export function AtalPersistentShell({ children }: { children: ReactNode }) {
+  return <PersistentShellContext.Provider value><AtalShellFrame>{children}</AtalShellFrame></PersistentShellContext.Provider>;
+}
+
+function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
   const pathname = usePathname() ?? '/';
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);

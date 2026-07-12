@@ -639,3 +639,97 @@ body { font-family: var(--font-atal), ui-sans-serif, system-ui, sans-serif; colo
   .atal-nav-slot .atal-secondary-link > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .atal-nav-slot .atal-secondary-link > svg:last-child { display: block; width: 12px; height: 12px; color: #6c7771; }
 }
+
+/* Final patient legibility: three clinical facts, compact but readable. */
+.atal-patient-directory .atal-dense-row { display: grid; grid-template-columns: auto minmax(0,1fr) 8px 16px; min-height: 54px; }
+.atal-patient-directory .atal-dense-row b { font-size: 12px; font-weight: 600; }
+.atal-patient-directory .atal-dense-row small { margin-top: 2px; font-size: 8.5px; }
+.atal-patient-directory .atal-dense-row .atal-avatar--md { width: 36px; height: 36px; flex-basis: 36px; font-size: 11px; }
+
+/* Closed local settings flows. */
+.atal-settings-detail { max-width: 720px; }
+.atal-detail-heading { display: grid; grid-template-columns: 42px 1fr; gap: 1px 12px; margin: 8px 0 18px; }
+.atal-detail-heading > span { display: flex; width: 42px; height: 42px; grid-row: 1 / 3; align-items: center; justify-content: center; border-radius: 13px; color: var(--green); background: var(--mint); }
+.atal-detail-heading svg { width: 20px; }
+.atal-detail-heading h1 { align-self: end; margin: 0; font-size: 20px; letter-spacing: -.035em; }
+.atal-detail-heading p { margin: 2px 0 0; color: var(--muted); font-size: 9px; }
+.atal-settings-form { display: grid; gap: 11px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+.atal-settings-form label, .atal-settings-textarea { display: grid; gap: 6px; color: var(--muted); font-size: 9px; font-weight: 600; }
+.atal-settings-form input, .atal-settings-textarea textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; outline: 0; color: var(--ink); background: var(--surface); }
+.atal-settings-form input { height: 38px; padding: 0 11px; }
+.atal-settings-textarea { margin-top: 13px; padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+.atal-settings-textarea textarea { min-height: 92px; padding: 10px; resize: vertical; }
+.atal-settings-form input:focus, .atal-settings-textarea textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 12%, transparent); }
+.atal-settings-card, .atal-theme-options { padding: 4px 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+.atal-settings-save { display: flex; min-height: 38px; align-items: center; justify-content: center; gap: 7px; margin: 13px 0 0 auto; padding: 0 14px; border: 0; border-radius: 10px; color: #fff; background: var(--green); font-size: 10px; font-weight: 600; }
+.atal-settings-save svg { width: 15px; }
+.atal-role-note { margin-top: 13px; padding: 13px; border: 1px solid var(--line); border-radius: 13px; background: var(--mint); }
+.atal-role-note b { font-size: 11px; }
+.atal-role-note p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.atal-theme-options { display: grid; gap: 2px; }
+.atal-theme-options button { display: grid; min-height: 61px; grid-template-columns: 35px minmax(0,1fr) 18px; align-items: center; gap: 10px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
+.atal-theme-options button:last-child { border-bottom: 0; }
+.atal-theme-options button > span:first-child { display: flex; width: 35px; height: 35px; align-items: center; justify-content: center; border-radius: 10px; background: var(--mint); }
+.atal-theme-options button > span:first-child svg { width: 18px; }
+.atal-theme-options b, .atal-theme-options small { display: block; }
+.atal-theme-options b { font-size: 11px; }
+.atal-theme-options small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.atal-theme-options button > svg { width: 17px; color: var(--green); }
+
+/* M080 — Graphite Clinical, official dark-mode source of truth. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --green: #f5f5f7;
+  --green-dark: #ffffff;
+  --mint: #232327;
+  --ink: #f5f5f7;
+  --muted: #a4a4aa;
+  --line: #2d2d32;
+  --surface: #0d0d0f;
+  --canvas: #0d0d0f;
+  --glass: rgba(28,28,31,.82);
+  --glass-strong: rgba(24,24,27,.96);
+  --shadow: 0 18px 48px rgba(0,0,0,.36);
+  --dock-shadow: 0 14px 38px rgba(0,0,0,.46);
+  --native-shadow: 0 18px 44px rgba(0,0,0,.46), 0 2px 8px rgba(0,0,0,.28);
+}
+html[data-theme="dark"], html[data-theme="dark"] body,
+html[data-theme="dark"] .atal-app, html[data-theme="dark"] .atal-workspace { color: var(--ink); background: #0d0d0f; }
+html[data-theme="dark"] .atal-mobile-header { border-color: rgba(255,255,255,.07); background: rgba(13,13,15,.88); }
+html[data-theme="dark"] .atal-logo__mark, html[data-theme="dark"] .atal-logo__name,
+html[data-theme="dark"] .atal-logo__descriptor { color: #f5f5f7; }
+html[data-theme="dark"] :is(.atal-search,.atal-premium-search,.atal-desktop-search,.atal-app-select,.atal-settings-profile,.atal-settings-group > div,.atal-settings-card,.atal-settings-form,.atal-settings-textarea,.atal-theme-options,.atal-activity-summary article,.atal-assistant-prompts button,.atal-export-list > button,.atal-panel-placeholder,.atal-clinical-form,.atal-profile-hero,.atal-plan-identity,.atal-profile-body,.atal-plan-editor,.atal-selector,.atal-preview-card,.atal-state-tabs button) { border-color: var(--line); color: var(--ink); background: #161618; box-shadow: none; }
+html[data-theme="dark"] :is(input,textarea,select) { color: var(--ink); background: transparent; }
+html[data-theme="dark"] :is(input,textarea)::placeholder { color: #717178; }
+html[data-theme="dark"] :is(.atal-dense-row,.atal-plan-row,.atal-activity-feed > button,.atal-patient-row,.atal-task-row,.atal-settings-row,.atal-theme-options button,.atal-exercise-list > div) { border-color: var(--line); color: var(--ink); }
+html[data-theme="dark"] :is(.atal-dense-row,.atal-plan-row,.atal-activity-feed button,.atal-patient-row):hover { background: #19191c; }
+html[data-theme="dark"] :is(.atal-mobile-dock .atal-primary-nav,.atal-mobile-dock .atal-ai-button,.atal-nav-slot .atal-more-menu) { border-color: rgba(255,255,255,.09); background: var(--glass); }
+html[data-theme="dark"] .atal-mobile-dock :is(.atal-primary-nav a,.atal-primary-nav button,.atal-primary-nav span,.atal-ai-button,.atal-ai-button span) { color: #f5f5f7; }
+html[data-theme="dark"] .atal-mobile-dock .atal-primary-nav .is-active,
+html[data-theme="dark"] .atal-mobile-dock .atal-primary-nav .is-active span { color: #fff; background: #2a2a2e; }
+html[data-theme="dark"] .atal-nav-slot .atal-more-menu .atal-secondary-link,
+html[data-theme="dark"] .atal-nav-slot .atal-secondary-link .atal-more-icon { color: #f5f5f7; }
+html[data-theme="dark"] .atal-nav-slot .atal-more-menu .atal-secondary-link.is-active { color: #fff; background: #2a2a2e; }
+html[data-theme="dark"] :is(.atal-native-sheet,.atal-select-overlay > section) { border-color: var(--line); color: var(--ink); background: #18181b; }
+html[data-theme="dark"] :is(.atal-command-search,.atal-select-overlay header button,.atal-premium-search button,.atal-native-sheet > header button,.atal-message p,.atal-instruction-card,.atal-report-comment blockquote,.atal-view-switch) { color: var(--ink); background: #232327; }
+html[data-theme="dark"] :is(.atal-command-results a,.atal-quick-actions button,.atal-notification-list button):hover { background: #232327; }
+html[data-theme="dark"] :is(.atal-select-overlay section > button:not(:first-child),.atal-app-select) { border-color: var(--line); color: var(--ink); background: #18181b; }
+html[data-theme="dark"] :is(.atal-avatar,.atal-more-icon,.atal-settings-row > span:first-child,.atal-detail-heading > span,.atal-theme-options button > span:first-child,.atal-mobile-metrics > div > span,.atal-activity-summary article > span,.atal-command-results a > span:first-child,.atal-quick-actions button > span:first-child,.atal-notification-list button > span:first-child) { color: #f5f5f7; background: #2a2a2e; }
+html[data-theme="dark"] :is(.atal-role-note,.atal-inline-notice,.atal-export-ready,.atal-clinical-cue,.atal-patient-preview-cta,.atal-preview-security) { border-color: #35353a; color: #f5f5f7; background: #232327; }
+html[data-theme="dark"] :is(.atal-new-button,.atal-submit-button,.atal-settings-save,.atal-observations > button,.atal-system-state button,.atal-assistant-composer button) { color: #0d0d0f; background: #f5f5f7; box-shadow: none; }
+html[data-theme="dark"] .atal-assistant-composer { border-color: var(--line); background: rgba(24,24,27,.94); }
+html[data-theme="dark"] .atal-message.is-user p { color: #0d0d0f; background: #f5f5f7; }
+html[data-theme="dark"] .atal-view-switch button.is-active { color: #fff; background: #303034; box-shadow: none; }
+html[data-theme="dark"] .atal-overlay, html[data-theme="dark"] .atal-select-overlay { background: rgba(0,0,0,.56); }
+html[data-theme="dark"] .atal-nav-backdrop { background: rgba(0,0,0,.14); }
+html[data-theme="dark"] .atal-patient-preview { color: var(--ink); background: #0d0d0f; }
+html[data-theme="dark"] .atal-preview-toolbar { background: rgba(13,13,15,.9); }
+html[data-theme="dark"] .atal-preview-hero { background: linear-gradient(145deg,#18181b,#0d0d0f); }
+html[data-theme="dark"] .atal-preview-tabs { background: #232327; }
+html[data-theme="dark"] .atal-preview-tabs button.is-active { color: #fff; background: #35353a; }
+html[data-theme="dark"] .atal-settings-row > i { background: #3a3a3f; }
+html[data-theme="dark"] .atal-settings-row > i.is-on { background: #f5f5f7; }
+html[data-theme="dark"] .atal-settings-row > i.is-on em { background: #0d0d0f; }
+
+/* Route feedback stays subtle; navigation itself is immediate. */
+.atal-route-content .atal-content { animation-duration: .16s; }

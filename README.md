@@ -1,82 +1,40 @@
-# Atal v1 - Repositorio Inicial Listo
+# Atal
 
-Este es un **scaffold técnico inicial mínimo** para el proyecto **Atal v1**. Ha sido diseñado de forma deliberadamente minimalista, limpia y modular, listo para ser conectado a un repositorio de GitHub bajo el nombre `atal-v1`.
+Aplicación web clínica mobile-first para fisioterapeutas. La versión actual es un prototipo frontend navegable: reproduce la experiencia visual aprobada con datos locales, sin autenticación ni integraciones externas.
 
-Tanto la pantalla actual como toda la estructura técnica sirven únicamente como un **contenedor de arranque vacío y ejecutable**. La reconstrucción final de Atal será realizada desde cero por **ChatGPT Work** y **Codex**, siguiendo estrictamente los 79 mockups oficiales y los documentos técnicos D003 y D004.
+## Stack actual
 
----
+- React 19 + TypeScript
+- Vite 6
+- React Router (navegación SPA instantánea)
+- Tailwind CSS v4 y CSS de producto
+- Poppins autohospedada
 
-## 🚀 Requisitos Técnicos Cubiertos
+La cabecera y la navegación permanecen montadas mientras cambia el contenido de cada ruta. Esto evita recargas y compilaciones de páginas durante el uso dentro de AI Studio.
 
-El proyecto está preconfigurado para ejecutarse de manera inmediata con las tecnologías requeridas:
-- **React 19**
-- **TypeScript 5 (Strict Mode)**
-- **Tailwind CSS v4** (Integrado y funcional)
-- **ESLint** (Configurado para mantener el código libre de advertencias y errores)
-- **React Router Dom** (Instalado y disponible para configurar el enrutamiento posterior)
-- **Next.js 15** (Como motor del contenedor para facilitar el levantamiento, previsualización y despliegue inmediato en puerto 3000)
+## Uso
 
----
-
-## 📂 Estructura del Proyecto
-
-La estructura del código incluye los directorios básicos recomendados para facilitar la futura transición y la adición de componentes de producto:
-
-```text
-├── app/                     # Rutas y vistas de Next.js (Visualización en /)
-│   ├── globals.css          # Estilos globales y Tailwind CSS
-│   ├── layout.tsx           # Diseño del layout raíz con metaetiquetas de Atal v1
-│   └── page.tsx             # Pantalla única temporal responsive
-├── src/                     # Estructura del repositorio limpio para reconstrucción
-│   ├── routes/              # Directorio reservado para enrutamiento
-│   ├── components/          # Directorio para componentes reutilizables
-│   ├── styles/              # Directorio para estilos CSS/SCSS adicionales
-│   └── assets/              # Directorio para imágenes, SVGs y fuentes
-├── package.json             # Scripts y dependencias oficiales del proyecto
-├── tsconfig.json            # Configuración estricta de TypeScript
-├── eslint.config.mjs        # Configuración de ESLint
-└── README.md                # Esta guía del scaffold temporal
+```bash
+npm install
+npm run dev
 ```
 
----
+El servidor de desarrollo usa el puerto `3000`. Verificaciones disponibles:
 
-## 🛠️ Scripts Disponibles
+```bash
+npm run typecheck
+npm run build
+```
 
-Puedes utilizar los siguientes comandos estándar para controlar el ciclo de vida del desarrollo:
+## Dirección visual
 
-- **Instalar dependencias**:
-  ```bash
-  npm install
-  ```
+- B001/B002: sistema oficial de marca.
+- M003/M004: navegación e Inicio en modo claro.
+- M080 Graphite Clinical: modo oscuro oficial.
+- M065: referencia histórica; no se utiliza como fuente principal.
 
-- **Ejecutar en modo desarrollo**:
-  ```bash
-  npm run dev
-  ```
+El selector está en `Ajustes → Apariencia` y conserva la preferencia localmente.
 
-- **Ejecutar verificación de tipos (TypeScript)**:
-  ```bash
-  npm run typecheck
-  ```
+## Alcance
 
-- **Ejecutar análisis de código (Lint)**:
-  ```bash
-  npm run lint
-  ```
-
-- **Construir el proyecto para producción**:
-  ```bash
-  npm run build
-  ```
-
----
-
-## ⚠️ Recordatorio Importante para Desarrollo Futuro
-
-Este repositorio no contiene:
-- Ninguna base de datos o almacenamiento persistente (Firebase, Supabase, SQL, etc.).
-- Autenticación ni llamadas a APIs de inteligencia artificial.
-- Lógica de negocio de pacientes, planes, ejercicios, reportes o pagos.
-- Datos mock, plantillas copiadas de proyectos anteriores, ni variables de entorno de producción ficticias.
-
-Es un **contenedor técnico puro e higiénico**. ¡Listo para la acción!
+Las rutas de pacientes, planes, ejercicios, actividad, reportes, exportaciones, Atal IA, ajustes y vista local del paciente están conectadas con datos de demostración. Supabase, Google Login, pagos, correos, APIs y despliegue se incorporarán en una fase posterior; no forman parte de este cierre visual.

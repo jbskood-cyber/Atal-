@@ -23,7 +23,7 @@ export function PatientsScreen() {
 
   return (
     <AtalShell onNew={() => router.push('/patients/new')}>
-      <main className="atal-content atal-list-page">
+      <main className="atal-content atal-list-page atal-patient-directory">
         <div className="atal-page-heading"><h1>Pacientes</h1><button type="button" onClick={() => router.push('/patients/new')}><Plus size={19} /> Nuevo paciente</button></div>
         <SearchBar value={query} onChange={setQuery} placeholder="Buscar paciente" />
         <div className="atal-segments">
@@ -36,9 +36,8 @@ export function PatientsScreen() {
           {visible.map((patient) => (
             <button key={patient.id} type="button" className="atal-dense-row" onClick={() => router.push(`/patients/${patient.id}`)}>
               <Avatar name={patient.name} />
-              <span><b>{patient.name}</b><small>{patient.diagnosis}</small><small>{patient.plan}　•　{patient.progress}% completado</small></span>
+              <span><b>{patient.name}</b><small>{patient.diagnosis}</small><small>{patient.progress}% del plan completado</small></span>
               <i style={{ background: statusColor[patient.status] }} />
-              <em>{patient.time}</em>
               <ChevronRight size={20} />
             </button>
           ))}

@@ -1,0 +1,5 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+export type ThemeMode = 'light' | 'dark' | 'system';
+const ThemeContext = createContext<{ mode: ThemeMode; resolved: 'light'|'dark'; setMode: (mode: ThemeMode) => void } | null>(null);
+export function ThemeProvider({ children }: { children: ReactNode }) { const [mode,setMode]=useState<ThemeMode>(()=>(localStorage.getItem('atal:theme') as ThemeMode)||'light'); const systemDark=window.matchMedia('(prefers-color-scheme: dark)').matches; const resolved=mode==='system'?(systemDark?'dark':'light'):mode; useEffect(()=>{document.documentElement.dataset.theme=resolved;localStorage.setItem('atal:theme',mode)},[mode,resolved]); const value=useMemo(()=>({mode,resolved,setMode}),[mode,resolved]); return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>; }
+export function useTheme(){const value=useContext(ThemeContext);if(!value)throw new Error('useTheme requires ThemeProvider');return value}
