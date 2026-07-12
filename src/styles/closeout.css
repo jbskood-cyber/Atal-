@@ -1,0 +1,258 @@
+/* Scoped closeout styles. Existing global rules remain untouched. */
+:root { --font-atal: 'Poppins'; }
+.atal-exercises-heading > button { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px; color: #fff; background: var(--green); font-size: 10px; font-weight: 600; }
+.atal-exercises-heading > button svg { width: 16px; }
+.atal-schedule-select { min-width: 0; overflow: hidden; }
+.atal-schedule-select > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atal-custom-select-sheet { overflow: hidden; }
+.atal-select-options { display: grid; }
+.atal-select-options > button { display: flex; width: 100%; min-height: 48px; align-items: center; justify-content: space-between; padding: 0 11px; border: 0; border-top: 1px solid var(--line); background: var(--surface); text-align: left; }
+.atal-select-options > button.is-selected { color: var(--green-dark); font-weight: 700; }
+.atal-custom-option svg { width: 16px; transform: rotate(-90deg); }
+.atal-custom-schedule { display: grid; gap: 13px; padding: 5px; }
+.atal-inline-back { justify-self: start; border: 0; color: var(--muted); background: transparent; font-size: 10px; }
+.atal-custom-schedule-grid { display: grid; grid-template-columns: .7fr 1.3fr; gap: 9px; }
+.atal-custom-schedule label { display: grid; gap: 5px; color: var(--muted); font-size: 9px; font-weight: 600; }
+.atal-custom-schedule :is(input,select) { width: 100%; height: 42px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: var(--surface); outline: 0; }
+.atal-special-values { display: flex; flex-wrap: wrap; gap: 7px; }
+.atal-special-values button { min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); font-size: 9px; }
+.atal-custom-save { display: flex; min-height: 40px; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 10px; color: #fff; background: var(--green); font-weight: 600; }
+.atal-custom-save svg { width: 16px; }
+.atal-report-person > .atal-report-avatar, .atal-report-avatar .atal-avatar { width: 38px; height: 38px; min-width: 38px; aspect-ratio: 1 / 1; flex: 0 0 38px; border-radius: 50%; }
+.atal-report-avatar { display: grid; place-items: center; overflow: hidden; }
+.atal-report-avatar .atal-avatar { flex-shrink: 0; }
+.atal-notification-list button { cursor: pointer; }
+.atal-notification-list button:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.atal-notification-list button:active { background: var(--mint); }
+.atal-notification-list button.is-read { opacity: .62; }
+.atal-patient-row.is-urgent, .atal-task-row.is-urgent { background: linear-gradient(90deg, rgba(220,63,69,.055), transparent 58%); }
+.atal-patient-row.is-attention, .atal-task-row.is-attention { background: linear-gradient(90deg, rgba(244,166,29,.05), transparent 58%); }
+.atal-exercise-form fieldset { padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.atal-exercise-form fieldset:last-of-type { border-bottom: 0; }
+.atal-field-grid.is-balanced { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.atal-mode-switch { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; padding: 4px; border-radius: 12px; background: var(--canvas); }
+.atal-mode-switch button { display: flex; min-height: 38px; align-items: center; justify-content: center; gap: 5px; border: 0; border-radius: 9px; background: transparent; font-size: 9px; }
+.atal-mode-switch button.is-active { color: var(--green-dark); background: var(--surface); box-shadow: 0 2px 8px rgba(15,20,22,.06); }
+.atal-mode-switch svg { width: 15px; }
+.atal-prescription-fields { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 8px; }
+.atal-media-picker { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+.atal-media-picker button { display: grid; min-height: 58px; place-items: center; gap: 2px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface); font-size: 8px; }
+.atal-media-picker button.is-active { border-color: var(--green); color: var(--green-dark); background: var(--mint); }
+.atal-media-picker svg { width: 18px; }
+.atal-exercise-media.is-simulated { margin-top: 9px; }
+
+/* Patient plan and guided session */
+.atal-patient-plan, .atal-patient-session { min-height: 100vh; color: var(--ink); background: var(--canvas); font-family: var(--font-atal), Poppins, sans-serif; }
+.atal-patient-plan-header { position: sticky; z-index: 10; top: 0; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 9px; min-height: 58px; padding: max(8px, env(safe-area-inset-top)) 14px 8px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(18px); }
+.atal-patient-plan-header > button { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 9px; background: transparent; }
+.atal-patient-plan-header > button svg { width: 17px; }
+.atal-patient-plan-header .atal-logo__mark { width: 28px; height: 28px; }
+.atal-patient-plan-header .atal-logo__name { font-size: 18px; }
+.atal-patient-plan-header .atal-logo__descriptor { margin-top: 4px; font-size: 5px; }
+.atal-patient-plan-header > span { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 7px; }
+.atal-patient-plan-header > span svg { width: 13px; }
+.atal-patient-plan-hero { padding: 28px 18px 22px; color: #fff; background: linear-gradient(145deg,#0f1416,#19352a); }
+.atal-patient-plan-hero span { font-size: 10px; font-weight: 600; }
+.atal-patient-plan-hero h1 { max-width: 370px; margin: 7px 0; font-size: 27px; line-height: 1.08; letter-spacing: -.045em; }
+.atal-patient-plan-hero p { max-width: 500px; margin: 0; color: rgba(255,255,255,.72); font-size: 9px; line-height: 1.55; }
+.atal-patient-plan-card { width: min(calc(100% - 24px), 620px); margin: -8px auto 0; padding: 18px 15px 26px; border: 1px solid var(--line); border-radius: 20px 20px 0 0; background: var(--surface); }
+.atal-session-kicker { color: var(--green); font-size: 8px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.atal-patient-plan-card h2 { margin: 6px 0 8px; font-size: 19px; letter-spacing: -.035em; }
+.atal-patient-plan-card blockquote { margin: 0; padding: 11px; border-left: 3px solid var(--green); border-radius: 0 10px 10px 0; color: var(--muted); background: var(--canvas); font-size: 9px; line-height: 1.55; }
+.atal-patient-plan-facts { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 14px 0; }
+.atal-patient-plan-facts > span { display: grid; min-width: 0; justify-items: center; padding: 9px 4px; border: 1px solid var(--line); border-radius: 11px; text-align: center; }
+.atal-patient-plan-facts svg { width: 17px; color: var(--green); }
+.atal-patient-plan-facts b, .atal-patient-plan-facts small { display: block; }
+.atal-patient-plan-facts b { margin-top: 4px; font-size: 9px; }
+.atal-patient-plan-facts small { margin-top: 2px; color: var(--muted); font-size: 6.5px; }
+.atal-patient-exercise-preview > header { margin: 18px 0 5px; }
+.atal-patient-exercise-preview h3 { margin: 0; font-size: 13px; }
+.atal-patient-exercise-preview header small { color: var(--muted); font-size: 7px; }
+.atal-patient-exercise-preview article { display: grid; min-height: 54px; grid-template-columns: 28px minmax(0,1fr) 15px; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+.atal-patient-exercise-preview article > span { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 9px; color: var(--green-dark); background: var(--mint); font-size: 9px; font-weight: 700; }
+.atal-patient-exercise-preview b, .atal-patient-exercise-preview small { display: block; }
+.atal-patient-exercise-preview b { font-size: 10px; }
+.atal-patient-exercise-preview small { margin-top: 2px; color: var(--muted); font-size: 7px; }
+.atal-patient-exercise-preview svg { width: 14px; color: var(--muted); }
+.atal-plan-guidance { display: flex; gap: 8px; margin: 15px 0; padding: 11px; border-radius: 11px; background: var(--mint); }
+.atal-plan-guidance svg { width: 17px; flex: 0 0 17px; color: var(--green); }
+.atal-plan-guidance b { font-size: 9px; }
+.atal-plan-guidance p { margin: 3px 0 0; color: var(--muted); font-size: 7px; line-height: 1.5; }
+.atal-session-primary { display: flex; width: 100%; min-height: 46px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 13px; color: #fff; background: var(--green); font-size: 11px; font-weight: 650; }
+.atal-session-primary svg { width: 17px; }
+.atal-start-session { margin-top: 12px; }
+.atal-plan-session-actions { display: grid; gap: 7px; }
+.atal-plan-session-actions > button:last-child, .atal-summary-actions > button:last-child, .atal-resume-card > div > button:last-child { min-height: 40px; border: 1px solid var(--line); border-radius: 11px; background: transparent; font-size: 9px; }
+.atal-local-save-copy { display: block; margin-top: 8px; color: var(--muted); font-size: 6.5px; text-align: center; }
+.atal-plan-unavailable { display: grid; min-height: 100vh; place-content: center; justify-items: center; padding: 22px; text-align: center; }
+
+.atal-session-header { position: sticky; z-index: 20; top: 0; display: grid; grid-template-columns: 92px minmax(0,1fr) 42px; align-items: center; gap: 10px; min-height: 64px; padding: max(9px, env(safe-area-inset-top)) 13px 8px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 91%, transparent); backdrop-filter: blur(20px); }
+.atal-session-header .atal-logo__mark { width: 25px; height: 25px; }
+.atal-session-header .atal-logo__name { font-size: 17px; }
+.atal-session-header .atal-logo__descriptor { margin-top: 4px; font-size: 4.5px; }
+.atal-session-progress > span { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 7px; }
+.atal-session-progress > span strong { color: var(--ink); }
+.atal-session-progress > i { display: block; height: 5px; margin-top: 5px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.atal-session-progress > i em { display: block; height: 100%; border-radius: inherit; background: var(--green); transition: width .2s ease; }
+.atal-session-header > button { display: grid; width: 40px; height: 40px; place-items: center; border: 0; border-radius: 12px; color: var(--muted); background: transparent; }
+.atal-session-header > button svg { width: 17px; }
+.atal-session-header > button span { display: none; }
+.atal-session-stage { width: min(100%, 700px); margin: 0 auto; padding: 14px 12px max(28px, env(safe-area-inset-bottom)); }
+.atal-session-card { padding: 20px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 14px 40px rgba(15,20,22,.05); }
+.atal-session-card h1 { margin: 6px 0; font-size: 23px; line-height: 1.12; letter-spacing: -.045em; }
+.atal-session-card > p { margin: 0 0 15px; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.atal-session-plan-summary { display: grid; grid-template-columns: 35px 1fr auto; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+.atal-session-plan-summary > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; color: var(--green); background: var(--mint); }
+.atal-session-plan-summary svg { width: 17px; }
+.atal-session-plan-summary b, .atal-session-plan-summary small { display: block; }
+.atal-session-plan-summary b { font-size: 9px; }
+.atal-session-plan-summary small { color: var(--muted); font-size: 7px; }
+.atal-session-plan-summary em { display: flex; align-items: center; gap: 3px; color: var(--muted); font-size: 7px; font-style: normal; }
+.atal-session-preparation blockquote { margin: 10px 0 15px; padding: 10px; border-radius: 10px; color: var(--muted); background: var(--canvas); font-size: 8px; line-height: 1.55; }
+.atal-session-sliders { display: grid; gap: 19px; margin: 18px 0; }
+.atal-semantic-slider { display: grid; gap: 8px; }
+.atal-semantic-slider > span, .atal-semantic-slider > small { display: flex; align-items: center; justify-content: space-between; }
+.atal-semantic-slider b { font-size: 9px; }
+.atal-semantic-slider strong { color: var(--semantic-color); font-size: 9px; }
+.atal-semantic-slider small { color: var(--muted); font-size: 6.5px; }
+.atal-semantic-slider input { width: 100%; height: 6px; margin: 0; border-radius: 99px; appearance: none; background: linear-gradient(to right,var(--semantic-color) 0,var(--semantic-color) var(--range-progress),var(--line) var(--range-progress),var(--line) 100%); outline: 0; }
+.atal-semantic-slider input::-webkit-slider-thumb { width: 20px; height: 20px; border: 3px solid var(--surface); border-radius: 50%; appearance: none; background: var(--semantic-color); box-shadow: 0 2px 7px rgba(0,0,0,.2); }
+.atal-semantic-slider input::-moz-range-thumb { width: 16px; height: 16px; border: 3px solid var(--surface); border-radius: 50%; background: var(--semantic-color); }
+.atal-semantic-slider input:focus-visible { outline: 3px solid color-mix(in srgb,var(--semantic-color) 35%,transparent); outline-offset: 5px; }
+.atal-session-comment { display: grid; gap: 5px; margin: 14px 0; color: var(--muted); font-size: 8px; font-weight: 600; }
+.atal-session-comment textarea { min-height: 68px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: var(--surface); outline: 0; resize: vertical; }
+.atal-session-safety { display: flex; gap: 8px; margin: 13px 0; padding: 10px; border: 1px solid color-mix(in srgb,#e0a21a 32%,var(--line)); border-radius: 11px; background: color-mix(in srgb,#e0a21a 8%,var(--surface)); }
+.atal-session-safety svg { width: 17px; flex: 0 0 17px; color: #c58a0b; }
+.atal-session-safety p { margin: 0; color: var(--muted); font-size: 7px; line-height: 1.55; }
+
+.atal-guided-exercise { display: grid; gap: 13px; }
+.atal-exercise-position { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 8px; }
+.atal-exercise-position strong { color: var(--ink); }
+.atal-session-media { display: grid; min-height: 190px; place-items: center; border-radius: 17px; background: #17191a; overflow: hidden; }
+.atal-session-media :is(img,video) { width: 100%; height: 100%; max-height: 260px; object-fit: cover; }
+.atal-session-media.is-empty { min-height: 150px; align-content: center; color: #b7bab9; background: #232627; }
+.atal-session-media.is-empty svg { width: 27px; }
+.atal-session-media.is-empty b, .atal-session-media.is-empty small { display: block; margin-top: 5px; }
+.atal-session-media.is-empty b { font-size: 10px; }
+.atal-session-media.is-empty small { max-width: 240px; font-size: 7px; text-align: center; }
+.atal-guided-exercise > header > span { color: var(--green); font-size: 8px; font-weight: 700; }
+.atal-guided-exercise > header h1 { margin: 4px 0; font-size: 23px; letter-spacing: -.04em; }
+.atal-guided-exercise > header p { margin: 0; color: var(--muted); font-size: 8px; }
+.atal-exercise-prescription { display: grid; grid-template-columns: repeat(4,1fr); gap: 5px; }
+.atal-exercise-prescription > span { display: grid; min-width: 0; justify-items: center; padding: 8px 2px; border: 1px solid var(--line); border-radius: 10px; }
+.atal-exercise-prescription svg { width: 15px; color: var(--green); }
+.atal-exercise-prescription b { margin-top: 3px; font-size: 9px; }
+.atal-exercise-prescription small { color: var(--muted); font-size: 5.8px; }
+.atal-exercise-instructions { display: grid; gap: 7px; }
+.atal-exercise-instructions article { padding: 11px; border-radius: 11px; background: var(--surface); border: 1px solid var(--line); }
+.atal-exercise-instructions article b { font-size: 9px; }
+.atal-exercise-instructions article p, .atal-exercise-instructions article ol { margin: 4px 0 0; color: var(--muted); font-size: 8px; line-height: 1.55; }
+.atal-exercise-instructions article ol { padding-left: 17px; }
+.atal-exercise-instructions article.is-caution { border-color: color-mix(in srgb,#e0a21a 30%,var(--line)); }
+.atal-exercise-instructions blockquote { margin: 0; padding: 10px; border-left: 3px solid var(--green); border-radius: 0 10px 10px 0; background: var(--mint); font-size: 8px; }
+.atal-set-control, .atal-exercise-result { padding: 13px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.atal-set-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.atal-set-heading span, .atal-exercise-result > span { color: var(--muted); font-size: 7px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.atal-set-heading h2 { margin: 2px 0 0; font-size: 13px; }
+.atal-set-heading strong { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; color: var(--green-dark); background: var(--mint); font-size: 9px; }
+.atal-set-row { display: grid; min-height: 49px; grid-template-columns: 32px 1fr auto; align-items: center; gap: 7px; border-top: 1px solid var(--line); }
+.atal-set-row > button { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); background: transparent; }
+.atal-set-row > button svg { width: 15px; }
+.atal-set-row.is-complete > button { border-color: var(--green); color: #fff; background: var(--green); }
+.atal-set-row b { font-size: 9px; }
+.atal-set-row label { display: grid; grid-template-columns: auto 48px; align-items: center; gap: 5px; color: var(--muted); font-size: 7px; }
+.atal-set-row input { width: 48px; height: 31px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--canvas); text-align: center; }
+.atal-exercise-result > div { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; margin-top: 9px; }
+.atal-exercise-result > div > button { display: flex; min-height: 42px; align-items: center; justify-content: center; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: transparent; font-size: 7px; }
+.atal-exercise-result > div > button.is-active { border-color: var(--green); color: var(--green-dark); background: var(--mint); font-weight: 700; }
+.atal-exercise-result > div > button svg { width: 13px; }
+.atal-report-discomfort { display: flex; align-items: center; gap: 5px; margin-top: 9px; border: 0; color: var(--muted); background: transparent; font-size: 8px; }
+.atal-report-discomfort svg { width: 14px; }
+.atal-discomfort-panel { display: grid !important; grid-template-columns: 1fr !important; gap: 16px !important; margin-top: 12px !important; padding-top: 12px; border-top: 1px solid var(--line); }
+.atal-discomfort-panel > label > span, .atal-close-symptoms > span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 8px; font-weight: 600; }
+.atal-symptom-picker { display: flex; flex-wrap: wrap; gap: 5px; }
+.atal-symptom-picker button { min-height: 31px; padding: 0 9px; border: 1px solid var(--line); border-radius: 99px; background: transparent; font-size: 7px; }
+.atal-symptom-picker button.is-active { border-color: var(--green); color: var(--green-dark); background: var(--mint); }
+.atal-session-navigation { display: grid; grid-template-columns: .75fr 1.5fr; gap: 7px; }
+.atal-session-navigation > button:first-child { display: flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 8px; }
+.atal-session-navigation > button svg { width: 15px; }
+.atal-session-navigation button:disabled { opacity: .38; }
+.atal-finish-early { justify-self: center; border: 0; color: var(--muted); background: transparent; font-size: 8px; text-decoration: underline; }
+.atal-rest-overlay, .atal-session-dialog { position: fixed; z-index: 100; inset: 0; display: grid; place-items: end center; padding: 12px; background: rgba(5,7,6,.48); backdrop-filter: blur(8px); }
+.atal-rest-overlay > section, .atal-session-dialog > section { width: min(100%,430px); padding: 22px 17px max(17px,env(safe-area-inset-bottom)); border-radius: 22px; background: var(--surface); box-shadow: 0 24px 70px rgba(0,0,0,.25); text-align: center; }
+.atal-rest-overlay > section > span { color: var(--muted); font-size: 8px; letter-spacing: .1em; text-transform: uppercase; }
+.atal-rest-overlay strong { display: block; margin: 10px 0 0; font-size: 58px; line-height: 1; letter-spacing: -.06em; }
+.atal-rest-overlay strong small { font-size: 16px; }
+.atal-rest-overlay h2 { margin: 12px 0 2px; font-size: 18px; }
+.atal-rest-overlay p { margin: 0 0 14px; color: var(--muted); font-size: 9px; }
+.atal-rest-overlay > section > div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.atal-rest-overlay > section > div button { display: flex; min-height: 38px; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--line); border-radius: 10px; background: transparent; font-size: 8px; }
+.atal-rest-overlay > section > div svg { width: 15px; }
+.atal-session-dialog > section > svg { width: 28px; color: #d79a16; }
+.atal-session-dialog h2 { margin: 8px 0 4px; font-size: 18px; }
+.atal-session-dialog p { color: var(--muted); font-size: 9px; }
+.atal-session-dialog section > button:last-child { min-height: 38px; margin-top: 6px; border: 0; background: transparent; font-size: 8px; }
+.atal-session-close .atal-session-sliders { margin-top: 20px; }
+.atal-close-symptoms { margin: 18px 0; }
+.atal-more-details { margin: 14px 0; border: 1px solid var(--line); border-radius: 12px; }
+.atal-more-details summary { display: flex; min-height: 42px; align-items: center; justify-content: space-between; padding: 0 11px; font-size: 9px; cursor: pointer; list-style: none; }
+.atal-more-details summary svg { width: 15px; }
+.atal-more-details > div { display: grid; gap: 9px; padding: 0 11px 11px; }
+.atal-more-details label { display: grid; gap: 4px; color: var(--muted); font-size: 7px; }
+.atal-more-details select { height: 36px; padding: 0 8px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface); }
+.atal-session-summary { text-align: center; }
+.atal-summary-check { display: grid; width: 58px; height: 58px; place-items: center; margin: 0 auto 9px; border-radius: 50%; color: var(--green); background: var(--mint); }
+.atal-summary-check svg { width: 29px; }
+.atal-summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin: 16px 0; }
+.atal-summary-grid article { padding: 10px 4px; border: 1px solid var(--line); border-radius: 11px; }
+.atal-summary-grid strong, .atal-summary-grid small { display: block; }
+.atal-summary-grid strong { font-size: 18px; }
+.atal-summary-grid small { color: var(--muted); font-size: 6px; }
+.atal-summary-details { display: grid; text-align: left; }
+.atal-summary-details > span { display: grid; min-height: 44px; grid-template-columns: 95px 1fr; align-items: center; border-bottom: 1px solid var(--line); }
+.atal-summary-details b { color: var(--muted); font-size: 7px; }
+.atal-summary-details strong { display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 8px; text-align: right; }
+.atal-summary-details svg { width: 13px; }
+.atal-summary-actions { display: grid; gap: 7px; margin-top: 14px; }
+.atal-summary-actions > button:last-child { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.atal-summary-actions svg { width: 14px; }
+.atal-resume-card, .atal-state-card { max-width: 480px; margin: 10vh auto 0; text-align: center; }
+.atal-resume-card > svg, .atal-state-card > span svg { width: 34px; color: var(--green); }
+.atal-resume-card > div { display: grid; gap: 7px; margin-top: 15px; }
+
+html[data-theme="dark"] :is(.atal-patient-plan,.atal-patient-session) { color: #f5f5f7; background: #0d0d0f; }
+html[data-theme="dark"] :is(.atal-patient-plan-header,.atal-session-header) { border-color: #2d2d32; background: rgba(13,13,15,.9); }
+html[data-theme="dark"] :is(.atal-patient-plan-card,.atal-session-card,.atal-set-control,.atal-exercise-result,.atal-exercise-instructions article,.atal-session-navigation > button:first-child,.atal-rest-overlay > section,.atal-session-dialog > section) { border-color: #2d2d32; color: #f5f5f7; background: #161618; box-shadow: none; }
+html[data-theme="dark"] :is(.atal-session-primary,.atal-set-row.is-complete > button) { color: #0d0d0f; background: #f5f5f7; }
+html[data-theme="dark"] :is(.atal-session-kicker,.atal-guided-exercise > header > span,.atal-summary-check,.atal-patient-plan-facts svg,.atal-plan-guidance svg) { color: #d7d7dc; }
+html[data-theme="dark"] :is(.atal-plan-guidance,.atal-exercise-instructions blockquote,.atal-summary-check,.atal-set-heading strong,.atal-patient-exercise-preview article > span,.atal-mode-switch button.is-active) { color: #f5f5f7; background: #232327; }
+html[data-theme="dark"] :is(.atal-session-comment textarea,.atal-set-row input,.atal-more-details select,.atal-custom-schedule input,.atal-custom-schedule select,.atal-select-options > button) { border-color: #2d2d32; color: #f5f5f7; background: #18181b; }
+html[data-theme="dark"] .atal-patient-plan-hero { background: linear-gradient(145deg,#09090a,#232327); }
+html[data-theme="dark"] .atal-session-progress > i em { background: #f5f5f7; }
+html[data-theme="dark"] .atal-symptom-picker button.is-active, html[data-theme="dark"] .atal-exercise-result > div > button.is-active { border-color: #f5f5f7; color: #f5f5f7; background: #2a2a2e; }
+html[data-theme="dark"] .atal-semantic-slider input::-webkit-slider-thumb { border-color: #161618; }
+
+@media (max-width: 540px) {
+  .atal-exercises-heading { align-items: center; }
+  .atal-exercises-heading h1 { margin: 0; }
+  .atal-exercises-heading > button { min-height: 33px; padding: 0 10px; font-size: 8.5px; }
+  .atal-plan-schedule-grid, .atal-field-grid.is-balanced { grid-template-columns: 1fr; }
+  .atal-plan-schedule-grid { gap: 10px; }
+  .atal-plan-schedule-grid .atal-app-select { min-height: 40px; height: auto; padding-top: 8px; padding-bottom: 8px; font-size: 10px; line-height: 1.25; }
+  .atal-prescription-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .atal-media-picker { grid-template-columns: repeat(2,1fr); }
+}
+
+@media (min-width: 768px) {
+  .atal-session-stage { padding-top: 24px; }
+  .atal-session-card { padding: 28px; }
+  .atal-session-card h1 { font-size: 29px; }
+  .atal-session-header { grid-template-columns: 130px minmax(220px,460px) 70px; justify-content: space-between; padding-right: 24px; padding-left: 24px; }
+  .atal-session-header > button { width: auto; grid-template-columns: 18px auto; gap: 5px; padding: 0 10px; }
+  .atal-session-header > button span { display: block; font-size: 8px; }
+  .atal-guided-exercise { grid-template-columns: 1fr 1fr; align-items: start; }
+  .atal-exercise-position, .atal-session-media, .atal-guided-exercise > header, .atal-exercise-prescription, .atal-session-navigation, .atal-finish-early { grid-column: 1 / -1; }
+  .atal-session-media { min-height: 300px; }
+  .atal-set-control { grid-column: 1; }
+  .atal-exercise-result { grid-column: 2; }
+}

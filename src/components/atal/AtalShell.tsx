@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   Activity,
-  ArrowUpDown,
+  ChevronsUp,
   Bell,
   CheckCircle2,
   ChevronRight,
@@ -120,7 +120,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
             {!menuOpen ? (
               <nav aria-label="Navegación principal" className="atal-primary-nav">
                 {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
-                <button type="button" aria-label="Más secciones" className={menuOpen || isActive('/activity') || isActive('/exercises') || isActive('/settings') ? 'is-active' : ''} onClick={() => setMenuOpen(true)}><ArrowUpDown /><span>Más</span></button>
+                <button type="button" aria-label="Más secciones" className={menuOpen || isActive('/activity') || isActive('/exercises') || isActive('/settings') ? 'is-active' : ''} onClick={() => setMenuOpen(true)}><ChevronsUp /><span>Más</span></button>
               </nav>
             ) : (
               <div className="atal-more-menu" role="dialog" aria-label="Más secciones">
@@ -132,7 +132,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
       </div>
 
       {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
-      {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} />}
+      {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} onNavigate={(href) => { setNotificationsOpen(false); router.push(href); }} />}
       {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
     </div>
   );
@@ -152,8 +152,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   return <PanelFrame title="Buscar en Atal" onClose={onClose}><label className="atal-command-search"><Search /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Paciente, plan o ejercicio" /></label><div className="atal-command-results">{entries.map(({ label, detail, href, icon: Icon }) => <Link key={href} href={href}><span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight /></Link>)}{!entries.length && <p>No encontramos resultados.</p>}</div></PanelFrame>;
 }
 
-function NotificationsPanel({ onClose }: { onClose: () => void }) {
-  return <PanelFrame title="Notificaciones" onClose={onClose}><div className="atal-notification-list"><button type="button"><span className="is-warning"><Activity /></span><span><b>Revisar progreso</b><small>Paciente Demo 02 reportó dolor 6/10.</small></span><i>Ahora</i></button><button type="button"><span><CheckCircle2 /></span><span><b>Sesión completada</b><small>Paciente Demo 01 terminó su rutina.</small></span><i>8:45</i></button></div></PanelFrame>;
+function NotificationsPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
+  const [read, setRead] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('atal:read-notifications') ?? '[]') as string[]; } catch { return []; } });
+  const open = (id: string, href: string) => { const next = read.includes(id) ? read : [...read, id]; setRead(next); localStorage.setItem('atal:read-notifications', JSON.stringify(next)); onNavigate(href); };
+  return <PanelFrame title="Notificaciones" onClose={onClose}><div className="atal-notification-list"><button type="button" className={read.includes('progress') ? 'is-read' : ''} onClick={() => open('progress', '/activity/p02')}><span className="is-warning"><Activity /></span><span><b>Revisar progreso</b><small>Paciente Demo 02 reportó dolor 6/10.</small></span><i>Ahora</i></button><button type="button" className={read.includes('complete') ? 'is-read' : ''} onClick={() => open('complete', '/activity/p01')}><span><CheckCircle2 /></span><span><b>Sesión completada</b><small>Paciente Demo 01 terminó su rutina.</small></span><i>8:45</i></button></div></PanelFrame>;
 }
 
 function NewPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
