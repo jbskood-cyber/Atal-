@@ -7,16 +7,22 @@ import { Avatar } from '@/src/components/atal/Avatar';
 import { patients, plans, statusColor } from '@/src/data/atal-demo';
 
 const tasks = [
-  { time: '9:30', meridiem: 'a.m.', title: 'Evaluación', person: 'Paciente Demo 04', detail: 'Caso demo · Telehealth', status: 'active' as const },
-  { time: '11:30', meridiem: 'a.m.', title: 'Rehab', person: 'Paciente Demo 05', detail: 'Caso demo · Clínica', status: 'active' as const },
-  { time: '2:00', meridiem: 'p.m.', title: 'Seguimiento', person: 'Paciente Demo 01', detail: 'Progreso semanal', status: 'attention' as const },
+  { time: '9:30', minutes: 570, meridiem: 'a.m.', title: 'Evaluación', person: 'Paciente Demo 04', detail: 'Caso demo · Telehealth', priority: 'stable' as const },
+  { time: '11:30', minutes: 690, meridiem: 'a.m.', title: 'Rehab', person: 'Paciente Demo 05', detail: 'Caso demo · Clínica', priority: 'attention' as const },
+  { time: '2:00', minutes: 840, meridiem: 'p.m.', title: 'Seguimiento', person: 'Paciente Demo 02', detail: 'Dolor 7/10 · Revisar hoy', priority: 'urgent' as const },
 ];
+
+const priorityRank = { urgent: 0, attention: 1, stable: 2 } as const;
+const priorityColor = { urgent: '#dc3f45', attention: '#f4a61d', stable: '#16a36a' } as const;
+const priorityLabel = { urgent: 'Urgente', attention: 'Requiere atención', stable: 'Estable' } as const;
 
 export function HomeScreen() {
   const router = useRouter();
   const activePatients = patients.filter((patient) => patient.status !== 'archived');
   const activePlans = plans.filter((plan) => plan.status === 'active');
   const alerts = patients.filter((patient) => patient.status === 'attention');
+  const todayPatients = patients.slice(0, 6).map((patient, order) => ({ ...patient, order, priority: patient.id === 'p02' ? 'urgent' as const : patient.status === 'attention' ? 'attention' as const : 'stable' as const })).sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || a.order - b.order).slice(0, 4);
+  const orderedTasks = [...tasks].sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || a.minutes - b.minutes);
 
   return (
     <AtalShell>
@@ -39,15 +45,15 @@ export function HomeScreen() {
           <section className="atal-section">
             <SectionHeading title="Hoy" onClick={() => router.push('/patients')} />
             <div className="atal-patient-rows">
-              {patients.slice(0, 4).map((patient) => <PatientRow key={patient.id} patient={patient} compact onClick={() => router.push(`/patients/${patient.id}`)} />)}
+              {todayPatients.map((patient) => <PatientRow key={patient.id} patient={patient} compact priority={patient.priority} onClick={() => router.push(`/patients/${patient.id}`)} />)}
             </div>
           </section>
           <section className="atal-section atal-tasks">
             <SectionHeading title="Pendientes del día" onClick={() => router.push('/activity')} />
-            {tasks.map((task, index) => (
-              <button key={task.time} type="button" className="atal-task-row" onClick={() => router.push('/activity')}>
-                <span className="atal-task-dot" style={{ background: statusColor[task.status] }} />
-                {index < tasks.length - 1 && <i />}
+            {orderedTasks.map((task, index) => (
+              <button key={task.time} type="button" className={`atal-task-row is-${task.priority}`} aria-label={`${priorityLabel[task.priority]}: ${task.title} de ${task.person} a las ${task.time} ${task.meridiem}`} onClick={() => router.push(task.priority === 'urgent' ? '/activity/p02' : '/activity')}>
+                <span className="atal-task-dot" style={{ background: priorityColor[task.priority] }} />
+                {index < orderedTasks.length - 1 && <i />}
                 <span className="atal-task-time"><strong>{task.time}</strong><small>{task.meridiem}</small></span>
                 <span className="atal-task-copy"><span><b>{task.title}</b> · {task.person}</span><small>{task.detail}</small></span>
                 <ChevronRight size={21} />
@@ -97,12 +103,12 @@ function SectionHeading({ title, onClick }: { title: string; onClick: () => void
   return <div className="atal-section-heading"><h2>{title}</h2><button type="button" onClick={onClick}>Ver todos <ChevronRight size={18} /></button></div>;
 }
 
-function PatientRow({ patient, compact = false, onClick }: { patient: (typeof patients)[number]; compact?: boolean; onClick: () => void }) {
+function PatientRow({ patient, compact = false, priority, onClick }: { patient: (typeof patients)[number]; compact?: boolean; priority?: keyof typeof priorityRank; onClick: () => void }) {
   return (
-    <button type="button" className={`atal-patient-row ${compact ? 'is-compact' : ''}`} onClick={onClick}>
+    <button type="button" className={`atal-patient-row ${compact ? 'is-compact' : ''} ${priority ? `is-${priority}` : ''}`} aria-label={priority ? `${priorityLabel[priority]}: ${patient.name}, ${patient.plan}` : undefined} onClick={onClick}>
       <Avatar name={patient.name} />
       <span className="atal-patient-row__copy"><b>{patient.name}</b><small>{compact ? patient.plan : patient.diagnosis}</small>{!compact && <small>{patient.adherence}% adherencia</small>}</span>
-      <span className="atal-status-dot" style={{ background: statusColor[patient.status] }} />
+      <span className="atal-status-dot" title={priority ? priorityLabel[priority] : patient.status} style={{ background: priority ? priorityColor[priority] : statusColor[patient.status] }} />
       {compact ? <small className="atal-patient-time">{patient.time.replace('Hoy, ', '')}</small> : <strong className="atal-adherence">{patient.adherence}%</strong>}
       <ChevronRight size={20} />
     </button>

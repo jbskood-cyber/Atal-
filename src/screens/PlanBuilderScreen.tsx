@@ -6,8 +6,10 @@ import { ArrowLeft, CalendarDays, ChevronRight, ClipboardList, Plus, RefreshCw, 
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
-import { AppSelect } from '@/src/components/atal/AppSelect';
-import { exercises, patients } from '@/src/data/atal-demo';
+import { CustomScheduleSelect } from '@/src/components/atal/CustomScheduleSelect';
+import { patients } from '@/src/data/atal-demo';
+import { getExerciseCatalog } from '@/src/data/localExercises';
+import { createLocalPlan } from '@/src/data/localPlans';
 
 export function PlanBuilderScreen() {
   const router = useRouter();
@@ -20,11 +22,13 @@ export function PlanBuilderScreen() {
   const [goal, setGoal] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const patient = patients[patientIndex];
+  const [exerciseCatalog] = useState(getExerciseCatalog);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!title.trim() || !selectedIds.length) return;
-    window.sessionStorage.setItem('atal:new-plan', JSON.stringify({ title, focus, duration, frequency, goal, patient: patient.name, exerciseIds: selectedIds }));
+    const plan = createLocalPlan({ patientId: patient.id, title, focus, duration, frequency, goal, exerciseIds: selectedIds, status: 'active' });
+    window.sessionStorage.setItem('atal:new-plan', JSON.stringify({ ...plan, patient: patient.name }));
     router.push('/plans/pl-new');
   };
 
@@ -35,12 +39,12 @@ export function PlanBuilderScreen() {
       <fieldset><label className="atal-field atal-field--full"><span>Paciente</span><button type="button" className="atal-patient-picker" onClick={() => setPatientIndex((value) => (value + 1) % 4)}><Avatar name={patient.name} /><span><b>{patient.name}</b><small>{patient.diagnosis}</small></span><ChevronRight /></button></label>
         <label className="atal-field atal-field--full"><span>Título del plan</span><input required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej. Rehabilitación funcional — Fase 1" /></label>
         <label className="atal-field atal-field--full"><span>Diagnóstico o área de enfoque</span><div className="atal-icon-field"><input value={focus} onChange={(event) => setFocus(event.target.value)} placeholder="Ej. Dolor lumbar inespecífico" /><Search /></div></label>
-        <div className="atal-field-grid"><label className="atal-field"><span>Duración total</span><AppSelect label="Duración total" value={duration} options={['4 semanas','6 semanas','8 semanas']} onChange={setDuration} icon={<CalendarDays/>}/></label><label className="atal-field"><span>Frecuencia</span><AppSelect label="Frecuencia" value={frequency} options={['2 veces por semana','3 veces por semana','Diario']} onChange={setFrequency} icon={<RefreshCw/>}/></label></div>
+        <div className="atal-field-grid atal-plan-schedule-grid"><label className="atal-field"><span>Duración total</span><CustomScheduleSelect mode="duration" label="Duración total" value={duration} options={['10 días','4 semanas','6 semanas','8 semanas','3 meses','Por definir','Sin duración estimada']} onChange={setDuration} icon={<CalendarDays/>}/></label><label className="atal-field"><span>Frecuencia</span><CustomScheduleSelect mode="frequency" label="Frecuencia" value={frequency} options={['1 vez por semana','2 veces por semana','3 veces por semana','Diario','Según tolerancia']} onChange={setFrequency} icon={<RefreshCw/>}/></label></div>
         <label className="atal-field atal-field--full"><span>Objetivo del plan</span><textarea maxLength={200} value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="Describe el objetivo principal del plan de rehabilitación…" /><small className="atal-character-count">{goal.length}/200</small></label>
       </fieldset>
       <fieldset><legend>Plantillas rápidas</legend><div className="atal-template-row"><button type="button" onClick={() => { setTitle('Rehabilitación lumbar — Fase 1'); setFocus('Lumbalgia crónica'); }}><Star /> Lumbalgia crónica</button><button type="button" onClick={() => setFocus('Dolor de hombro')}>Dolor de hombro</button><button type="button" onClick={() => setFocus('Cervicalgia')}>Cervicalgia</button></div></fieldset>
-      <fieldset><legend>Ejercicios del plan</legend><button type="button" className="atal-add-exercises" onClick={() => setSelecting(true)}><span><Plus /></span><span><b>{selectedIds.length ? `${selectedIds.length} ejercicios seleccionados` : 'Agregar ejercicios'}</b><small>{selectedIds.length ? selectedIds.map((id) => exercises.find((item) => item.id === id)?.name).filter(Boolean).join(', ') : 'Busca y selecciona ejercicios para tu plan.'}</small></span><ChevronRight /></button></fieldset>
-      <button type="submit" className="atal-submit-button" disabled={!title.trim() || !selectedIds.length}><ClipboardList /> Crear borrador</button>
+      <fieldset><legend>Ejercicios del plan</legend><button type="button" className="atal-add-exercises" onClick={() => setSelecting(true)}><span><Plus /></span><span><b>{selectedIds.length ? `${selectedIds.length} ejercicios seleccionados` : 'Agregar ejercicios'}</b><small>{selectedIds.length ? selectedIds.map((id) => exerciseCatalog.find((item) => item.id === id)?.name).filter(Boolean).join(', ') : 'Busca y selecciona ejercicios para tu plan.'}</small></span><ChevronRight /></button></fieldset>
+      <button type="submit" className="atal-submit-button" disabled={!title.trim() || !selectedIds.length}><ClipboardList /> Crear plan local</button>
     </form>
   </main>}</AtalShell>;
 }

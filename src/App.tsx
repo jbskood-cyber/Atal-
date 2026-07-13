@@ -5,6 +5,7 @@ import { PatientsScreen } from '@/src/screens/PatientsScreen';
 import { NewPatientScreen } from '@/src/screens/NewPatientScreen';
 import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
 import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
+import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
 import { PlansScreen } from '@/src/screens/PlansScreen';
 import { PlanBuilderScreen } from '@/src/screens/PlanBuilderScreen';
 import { PlanDetailScreen } from '@/src/screens/PlanDetailScreen';
@@ -22,6 +23,7 @@ import { ThemeProvider } from '@/src/context/ThemeContext';
 
 function PatientProfileRoute() { const { id = 'p01' } = useParams(); return <PatientProfileScreen patientId={id} />; }
 function PatientPreviewRoute() { const { id = 'p01' } = useParams(); return <PatientPortalPreviewScreen patientId={id} />; }
+function PatientSessionRoute() { const { id = 'p01' } = useParams(); return <GuidedSessionFlow patientId={id} />; }
 function PlanDetailRoute() { const { id = 'pl01' } = useParams(); return <PlanDetailScreen planId={id} />; }
 function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <ExerciseDetailScreen exerciseId={id} />; }
 function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
@@ -56,6 +58,7 @@ function PrivateAppRoutes() {
 export function App() {
   return <ThemeProvider><BrowserRouter><Routes>
     <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
+    <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
     <Route path="*" element={<PrivateAppRoutes />} />
   </Routes></BrowserRouter></ThemeProvider>;
 }
