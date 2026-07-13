@@ -6,7 +6,8 @@ import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, ChevronRight, Plus,
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
-import { exercises, plans } from '@/src/data/atal-demo';
+import { plans } from '@/src/data/atal-demo';
+import { getExerciseCatalog } from '@/src/data/localExercises';
 
 type PlanTab = 'summary' | 'exercises' | 'progress' | 'review';
 
@@ -24,6 +25,7 @@ export function PlanDetailScreen({ planId }: { planId: string }) {
   const [duration, setDuration] = useState(base.duration);
   const [frequency, setFrequency] = useState(base.frequency);
   const [exerciseIds, setExerciseIds] = useState(['e01', 'e02', 'e03', 'e04', 'e05', 'e06']);
+  const [exerciseCatalog] = useState(getExerciseCatalog);
 
   useEffect(() => {
     if (planId !== 'pl-new') return;
@@ -47,7 +49,7 @@ export function PlanDetailScreen({ planId }: { planId: string }) {
     <div className="atal-flow-topbar"><button type="button" onClick={() => router.push('/plans')}><ArrowLeft /></button><span>Editar plan</span><button type="button" onClick={() => setTab('review')}>•••</button></div>
     <section className="atal-plan-identity"><Avatar name={patient} /><div><h1>{title}</h1><b>{patient}</b><small>Plan clínico demostrativo</small></div></section>
     <nav className="atal-tabbar">{([['summary','Resumen'],['exercises','Ejercicios'],['progress','Progreso'],['review','Revisión']] as const).map(([value,label]) => <button type="button" key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>)}</nav>
-    {tab === 'exercises' && <div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration}</b></span><span><small>Frecuencia</small><b>{frequency}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={() => setSelecting(true)}><Plus /> Agregar ejercicio</button></div><div className="atal-plan-exercises">{exerciseIds.map((id,index) => { const exercise=exercises.find((item)=>item.id===id); if(!exercise) return null; return <div key={id}><img src={exercise.image} alt="" /><span><b>{exercise.name}</b><small>3 series　•　12 reps</small></span><div><button type="button" onClick={() => move(index,-1)} aria-label="Subir"><ArrowUp /></button><button type="button" onClick={() => move(index,1)} aria-label="Bajar"><ArrowDown /></button></div></div>; })}</div><section className="atal-plan-settings"><h2>Ajustes del plan</h2><button type="button" onClick={() => setProgression((value) => value === 'Lineal' ? 'Semanal' : 'Lineal')}><span><SlidersHorizontal /></span><b>Progresión</b><em>{progression}</em><ChevronRight /></button><button type="button" onClick={() => setCriterion((value) => value === 'Dolor ≤ 3' ? 'Dolor ≤ 4' : 'Dolor ≤ 3')}><span><Target /></span><b>Criterio de reporte</b><em>{criterion}</em><ChevronRight /></button></section></div>}
+    {tab === 'exercises' && <div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration}</b></span><span><small>Frecuencia</small><b>{frequency}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={() => setSelecting(true)}><Plus /> Agregar ejercicio</button></div><div className="atal-plan-exercises">{exerciseIds.map((id,index) => { const exercise=exerciseCatalog.find((item)=>item.id===id); if(!exercise) return null; return <div key={id}><img src={exercise.image} alt="" /><span><b>{exercise.name}</b><small>{exercise.details?.sets ?? 3} series　•　{exercise.details?.repetitions ?? exercise.details?.time ?? '12 reps'}</small></span><div><button type="button" onClick={() => move(index,-1)} aria-label="Subir"><ArrowUp /></button><button type="button" onClick={() => move(index,1)} aria-label="Bajar"><ArrowDown /></button></div></div>; })}</div><section className="atal-plan-settings"><h2>Ajustes del plan</h2><button type="button" onClick={() => setProgression((value) => value === 'Lineal' ? 'Semanal' : 'Lineal')}><span><SlidersHorizontal /></span><b>Progresión</b><em>{progression}</em><ChevronRight /></button><button type="button" onClick={() => setCriterion((value) => value === 'Dolor ≤ 3' ? 'Dolor ≤ 4' : 'Dolor ≤ 3')}><span><Target /></span><b>Criterio de reporte</b><em>{criterion}</em><ChevronRight /></button></section></div>}
     {tab === 'summary' && <div className="atal-panel-placeholder"><CalendarDays /><h2>Resumen del plan</h2><p>{duration}, {frequency}. El plan contiene {exerciseIds.length} ejercicios.</p><button type="button" onClick={() => setTab('exercises')}>Editar ejercicios</button></div>}
     {tab === 'progress' && <div className="atal-panel-placeholder"><Target /><h2>Progreso del plan</h2><p>3 de 12 sesiones completadas con una adherencia demostrativa del 78%.</p></div>}
     {tab === 'review' && <div className="atal-panel-placeholder"><Check /><h2>{active ? 'Plan activo' : 'Listo para revisión'}</h2><p>{active ? 'El paciente ya puede consultar y completar este plan.' : 'Comprueba frecuencia, ejercicios y criterios antes de activar el plan.'}</p><button type="button" onClick={() => setActive((value) => !value)}>{active ? 'Pausar plan' : 'Activar plan'}</button></div>}

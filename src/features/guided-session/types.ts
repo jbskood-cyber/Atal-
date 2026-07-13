@@ -25,8 +25,9 @@ export type DiscomfortReport = { pain: number; effort: number; fatigue: number; 
 export type ExerciseRecord = { result?: ExerciseResult; sets: SetRecord[]; discomfort?: DiscomfortReport };
 
 export type GuidedSessionDraft = {
-  version: 1;
+  version: 2;
   patientId: string;
+  planId: string;
   status: SessionStatus;
   stage: 'prepare' | 'exercise' | 'close' | 'summary';
   currentExerciseIndex: number;

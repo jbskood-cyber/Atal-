@@ -7,7 +7,9 @@ import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
 import { CustomScheduleSelect } from '@/src/components/atal/CustomScheduleSelect';
-import { exercises, patients } from '@/src/data/atal-demo';
+import { patients } from '@/src/data/atal-demo';
+import { getExerciseCatalog } from '@/src/data/localExercises';
+import { createLocalPlan } from '@/src/data/localPlans';
 
 export function PlanBuilderScreen() {
   const router = useRouter();
@@ -20,11 +22,13 @@ export function PlanBuilderScreen() {
   const [goal, setGoal] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const patient = patients[patientIndex];
+  const [exerciseCatalog] = useState(getExerciseCatalog);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!title.trim() || !selectedIds.length) return;
-    window.sessionStorage.setItem('atal:new-plan', JSON.stringify({ title, focus, duration, frequency, goal, patient: patient.name, exerciseIds: selectedIds }));
+    const plan = createLocalPlan({ patientId: patient.id, title, focus, duration, frequency, goal, exerciseIds: selectedIds, status: 'active' });
+    window.sessionStorage.setItem('atal:new-plan', JSON.stringify({ ...plan, patient: patient.name }));
     router.push('/plans/pl-new');
   };
 
@@ -39,8 +43,8 @@ export function PlanBuilderScreen() {
         <label className="atal-field atal-field--full"><span>Objetivo del plan</span><textarea maxLength={200} value={goal} onChange={(event) => setGoal(event.target.value)} placeholder="Describe el objetivo principal del plan de rehabilitación…" /><small className="atal-character-count">{goal.length}/200</small></label>
       </fieldset>
       <fieldset><legend>Plantillas rápidas</legend><div className="atal-template-row"><button type="button" onClick={() => { setTitle('Rehabilitación lumbar — Fase 1'); setFocus('Lumbalgia crónica'); }}><Star /> Lumbalgia crónica</button><button type="button" onClick={() => setFocus('Dolor de hombro')}>Dolor de hombro</button><button type="button" onClick={() => setFocus('Cervicalgia')}>Cervicalgia</button></div></fieldset>
-      <fieldset><legend>Ejercicios del plan</legend><button type="button" className="atal-add-exercises" onClick={() => setSelecting(true)}><span><Plus /></span><span><b>{selectedIds.length ? `${selectedIds.length} ejercicios seleccionados` : 'Agregar ejercicios'}</b><small>{selectedIds.length ? selectedIds.map((id) => exercises.find((item) => item.id === id)?.name).filter(Boolean).join(', ') : 'Busca y selecciona ejercicios para tu plan.'}</small></span><ChevronRight /></button></fieldset>
-      <button type="submit" className="atal-submit-button" disabled={!title.trim() || !selectedIds.length}><ClipboardList /> Crear borrador</button>
+      <fieldset><legend>Ejercicios del plan</legend><button type="button" className="atal-add-exercises" onClick={() => setSelecting(true)}><span><Plus /></span><span><b>{selectedIds.length ? `${selectedIds.length} ejercicios seleccionados` : 'Agregar ejercicios'}</b><small>{selectedIds.length ? selectedIds.map((id) => exerciseCatalog.find((item) => item.id === id)?.name).filter(Boolean).join(', ') : 'Busca y selecciona ejercicios para tu plan.'}</small></span><ChevronRight /></button></fieldset>
+      <button type="submit" className="atal-submit-button" disabled={!title.trim() || !selectedIds.length}><ClipboardList /> Crear plan local</button>
     </form>
   </main>}</AtalShell>;
 }

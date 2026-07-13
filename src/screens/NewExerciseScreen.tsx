@@ -4,9 +4,10 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, Clock3, ImagePlus, Repeat2, Video } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
+import { createLocalExercise, type ExerciseMedia } from '@/src/data/localExercises';
 
 type ExecutionMode = 'repetitions' | 'time' | 'both';
-type MediaKind = 'image' | 'video' | 'sequence' | 'none';
+type MediaKind = ExerciseMedia['type'];
 
 export function NewExerciseScreen() {
   const router = useRouter();
@@ -18,8 +19,30 @@ export function NewExerciseScreen() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const draft = Object.fromEntries(form.entries());
-    window.sessionStorage.setItem('atal:new-exercise', JSON.stringify({ ...draft, name, mode, media, createdAt: new Date().toISOString() }));
+    const text = (key: string) => String(form.get(key) ?? '').trim();
+    const number = (key: string, fallback: number) => {
+      const parsed = Number(form.get(key));
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+    createLocalExercise({
+      name,
+      region: text('region'),
+      category: text('category'),
+      objective: text('objective'),
+      startingPosition: text('startingPosition'),
+      instructions: text('instructions').split(/\r?\n/).map((line) => line.trim()).filter(Boolean),
+      precautions: text('precautions'),
+      equipment: text('equipment'),
+      difficulty: text('difficulty'),
+      sets: Math.max(1, number('sets', 3)),
+      repetitions: mode === 'time' ? undefined : Math.max(1, number('repetitions', 10)),
+      time: mode === 'repetitions' ? undefined : text('time'),
+      rest: text('rest'),
+      maxPain: Math.min(10, Math.max(0, number('maxPain', 3))),
+      tags: text('tags').split(',').map((tag) => tag.trim()).filter(Boolean),
+      notes: text('notes'),
+      media: { type: media },
+    });
     setSaved(true);
     window.setTimeout(() => router.push('/exercises'), 450);
   };

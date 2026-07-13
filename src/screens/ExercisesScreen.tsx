@@ -5,27 +5,16 @@ import { useRouter } from 'next/navigation';
 import { Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { SearchBar } from '@/src/components/atal/SearchBar';
-import { exercises, type Exercise } from '@/src/data/atal-demo';
+import { getExerciseCatalog } from '@/src/data/localExercises';
 
 const regions = ['Todos', 'Rodilla', 'Hombro', 'Cadera', 'Columna', 'Tobillo'];
-
-function readLocalExercise(): Exercise | null {
-  try {
-    const raw = sessionStorage.getItem('atal:new-exercise');
-    if (!raw) return null;
-    const draft = JSON.parse(raw) as Record<string, string>;
-    if (!draft.name?.trim()) return null;
-    return { id: 'local-new', name: draft.name, region: draft.region || 'Personalizada', category: draft.category || 'Ejercicio personalizado', image: exercises[0].image };
-  } catch { return null; }
-}
 
 export function ExercisesScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('Todos');
   const [selected, setSelected] = useState<string[]>([]);
-  const [localExercise] = useState<Exercise | null>(readLocalExercise);
-  const allExercises = useMemo(() => localExercise ? [localExercise, ...exercises] : exercises, [localExercise]);
+  const [allExercises] = useState(getExerciseCatalog);
   const visible = useMemo(() => allExercises.filter((exercise) => (region === 'Todos' || exercise.region === region) && `${exercise.name} ${exercise.category}`.toLowerCase().includes(query.toLowerCase())), [allExercises, query, region]);
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
 
