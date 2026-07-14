@@ -7,6 +7,7 @@ import '@fontsource/poppins/latin-700.css';
 import '@/app/globals.css';
 import '@/src/styles/closeout.css';
 import '@/src/styles/atal-ai.css';
+import '@/src/styles/functional.css';
 import { App } from './App';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);

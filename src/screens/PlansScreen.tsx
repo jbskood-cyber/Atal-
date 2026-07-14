@@ -6,16 +6,18 @@ import { CalendarDays, ChevronRight, Plus, RefreshCw } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { SearchBar } from '@/src/components/atal/SearchBar';
-import { plans, type Plan } from '@/src/data/atal-demo';
-import { readLocalPlans } from '@/src/data/localPlans';
-import { getPatientById } from '@/src/data/localPatients';
+import { useLocalPlans, type PlanStatus } from '@/src/data/localPlans';
+import { usePatientCatalog } from '@/src/data/localPatients';
 
 export function PlansScreen() {
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Plan['status']>('active');
+  const [filter, setFilter] = useState<PlanStatus>('active');
   const router = useRouter();
-  const [planCatalog] = useState(() => [...readLocalPlans().map((plan) => ({ id: plan.id, title: plan.title, patient: getPatientById(plan.patientId)?.name ?? 'Paciente local', duration: plan.duration, frequency: plan.frequency, updated: `Actualizado ${new Date(plan.updatedAt).toLocaleDateString('es-MX')}`, status: plan.status, phase: plan.status === 'draft' ? 'Borrador' : 'Plan local' } as Plan)), ...plans]);
+  const plans = useLocalPlans();
+  const patients = usePatientCatalog();
+  const planCatalog = useMemo(() => plans.map((plan) => ({...plan,patient:patients.find((item)=>item.id===plan.patientId)?.name??'Paciente no disponible',updated:`Actualizado ${new Date(plan.updatedAt).toLocaleDateString('es-MX')}`})),[plans,patients]);
   const visible = useMemo(() => planCatalog.filter((plan) => plan.status === filter && `${plan.title} ${plan.patient}`.toLowerCase().includes(query.toLowerCase())), [planCatalog, query, filter]);
+  const filters:[PlanStatus,string][]=[['active','Activos'],['draft','Borradores'],['paused','Pausados'],['completed','Completados'],['archived','Archivados']];
 
   return (
     <AtalShell onNew={() => router.push('/plans/new')}>
@@ -23,9 +25,7 @@ export function PlansScreen() {
         <div className="atal-page-heading"><h1>Planes</h1><button type="button" onClick={() => router.push('/plans/new')}><Plus size={19} /> Nuevo plan</button></div>
         <SearchBar value={query} onChange={setQuery} placeholder="Buscar planes" />
         <div className="atal-segments atal-plan-segments">
-          <button type="button" className={filter === 'active' ? 'is-active' : ''} onClick={() => setFilter('active')}>Activos <b>{planCatalog.filter((plan) => plan.status === 'active').length}</b></button>
-          <button type="button" className={filter === 'draft' ? 'is-active' : ''} onClick={() => setFilter('draft')}>Borradores <b>{planCatalog.filter((plan) => plan.status === 'draft').length}</b></button>
-          <button type="button" className={filter === 'archived' ? 'is-active' : ''} onClick={() => setFilter('archived')}>Archivados <b>{planCatalog.filter((plan) => plan.status === 'archived').length}</b></button>
+          {filters.map(([value,label])=><button type="button" key={value} className={filter===value?'is-active':''} onClick={()=>setFilter(value)}>{label} <b>{planCatalog.filter((plan)=>plan.status===value).length}</b></button>)}
         </div>
         <div className="atal-dense-list atal-plan-list">
           {visible.map((plan) => (
@@ -36,6 +36,7 @@ export function PlansScreen() {
             </button>
           ))}
         </div>
+        {!visible.length&&<div className="atal-empty">No hay planes en este estado.</div>}
       </main>
     </AtalShell>
   );

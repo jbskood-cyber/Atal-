@@ -16,6 +16,10 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
   const move = (index: number, direction: -1 | 1) => { const next = [...draft.exercises]; const target = index + direction; if (target < 0 || target >= next.length) return; [next[index], next[target]] = [next[target], next[index]]; onChange({ ...draft, exercises: next, updatedAt: new Date().toISOString() }); };
   const exerciseCatalog = getExerciseCatalog();
   const addExercise = () => onChange({ ...draft, exercises: [...draft.exercises, { id: `ai-exercise-${Date.now()}`, name: '', region: '', category: '', objective: '', startingPosition: '', instructions: [], precautions: [], equipment: '', difficulty: '', sets: 1, repetitions: '', duration: '', rest: '', maxPain: 3, tags: [], notes: '', reusePreference: 'create-new' }], updatedAt: new Date().toISOString() });
+  const needsPatient = draft.intent !== 'create_exercise';
+  const needsPlan = ['create_patient_plan','create_plan_for_existing_patient','update_existing_plan'].includes(draft.intent);
+  const needsExercises = draft.intent !== 'update_patient_record';
+  const canConfirm = (!needsPatient || draft.intent !== 'create_patient_plan' || patient.name.trim()) && (!needsPatient || draft.intent === 'create_patient_plan' || draft.selectedPatientId) && (!needsPlan || plan.title.trim()) && (draft.intent !== 'create_exercise' || draft.exercises.some((item) => item.name.trim()));
 
   return <section className="atal-ai-draft" aria-label="Borrador editable generado por Atal IA">
     <header><div><span><CheckCircle2 /></span><div><small>Borrador generado · Editable</small><h2>Revisa antes de aplicar</h2></div></div>{Boolean(draft.missingFields.length || draft.uncertainFields.length) && <em><AlertTriangle /> Requiere revisión</em>}</header>
@@ -25,7 +29,7 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
       {draft.contradictions.length > 0 && <p><b>Contradicciones:</b> {draft.contradictions.join(', ')}</p>}
     </aside>}
 
-    <details open className="atal-ai-draft-block"><summary><span><UserRound /></span><b>Paciente</b><small>Información clínica extraída</small></summary><div className="atal-ai-edit-grid">
+    {needsPatient&&<details open data-ai-section="patient" className="atal-ai-draft-block"><summary><span><UserRound /></span><b>Paciente</b><small>Información clínica extraída</small></summary><div className="atal-ai-edit-grid">
       <Field label="Nombre" value={patient.name} onChange={(name) => setPatient({ name })} />
       <Field label="Edad" type="number" value={patient.age?.toString() ?? ''} onChange={(value) => setPatient({ age: value ? Number(value) : null })} />
       <Field label="Fecha de nacimiento" type="date" value={patient.birthDate} onChange={(birthDate) => setPatient({ birthDate })} />
@@ -41,9 +45,9 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
       <Field label="Antecedentes relevantes" value={patient.relevantHistory.join(', ')} onChange={(value) => setPatient({ relevantHistory: splitList(value) })} wide />
       <Field label="Precauciones" value={patient.precautions.join(', ')} onChange={(value) => setPatient({ precautions: splitList(value) })} wide />
       <Field label="Notas clínicas" value={patient.clinicalNotes} onChange={(clinicalNotes) => setPatient({ clinicalNotes })} wide multiline />
-    </div></details>
+    </div></details>}
 
-    <details open className="atal-ai-draft-block"><summary><span><ClipboardList /></span><b>Plan</b><small>Duración, frecuencia y objetivo</small></summary><div className="atal-ai-edit-grid">
+    {needsPlan&&<details open data-ai-section="plan" className="atal-ai-draft-block"><summary><span><ClipboardList /></span><b>Plan</b><small>Duración, frecuencia y objetivo</small></summary><div className="atal-ai-edit-grid">
       <Field label="Título" value={plan.title} onChange={(title) => setPlan({ title })} wide />
       <Field label="Objetivo principal" value={plan.goal} onChange={(goal) => setPlan({ goal })} wide multiline />
       <Field label="Enfoque" value={plan.focus} onChange={(focus) => setPlan({ focus })} wide />
@@ -57,9 +61,9 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
       <Field label="Indicaciones generales" value={plan.generalInstructions} onChange={(generalInstructions) => setPlan({ generalInstructions })} wide multiline />
       <label className="atal-ai-field"><span>Estado al confirmar</span><AppSelect label="Estado del plan" value={plan.status === 'active' ? 'Activo' : 'Borrador'} options={['Borrador','Activo']} onChange={(value) => setPlan({ status: value === 'Activo' ? 'active' : 'draft' })} /></label>
       <button type="button" className="atal-ai-regenerate" onClick={onRegeneratePlan}><RefreshCw /> Regenerar solo el plan</button>
-    </div></details>
+    </div></details>}
 
-    <details open className="atal-ai-draft-block"><summary><span><Dumbbell /></span><b>Ejercicios ({draft.exercises.length})</b><small>Todos continúan editables</small></summary><div className="atal-ai-exercise-editor">
+    {needsExercises&&<details open data-ai-section="exercises" className="atal-ai-draft-block"><summary><span><Dumbbell /></span><b>Ejercicios ({draft.exercises.length})</b><small>Todos continúan editables</small></summary><div className="atal-ai-exercise-editor">
       {draft.exercises.map((exercise, index) => { const match = exerciseCatalog.find((item) => normalize(item.name) === normalize(exercise.name) && (!exercise.region.trim() || normalize(item.region) === normalize(exercise.region))); return <article key={exercise.id}><header><strong>{index + 1}. {exercise.name || 'Ejercicio sin nombre'}</strong><div><button type="button" onClick={() => move(index, -1)} disabled={index === 0} aria-label="Subir ejercicio"><ArrowUp /></button><button type="button" onClick={() => move(index, 1)} disabled={index === draft.exercises.length - 1} aria-label="Bajar ejercicio"><ArrowDown /></button><button type="button" onClick={() => onChange({ ...draft, exercises: draft.exercises.filter((item) => item.id !== exercise.id) })} aria-label="Eliminar ejercicio"><Trash2 /></button></div></header><div className="atal-ai-edit-grid">
         <Field label="Nombre" value={exercise.name} onChange={(name) => updateExercise(exercise.id, { name })} />
         <Field label="Región" value={exercise.region} onChange={(region) => updateExercise(exercise.id, { region })} />
@@ -81,15 +85,15 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
         <button type="button" className="atal-ai-regenerate" onClick={() => onRegenerateExercise(exercise.id)}><RefreshCw /> Alternativa para este ejercicio</button>
       </div></article>; })}
       <button type="button" className="atal-ai-add-exercise" onClick={addExercise}><Plus /> Añadir ejercicio manualmente</button>
-    </div></details>
+    </div></details>}
 
-    <details className="atal-ai-draft-block"><summary><span><UserRound /></span><b>Datos de contacto</b><small>Se completan manualmente · no se envían a Gemini</small></summary><div className="atal-ai-edit-grid">
+    {draft.intent==='create_patient_plan'&&<details className="atal-ai-draft-block"><summary><span><UserRound /></span><b>Datos de contacto</b><small>Se completan manualmente · no se envían a Gemini</small></summary><div className="atal-ai-edit-grid">
       <Field label="Teléfono" value={contact.phone} onChange={(phone) => onContact({ ...contact, phone })} />
       <Field label="Correo" type="email" value={contact.email} onChange={(email) => onContact({ ...contact, email })} />
       <Field label="Dirección" value={contact.address} onChange={(address) => onContact({ ...contact, address })} wide />
       <Field label="Contacto de emergencia" value={contact.emergencyContact} onChange={(emergencyContact) => onContact({ ...contact, emergencyContact })} wide />
-    </div></details>
-    <button type="button" className="atal-ai-confirm" disabled={saving || saved || !patient.name.trim() || !plan.title.trim()} onClick={onConfirm}><Save /> {saved ? 'Aplicado a Atal' : saving ? 'Aplicando a Atal…' : 'Confirmar y aplicar a Atal'}</button>
+    </div></details>}
+    <button type="button" className="atal-ai-confirm" disabled={saving || saved || !canConfirm} onClick={onConfirm}><Save /> {saved ? 'Aplicado a Atal' : saving ? 'Aplicando a Atal…' : 'Confirmar y aplicar a Atal'}</button>
     <small className="atal-ai-clinical-note">Atal IA propone. El fisioterapeuta revisa y confirma antes de guardar.</small>
   </section>;
 }

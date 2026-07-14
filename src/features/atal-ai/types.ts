@@ -1,4 +1,6 @@
 export type AtalAIStatus = 'empty' | 'composing' | 'recording' | 'uploading' | 'processing' | 'needs_information' | 'ready_for_review' | 'saved' | 'error';
+export type AtalAIIntent='create_patient_plan'|'create_plan_for_existing_patient'|'create_exercise'|'update_patient_record'|'update_existing_plan';
+export type AIWorkContext={intent:AtalAIIntent;patientMode:'new'|'existing'|'none';selectedPatientId:string;selectedPlanId:string};
 
 export type AIAttachmentKind = 'image' | 'pdf' | 'audio';
 
@@ -75,7 +77,9 @@ export type AIExerciseDraft = {
 
 export type AtalAIDraft = {
   id: string;
-  intent: 'create_patient_plan';
+  intent: AtalAIIntent;
+  selectedPatientId: string;
+  selectedPlanId: string;
   patient: AIPatientDraft;
   plan: AIPlanDraft;
   exercises: AIExerciseDraft[];
@@ -83,6 +87,7 @@ export type AtalAIDraft = {
   uncertainFields: string[];
   contradictions: string[];
   followUpQuestion: string;
+  proposedActions:string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -105,17 +110,25 @@ export type AIConversation = {
   messages: AIMessage[];
   attachmentMetadata: AIAttachmentMeta[];
   privateContact: PrivateContactDraft;
-  savedResult?: { patientId: string; planId: string; clinicalRecordId: string };
+  workContext:AIWorkContext;
+  savedResult?: { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?:string; summary:string[] };
   error?: string;
 };
 
 export type AtalAIAnalyzeRequest = {
+  draftId?: string;
   mode: 'analyze' | 'transcribe' | 'regenerate-plan' | 'regenerate-exercise';
   text: string;
   transcription?: string;
   attachments: AIAttachmentPayload[];
   currentDraft?: AtalAIDraft | null;
   targetExerciseId?: string;
+  workContext?:AIWorkContext;
+  existingContext?: {
+    patient?: { id: string; name: string; diagnosis: string; age: number | null; affectedArea: string };
+    clinicalRecord?: { reasonForVisit: string; evolution: string; affectedArea: string; symptoms: string[]; painLevel: number | null; providedDiagnosis: string; functionalLimitations: string[]; goals: string[]; relevantHistory: string[]; precautions: string[]; clinicalNotes: string };
+    plan?: { id: string; title: string; focus: string; duration: string; frequency: string; goal: string; exerciseIds: string[]; status: string; progression: string; reportCriteria: string; generalInstructions: string };
+  };
 };
 
 export type AtalAIAnalyzeResponse = { draft?: AtalAIDraft; transcript?: string };

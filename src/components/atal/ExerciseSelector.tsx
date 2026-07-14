@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import { ArrowLeft, Check, Filter, Plus, Search } from 'lucide-react';
-import { getExerciseCatalog } from '@/src/data/localExercises';
+import { useExerciseCatalog } from '@/src/data/localExercises';
 
 export function ExerciseSelector({ initialIds = [], onBack, onConfirm }: { initialIds?: string[]; onBack: () => void; onConfirm: (ids: string[]) => void }) {
   const [selected, setSelected] = useState(initialIds);
   const [query, setQuery] = useState('');
   const [region, setRegion] = useState('Todos');
-  const [allExercises] = useState(getExerciseCatalog);
+  const allExercises = useExerciseCatalog();
   const regions = useMemo(() => ['Todos', ...new Set(allExercises.map((exercise) => exercise.region))], [allExercises]);
-  const visible = useMemo(() => allExercises.filter((exercise) => (region === 'Todos' || exercise.region === region) && `${exercise.name} ${exercise.category}`.toLowerCase().includes(query.toLowerCase())), [query, region]);
+  const visible = useMemo(() => allExercises.filter((exercise) => (region === 'Todos' || exercise.region === region) && `${exercise.name} ${exercise.category}`.toLowerCase().includes(query.toLowerCase())), [query, region,allExercises]);
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
 
   return <div className="atal-selector">
@@ -19,7 +19,7 @@ export function ExerciseSelector({ initialIds = [], onBack, onConfirm }: { initi
     <div className="atal-region-tabs">{regions.map((value) => <button type="button" key={value} className={region === value ? 'is-active' : ''} onClick={() => setRegion(value)}>{value}</button>)}</div>
     <div className="atal-selector-list">{visible.map((exercise) => {
       const checked = selected.includes(exercise.id);
-      return <button type="button" key={exercise.id} onClick={() => toggle(exercise.id)} className={checked ? 'is-selected' : ''}><img src={exercise.image} alt="" /><span><b>{exercise.name}</b><small>3 series　•　12 repeticiones</small><em>{exercise.region}</em></span><i>{checked ? <Check /> : <Plus />}</i></button>;
+      return <button type="button" key={exercise.id} onClick={() => toggle(exercise.id)} className={checked ? 'is-selected' : ''}><img src={exercise.image} alt="" /><span><b>{exercise.name}</b><small>{exercise.details.sets} series　•　{exercise.details.repetitions??exercise.details.time??'Dosis por definir'}</small><em>{exercise.region}</em></span><i>{checked ? <Check /> : <Plus />}</i></button>;
     })}</div>
     <div className="atal-selector-footer"><span><b>{selected.length} seleccionados</b><small>Puedes agregar más ejercicios</small></span><button type="button" onClick={() => onConfirm(selected)} disabled={!selected.length}><Plus /> Agregar al plan</button></div>
   </div>;

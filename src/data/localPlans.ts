@@ -1,83 +1,21 @@
-export const LOCAL_PLANS_KEY = 'atal:local-plans:v1';
+import { createPlan, deletePlan, duplicatePlan, findActivePlanConflict, getAtalState, mutateAtalStore, updatePlan, updatePlanStatus, useAtalStore, type PlanEntity, type PlanStatus } from './atalStore';
 
-export type LocalPlanStatus = 'active' | 'draft' | 'archived';
-
-export type LocalPlan = {
-  id: string;
-  patientId: string;
-  title: string;
-  focus: string;
-  duration: string;
-  frequency: string;
-  goal: string;
-  exerciseIds: string[];
-  status: LocalPlanStatus;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type NewLocalPlan = Omit<LocalPlan, 'id' | 'createdAt' | 'updatedAt'>;
-
-function isLocalPlan(value: unknown): value is LocalPlan {
-  if (!value || typeof value !== 'object') return false;
-  const item = value as Partial<LocalPlan>;
-  return typeof item.id === 'string'
-    && typeof item.patientId === 'string'
-    && typeof item.title === 'string'
-    && Array.isArray(item.exerciseIds)
-    && item.exerciseIds.every((id) => typeof id === 'string')
-    && typeof item.status === 'string'
-    && typeof item.createdAt === 'string'
-    && typeof item.updatedAt === 'string';
-}
-
-function createLocalId() {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return `plan-${crypto.randomUUID()}`;
-  return `plan-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function readLocalPlans(): LocalPlan[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = window.localStorage.getItem(LOCAL_PLANS_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isLocalPlan) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function writeLocalPlans(items: LocalPlan[]) {
-  window.localStorage.setItem(LOCAL_PLANS_KEY, JSON.stringify(items));
-}
-
-export function createLocalPlan(input: NewLocalPlan): LocalPlan {
-  const timestamp = new Date().toISOString();
-  const plan: LocalPlan = {
-    ...input,
-    id: createLocalId(),
-    patientId: input.patientId.trim(),
-    title: input.title.trim(),
-    exerciseIds: [...new Set(input.exerciseIds)],
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-  writeLocalPlans([...readLocalPlans(), plan]);
-  return plan;
-}
-
-export function getPatientLocalPlans(patientId: string) {
-  return readLocalPlans()
-    .filter((plan) => plan.patientId === patientId)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-}
-
-export function getCurrentPatientLocalPlan(patientId: string) {
-  const plans = getPatientLocalPlans(patientId);
-  return plans.find((plan) => plan.status === 'active') ?? plans[0] ?? null;
-}
-
-export function getLocalPlanById(id: string) {
-  return readLocalPlans().find((plan) => plan.id === id) ?? null;
-}
+export const LOCAL_PLANS_KEY='atal:local-plans:v1';
+export type LocalPlanStatus=PlanStatus;
+export type LocalPlan=PlanEntity;
+export type NewLocalPlan={patientId:string;title:string;focus:string;duration:string;frequency:string;goal:string;exerciseIds:string[];status:PlanStatus;progression?:string;reportCriteria?:string;generalInstructions?:string};
+export function readLocalPlans(){return getAtalState().plans;}
+export function writeLocalPlans(items:LocalPlan[]){mutateAtalStore((draft)=>{draft.plans=items;});}
+export function createLocalPlan(input:NewLocalPlan){return createPlan({...input,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''});}
+export function updateLocalPlan(id:string,patch:Partial<LocalPlan>){return updatePlan(id,patch);}
+export const activatePlan=(id:string,resolution?:'pause'|'complete'|'archive')=>updatePlanStatus(id,'active',resolution);
+export const pausePlan=(id:string)=>updatePlanStatus(id,'paused');
+export const completePlan=(id:string)=>updatePlanStatus(id,'completed');
+export const archivePlan=(id:string)=>updatePlanStatus(id,'archived');
+export const restorePlan=(id:string)=>updatePlanStatus(id,'draft');
+export {duplicatePlan,deletePlan,findActivePlanConflict};
+export function getPatientLocalPlans(patientId:string){return getAtalState().plans.filter((plan)=>plan.patientId===patientId).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt));}
+export function getCurrentPatientLocalPlan(patientId:string){return getPatientLocalPlans(patientId).find((plan)=>plan.status==='active')??null;}
+export function getLocalPlanById(id:string){return getAtalState().plans.find((plan)=>plan.id===id)??null;}
+export function useLocalPlans(){return useAtalStore((state)=>state.plans);}
+export type { PlanStatus };

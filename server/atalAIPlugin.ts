@@ -46,7 +46,9 @@ function promptFor(payload: AtalAIAnalyzeRequest) {
     : payload.mode === 'regenerate-exercise'
       ? `Regenera solamente el ejercicio con id ${payload.targetExerciseId ?? 'indicado'}; conserva paciente, plan y los demás ejercicios.`
       : 'Extrae o completa un único borrador de paciente, expediente, plan y ejercicios.';
-  return `${instruction}\n\nTexto del fisioterapeuta:\n${payload.text || '(sin texto adicional)'}\n\nTranscripción revisada:\n${payload.transcription || '(sin transcripción)'}${previous}`;
+  const context=payload.workContext?`\nContexto elegido por el fisioterapeuta (vinculante):\n${JSON.stringify(payload.workContext)}`:'';
+  const existing=payload.existingContext?`\nDatos clínicos locales estrictamente necesarios que debes conservar salvo cambio explícito:\n${JSON.stringify(payload.existingContext)}`:'';
+  return `${instruction}${context}${existing}\n\nTexto del fisioterapeuta:\n${payload.text || '(sin texto adicional)'}\n\nTranscripción revisada:\n${payload.transcription || '(sin transcripción)'}${previous}`;
 }
 
 async function analyze(payload: AtalAIAnalyzeRequest) {

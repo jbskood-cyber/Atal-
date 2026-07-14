@@ -10,20 +10,23 @@ import { SessionPreparation } from './SessionPreparation';
 import { SessionSummary } from './SessionSummary';
 import { clearSessionDraft, createSessionDraft, readSessionDraft, writeSessionDraft } from './storage';
 import type { GuidedSessionDraft } from './types';
+import { recordSessionStarted, saveCompletedSession, useAtalStore } from '@/src/data/atalStore';
 
 export function GuidedSessionFlow({ patientId }: { patientId: string }) {
   const router = useRouter();
-  const patient = getPatientById(patientId);
-  const plan = useMemo(() => resolvePatientPlan(patientId), [patientId]);
+  const revision = useAtalStore((state) => state.updatedAt);
+  const patient = useMemo(() => getPatientById(patientId), [patientId, revision]);
+  const plan = useMemo(() => resolvePatientPlan(patientId), [patientId, revision]);
   const restored = useMemo(() => patient ? readSessionDraft(patientId, plan.id) : { draft: null, error: false }, [patient, patientId, plan.id]);
   const [draft, setDraft] = useState<GuidedSessionDraft>(() => restored.draft ?? createSessionDraft(patientId, plan.id, plan.exercises));
   const [resumeGate, setResumeGate] = useState(Boolean(restored.draft && restored.draft.stage !== 'prepare'));
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [confirmFinish, setConfirmFinish] = useState(false);
 
-  useEffect(() => { if (draft.startedAt || draft.stage === 'summary') writeSessionDraft(draft); }, [draft]);
+  useEffect(() => { if (draft.startedAt && draft.stage !== 'summary') writeSessionDraft(draft); }, [draft]);
 
   if (!patient) return <PatientSessionFrame label="Plan no disponible" progress={0} onExit={() => router.push('/patients')}><StateCard icon={<AlertTriangle />} title="Paciente no encontrado" text="No pudimos abrir esta vista local. Regresa al expediente y vuelve a intentarlo." action="Volver" onAction={() => router.push('/patients')} /></PatientSessionFrame>;
+  if (plan.status === 'paused') return <PatientSessionFrame label="Plan pausado" progress={0} onExit={() => router.push(`/patients/${patientId}/portal-preview`)}><StateCard icon={<AlertTriangle />} title="Plan pausado" text="Este plan está visible, pero no permite iniciar una sesión hasta que el fisioterapeuta lo reactive." action="Volver al plan" onAction={() => router.push(`/patients/${patientId}/portal-preview`)} /></PatientSessionFrame>;
   if (!plan.exercises.length) return <PatientSessionFrame label="Plan sin ejercicios" progress={0} onExit={() => router.push(`/patients/${patientId}/portal-preview`)}><StateCard icon={<AlertTriangle />} title="Plan sin ejercicios" text="Tu fisioterapeuta todavía no ha añadido ejercicios a este plan." action="Volver al plan" onAction={() => router.push(`/patients/${patientId}/portal-preview`)} /></PatientSessionFrame>;
 
   const currentIndex = Math.min(Math.max(0, draft.currentExerciseIndex), plan.exercises.length - 1);
@@ -33,13 +36,13 @@ export function GuidedSessionFlow({ patientId }: { patientId: string }) {
   const progress = draft.stage === 'prepare' ? 4 : draft.stage === 'exercise' ? ((currentIndex + 0.2) / plan.exercises.length) * 80 + 8 : draft.stage === 'close' ? 92 : 100;
   const restart = () => { clearSessionDraft(patientId, plan.id); setDraft(createSessionDraft(patientId, plan.id, plan.exercises)); setResumeGate(false); setConfirmRestart(false); };
   const finishEarly = () => { setDraft((current) => ({ ...current, status: 'partial', stage: 'close' })); setConfirmFinish(false); };
-  const finish = () => { const allComplete = Object.values(draft.exercises).every((record) => record.result === 'completed'); setDraft((current) => ({ ...current, status: allComplete ? 'completed' : 'partial', stage: 'summary', completedAt: new Date().toISOString() })); };
+  const finish = () => { const allComplete = Object.values(draft.exercises).every((record) => record.result === 'completed'); const next:GuidedSessionDraft={...draft,status:allComplete?'completed':'partial',stage:'summary',completedAt:new Date().toISOString()};saveCompletedSession(patientId,plan.id,next);clearSessionDraft(patientId,plan.id);setDraft(next); };
 
   if (restored.error && !draft.startedAt) return <PatientSessionFrame label="Recuperación local" progress={0} onExit={() => router.push(`/patients/${patientId}/portal-preview`)}><StateCard icon={<AlertTriangle />} title="No pudimos recuperar la sesión" text="El progreso local estaba dañado. Puedes comenzar una sesión nueva sin afectar tu plan." action="Empezar de nuevo" onAction={restart} /></PatientSessionFrame>;
 
   return <PatientSessionFrame label={draft.stage === 'exercise' ? `Ejercicio ${currentIndex + 1} de ${plan.exercises.length}` : draft.stage === 'summary' ? 'Resumen' : draft.stage === 'close' ? 'Cierre' : 'Preparación'} progress={progress} onExit={() => router.push(`/patients/${patientId}/portal-preview`)}>
     {resumeGate ? <section className="atal-session-card atal-resume-card"><RotateCcw /><span className="atal-session-kicker">Sesión sin terminar</span><h1>Continúa donde lo dejaste</h1><p>Conservamos el ejercicio actual, tus series, valores y comentarios en este dispositivo.</p><div><button type="button" className="atal-session-primary" onClick={() => setResumeGate(false)}>Continuar sesión</button><button type="button" onClick={() => setConfirmRestart(true)}>Empezar de nuevo</button></div></section> : <>
-      {draft.stage === 'prepare' && <SessionPreparation plan={plan} draft={draft} onChange={setDraft} onStart={() => setDraft((current) => ({ ...current, stage: 'exercise', status: 'in_progress', startedAt: current.startedAt ?? new Date().toISOString() }))} />}
+      {draft.stage === 'prepare' && <SessionPreparation plan={plan} draft={draft} onChange={setDraft} onStart={() => setDraft((current) => {const startedAt=current.startedAt??new Date().toISOString();recordSessionStarted(patientId,plan.id,startedAt);return{...current,stage:'exercise',status:'in_progress',startedAt};})} />}
       {draft.stage === 'exercise' && exercise && safeRecord && <ActiveExercise exercise={exercise} record={safeRecord} index={currentIndex} total={plan.exercises.length} onChange={(record) => setDraft((current) => ({ ...current, currentExerciseIndex: currentIndex, exercises: { ...current.exercises, [exercise.id]: record } }))} onPrevious={() => setDraft((current) => ({ ...current, currentExerciseIndex: Math.max(0, currentIndex - 1) }))} onNext={() => setDraft((current) => currentIndex === plan.exercises.length - 1 ? { ...current, currentExerciseIndex: currentIndex, stage: 'close' } : { ...current, currentExerciseIndex: currentIndex + 1 })} onFinishEarly={() => setConfirmFinish(true)} />}
       {draft.stage === 'close' && <SessionClose plan={plan} draft={draft} onChange={setDraft} onFinish={finish} />}
       {draft.stage === 'summary' && <SessionSummary plan={plan} draft={draft} onPlan={() => router.push(`/patients/${patientId}/portal-preview`)} onRestart={() => setConfirmRestart(true)} />}

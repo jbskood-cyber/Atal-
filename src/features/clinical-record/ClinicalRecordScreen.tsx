@@ -1,32 +1,35 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Edit3, FileDown, Printer, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AtalLogo } from '@/src/components/atal/AtalLogo';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { getExerciseCatalogItem } from '@/src/data/localExercises';
-import { getLocalPlanById } from '@/src/data/localPlans';
-import { getPatientById } from '@/src/data/localPatients';
-import { createClinicalRecord, getClinicalRecordByPatient, updateClinicalRecord } from './clinicalRecordRepository';
+import { useExerciseCatalog } from '@/src/data/localExercises';
+import { useLocalPlans } from '@/src/data/localPlans';
+import { usePatientCatalog } from '@/src/data/localPatients';
+import { createClinicalRecord, updateClinicalRecord, useClinicalRecord } from './clinicalRecordRepository';
 import type { ClinicalRecord } from './types';
+import { useAtalStore } from '@/src/data/atalStore';
 
 function list(value: string) { return value.split(/\n|,/).map((item) => item.trim()).filter(Boolean); }
 
 export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
   const router = useRouter();
-  const patient = useMemo(() => getPatientById(patientId), [patientId]);
-  const stored = useMemo(() => getClinicalRecordByPatient(patientId), [patientId]);
+  const patients=usePatientCatalog();const patient=useMemo(() => patients.find((item)=>item.id===patientId)??null, [patients,patientId]);
+  const stored = useClinicalRecord(patientId);
   const [record, setRecord] = useState<ClinicalRecord | null>(stored);
   const [editing, setEditing] = useState(false);
   const [printPreview, setPrintPreview] = useState(false);
-  const plan = record ? getLocalPlanById(record.planId) : null;
-  const planExercises = plan?.exerciseIds.map(getExerciseCatalogItem).filter(Boolean) ?? [];
+  const plans=useLocalPlans();const exerciseCatalog=useExerciseCatalog(true);const professional=useAtalStore((state)=>state.settings.professionalName);
+  const patientPlans=plans.filter((item)=>item.patientId===patientId);const plan=patientPlans.find((item)=>item.id===record?.planId)??patientPlans.find((item)=>item.status==='active')??patientPlans.sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt))[0]??null;
+  const planExercises = plan?.exerciseIds.map((id)=>exerciseCatalog.find((item)=>item.id===id)).filter(Boolean) ?? [];
+  useEffect(()=>{if(stored)setRecord(stored)},[stored?.id,stored?.updatedAt]);
   if (!patient) return <AtalShell><main className="atal-content atal-clinical-record"><section className="atal-record-empty"><h1>Expediente no disponible</h1><p>No encontramos al paciente solicitado.</p><button type="button" onClick={() => router.push('/patients')}>Volver a pacientes</button></section></main></AtalShell>;
 
-  const fallback: ClinicalRecord = record ?? { id: 'demo-record', patientId, version: 1, date: new Date().toISOString(), reasonForVisit: patient.diagnosis, evolution: 'Información por completar.', affectedArea: '', symptoms: [], painLevel: null, providedDiagnosis: patient.diagnosis, functionalLimitations: [], goals: [], relevantHistory: [], precautions: [], clinicalNotes: 'Expediente demostrativo. Edita cada sección para completarlo.', planId: '', professional: 'Cuenta demo', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  const fallback: ClinicalRecord = record ?? { id: 'pending-record', patientId, version: 1, date: new Date().toISOString(), reasonForVisit: patient.diagnosis, evolution: '', affectedArea: patient.affectedArea, symptoms: [], painLevel: null, providedDiagnosis: patient.diagnosis, functionalLimitations: [], goals: [], relevantHistory: [], precautions: [], clinicalNotes: '', planId: plan?.id??'', professional, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
   const current = record ?? fallback;
   const patch = (next: Partial<ClinicalRecord>) => setRecord({ ...current, ...next });
   const save = () => {
-    if (record && record.id !== 'demo-record') setRecord(updateClinicalRecord(record.id, record) ?? record);
+    if (record && record.id !== 'pending-record') setRecord(updateClinicalRecord(record.id, record) ?? record);
     else {
       const { id: _id, version: _version, createdAt: _createdAt, updatedAt: _updatedAt, ...input } = current;
       setRecord(createClinicalRecord(input));
@@ -45,7 +48,7 @@ export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
       ]} onChange={(key,value) => patch({ [key]: key === 'painLevel' ? (value ? Number(value) : null) : value })} />
       <RecordLists editing={editing} record={current} onChange={(key, value) => patch({ [key]: list(value) })} />
       <section className="atal-record-section"><div><span>04</span><h2>Observaciones clínicas</h2></div>{editing ? <textarea value={current.clinicalNotes} onChange={(event) => patch({ clinicalNotes: event.target.value })} /> : <p>{current.clinicalNotes || 'Sin observaciones registradas.'}</p>}</section>
-      <section className="atal-record-section"><div><span>05</span><h2>Plan asociado</h2></div>{plan ? <><h3>{plan.title}</h3><p>{plan.goal || plan.focus}</p><div className="atal-record-plan-facts"><span><small>Duración</small><b>{plan.duration}</b></span><span><small>Frecuencia</small><b>{plan.frequency}</b></span><span><small>Estado</small><b>{plan.status === 'active' ? 'Activo' : 'Borrador'}</b></span></div><ol className="atal-record-exercises">{planExercises.map((exercise) => <li key={exercise?.id}><b>{exercise?.name}</b><span>{exercise?.region} · {exercise?.category}</span></li>)}</ol></> : <p>No hay un plan local asociado a este expediente.</p>}</section>
+      <section className="atal-record-section"><div><span>05</span><h2>Plan asociado</h2></div>{plan ? <><h3>{plan.title}</h3><p>{plan.goal || plan.focus}</p><div className="atal-record-plan-facts"><span><small>Duración</small><b>{plan.duration}</b></span><span><small>Frecuencia</small><b>{plan.frequency}</b></span><span><small>Estado</small><b>{{active:'Activo',draft:'Borrador',paused:'Pausado',completed:'Completado',archived:'Archivado'}[plan.status]}</b></span></div><ol className="atal-record-exercises">{planExercises.map((exercise) => <li key={exercise?.id}><b>{exercise?.name}</b><span>{exercise?.region} · {exercise?.category}</span></li>)}</ol></> : <p>No hay un plan local asociado a este expediente.</p>}</section>
       <footer><span>Atal Fisioterapia · Documento generado bajo demanda</span><span>Paciente: {patient.id}</span></footer>
     </article>
     {printPreview && <button type="button" className="atal-record-print-action no-print" onClick={print}><Printer /> Abrir diálogo para Guardar como PDF</button>}

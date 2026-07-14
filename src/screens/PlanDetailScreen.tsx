@@ -1,61 +1,49 @@
 'use client';
-
-import { useEffect, useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, Check, ChevronRight, Plus, Save, SlidersHorizontal, Target } from 'lucide-react';
+import { Archive,ArrowDown,ArrowLeft,ArrowUp,CalendarDays,Check,ChevronRight,Copy,MoreHorizontal,Pause,Play,Plus,Save,SlidersHorizontal,Target,Trash2 } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
-import { plans } from '@/src/data/atal-demo';
-import { getExerciseCatalog } from '@/src/data/localExercises';
-import { getLocalPlanById } from '@/src/data/localPlans';
-import { getPatientById } from '@/src/data/localPatients';
+import { activatePlan,archivePlan,completePlan,deletePlan,duplicatePlan,findActivePlanConflict,pausePlan,restorePlan,updateLocalPlan,useLocalPlans } from '@/src/data/localPlans';
+import { useExerciseCatalog } from '@/src/data/localExercises';
+import { usePatientCatalog } from '@/src/data/localPatients';
+import { useAtalStore } from '@/src/data/atalStore';
+import { ExerciseMediaThumbnail } from '@/src/components/atal/ExerciseMediaThumbnail';
 
-type PlanTab = 'summary' | 'exercises' | 'progress' | 'review';
-
-export function PlanDetailScreen({ planId }: { planId: string }) {
-  const router = useRouter();
-  const localPlan = getLocalPlanById(planId);
-  const base = localPlan ? { id: localPlan.id, title: localPlan.title, patient: getPatientById(localPlan.patientId)?.name ?? 'Paciente local', duration: localPlan.duration, frequency: localPlan.frequency, updated: localPlan.updatedAt, status: localPlan.status, phase: 'Plan local' } : plans.find((item) => item.id === planId) ?? plans[0];
-  const [tab, setTab] = useState<PlanTab>('exercises');
-  const [selecting, setSelecting] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [active, setActive] = useState(base.status === 'active');
-  const [progression, setProgression] = useState<'Lineal' | 'Semanal'>('Lineal');
-  const [criterion, setCriterion] = useState<'Dolor ≤ 3' | 'Dolor ≤ 4'>('Dolor ≤ 3');
-  const [title, setTitle] = useState(base.title);
-  const [patient, setPatient] = useState(base.patient);
-  const [duration, setDuration] = useState(base.duration);
-  const [frequency, setFrequency] = useState(base.frequency);
-  const [exerciseIds, setExerciseIds] = useState(localPlan?.exerciseIds ?? ['e01', 'e02', 'e03', 'e04', 'e05', 'e06']);
-  const [exerciseCatalog] = useState(getExerciseCatalog);
-
-  useEffect(() => {
-    if (planId !== 'pl-new') return;
-    const raw = window.sessionStorage.getItem('atal:new-plan');
-    if (!raw) return;
-    const draft = JSON.parse(raw) as { title: string; patient: string; duration: string; frequency: string; exerciseIds: string[] };
-    const timeoutId = setTimeout(() => {
-      setTitle(draft.title);
-      setPatient(draft.patient);
-      setDuration(draft.duration);
-      setFrequency(draft.frequency);
-      setExerciseIds(draft.exerciseIds);
-    }, 0);
-    return () => clearTimeout(timeoutId);
-  }, [planId]);
-
-  const move = (index: number, direction: -1 | 1) => setExerciseIds((current) => { const next = [...current]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target], next[index]]; return next; });
-  const save = () => { setSaved(true); window.setTimeout(() => setSaved(false), 2200); };
-
-  return <AtalShell>{selecting ? <main className="atal-content atal-flow-page"><ExerciseSelector initialIds={exerciseIds} onBack={() => setSelecting(false)} onConfirm={(ids) => { setExerciseIds(ids); setSelecting(false); }} /></main> : <main className="atal-content atal-flow-page atal-plan-detail">
-    <div className="atal-flow-topbar"><button type="button" onClick={() => router.push('/plans')}><ArrowLeft /></button><span>Editar plan</span><button type="button" onClick={() => setTab('review')}>•••</button></div>
-    <section className="atal-plan-identity"><Avatar name={patient} /><div><h1>{title}</h1><b>{patient}</b><small>Plan clínico demostrativo</small></div></section>
-    <nav className="atal-tabbar">{([['summary','Resumen'],['exercises','Ejercicios'],['progress','Progreso'],['review','Revisión']] as const).map(([value,label]) => <button type="button" key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>)}</nav>
-    {tab === 'exercises' && <div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration}</b></span><span><small>Frecuencia</small><b>{frequency}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={() => setSelecting(true)}><Plus /> Agregar ejercicio</button></div><div className="atal-plan-exercises">{exerciseIds.map((id,index) => { const exercise=exerciseCatalog.find((item)=>item.id===id); if(!exercise) return null; return <div key={id}><img src={exercise.image} alt="" /><span><b>{exercise.name}</b><small>{exercise.details?.sets ?? 3} series　•　{exercise.details?.repetitions ?? exercise.details?.time ?? '12 reps'}</small></span><div><button type="button" onClick={() => move(index,-1)} aria-label="Subir"><ArrowUp /></button><button type="button" onClick={() => move(index,1)} aria-label="Bajar"><ArrowDown /></button></div></div>; })}</div><section className="atal-plan-settings"><h2>Ajustes del plan</h2><button type="button" onClick={() => setProgression((value) => value === 'Lineal' ? 'Semanal' : 'Lineal')}><span><SlidersHorizontal /></span><b>Progresión</b><em>{progression}</em><ChevronRight /></button><button type="button" onClick={() => setCriterion((value) => value === 'Dolor ≤ 3' ? 'Dolor ≤ 4' : 'Dolor ≤ 3')}><span><Target /></span><b>Criterio de reporte</b><em>{criterion}</em><ChevronRight /></button></section></div>}
-    {tab === 'summary' && <div className="atal-panel-placeholder"><CalendarDays /><h2>Resumen del plan</h2><p>{duration}, {frequency}. El plan contiene {exerciseIds.length} ejercicios.</p><button type="button" onClick={() => setTab('exercises')}>Editar ejercicios</button></div>}
-    {tab === 'progress' && <div className="atal-panel-placeholder"><Target /><h2>Progreso del plan</h2><p>3 de 12 sesiones completadas con una adherencia demostrativa del 78%.</p></div>}
-    {tab === 'review' && <div className="atal-panel-placeholder"><Check /><h2>{active ? 'Plan activo' : 'Listo para revisión'}</h2><p>{active ? 'El paciente ya puede consultar y completar este plan.' : 'Comprueba frecuencia, ejercicios y criterios antes de activar el plan.'}</p><button type="button" onClick={() => setActive((value) => !value)}>{active ? 'Pausar plan' : 'Activar plan'}</button></div>}
-    <button type="button" className="atal-submit-button atal-sticky-save" onClick={save}><Save /> {saved ? 'Plan guardado' : 'Guardar plan'} {saved && <Check />}</button>
-  </main>}</AtalShell>;
+type Tab='summary'|'exercises'|'progress'|'review';
+export function PlanDetailScreen({planId}:{planId:string}){
+ const router=useRouter();const plans=useLocalPlans();const patients=usePatientCatalog();const catalog=useExerciseCatalog();const sessions=useAtalStore((state)=>state.sessions.filter((item)=>item.planId===planId));const plan=plans.find((item)=>item.id===planId);const patient=patients.find((item)=>item.id===plan?.patientId);
+ const[tab,setTab]=useState<Tab>('exercises');const[selecting,setSelecting]=useState(false);const[menu,setMenu]=useState(false);const[message,setMessage]=useState('');const[confirmArchive,setConfirmArchive]=useState(false);const[conflict,setConflict]=useState(false);
+ const[title,setTitle]=useState(plan?.title??'');const[focus,setFocus]=useState(plan?.focus??'');const[goal,setGoal]=useState(plan?.goal??'');const[duration,setDuration]=useState(plan?.duration??'');const[frequency,setFrequency]=useState(plan?.frequency??'');const[progression,setProgression]=useState(plan?.progression??'');const[criterion,setCriterion]=useState(plan?.reportCriteria??'');const[instructions,setInstructions]=useState(plan?.generalInstructions??'');const[exerciseIds,setExerciseIds]=useState(plan?.exerciseIds??[]);
+ useEffect(()=>{if(!plan)return;setTitle(plan.title);setFocus(plan.focus);setGoal(plan.goal);setDuration(plan.duration);setFrequency(plan.frequency);setProgression(plan.progression);setCriterion(plan.reportCriteria);setInstructions(plan.generalInstructions);setExerciseIds(plan.exerciseIds);},[plan?.id]);
+ if(!plan)return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><CalendarDays/><h1>Plan no encontrado</h1><p>El plan solicitado no existe o fue eliminado.</p><button type="button" onClick={()=>router.push('/plans')}>Volver a planes</button></div></main></AtalShell>;
+ const dirty=title!==plan.title||focus!==plan.focus||goal!==plan.goal||duration!==plan.duration||frequency!==plan.frequency||progression!==plan.progression||criterion!==plan.reportCriteria||instructions!==plan.generalInstructions||exerciseIds.join('|')!==plan.exerciseIds.join('|');
+ const save=()=>{try{updateLocalPlan(plan.id,{title,focus,goal,duration,frequency,progression,reportCriteria:criterion,generalInstructions:instructions,exerciseIds});setMessage('Plan guardado');}catch(error){setMessage(error instanceof Error?error.message:'No pudimos guardar el plan.');}};
+ const changeStatus=(action:'activate'|'pause'|'complete'|'archive'|'restore')=>{try{if(action==='activate'&&findActivePlanConflict(plan.id)){setConflict(true);setMenu(false);return;}if(action==='activate')activatePlan(plan.id);if(action==='pause')pausePlan(plan.id);if(action==='complete')completePlan(plan.id);if(action==='archive')archivePlan(plan.id);if(action==='restore')restorePlan(plan.id);setMessage('Estado actualizado');setMenu(false);setConfirmArchive(false);}catch(error){setMessage(error instanceof Error?error.message:'No pudimos actualizar el plan.');}};
+ const resolveConflict=(resolution:'pause'|'complete'|'archive')=>{try{activatePlan(plan.id,resolution);setConflict(false);setMessage('Plan activado y plan anterior actualizado.');}catch(error){setMessage(error instanceof Error?error.message:'No pudimos activar el plan.');}};
+ const move=(index:number,direction:-1|1)=>setExerciseIds((current)=>{const next=[...current];const target=index+direction;if(target<0||target>=next.length)return current;[next[index],next[target]]=[next[target],next[index]];return next;});
+ const completed=sessions.filter((item)=>item.status==='completed').length;const adherence=sessions.length?Math.round(completed/sessions.length*100):null;
+ return <AtalShell>{selecting?<main className="atal-content atal-flow-page"><ExerciseSelector initialIds={exerciseIds} onBack={()=>setSelecting(false)} onConfirm={(ids)=>{setExerciseIds(ids);setSelecting(false);}}/></main>:<main className="atal-content atal-flow-page atal-plan-detail">
+  <div className="atal-flow-topbar"><button type="button" onClick={()=>router.push('/plans')}><ArrowLeft/></button><span>Plan clínico</span><button type="button" aria-label="Acciones del plan" onClick={()=>setMenu(true)}><MoreHorizontal/></button></div>
+  <section className="atal-plan-identity"><Avatar name={patient?.name??'Paciente'}/><div><h1>{plan.title}</h1><b>{patient?.name??'Paciente no disponible'}</b><small>Estado: {statusLabel(plan.status)} · Actualizado {new Date(plan.updatedAt).toLocaleString('es-MX')}</small></div></section>
+  <nav className="atal-tabbar">{([['summary','Resumen'],['exercises','Ejercicios'],['progress','Progreso'],['review','Estado']] as const).map(([value,label])=><button type="button" key={value} className={tab===value?'is-active':''} onClick={()=>setTab(value)}>{label}</button>)}</nav>
+  {tab==='summary'&&<div className="atal-clinical-form"><fieldset><legend>Información del plan</legend><label className="atal-field"><span>Título</span><input value={title} onChange={(event)=>setTitle(event.target.value)}/></label><label className="atal-field"><span>Enfoque</span><input value={focus} onChange={(event)=>setFocus(event.target.value)}/></label><label className="atal-field"><span>Objetivo</span><textarea value={goal} onChange={(event)=>setGoal(event.target.value)}/></label><div className="atal-field-grid"><label className="atal-field"><span>Duración</span><input value={duration} onChange={(event)=>setDuration(event.target.value)}/></label><label className="atal-field"><span>Frecuencia</span><input value={frequency} onChange={(event)=>setFrequency(event.target.value)}/></label></div><label className="atal-field"><span>Indicaciones</span><textarea value={instructions} onChange={(event)=>setInstructions(event.target.value)}/></label></fieldset></div>}
+  {tab==='exercises'&&<div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration||'Por definir'}</b></span><span><small>Frecuencia</small><b>{frequency||'Por definir'}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={()=>setSelecting(true)}><Plus/> Agregar ejercicio</button></div><div className="atal-plan-exercises">{exerciseIds.map((id,index)=>{const exercise=catalog.find((item)=>item.id===id);return exercise?<div key={id}><ExerciseMediaThumbnail mediaId={exercise.details.media.mediaId} name={exercise.name}/><span><b>{exercise.name}</b><small>{exercise.details.sets} series · {exercise.details.repetitions??exercise.details.time??'Por definir'}</small></span><div><button type="button" onClick={()=>move(index,-1)} aria-label="Subir"><ArrowUp/></button><button type="button" onClick={()=>move(index,1)} aria-label="Bajar"><ArrowDown/></button><button type="button" onClick={()=>setExerciseIds((current)=>current.filter((item)=>item!==id))} aria-label="Quitar"><Trash2/></button></div></div>:null;})}</div><section className="atal-plan-settings"><h2>Ajustes del plan</h2><label className="atal-field"><span><SlidersHorizontal/> Progresión</span><textarea value={progression} onChange={(event)=>setProgression(event.target.value)}/></label><label className="atal-field"><span><Target/> Criterio de reporte</span><textarea value={criterion} onChange={(event)=>setCriterion(event.target.value)}/></label></section></div>}
+  {tab==='progress'&&<div className="atal-panel-placeholder"><Target/><h2>Progreso real</h2>{sessions.length?<><p>{completed} de {sessions.length} sesiones completadas.</p><strong>{adherence}% adherencia</strong><button type="button" onClick={()=>router.push(`/activity?patientId=${plan.patientId}`)}>Ver actividad</button></>:<p>Todavía no existen sesiones para este plan.</p>}</div>}
+  {tab==='review'&&<div className="atal-panel-placeholder"><Check/><h2>{statusLabel(plan.status)}</h2><p>{plan.status==='active'?'El paciente puede consultar e iniciar este plan.':plan.status==='paused'?'El paciente puede verlo, pero no iniciar una sesión.':'El historial se conserva y el plan no se ejecuta.'}</p><button type="button" onClick={()=>setMenu(true)}>Administrar estado</button></div>}
+  {message&&<p className="atal-action-message" role="status">{message}</p>}
+  <button type="button" className="atal-submit-button atal-sticky-save" disabled={!dirty} onClick={save}><Save/>{dirty?'Guardar cambios':'Sin cambios pendientes'}</button>
+  {menu&&<div className="atal-overlay" onMouseDown={()=>setMenu(false)}><section className="atal-native-sheet" onMouseDown={(event)=>event.stopPropagation()}><header><h2>Acciones del plan</h2><button type="button" onClick={()=>setMenu(false)}>×</button></header><div className="atal-plan-action-menu">{plan.status!=='active'&&<button type="button" onClick={()=>changeStatus('activate')}><Play/>Activar</button>}{plan.status==='active'&&<button type="button" onClick={()=>changeStatus('pause')}><Pause/>Pausar</button>}{!['completed','archived'].includes(plan.status)&&<button type="button" onClick={()=>changeStatus('complete')}><Check/>Completar</button>}{plan.status!=='archived'&&<button type="button" onClick={()=>{setMenu(false);setConfirmArchive(true);}}><Archive/>Archivar</button>}{plan.status==='archived'&&<button type="button" onClick={()=>changeStatus('restore')}><Play/>Restaurar como borrador</button>}<button type="button" onClick={()=>{const copy=duplicatePlan(plan.id);router.push(`/plans/${copy.id}`);}}><Copy/>Duplicar</button><button type="button" onClick={()=>{try{deletePlan(plan.id);router.push('/plans');}catch(error){setMessage(error instanceof Error?error.message:'No se puede eliminar.');setMenu(false);}}}><Trash2/>Eliminar si es seguro</button></div></section></div>}
+  {confirmArchive&&<Confirm
+    title="¿Archivar este plan?"
+    text="El paciente dejará de verlo como plan activo. Sus sesiones, reportes e historial se conservarán."
+    confirm="Archivar plan"
+    onConfirm={()=>changeStatus('archive')}
+    onCancel={()=>setConfirmArchive(false)}
+  />}
+  {conflict&&<div className="atal-overlay"><section className="atal-native-sheet"><header><h2>Ya existe un plan activo</h2></header><p>Elige qué hacer con el plan activo anterior antes de activar este.</p><div className="atal-plan-action-menu"><button type="button" onClick={()=>resolveConflict('pause')}>Pausar anterior</button><button type="button" onClick={()=>resolveConflict('complete')}>Completar anterior</button><button type="button" onClick={()=>resolveConflict('archive')}>Archivar anterior</button><button type="button" onClick={()=>setConflict(false)}>Cancelar</button></div></section></div>}
+ </main>}</AtalShell>;
 }
+function statusLabel(status:string){return status==='active'?'Activo':status==='draft'?'Borrador':status==='paused'?'Pausado':status==='completed'?'Completado':'Archivado';}
+function Confirm({title,text,confirm,onConfirm,onCancel}:{title:string;text:string;confirm:string;onConfirm:()=>void;onCancel:()=>void}){return <div className="atal-overlay" onMouseDown={onCancel}><section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={(event)=>event.stopPropagation()}><header><h2>{title}</h2></header><p>{text}</p><button type="button" className="atal-submit-button" onClick={onConfirm}>{confirm}</button><button type="button" onClick={onCancel}>Cancelar</button></section></div>;}

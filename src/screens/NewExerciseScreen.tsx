@@ -1,10 +1,11 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, Clock3, ImagePlus, Repeat2, Video } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { createLocalExercise, type ExerciseMedia } from '@/src/data/localExercises';
+import { createLocalExercise, deleteExercise, updateLocalExercise, type ExerciseMedia } from '@/src/data/localExercises';
+import { saveExerciseMedia } from '@/src/data/exerciseMediaRepository';
 
 type ExecutionMode = 'repetitions' | 'time' | 'both';
 type MediaKind = ExerciseMedia['type'];
@@ -15,8 +16,12 @@ export function NewExerciseScreen() {
   const [mode, setMode] = useState<ExecutionMode>('repetitions');
   const [media, setMedia] = useState<MediaKind>('none');
   const [saved, setSaved] = useState(false);
+  const [files,setFiles]=useState<File[]>([]);
+  const [error,setError]=useState('');
+  const [preview,setPreview]=useState('');
+  useEffect(()=>{if(!files[0]){setPreview('');return;}const url=URL.createObjectURL(files[0]);setPreview(url);return()=>URL.revokeObjectURL(url);},[files]);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const text = (key: string) => String(form.get(key) ?? '').trim();
@@ -24,7 +29,9 @@ export function NewExerciseScreen() {
       const parsed = Number(form.get(key));
       return Number.isFinite(parsed) ? parsed : fallback;
     };
-    createLocalExercise({
+    if(media!=='none'&&!files.length){setError('Selecciona el recurso visual antes de guardar.');return;}
+    let exercise:ReturnType<typeof createLocalExercise>|null=null;
+    try{exercise=createLocalExercise({
       name,
       region: text('region'),
       category: text('category'),
@@ -41,10 +48,12 @@ export function NewExerciseScreen() {
       maxPain: Math.min(10, Math.max(0, number('maxPain', 3))),
       tags: text('tags').split(',').map((tag) => tag.trim()).filter(Boolean),
       notes: text('notes'),
-      media: { type: media },
+      media: { type: 'none' },
     });
+    if(media!=='none'){const record=await saveExerciseMedia(exercise.id,media==='video'?'video':media==='sequence'?'sequence':'image',files);updateLocalExercise(exercise.id,{media:{type:media,mediaId:record.id}});}
     setSaved(true);
-    window.setTimeout(() => router.push('/exercises'), 450);
+    window.setTimeout(() => router.push(`/exercises/${exercise?.id}`), 450);
+    }catch(problem){if(exercise)try{deleteExercise(exercise.id);}catch{}setError(problem instanceof Error?problem.message:'No pudimos guardar el ejercicio.');}
   };
 
   return <AtalShell><main className="atal-content atal-flow-page atal-new-exercise-page">
@@ -68,9 +77,11 @@ export function NewExerciseScreen() {
       <fieldset><legend>Organización y recurso visual</legend>
         <label className="atal-field"><span>Etiquetas</span><input name="tags" placeholder="Separadas por comas; acepta texto libre" /></label>
         <label className="atal-field"><span>Observaciones</span><textarea name="notes" placeholder="Indicaciones adicionales para el fisioterapeuta…" /></label>
-        <div className="atal-media-picker" role="group" aria-label="Recurso visual local simulado">{([{ id: 'image', label: 'Imagen', icon: <ImagePlus /> }, { id: 'video', label: 'Video', icon: <Video /> }, { id: 'sequence', label: 'Secuencia', icon: <ImagePlus /> }, { id: 'none', label: 'Sin recurso', icon: <Check /> }] as const).map((item) => <button type="button" key={item.id} className={media === item.id ? 'is-active' : ''} onClick={() => setMedia(item.id)}>{item.icon}<span>{item.label}</span></button>)}</div>
-        {media !== 'none' && <div className="atal-exercise-media is-simulated"><ImagePlus /><span>Recurso {media === 'image' ? 'de imagen' : media === 'video' ? 'de video' : 'en secuencia'} preparado</span><small>Simulación local; no se cargará ningún archivo.</small></div>}
+        <div className="atal-media-picker" role="group" aria-label="Recurso visual local">{([{ id: 'image', label: 'Imagen', icon: <ImagePlus /> }, { id: 'video', label: 'Video', icon: <Video /> }, { id: 'sequence', label: 'Secuencia', icon: <ImagePlus /> }, { id: 'none', label: 'Sin recurso', icon: <Check /> }] as const).map((item) => <button type="button" key={item.id} className={media === item.id ? 'is-active' : ''} onClick={() => {setMedia(item.id);setFiles([]);setError('');}}>{item.icon}<span>{item.label}</span></button>)}</div>
+        {media !== 'none' && <label className="atal-exercise-media"><ImagePlus/><span><b>{files.length?`${files.length} archivo(s) seleccionado(s)`:'Seleccionar recurso local'}</b><small>{media==='video'?'Video corto, máximo 25 MB':media==='sequence'?'Hasta 12 imágenes de 8 MB':'Imagen de hasta 8 MB'}</small></span><input type="file" accept={media==='video'?'video/*':'image/*'} multiple={media==='sequence'} onChange={(event)=>{setFiles(Array.from(event.target.files??[]));setError('');}}/></label>}
+        {preview&&<div className="atal-media-preview">{media==='video'?<video src={preview} controls/>:<img src={preview} alt="Vista previa del recurso"/>}<button type="button" onClick={()=>setFiles([])}>Eliminar recurso</button></div>}
       </fieldset>
+      {error&&<p className="atal-form-error" role="alert">{error}</p>}
       <button type="submit" className="atal-submit-button" disabled={!name.trim()}><Check />{saved ? 'Ejercicio guardado' : 'Guardar ejercicio local'}</button>
     </form>
   </main></AtalShell>;

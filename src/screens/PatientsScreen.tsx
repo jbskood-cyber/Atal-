@@ -6,22 +6,22 @@ import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { SearchBar } from '@/src/components/atal/SearchBar';
-import { statusColor, type PatientStatus } from '@/src/data/atal-demo';
-import { getPatientCatalog } from '@/src/data/localPatients';
+import { statusColor, usePatientCatalog, type PatientStatus } from '@/src/data/localPatients';
 
 type Filter = 'all' | PatientStatus;
 
 export function PatientsScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('active');
+  const [ascending,setAscending]=useState(true);
   const router = useRouter();
-  const [patientCatalog] = useState(getPatientCatalog);
+  const patientCatalog = usePatientCatalog();
 
   const visible = useMemo(() => patientCatalog.filter((patient) => {
     const matchesFilter = filter === 'all' || patient.status === filter;
     const text = `${patient.name} ${patient.diagnosis}`.toLowerCase();
     return matchesFilter && text.includes(query.toLowerCase());
-  }), [patientCatalog, query, filter]);
+  }).sort((a,b)=>ascending?a.name.localeCompare(b.name):b.name.localeCompare(a.name)), [patientCatalog, query, filter,ascending]);
 
   return (
     <AtalShell onNew={() => router.push('/patients/new')}>
@@ -33,7 +33,7 @@ export function PatientsScreen() {
           <Segment active={filter === 'attention'} onClick={() => setFilter('attention')} dot={statusColor.attention}>Atención</Segment>
           <Segment active={filter === 'archived'} onClick={() => setFilter('archived')} dot={statusColor.archived}>Archivados</Segment>
         </div>
-        <div className="atal-list-meta"><span>{visible.length} pacientes</span><button type="button">Ordenar: Nombre <ChevronDown size={17} /></button></div>
+        <div className="atal-list-meta"><span>{visible.length} pacientes</span><button type="button" onClick={()=>setAscending((value)=>!value)}>Nombre {ascending?'A–Z':'Z–A'} <ChevronDown size={17} /></button></div>
         <div className="atal-dense-list">
           {visible.map((patient) => (
             <button key={patient.id} type="button" className="atal-dense-row" onClick={() => router.push(`/patients/${patient.id}`)}>

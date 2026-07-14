@@ -1,80 +1,33 @@
 'use client';
-
-import { useMemo, useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CalendarDays, ChevronRight, Eye, FileText, MessageCircle, Pencil, Plus, Target, TrendingUp } from 'lucide-react';
+import { Archive,ArrowLeft,CalendarDays,ChevronRight,Eye,FileText,Pencil,Plus,RotateCcw,Save,Target,Trash2,TrendingUp } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
-import { patients, type Patient } from '@/src/data/atal-demo';
-import { getCurrentPatientLocalPlan } from '@/src/data/localPlans';
-import { getPatientById } from '@/src/data/localPatients';
+import { archiveLocalPatient,getPatientById,restoreLocalPatient,updateLocalPatient,usePatientCatalog } from '@/src/data/localPatients';
+import { addPatientNote,deletePatientNote,updatePatientNote,useAtalStore,type ActivityEvent,type PatientNote,type SessionRecord } from '@/src/data/atalStore';
 
-type Tab = 'summary' | 'history' | 'notes' | 'metrics';
-
-export function PatientProfileScreen({ patientId }: { patientId: string }) {
-  const router = useRouter();
-  const [tab, setTab] = useState<Tab>('summary');
-  const [editing, setEditing] = useState(false);
-  const patient = useMemo(() => getPatientById(patientId) ?? patients[0], [patientId]);
-  const activePlan = useMemo(() => getCurrentPatientLocalPlan(patientId), [patientId]);
-  const [diagnosis, setDiagnosis] = useState(patient.diagnosis);
-
-  return (
-    <AtalShell onNew={() => router.push('/plans/new')}>
-      <main className="atal-content atal-flow-page atal-patient-profile">
-        <div className="atal-flow-topbar">
-          <button type="button" onClick={() => router.push('/patients')} aria-label="Volver a pacientes"><ArrowLeft /></button>
-          <span>Expediente del paciente</span>
-          <button type="button" aria-label="Más opciones" onClick={() => setTab('history')}>•••</button>
-        </div>
-
-        <section className="atal-profile-hero">
-          <Avatar name={patient.name} size="lg" />
-          <div><h1>{patient.name}</h1><p>29 años　•　Paciente demo</p><small>ID: {patient.id.toUpperCase()}</small></div>
-        </section>
-
-        <nav className="atal-tabbar" aria-label="Secciones del expediente">
-          {([['summary', 'Resumen'], ['history', 'Historial'], ['notes', 'Notas'], ['metrics', 'Métricas']] as const).map(([value, label]) => (
-            <button type="button" key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>
-          ))}
-        </nav>
-
-        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} planTitle={activePlan?.title} diagnosisEditing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push(activePlan ? `/plans/${activePlan.id}` : '/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onRecord={() => router.push(`/patients/${patient.id}/clinical-record`)} onPreview={() => router.push(`/patients/${patient.id}/portal-preview`)} />}
-        {tab === 'history' && <History />}
-        {tab === 'notes' && <Notes />}
-        {tab === 'metrics' && <Metrics patient={patient} />}
-      </main>
-    </AtalShell>
-  );
+type Tab='summary'|'history'|'notes'|'metrics';
+export function PatientProfileScreen({patientId}:{patientId:string}){
+ const router=useRouter();const catalog=usePatientCatalog();const patient=catalog.find((item)=>item.id===patientId);const state=useAtalStore((store)=>({plans:store.plans.filter((item)=>item.patientId===patientId),sessions:store.sessions.filter((item)=>item.patientId===patientId),notes:store.notes.filter((item)=>item.patientId===patientId),events:store.events.filter((item)=>item.patientId===patientId),settings:store.settings}));const[tab,setTab]=useState<Tab>('summary');const[editing,setEditing]=useState(false);const[form,setForm]=useState({name:patient?.name??'',diagnosis:patient?.diagnosis??'',age:patient?.age?.toString()??'',birthDate:patient?.birthDate??'',sex:patient?.sex??'',affectedArea:patient?.affectedArea??''});const[message,setMessage]=useState('');
+ useEffect(()=>{if(patient)setForm({name:patient.name,diagnosis:patient.diagnosis,age:patient.age?.toString()??'',birthDate:patient.birthDate,sex:patient.sex,affectedArea:patient.affectedArea});},[patient?.id,patient?.updatedAt]);
+ if(!patient)return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><FileText/><h1>Paciente no encontrado</h1><button type="button" onClick={()=>router.push('/patients')}>Volver</button></div></main></AtalShell>;
+ const activePlan=state.plans.find((item)=>item.status==='active')??null;
+ const savePatient=()=>{updateLocalPatient(patient.id,{name:form.name.trim(),diagnosis:form.diagnosis.trim(),age:form.age?Number(form.age):null,birthDate:form.birthDate,sex:form.sex,affectedArea:form.affectedArea});setEditing(false);setMessage('Datos guardados.');};
+ return <AtalShell onNew={()=>router.push(`/plans/new?patientId=${patient.id}`)}><main className="atal-content atal-flow-page atal-patient-profile">
+  <div className="atal-flow-topbar"><button type="button" onClick={()=>router.push('/patients')}><ArrowLeft/></button><span>Expediente del paciente</span><button type="button" onClick={()=>patient.status==='archived'?restoreLocalPatient(patient.id):archiveLocalPatient(patient.id)} aria-label={patient.status==='archived'?'Restaurar paciente':'Archivar paciente'}>{patient.status==='archived'?<RotateCcw/>:<Archive/>}</button></div>
+  <section className="atal-profile-hero"><Avatar name={patient.name} size="lg"/><div><h1>{patient.name}</h1><p>{patient.age!==null?`${patient.age} años · `:''}{patient.status==='archived'?'Archivado':patient.status==='attention'?'Requiere atención':'Paciente activo'}</p><small>ID: {patient.id.toUpperCase()}</small></div></section>
+  <nav className="atal-tabbar">{([['summary','Resumen'],['history','Historial'],['notes','Notas'],['metrics','Métricas']] as const).map(([value,label])=><button type="button" key={value} className={tab===value?'is-active':''} onClick={()=>setTab(value)}>{label}</button>)}</nav>
+  {message&&<p className="atal-action-message" role="status">{message}</p>}
+  {tab==='summary'&&<div className="atal-profile-body"><button type="button" className="atal-patient-preview-cta" onClick={()=>router.push(`/patients/${patient.id}/portal-preview`)}><Eye/><span><b>Vista del paciente</b><small>{activePlan?'Consulta su plan activo y sesión guiada':'No tiene un plan activo'}</small></span><ChevronRight/></button>
+   <section className="atal-profile-section"><div className="atal-section-title"><h2>Datos clínicos</h2><button type="button" onClick={()=>setEditing((value)=>!value)}><Pencil/></button></div>{editing?<div className="atal-settings-form"><label><span>Nombre</span><input value={form.name} onChange={(event)=>setForm({...form,name:event.target.value})}/></label><label><span>Edad</span><input type="number" value={form.age} onChange={(event)=>setForm({...form,age:event.target.value})}/></label><label><span>Fecha de nacimiento</span><input type="date" value={form.birthDate} onChange={(event)=>setForm({...form,birthDate:event.target.value})}/></label><label><span>Sexo</span><input value={form.sex} onChange={(event)=>setForm({...form,sex:event.target.value})}/></label><label><span>Motivo / diagnóstico</span><textarea value={form.diagnosis} onChange={(event)=>setForm({...form,diagnosis:event.target.value})}/></label><label><span>Zona afectada</span><input value={form.affectedArea} onChange={(event)=>setForm({...form,affectedArea:event.target.value})}/></label><button type="button" className="atal-settings-save" onClick={savePatient}><Save/>Guardar datos</button></div>:<><p className="atal-profile-lead">{patient.diagnosis||'Motivo por completar'}</p><small>{patient.affectedArea||'Zona afectada por completar'}</small></>}</section>
+   <section className="atal-profile-section"><h2>Plan activo</h2>{activePlan?<button type="button" className="atal-active-plan" onClick={()=>router.push(`/plans/${activePlan.id}`)}><span><CalendarDays/></span><span><b>{activePlan.title}</b><small>{activePlan.duration} · {activePlan.frequency}</small></span><em>Activo</em><ChevronRight/></button>:<div className="atal-empty"><p>Este paciente no tiene un plan activo.</p><button type="button" onClick={()=>router.push(`/plans/new?patientId=${patient.id}`)}><Plus/>Crear plan</button></div>}</section>
+   <section className="atal-profile-section"><div className="atal-section-title"><h2>Reportes recientes</h2><button type="button" onClick={()=>router.push(`/activity?patientId=${patient.id}`)}>Ver todo</button></div>{state.sessions.slice(0,3).map((session)=><button type="button" className="atal-report-row" key={session.id} onClick={()=>router.push(`/activity/${session.id}`)}><span><FileText/></span><span><b>{session.status==='completed'?'Sesión completada':'Sesión parcial'}</b><small>{new Date(session.completedAt).toLocaleString('es-MX')}</small></span><ChevronRight/></button>)}{!state.sessions.length&&<p>Sin sesiones registradas.</p>}</section>
+   <div className="atal-profile-actions"><button type="button" onClick={()=>router.push(`/patients/${patient.id}/clinical-record`)}><FileText/>Ver expediente</button><button type="button" className="is-primary" onClick={()=>router.push(`/plans/new?patientId=${patient.id}`)}>Crear plan <Plus/></button></div>
+  </div>}
+  {tab==='history'&&<History events={state.events}/>} {tab==='notes'&&<Notes patientId={patient.id} notes={state.notes} professional={state.settings.professionalName}/>} {tab==='metrics'&&<Metrics sessions={state.sessions} planId={activePlan?.id}/>}
+ </main></AtalShell>;
 }
-
-function Summary({ patient, diagnosis, planTitle, diagnosisEditing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onRecord, onPreview }: { patient: Patient; diagnosis: string; planTitle?: string; diagnosisEditing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onRecord: () => void; onPreview: () => void }) {
-  return <div className="atal-profile-body"><button type="button" className="atal-patient-preview-cta" onClick={onPreview}><Eye/><span><b>Vista del paciente</b><small>Previsualiza localmente su plan y seguimiento</small></span><ChevronRight/></button>
-    <section className="atal-profile-section">
-      <div className="atal-section-title"><h2>Diagnóstico / Motivo</h2><button type="button" onClick={onEdit} aria-label="Editar diagnóstico"><Pencil size={17} /></button></div>
-      {diagnosisEditing ? <input className="atal-inline-edit" value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} onBlur={onEdit} autoFocus /> : <><p className="atal-profile-lead">{diagnosis}</p><small>Seguimiento clínico demostrativo.</small></>}
-    </section>
-    <section className="atal-profile-section">
-      <h2>Plan activo</h2>
-      <button type="button" className="atal-active-plan" onClick={onPlan}><span><CalendarDays /></span><span><b>{planTitle ?? 'Rehabilitación — Fase 1'}</b><small>Plan asignado al paciente</small></span><em>En progreso</em><ChevronRight /></button>
-    </section>
-    <section className="atal-profile-section">
-      <h2>Métricas clave</h2>
-      <MetricRow icon={<Target />} label="Dolor (NPRS)" value="4 → 2 / 10" />
-      <MetricRow icon={<TrendingUp />} label="Función (LEFS)" value="48 → 62 / 80" />
-      <MetricRow icon={<TrendingUp />} label="Rango (Flexión)" value="110° → 126°" />
-    </section>
-    <section className="atal-profile-section">
-      <div className="atal-section-title"><h2>Reportes recientes</h2><button type="button" onClick={onActivity}>Ver todo</button></div>
-      <ReportRow title="Progreso funcional" date="Hoy, 8:45 a.m." onClick={onActivity} />
-      <ReportRow title="Reporte de evaluación" date="Ayer, 5:30 p.m." onClick={onActivity} />
-    </section>
-    <div className="atal-profile-actions"><button type="button" onClick={onRecord}><FileText /> Ver expediente</button><button type="button" onClick={onRecord}><Pencil /> Editar expediente</button><button type="button" onClick={onRecord}><FileText /> Descargar PDF</button><button type="button" className="is-primary" onClick={onCreatePlan}>Crear plan <Plus /></button></div>
-  </div>;
-}
-
-function MetricRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) { return <div className="atal-metric-row"><span>{icon}</span><b>{label}</b><strong>{value}</strong><i><span /><span /><span /><span /></i></div>; }
-function ReportRow({ title, date, onClick }: { title: string; date: string; onClick: () => void }) { return <button type="button" className="atal-report-row" onClick={onClick}><span><FileText /></span><span><b>{title}</b><small>{date}</small></span><ChevronRight /></button>; }
-function History() { return <div className="atal-panel-placeholder"><CalendarDays /><h2>Historial clínico</h2><p>Evaluación inicial, seguimientos y cambios del plan organizados cronológicamente.</p><button type="button">Registrar seguimiento</button></div>; }
-function Notes() { const [value, setValue] = useState('Paciente con evolución favorable y buena tolerancia a la carga.'); return <div className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea value={value} onChange={(event) => setValue(event.target.value)} /><small>{value.length}/500</small><button type="button">Guardar nota</button></div>; }
-function Metrics({ patient }: { patient: Patient }) { return <div className="atal-profile-section"><h2>Progreso del paciente</h2><div className="atal-large-metrics"><span><strong>{patient.progress}%</strong><small>Progreso del plan</small></span><span><strong>{patient.adherence}%</strong><small>Adherencia</small></span><span><strong>2/10</strong><small>Dolor actual</small></span></div></div>; }
+function History({events}:{events:ActivityEvent[]}){return <section className="atal-profile-section"><h2>Historial cronológico</h2><div className="atal-history-list">{[...events].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map((event)=><article key={event.id}><CalendarDays/><span><b>{event.title}</b><small>{event.detail}</small><time>{new Date(event.createdAt).toLocaleString('es-MX')}</time></span></article>)}{!events.length&&<p>No hay eventos registrados.</p>}</div></section>;}
+function Notes({patientId,notes,professional}:{patientId:string;notes:PatientNote[];professional:string}){const[value,setValue]=useState('');const[editing,setEditing]=useState<string|null>(null);const[pendingDelete,setPendingDelete]=useState<string|null>(null);const save=()=>{if(!value.trim())return;if(editing)updatePatientNote(editing,value);else addPatientNote(patientId,value,professional);setValue('');setEditing(null);};return <section className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea maxLength={1000} value={value} onChange={(event)=>setValue(event.target.value)} placeholder="Escribe una observación clínica…"/><small>{value.length}/1000</small><button type="button" disabled={!value.trim()} onClick={save}><Save/>{editing?'Actualizar nota':'Guardar nota'}</button><div className="atal-note-history">{[...notes].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map((note)=><article key={note.id}><p>{note.content}</p><small>{note.professional} · {new Date(note.updatedAt).toLocaleString('es-MX')}</small><div><button type="button" onClick={()=>{setEditing(note.id);setValue(note.content);}}><Pencil/>Editar</button>{pendingDelete===note.id?<><button type="button" onClick={()=>{deletePatientNote(note.id);setPendingDelete(null);}}><Trash2/>Confirmar</button><button type="button" onClick={()=>setPendingDelete(null)}>Cancelar</button></>:<button type="button" onClick={()=>setPendingDelete(note.id)}><Trash2/>Eliminar</button>}</div></article>)}{!notes.length&&<p>No hay notas todavía.</p>}</div></section>;}
+function Metrics({sessions,planId}:{sessions:SessionRecord[];planId?:string}){const relevant=planId?sessions.filter((item)=>item.planId===planId):sessions;const completed=relevant.filter((item)=>item.status==='completed').length;const adherence=relevant.length?Math.round(completed/relevant.length*100):null;const avgPain=relevant.length?(relevant.reduce((sum,item)=>sum+item.endPain,0)/relevant.length).toFixed(1):null;return <section className="atal-profile-section"><h2>Progreso del paciente</h2>{relevant.length?<div className="atal-large-metrics"><span><strong>{completed}</strong><small>Sesiones completadas</small></span><span><strong>{adherence}%</strong><small>Adherencia</small></span><span><strong>{avgPain}/10</strong><small>Dolor final promedio</small></span><span><strong>{new Date(relevant[0].completedAt).toLocaleDateString('es-MX')}</strong><small>Última sesión</small></span></div>:<div className="atal-empty"><TrendingUp/><p>Las métricas aparecerán después de la primera sesión.</p></div>}</section>;}

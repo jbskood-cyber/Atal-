@@ -1,128 +1,19 @@
 'use client';
-
-import { AlertTriangle, CalendarDays, Check, ChevronRight, ClipboardList, FileText, Sparkles, UsersRound } from 'lucide-react';
+import { AlertTriangle,ChevronRight,ClipboardList,FileText,Sparkles,UsersRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
-import { patients, plans, statusColor } from '@/src/data/atal-demo';
-
-const tasks = [
-  { time: '9:30', minutes: 570, meridiem: 'a.m.', title: 'Evaluación', person: 'Paciente Demo 04', detail: 'Caso demo · Telehealth', priority: 'stable' as const },
-  { time: '11:30', minutes: 690, meridiem: 'a.m.', title: 'Rehab', person: 'Paciente Demo 05', detail: 'Caso demo · Clínica', priority: 'attention' as const },
-  { time: '2:00', minutes: 840, meridiem: 'p.m.', title: 'Seguimiento', person: 'Paciente Demo 02', detail: 'Dolor 7/10 · Revisar hoy', priority: 'urgent' as const },
-];
-
-const priorityRank = { urgent: 0, attention: 1, stable: 2 } as const;
-const priorityColor = { urgent: '#dc3f45', attention: '#f4a61d', stable: '#16a36a' } as const;
-const priorityLabel = { urgent: 'Urgente', attention: 'Requiere atención', stable: 'Estable' } as const;
-
-export function HomeScreen() {
-  const router = useRouter();
-  const activePatients = patients.filter((patient) => patient.status !== 'archived');
-  const activePlans = plans.filter((plan) => plan.status === 'active');
-  const alerts = patients.filter((patient) => patient.status === 'attention');
-  const todayPatients = patients.slice(0, 6).map((patient, order) => ({ ...patient, order, priority: patient.id === 'p02' ? 'urgent' as const : patient.status === 'attention' ? 'attention' as const : 'stable' as const })).sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || a.order - b.order).slice(0, 4);
-  const orderedTasks = [...tasks].sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority] || a.minutes - b.minutes);
-
-  return (
-    <AtalShell>
-      <main className="atal-content atal-home">
-        <h1 className="atal-mobile-page-title">Inicio</h1>
-        <section className="atal-mobile-metrics">
-          <MobileMetric icon={<UsersRound />} value={patients.length} label="Pacientes" />
-          <MobileMetric icon={<ClipboardList />} value={activePlans.length} label="Planes" />
-          <MobileMetric icon={<AlertTriangle />} value={alerts.length} label="Alertas" />
-        </section>
-
-        <section className="atal-desktop-metrics">
-          <DesktopMetric icon={<UsersRound />} value={activePatients.length} label="Pacientes activos" trend="↑ 12% vs. semana anterior" />
-          <DesktopMetric icon={<ClipboardList />} value={activePlans.length} label="Planes en curso" trend="↑ 8% vs. semana anterior" />
-          <DesktopMetric icon={<FileText />} value={alerts.length} label="Reportes pendientes" trend="↓ 5% vs. semana anterior" warning />
-          <DesktopMetric icon={<Sparkles />} value="2,450" label="Créditos IA" trend="Válidos hasta 28 may, 2025" />
-        </section>
-
-        <div className="atal-mobile-home-flow">
-          <section className="atal-section">
-            <SectionHeading title="Hoy" onClick={() => router.push('/patients')} />
-            <div className="atal-patient-rows">
-              {todayPatients.map((patient) => <PatientRow key={patient.id} patient={patient} compact priority={patient.priority} onClick={() => router.push(`/patients/${patient.id}`)} />)}
-            </div>
-          </section>
-          <section className="atal-section atal-tasks">
-            <SectionHeading title="Pendientes del día" onClick={() => router.push('/activity')} />
-            {orderedTasks.map((task, index) => (
-              <button key={task.time} type="button" className={`atal-task-row is-${task.priority}`} aria-label={`${priorityLabel[task.priority]}: ${task.title} de ${task.person} a las ${task.time} ${task.meridiem}`} onClick={() => router.push(task.priority === 'urgent' ? '/activity/p02' : '/activity')}>
-                <span className="atal-task-dot" style={{ background: priorityColor[task.priority] }} />
-                {index < orderedTasks.length - 1 && <i />}
-                <span className="atal-task-time"><strong>{task.time}</strong><small>{task.meridiem}</small></span>
-                <span className="atal-task-copy"><span><b>{task.title}</b> · {task.person}</span><small>{task.detail}</small></span>
-                <ChevronRight size={21} />
-              </button>
-            ))}
-          </section>
-        </div>
-
-        <div className="atal-desktop-dashboard">
-          <DashboardColumn title="Pacientes" count={activePatients.length} tabs={['Todos', 'Activos', 'Inactivos', 'Nuevos']} onViewAll={() => router.push('/patients')}>
-            {patients.slice(0, 5).map((patient) => <PatientRow key={patient.id} patient={patient} onClick={() => router.push(`/patients/${patient.id}`)} />)}
-          </DashboardColumn>
-          <DashboardColumn title="Planes" count={activePlans.length} tabs={['Todos', 'En curso', 'Por iniciar', 'Finalizados']} onViewAll={() => router.push('/plans')}>
-            {plans.slice(0, 5).map((plan, index) => (
-              <button type="button" className="atal-dashboard-plan" key={plan.id} onClick={() => router.push(`/plans/${plan.id}`)}>
-                <span className={`atal-plan-icon atal-plan-icon--${index % 4}`}><ClipboardList size={20} /></span>
-                <span className="atal-dashboard-plan__copy"><b>{plan.title}</b><small>{plan.patient}</small><small>Inicio: 28 may, 2025</small></span>
-                <span className="atal-plan-phase">{plan.phase}</span>
-                <ChevronRight size={18} />
-              </button>
-            ))}
-          </DashboardColumn>
-          <DashboardColumn title="Reportes / Actividad" count={24} tabs={['Todos', 'Pendientes', 'Completados', 'Con IA']} onViewAll={() => router.push('/activity')}>
-            {['Evaluación progreso', 'Reevaluación funcional', 'Ajuste de plan', 'Informe de adherencia', 'Análisis con IA'].map((title, index) => (
-              <button type="button" className="atal-activity-row" key={title} onClick={() => router.push('/activity')}>
-                <span className={index === 1 || index === 3 ? 'is-done' : ''}>{index === 1 || index === 3 ? <Check size={19} /> : index === 4 ? <Sparkles size={19} /> : <FileText size={19} />}</span>
-                <span><b>{title}</b><small>Paciente Demo 0{index + 1}</small></span>
-                <em className={index % 2 ? 'is-complete' : ''}>{index % 2 ? 'Completado' : 'Pendiente'}</em>
-              </button>
-            ))}
-          </DashboardColumn>
-        </div>
-      </main>
-    </AtalShell>
-  );
-}
-
-function MobileMetric({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
-  return <div><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></div>;
-}
-
-function DesktopMetric({ icon, value, label, trend, warning }: { icon: React.ReactNode; value: string | number; label: string; trend: string; warning?: boolean }) {
-  return <div className={`atal-desktop-metric ${warning ? 'is-warning' : ''}`}><span>{icon}</span><div><small>{label}</small><strong>{value}</strong><em>{trend}</em></div></div>;
-}
-
-function SectionHeading({ title, onClick }: { title: string; onClick: () => void }) {
-  return <div className="atal-section-heading"><h2>{title}</h2><button type="button" onClick={onClick}>Ver todos <ChevronRight size={18} /></button></div>;
-}
-
-function PatientRow({ patient, compact = false, priority, onClick }: { patient: (typeof patients)[number]; compact?: boolean; priority?: keyof typeof priorityRank; onClick: () => void }) {
-  return (
-    <button type="button" className={`atal-patient-row ${compact ? 'is-compact' : ''} ${priority ? `is-${priority}` : ''}`} aria-label={priority ? `${priorityLabel[priority]}: ${patient.name}, ${patient.plan}` : undefined} onClick={onClick}>
-      <Avatar name={patient.name} />
-      <span className="atal-patient-row__copy"><b>{patient.name}</b><small>{compact ? patient.plan : patient.diagnosis}</small>{!compact && <small>{patient.adherence}% adherencia</small>}</span>
-      <span className="atal-status-dot" title={priority ? priorityLabel[priority] : patient.status} style={{ background: priority ? priorityColor[priority] : statusColor[patient.status] }} />
-      {compact ? <small className="atal-patient-time">{patient.time.replace('Hoy, ', '')}</small> : <strong className="atal-adherence">{patient.adherence}%</strong>}
-      <ChevronRight size={20} />
-    </button>
-  );
-}
-
-function DashboardColumn({ title, count, tabs, children, onViewAll }: { title: string; count: number; tabs: string[]; children: React.ReactNode; onViewAll: () => void }) {
-  return (
-    <section className="atal-dashboard-column">
-      <header><h2>{title} <small>{count}</small></h2><button type="button" onClick={onViewAll}>Ver todos <ChevronRight size={16} /></button></header>
-      <div className="atal-dashboard-tabs">{tabs.map((tab, index) => <span key={tab} className={index === 0 ? 'is-active' : ''}>{tab}</span>)}</div>
-      <label className="atal-dashboard-search"><span>⌕</span><input placeholder={`Buscar ${title.toLowerCase()}...`} /></label>
-      <div className="atal-dashboard-list">{children}</div>
-      <footer>Mostrando 1–5 de {count}<span>‹　<b>1</b>　2　3　…　›</span></footer>
-    </section>
-  );
-}
+import { statusColor,usePatientCatalog,type PatientView } from '@/src/data/localPatients';
+import { useAtalStore } from '@/src/data/atalStore';
+const priorityRank={urgent:0,attention:1,stable:2} as const;const priorityColor={urgent:'#dc3f45',attention:'#f4a61d',stable:'#16a36a'};const priorityLabel={urgent:'Urgente',attention:'Requiere atención',stable:'Estable'};
+export function HomeScreen(){const router=useRouter();const patients=usePatientCatalog();const state=useAtalStore((store)=>({plans:store.plans,sessions:store.sessions,events:store.events,notifications:store.notifications}));const activePatients=patients.filter((item)=>item.status!=='archived');const activePlans=state.plans.filter((item)=>item.status==='active');const pending=state.sessions.filter((item)=>!item.reviewedAt);
+ const rows=activePatients.map((patient)=>{const latest=state.sessions.find((session)=>session.patientId===patient.id);const hasActivePlan=state.plans.some((plan)=>plan.patientId===patient.id&&plan.status==='active');const priority:keyof typeof priorityRank=latest&&(latest.endPain>=7||latest.symptoms.some((item)=>!['ninguno','otro'].includes(item)))?'urgent':latest&&!latest.reviewedAt||hasActivePlan&&!latest||patient.status==='attention'?'attention':'stable';return{patient,priority};}).sort((a,b)=>priorityRank[a.priority]-priorityRank[b.priority]).slice(0,5);
+ const tasks=state.events.slice(0,6);
+ return <AtalShell><main className="atal-content atal-home"><h1 className="atal-mobile-page-title">Inicio</h1><section className="atal-mobile-metrics"><Metric icon={<UsersRound/>} value={activePatients.length} label="Pacientes"/><Metric icon={<ClipboardList/>} value={activePlans.length} label="Planes"/><Metric icon={<AlertTriangle/>} value={pending.length} label="Por revisar"/></section>
+ <section className="atal-desktop-metrics"><DesktopMetric icon={<UsersRound/>} value={activePatients.length} label="Pacientes activos"/><DesktopMetric icon={<ClipboardList/>} value={activePlans.length} label="Planes en curso"/><DesktopMetric icon={<FileText/>} value={pending.length} label="Reportes pendientes" warning/><DesktopMetric icon={<Sparkles/>} value={state.events.length} label="Eventos registrados"/></section>
+ <div className="atal-mobile-home-flow"><section className="atal-section"><Heading title="Pacientes" onClick={()=>router.push('/patients')}/><div className="atal-patient-rows">{rows.map(({patient,priority})=><PatientRow key={patient.id} patient={patient} priority={priority} onClick={()=>router.push(`/patients/${patient.id}`)}/>)}{!rows.length&&<p className="atal-empty">No hay pacientes activos.</p>}</div></section><section className="atal-section atal-tasks"><Heading title="Actividad reciente" onClick={()=>router.push('/activity')}/>{tasks.map((event)=><button key={event.id} type="button" className="atal-task-row is-stable" onClick={()=>router.push(event.sessionId?`/activity/${event.sessionId}`:event.patientId?`/patients/${event.patientId}`:'/activity')}><span className="atal-task-dot" style={{background:priorityColor.stable}}/><span className="atal-task-time"><strong>{new Date(event.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</strong><small>{new Date(event.createdAt).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</small></span><span className="atal-task-copy"><b>{event.title}</b><small>{event.detail}</small></span><ChevronRight/></button>)}{!tasks.length&&<p className="atal-empty">La actividad aparecerá conforme trabajes.</p>}</section></div>
+ <div className="atal-desktop-dashboard"><Column title="Pacientes" count={activePatients.length} onViewAll={()=>router.push('/patients')}>{rows.map(({patient,priority})=><PatientRow key={patient.id} patient={patient} priority={priority} onClick={()=>router.push(`/patients/${patient.id}`)}/>)}</Column><Column title="Planes activos" count={activePlans.length} onViewAll={()=>router.push('/plans')}>{activePlans.slice(0,5).map((plan)=><button type="button" className="atal-dashboard-plan" key={plan.id} onClick={()=>router.push(`/plans/${plan.id}`)}><span className="atal-plan-icon"><ClipboardList/></span><span className="atal-dashboard-plan__copy"><b>{plan.title}</b><small>{patients.find((item)=>item.id===plan.patientId)?.name??'Paciente'}</small><small>{plan.duration} · {plan.frequency}</small></span><ChevronRight/></button>)}</Column><Column title="Reportes pendientes" count={pending.length} onViewAll={()=>router.push('/activity?view=reports')}>{pending.slice(0,5).map((session)=><button type="button" className="atal-activity-row" key={session.id} onClick={()=>router.push(`/activity/${session.id}`)}><span><FileText/></span><span><b>{session.status==='completed'?'Sesión completada':'Sesión parcial'}</b><small>{patients.find((item)=>item.id===session.patientId)?.name??'Paciente'}</small></span><em>Pendiente</em></button>)}</Column></div>
+ </main></AtalShell>}
+function Metric({icon,value,label}:{icon:React.ReactNode;value:number;label:string}){return <div><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></div>};function DesktopMetric({icon,value,label,warning}:{icon:React.ReactNode;value:number;label:string;warning?:boolean}){return <div className={`atal-desktop-metric ${warning?'is-warning':''}`}><span>{icon}</span><div><small>{label}</small><strong>{value}</strong><em>Datos locales actuales</em></div></div>};function Heading({title,onClick}:{title:string;onClick:()=>void}){return <div className="atal-section-heading"><h2>{title}</h2><button type="button" onClick={onClick}>Ver todos <ChevronRight/></button></div>};
+function PatientRow({patient,priority,onClick}:{patient:PatientView;priority:keyof typeof priorityRank;onClick:()=>void}){return <button type="button" className={`atal-patient-row is-compact is-${priority}`} aria-label={`${priorityLabel[priority]}: ${patient.name}`} onClick={onClick}><Avatar name={patient.name}/><span className="atal-patient-row__copy"><b>{patient.name}</b><small>{patient.plan}</small></span><span className="atal-status-dot" style={{background:priorityColor[priority]??statusColor[patient.status]}}/><small className="atal-patient-time">{patient.time}</small><ChevronRight/></button>};
+function Column({title,count,children,onViewAll}:{title:string;count:number;children:React.ReactNode;onViewAll:()=>void}){return <section className="atal-dashboard-column"><header><h2>{title} <small>{count}</small></h2><button type="button" onClick={onViewAll}>Ver todos <ChevronRight/></button></header><div className="atal-dashboard-list">{children}</div>{count===0&&<p className="atal-empty">Sin datos todavía.</p>}</section>}

@@ -1,16 +1,18 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { ArrowUp, CheckCircle2, FileText, Mic, Paperclip, Plus, RotateCcw, Sparkles, Trash2, UserRound, X } from 'lucide-react';
+import { ArrowUp, FileText, LoaderCircle, Mic, Paperclip, Plus, RotateCcw, Sparkles, Trash2, UserRound, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { applyAtalAIDraft } from './data/applyDraft';
 import { clearAIWorkspace, createAIConversation, getAIDraft, getLatestAIConversation, saveAIConversation, saveAIDraft } from './data/aiRepository';
 import { requestAtalAI } from './api/geminiClient';
 import { AttachmentMenu } from './components/AttachmentMenu';
 import { AttachmentPreview } from './components/AttachmentPreview';
 import { AudioRecorder } from './components/AudioRecorder';
-import { DraftEditor } from './components/DraftEditor';
+import { AIContextBar } from './components/AIContextBar';
+import { AIProgressCircuit } from './components/AIProgressCircuit';
+import { DraftSummaryCard } from './components/DraftSummaryCard';
 import { SuggestionBar } from './components/SuggestionBar';
 import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest } from './types';
+import { useAtalStore } from '@/src/data/atalStore';
 
 const MAX_FILES = 8;
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
@@ -32,14 +34,18 @@ export function AtalAIConversationScreen() {
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [saving, setSaving] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [retryPayload, setRetryPayload] = useState<{ request: AtalAIAnalyzeRequest; messageId?: string } | null>(null);
+  const [collisionDismissed, setCollisionDismissed] = useState(false);
   const [replacementId, setReplacementId] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const replacementRef = useRef<HTMLInputElement>(null);
   const discardCancelRef = useRef<HTMLButtonElement>(null);
+  const store = useAtalStore((state) => ({ patients: state.patients, plans: state.plans, clinicalRecords: state.clinicalRecords }));
 
   useEffect(() => { saveAIConversation({ ...conversation, updatedAt: new Date().toISOString(), attachmentMetadata: attachments.map(({ data: _data, ...meta }) => ({ ...meta, available: false })) }); }, [conversation, attachments]);
   useEffect(() => { if (draft) saveAIDraft(draft); }, [draft]);
-  useEffect(() => { const element = composerRef.current; if (!element) return; element.style.height = 'auto'; element.style.height = `${Math.min(150, Math.max(48, element.scrollHeight))}px`; }, [conversation.composerText]);
+  useEffect(() => { const element = composerRef.current; if (!element) return; element.style.height = 'auto'; element.style.height = `${Math.min(112, Math.max(44, element.scrollHeight))}px`; }, [conversation.composerText]);
+  useEffect(() => { const viewport = window.visualViewport; if (!viewport) return; const sync = () => document.documentElement.style.setProperty('--atal-visual-height', `${viewport.height}px`); sync(); viewport.addEventListener('resize', sync); return () => { viewport.removeEventListener('resize', sync); document.documentElement.style.removeProperty('--atal-visual-height'); }; }, []);
   useEffect(() => {
     if (!confirmDiscard) return;
     discardCancelRef.current?.focus();
@@ -78,9 +84,9 @@ export function AtalAIConversationScreen() {
   };
 
   const process = async (request: AtalAIAnalyzeRequest, userMessage?: AIMessage) => {
-    const before = conversation.composerText;
-    if (userMessage) append(userMessage);
-    patchConversation({ status: 'processing', error: undefined }); setNotice('');
+    setRetryPayload({ request, messageId: userMessage?.id });
+    setConversation((current) => ({ ...current, messages: userMessage ? [...current.messages, userMessage] : current.messages, composerText: '', transcription: '', status: 'processing', error: undefined, updatedAt: new Date().toISOString() }));
+    setNotice('');
     try {
       const result = await requestAtalAI(request);
       if (!result.draft) throw new Error('Gemini no devolvió un borrador estructurado.');
@@ -89,7 +95,7 @@ export function AtalAIConversationScreen() {
       setConversation((current) => ({ ...current, status, composerText: '', transcription: '', attachmentMetadata: [], messages: [...current.messages, { id: id('message'), role: 'assistant', text: result.draft?.followUpQuestion || 'Preparé un borrador editable. Revísalo antes de aplicarlo a Atal.', createdAt: new Date().toISOString(), attachments: [] }], updatedAt: new Date().toISOString() }));
       setAttachments([]); setAudioOpen(false);
     } catch (error) {
-      patchConversation({ status: 'error', composerText: before, error: error instanceof Error ? error.message : 'No pudimos procesar la solicitud.' });
+      patchConversation({ status: 'error', error: error instanceof Error ? error.message : 'No pudimos procesar la solicitud.' });
     }
   };
 
@@ -98,39 +104,37 @@ export function AtalAIConversationScreen() {
     const text = conversation.composerText.trim();
     const transcription = conversation.transcription.trim();
     if (!text && !transcription && !attachments.length) return;
+    if (conversation.workContext.patientMode === 'existing' && !conversation.workContext.selectedPatientId) { setNotice('Selecciona el paciente existente antes de procesar.'); return; }
+    if (conversation.workContext.intent === 'update_existing_plan' && !conversation.workContext.selectedPlanId) { setNotice('Selecciona el plan que deseas modificar.'); return; }
     const message: AIMessage = { id: id('message'), role: 'user', text: [text, transcription && `Transcripción: ${transcription}`].filter(Boolean).join('\n\n'), createdAt: new Date().toISOString(), attachments: attachments.map(({ data: _data, ...meta }) => meta) };
-    void process({ mode: 'analyze', text, transcription, attachments, currentDraft: draft }, message);
+    const selectedPatient=store.patients.find((item)=>item.id===conversation.workContext.selectedPatientId);const selectedRecord=store.clinicalRecords.find((item)=>item.patientId===conversation.workContext.selectedPatientId);const selectedPlan=store.plans.find((item)=>item.id===conversation.workContext.selectedPlanId);
+    const existingContext=selectedPatient?{patient:{id:selectedPatient.id,name:selectedPatient.name,diagnosis:selectedPatient.diagnosis,age:selectedPatient.age,affectedArea:selectedPatient.affectedArea},clinicalRecord:selectedRecord?{reasonForVisit:selectedRecord.reasonForVisit,evolution:selectedRecord.evolution,affectedArea:selectedRecord.affectedArea,symptoms:selectedRecord.symptoms,painLevel:selectedRecord.painLevel,providedDiagnosis:selectedRecord.providedDiagnosis,functionalLimitations:selectedRecord.functionalLimitations,goals:selectedRecord.goals,relevantHistory:selectedRecord.relevantHistory,precautions:selectedRecord.precautions,clinicalNotes:selectedRecord.clinicalNotes}:undefined,plan:selectedPlan?{id:selectedPlan.id,title:selectedPlan.title,focus:selectedPlan.focus,duration:selectedPlan.duration,frequency:selectedPlan.frequency,goal:selectedPlan.goal,exerciseIds:selectedPlan.exerciseIds,status:selectedPlan.status,progression:selectedPlan.progression,reportCriteria:selectedPlan.reportCriteria,generalInstructions:selectedPlan.generalInstructions}:undefined}:undefined;
+    void process({ mode: 'analyze', draftId: conversation.draftId, text, transcription, attachments, currentDraft: draft, workContext: conversation.workContext, existingContext }, message);
   };
 
   const transcribe = async () => {
     const audio = attachments.find((item) => item.kind === 'audio'); if (!audio) return;
     setTranscribing(true); setNotice('Transcribiendo el audio para que puedas revisarlo…');
-    try { const result = await requestAtalAI({ mode: 'transcribe', text: '', attachments: [audio] }); patchConversation({ transcription: result.transcript ?? '' }); setNotice('Revisa y corrige la transcripción antes de procesar.'); }
+    try { const result = await requestAtalAI({ mode: 'transcribe', draftId: conversation.draftId, text: '', attachments: [audio] }); patchConversation({ transcription: result.transcript ?? '' }); setNotice('Revisa y corrige la transcripción antes de procesar.'); }
     catch (error) { setNotice(error instanceof Error ? error.message : 'No pudimos transcribir el audio.'); }
     finally { setTranscribing(false); }
   };
 
-  const regenerate = (mode: 'regenerate-plan' | 'regenerate-exercise', targetExerciseId?: string) => { if (!draft) return; void process({ mode, text: conversation.composerText, attachments: [], currentDraft: draft, targetExerciseId }); };
-  const confirm = () => {
-    if (!draft) return; setSaving(true); setNotice('');
-    try {
-      const savedResult = applyAtalAIDraft(draft, conversation.privateContact);
-      patchConversation({ status: 'saved', savedResult });
-      append({ id: id('message'), role: 'assistant', text: 'Paciente, expediente, ejercicios y plan aplicados correctamente en Atal.', createdAt: new Date().toISOString(), attachments: [] });
-    } catch (error) { patchConversation({ status: 'error', error: error instanceof Error ? error.message : 'No pudimos aplicar el borrador.' }); }
-    finally { setSaving(false); }
-  };
   const discard = () => { clearAIWorkspace(conversation.id, conversation.draftId); const fresh = createAIConversation(); setConversation(fresh); setDraft(null); setAttachments([]); setNotice('Borrador descartado.'); setConfirmDiscard(false); };
+  const editFailed = () => { if (!retryPayload) return; const text = [retryPayload.request.text, retryPayload.request.transcription].filter(Boolean).join('\n\n'); setConversation((current) => ({ ...current, composerText: text, status: 'composing', error: undefined, messages: retryPayload.messageId ? current.messages.filter((item) => item.id !== retryPayload.messageId) : current.messages })); composerRef.current?.focus(); };
+  const matchingPatient = !collisionDismissed && draft?.patient.name.trim() && conversation.workContext.patientMode === 'new' ? store.patients.find((patient) => patient.name.localeCompare(draft.patient.name, 'es', { sensitivity: 'base' }) === 0) : undefined;
 
   return <AtalShell><main className="atal-content atal-ai-page">
-    <header className="atal-ai-header"><div><span><Sparkles /></span><div><small>Asistente clínico multimodal</small><h1>Atal IA</h1></div></div><button type="button" onClick={() => setConfirmDiscard(true)} disabled={!conversation.messages.length && !draft}><Trash2 /> <span>Descartar</span></button></header>
+    <header className={`atal-ai-header ${conversation.messages.length ? 'is-compact' : ''}`}><div><span><Sparkles /></span><div><small>Asistente clínico multimodal</small><h1>Atal IA</h1></div></div><button type="button" onClick={() => setConfirmDiscard(true)} disabled={!conversation.messages.length && !draft}><Trash2 /> <span>Descartar</span></button></header>
+    <AIContextBar context={conversation.workContext} patients={store.patients} plans={store.plans} onChange={(workContext) => { patchConversation({ workContext }); setDraft((current) => current ? { ...current, intent: workContext.intent, selectedPatientId: workContext.selectedPatientId, selectedPlanId: workContext.selectedPlanId, updatedAt: new Date().toISOString() } : current); }} />
+    <AIProgressCircuit status={conversation.status} draft={draft} onReview={() => draft && router.push(`/assistant/drafts/${draft.id}`)} />
     <section className="atal-ai-thread" aria-live="polite">
-      {!conversation.messages.length && !draft && <div className="atal-ai-welcome"><span><Sparkles /></span><h2>Hola, Fisio 👋</h2><p>Describe el caso con naturalidad. Puedes combinar texto, audio, fotografías y PDF en una misma solicitud.</p><div><span><UserRound /> Paciente</span><span><FileText /> Plan</span><span><Sparkles /> Ejercicios</span></div></div>}
+      {!conversation.messages.length && !draft && <div className="atal-ai-welcome"><span><Sparkles /></span><h2>Hola, Fisio 👋</h2><p>Elige arriba qué deseas hacer y describe el caso con naturalidad. Puedes combinar texto, audio, fotografías y PDF en una sola solicitud.</p></div>}
       {conversation.messages.map((message) => <article key={message.id} className={`atal-ai-message is-${message.role}`}><span>{message.role === 'assistant' ? <Sparkles /> : <UserRound />}</span><div><p>{message.text}</p>{message.attachments.length > 0 && <div className="atal-ai-message-files">{message.attachments.map((item) => <small key={item.id}><Paperclip /> {item.name}</small>)}</div>}<time>{new Date(message.createdAt).toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})}</time></div></article>)}
-      {conversation.status === 'processing' && <div className="atal-ai-processing" role="status"><Sparkles /><span><b>Atal IA está analizando tu solicitud…</b><small>Organizando paciente, expediente, plan y ejercicios</small></span><i /><i /><i /></div>}
-      {conversation.error && <div className="atal-ai-error" role="alert"><AlertCopy text={conversation.error} /><button type="button" onClick={() => send()}><RotateCcw /> Reintentar</button></div>}
-      {draft && <DraftEditor draft={draft} contact={conversation.privateContact} saving={saving} saved={conversation.status === 'saved'} onChange={setDraft} onContact={(privateContact) => patchConversation({ privateContact })} onRegeneratePlan={() => regenerate('regenerate-plan')} onRegenerateExercise={(exerciseId) => regenerate('regenerate-exercise', exerciseId)} onConfirm={confirm} />}
-      {conversation.status === 'saved' && conversation.savedResult && <section className="atal-ai-saved"><CheckCircle2 /><h2>Listo para continuar</h2><p>Los datos ya forman parte de la aplicación local.</p><div><button type="button" onClick={() => router.push(`/patients/${conversation.savedResult?.patientId}`)}>Ver paciente</button><button type="button" onClick={() => router.push(`/patients/${conversation.savedResult?.patientId}/clinical-record`)}>Ver expediente</button><button type="button" onClick={() => router.push(`/plans/${conversation.savedResult?.planId}`)}>Ver plan</button><button type="button" onClick={() => router.push(`/patients/${conversation.savedResult?.patientId}/portal-preview`)}>Vista del paciente</button></div></section>}
+      {conversation.status === 'processing' && <div className="atal-ai-processing is-compact" role="status"><LoaderCircle className="is-spinning"/><span><b>Atal IA está analizando tu solicitud…</b><small>Comprobando información y preparando el borrador</small></span></div>}
+      {conversation.error && <div className="atal-ai-error" role="alert"><AlertCopy text={conversation.error} /><div><button type="button" onClick={() => retryPayload && void process(retryPayload.request)}><RotateCcw /> Reintentar</button><button type="button" onClick={editFailed}>Editar y reenviar</button></div></div>}
+      {matchingPatient && <div className="atal-ai-match"><b>Encontramos a {matchingPatient.name}</b><p>Confirma si deseas usar este registro o crear uno nuevo.</p><div><button type="button" onClick={() => { const workContext = { intent: 'create_plan_for_existing_patient' as const, patientMode: 'existing' as const, selectedPatientId: matchingPatient.id, selectedPlanId: '' }; patchConversation({ workContext }); setDraft((current) => current ? { ...current, intent: workContext.intent, selectedPatientId: matchingPatient.id, updatedAt: new Date().toISOString() } : current); setCollisionDismissed(true); }}>Usar paciente existente</button><button type="button" onClick={() => { setCollisionDismissed(true); setNotice('Se conservará como paciente nuevo. Revisa los datos antes de aplicar.'); }}>Crear paciente nuevo</button></div></div>}
+      {draft && <DraftSummaryCard draft={draft} patientLabel={conversation.workContext.patientMode === 'existing' ? store.patients.find((item) => item.id === conversation.workContext.selectedPatientId)?.name ?? 'Paciente existente' : draft.patient.name || 'Paciente nuevo'} onReview={() => router.push(`/assistant/drafts/${draft.id}`)} onContinue={() => composerRef.current?.focus()} onDiscard={() => setConfirmDiscard(true)} />}
     </section>
 
     <section className="atal-ai-compose-zone">
@@ -140,7 +144,7 @@ export function AtalAIConversationScreen() {
       {audioOpen && <AudioRecorder onReady={addAudio} onState={(state, message) => { patchConversation({ status: state === 'recording' || state === 'paused' ? 'recording' : 'composing' }); if (message) setNotice(message); }} />}
       {attachments.some((item) => item.kind === 'audio') && <button type="button" className="atal-ai-transcribe" disabled={transcribing} onClick={transcribe}><Mic /> {transcribing ? 'Transcribiendo…' : 'Convertir audio a texto'}</button>}
       {conversation.transcription && <label className="atal-ai-transcript"><span>Transcripción editable</span><textarea value={conversation.transcription} onChange={(event) => patchConversation({ transcription: event.target.value })} /></label>}
-      <form className="atal-ai-composer" onSubmit={send}><button type="button" aria-label="Adjuntar" onClick={() => setAttachmentOpen(true)}><Plus /></button><textarea ref={composerRef} rows={1} value={conversation.composerText} onChange={(event) => setText(event.target.value)} placeholder="Escribe información del paciente, plan o ejercicios…" aria-label="Mensaje para Atal IA" /><button type="button" aria-label="Grabar audio" className={audioOpen ? 'is-active' : ''} onClick={() => setAudioOpen((value) => !value)}><Mic /></button><button type="submit" aria-label="Enviar" className="is-send" disabled={conversation.status === 'processing' || (!conversation.composerText.trim() && !conversation.transcription.trim() && !attachments.length)}><ArrowUp /></button></form>
+      <form className="atal-ai-composer" onSubmit={send}><button type="button" aria-label="Adjuntar" onClick={() => setAttachmentOpen(true)}><Plus /></button><textarea ref={composerRef} rows={1} value={conversation.composerText} onChange={(event) => setText(event.target.value)} placeholder="Escribe información del paciente, plan o ejercicios…" aria-label="Mensaje para Atal IA" /><button type="button" aria-label={audioOpen ? 'Cerrar grabadora' : 'Grabar audio'} className={audioOpen ? 'is-active' : ''} onClick={() => setAudioOpen((value) => !value)}><Mic /></button><button type="submit" aria-label={conversation.status === 'processing' ? 'Procesando solicitud' : 'Enviar'} className="is-send" disabled={conversation.status === 'processing' || (!conversation.composerText.trim() && !conversation.transcription.trim() && !attachments.length)}>{conversation.status === 'processing' ? <LoaderCircle className="is-spinning"/> : <ArrowUp />}</button></form>
       <small className="atal-ai-disclaimer">Atal IA organiza la información; el fisioterapeuta la revisa y confirma.</small>
     </section>
     <input ref={replacementRef} hidden type="file" accept="image/*,application/pdf,audio/*" onChange={(event) => { if (event.target.files) void addFiles(event.target.files); event.target.value = ''; }} />

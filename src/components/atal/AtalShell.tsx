@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { AtalLogo } from './AtalLogo';
+import { markAllNotificationsRead,markNotificationRead,useAtalStore } from '@/src/data/atalStore';
 
 const primary = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -55,6 +56,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const settings=useAtalStore((state)=>state.settings);const unread=useAtalStore((state)=>state.notifications.filter((item)=>!item.read).length);
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
 
   useEffect(() => {
@@ -79,7 +81,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const openNew = onNew ?? (() => setNewOpen(true));
 
   return (
-    <div className="atal-app">
+    <div className={`atal-app${settings.compact?' atal-app--compact':''}`}>
       <aside className="atal-sidebar">
         <AtalLogo />
         <nav className="atal-sidebar__nav" aria-label="Navegación principal">
@@ -89,14 +91,15 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
           <Link href="/exports" className={isActive('/exports') ? 'is-active' : ''}><FileDown /><span>Exportaciones</span></Link>
           <Link href="/settings" className={isActive('/settings') ? 'is-active' : ''}><Settings /><span>Ajustes</span></Link>
         </nav>
-        <div className="atal-sidebar__profile"><AvatarMini /><span><strong>Cuenta demo</strong><small>Fisioterapeuta</small></span></div>
+        <div className="atal-sidebar__profile"><AvatarMini /><span><strong>{settings.professionalName}</strong><small>{settings.specialty}</small></span></div>
       </aside>
 
       <div className="atal-workspace">
         <header className="atal-mobile-header">
           <AtalLogo />
           <div>
-            <button type="button" aria-label="Notificaciones" onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell /><i /></button>
+            <button type="button" aria-label="Buscar en Atal" onClick={() => setSearchOpen(true)} className="atal-icon-button"><Search /></button>
+            <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" aria-label="Crear nuevo" onClick={openNew} className="atal-new-button"><Plus /></button>
           </div>
         </header>
@@ -105,7 +108,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
           <div className="atal-desktop-title">Escritorio maestro</div>
           <div className="atal-desktop-actions">
             <button type="button" className="atal-desktop-search" onClick={() => setSearchOpen(true)}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>⌘ K</kbd></button>
-            <button type="button" aria-label="Notificaciones" onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell /><i /></button>
+            <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" onClick={openNew} className="atal-desktop-new"><Plus /> Nuevo</button>
           </div>
         </header>
@@ -144,22 +147,17 @@ function PanelFrame({ title, children, onClose }: { title: string; children: Rea
 
 function SearchPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
-  const entries = [
-    { label: 'Paciente Demo 01', detail: 'Paciente · Plan activo', href: '/patients/p01', icon: UsersRound },
-    { label: 'Rehabilitación — Fase 1', detail: 'Plan · 4 semanas', href: '/plans/pl01', icon: ClipboardList },
-    { label: 'Sentadilla asistida', detail: 'Ejercicio · Rodilla', href: '/exercises', icon: Dumbbell },
-  ].filter((entry) => `${entry.label} ${entry.detail}`.toLowerCase().includes(query.toLowerCase()));
+  const state=useAtalStore((store)=>store);const entries=[...state.patients.map((item)=>({label:item.name,detail:`Paciente · ${item.diagnosis}`,href:`/patients/${item.id}`,icon:UsersRound})),...state.plans.map((item)=>({label:item.title,detail:`Plan · ${state.patients.find((patient)=>patient.id===item.patientId)?.name??''}`,href:`/plans/${item.id}`,icon:ClipboardList})),...state.exercises.map((item)=>({label:item.name,detail:`Ejercicio · ${item.region} · ${item.category}`,href:`/exercises/${item.id}`,icon:Dumbbell})),...state.sessions.map((item)=>({label:`Reporte · ${state.patients.find((patient)=>patient.id===item.patientId)?.name??'Paciente'}`,detail:`Dolor ${item.endPain}/10 · ${item.status}`,href:`/activity/${item.id}`,icon:FileText}))].filter((entry)=>`${entry.label} ${entry.detail}`.toLowerCase().includes(query.toLowerCase())).slice(0,20);
   return <PanelFrame title="Buscar en Atal" onClose={onClose}><label className="atal-command-search"><Search /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Paciente, plan o ejercicio" /></label><div className="atal-command-results">{entries.map(({ label, detail, href, icon: Icon }) => <Link key={href} href={href}><span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight /></Link>)}{!entries.length && <p>No encontramos resultados.</p>}</div></PanelFrame>;
 }
 
 function NotificationsPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
-  const [read, setRead] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('atal:read-notifications') ?? '[]') as string[]; } catch { return []; } });
-  const open = (id: string, href: string) => { const next = read.includes(id) ? read : [...read, id]; setRead(next); localStorage.setItem('atal:read-notifications', JSON.stringify(next)); onNavigate(href); };
-  return <PanelFrame title="Notificaciones" onClose={onClose}><div className="atal-notification-list"><button type="button" className={read.includes('progress') ? 'is-read' : ''} onClick={() => open('progress', '/activity/p02')}><span className="is-warning"><Activity /></span><span><b>Revisar progreso</b><small>Paciente Demo 02 reportó dolor 6/10.</small></span><i>Ahora</i></button><button type="button" className={read.includes('complete') ? 'is-read' : ''} onClick={() => open('complete', '/activity/p01')}><span><CheckCircle2 /></span><span><b>Sesión completada</b><small>Paciente Demo 01 terminó su rutina.</small></span><i>8:45</i></button></div></PanelFrame>;
+  const notifications=useAtalStore((state)=>state.notifications);const open=(id:string,href:string)=>{markNotificationRead(id);onNavigate(href)};
+  return <PanelFrame title="Notificaciones" onClose={onClose}><div className="atal-notification-toolbar"><span>{notifications.filter((item)=>!item.read).length} sin leer</span><button type="button" disabled={!notifications.some((item)=>!item.read)} onClick={markAllNotificationsRead}>Marcar todas como leídas</button></div><div className="atal-notification-list">{notifications.map((item)=><button type="button" key={item.id} className={item.read?'is-read':''} onClick={()=>open(item.id,item.href)}><span className={item.severity==='urgent'||item.severity==='attention'?'is-warning':''}>{item.severity==='stable'?<CheckCircle2/>:<Activity/>}</span><span><b>{item.title}</b><small>{item.detail}</small></span><i>{new Date(item.createdAt).toLocaleDateString('es-MX',{day:'numeric',month:'short'})}</i></button>)}{!notifications.length&&<p className="atal-empty">No hay notificaciones todavía.</p>}</div></PanelFrame>;
 }
 
 function NewPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
-  return <PanelFrame title="Crear nuevo" onClose={onClose}><div className="atal-quick-actions"><button type="button" onClick={() => onNavigate('/patients/new')}><span><UserPlus /></span><span><b>Paciente</b><small>Crear un expediente clínico</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/plans/new')}><span><ClipboardList /></span><span><b>Plan</b><small>Diseñar una nueva rehabilitación</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/exercises')}><span><Dumbbell /></span><span><b>Ejercicio</b><small>Abrir la biblioteca y añadir uno</small></span><ChevronRight /></button></div></PanelFrame>;
+  return <PanelFrame title="Crear nuevo" onClose={onClose}><div className="atal-quick-actions"><button type="button" onClick={() => onNavigate('/patients/new')}><span><UserPlus /></span><span><b>Paciente</b><small>Crear un expediente clínico</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/plans/new')}><span><ClipboardList /></span><span><b>Plan</b><small>Diseñar una nueva rehabilitación</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/exercises/new')}><span><Dumbbell /></span><span><b>Ejercicio</b><small>Crear un ejercicio personalizado</small></span><ChevronRight /></button></div></PanelFrame>;
 }
 
 function AvatarMini() { return <span className="atal-avatar atal-avatar--md">CD</span>; }

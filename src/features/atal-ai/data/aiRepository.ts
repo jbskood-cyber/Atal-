@@ -18,12 +18,15 @@ export function readAIConversations() {
     transcription: typeof conversation.transcription === 'string' ? conversation.transcription : '',
     attachmentMetadata: Array.isArray(conversation.attachmentMetadata) ? conversation.attachmentMetadata : [],
     privateContact: conversation.privateContact ?? { phone: '', email: '', address: '', emergencyContact: '' },
+    workContext: conversation.workContext ?? {intent:'create_patient_plan',patientMode:'new',selectedPatientId:'',selectedPlanId:''},
   }));
 }
 export function readAIDrafts() {
   return readCollection(AI_DRAFTS_KEY, isDraft).map((draft) => ({
     ...draft,
     patient: { ...draft.patient, symptoms: Array.isArray(draft.patient.symptoms) ? draft.patient.symptoms : [] },
+    intent:['create_patient_plan','create_plan_for_existing_patient','create_exercise','update_patient_record','update_existing_plan'].includes(draft.intent)?draft.intent:'create_patient_plan',
+    selectedPatientId:typeof draft.selectedPatientId==='string'?draft.selectedPatientId:'',selectedPlanId:typeof draft.selectedPlanId==='string'?draft.selectedPlanId:'',proposedActions:Array.isArray(draft.proposedActions)?draft.proposedActions:[],
     exercises: draft.exercises.map((exercise) => ({ ...exercise, reusePreference: exercise.reusePreference === 'create-new' ? 'create-new' as const : 'reuse-exact' as const })),
   }));
 }
@@ -36,5 +39,5 @@ export function clearAIWorkspace(conversationId: string, draftId: string) { wind
 export function createAIConversation(): AIConversation {
   const now = new Date().toISOString();
   const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
-  return { id: `conversation-${id}`, draftId: `draft-${id}`, createdAt: now, updatedAt: now, status: 'empty', composerText: '', transcription: '', messages: [], attachmentMetadata: [], privateContact: { phone: '', email: '', address: '', emergencyContact: '' } };
+  return { id: `conversation-${id}`, draftId: `draft-${id}`, createdAt: now, updatedAt: now, status: 'empty', composerText: '', transcription: '', messages: [], attachmentMetadata: [], privateContact: { phone: '', email: '', address: '', emergencyContact: '' },workContext:{intent:'create_patient_plan',patientMode:'new',selectedPatientId:'',selectedPlanId:''} };
 }

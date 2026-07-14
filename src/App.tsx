@@ -21,6 +21,8 @@ import { SettingsDetailScreen, type SettingsKind } from '@/src/screens/SettingsD
 import { SystemStatesScreen } from '@/src/screens/SystemStatesScreen';
 import { ThemeProvider } from '@/src/context/ThemeContext';
 import { ClinicalRecordScreen } from '@/src/features/clinical-record/ClinicalRecordScreen';
+import { AtalAIDraftReviewScreen } from '@/src/features/atal-ai/AtalAIDraftReviewScreen';
+import { FeedbackScreen } from '@/src/screens/FeedbackScreen';
 
 function PatientProfileRoute() { const { id = 'p01' } = useParams(); return <PatientProfileScreen patientId={id} />; }
 function PatientPreviewRoute() { const { id = 'p01' } = useParams(); return <PatientPortalPreviewScreen patientId={id} />; }
@@ -30,6 +32,7 @@ function PlanDetailRoute() { const { id = 'pl01' } = useParams(); return <PlanDe
 function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <ExerciseDetailScreen exerciseId={id} />; }
 function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
 function SettingsDetailRoute({ kind }: { kind: SettingsKind }) { return <SettingsDetailScreen kind={kind} />; }
+function AIDraftRoute() { const { draftId = '' } = useParams(); return <AtalAIDraftReviewScreen draftId={draftId} />; }
 
 function PrivateAppRoutes() {
   return <AtalPersistentShell><Routes>
@@ -47,12 +50,14 @@ function PrivateAppRoutes() {
     <Route path="/activity" element={<ActivityScreen />} />
     <Route path="/activity/:id" element={<ActivityDetailRoute />} />
     <Route path="/assistant" element={<AssistantScreen />} />
+    <Route path="/assistant/drafts/:draftId" element={<AIDraftRoute />} />
     <Route path="/exports" element={<ExportsScreen />} />
     <Route path="/settings" element={<SettingsScreen />} />
     <Route path="/settings/profile" element={<SettingsDetailRoute kind="profile" />} />
     <Route path="/settings/privacy" element={<SettingsDetailRoute kind="privacy" />} />
     <Route path="/settings/ai" element={<SettingsDetailRoute kind="ai" />} />
     <Route path="/settings/appearance" element={<SettingsDetailRoute kind="appearance" />} />
+    <Route path="/settings/feedback" element={<FeedbackScreen />} />
     <Route path="/system-states" element={<SystemStatesScreen />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></AtalPersistentShell>;

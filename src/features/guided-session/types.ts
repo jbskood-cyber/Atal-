@@ -17,7 +17,7 @@ export type GuidedExercise = {
   instructions: string[];
   precautions: string;
   therapistCue: string;
-  media: { type: 'video' | 'animation' | 'sequence' | 'image' | 'none'; url?: string };
+  media: { type: 'video' | 'animation' | 'sequence' | 'image' | 'none'; url?: string; mediaId?: string };
 };
 
 export type SetRecord = { completed: boolean; repetitions?: number; seconds?: number };
@@ -40,6 +40,7 @@ export type GuidedSessionDraft = {
 
 export type GuidedPlan = {
   id: string;
+  status: 'draft'|'active'|'paused'|'completed'|'archived'|'none';
   name: string;
   therapistMessage: string;
   estimatedDuration: string;

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertCircle, ArrowLeft, Check, ChevronRight, Clock3, Dumbbell, ImageOff, RotateCcw, Square, TimerReset } from 'lucide-react';
 import type { DiscomfortReport, ExerciseRecord, ExerciseResult, GuidedExercise, Symptom } from './types';
 import { RestTimer } from './RestTimer';
 import { SemanticSlider } from './SemanticSlider';
 import { SymptomPicker } from './SymptomPicker';
+import { getExerciseMedia,mediaObjectUrls } from '@/src/data/exerciseMediaRepository';
 
 const resultOptions: { id: ExerciseResult; label: string }[] = [{ id: 'completed', label: 'Completado' }, { id: 'partial', label: 'Parcialmente' }, { id: 'skipped', label: 'No pude hacerlo' }];
 
@@ -30,9 +31,11 @@ export function ActiveExercise({ exercise, record, index, total, onChange, onPre
 }
 
 export function ExerciseMedia({ exercise }: { exercise: GuidedExercise }) {
-  if (exercise.media.type === 'none' || !exercise.media.url) return <div className="atal-session-media is-empty"><ImageOff /><b>Sin recurso visual</b><small>Sigue las instrucciones escritas de tu fisioterapeuta.</small></div>;
-  if (exercise.media.type === 'video') return <div className="atal-session-media"><video controls src={exercise.media.url} /></div>;
-  if (exercise.media.type === 'animation') return <div className="atal-session-media"><img src={exercise.media.url} alt={`Animación de ${exercise.name}`} /></div>;
-  if (exercise.media.type === 'sequence') return <div className="atal-session-media is-sequence"><img src={exercise.media.url} alt={`Secuencia de ${exercise.name}`} /><TimerReset /></div>;
-  return <div className="atal-session-media"><img src={exercise.media.url} alt={`Demostración de ${exercise.name}`} /></div>;
+  const[urls,setUrls]=useState<string[]>(exercise.media.url?[exercise.media.url]:[]);
+  useEffect(()=>{if(!exercise.media.mediaId){setUrls(exercise.media.url?[exercise.media.url]:[]);return;}let active=true;let created:string[]=[];getExerciseMedia(exercise.media.mediaId).then((record)=>{if(!active||!record)return;created=mediaObjectUrls(record);setUrls(created)});return()=>{active=false;created.forEach(URL.revokeObjectURL)}},[exercise.media.mediaId,exercise.media.url]);
+  if (exercise.media.type === 'none' || !urls.length) return <div className="atal-session-media is-empty"><ImageOff /><b>Sin recurso visual</b><small>Sigue las instrucciones escritas de tu fisioterapeuta.</small></div>;
+  if (exercise.media.type === 'video') return <div className="atal-session-media"><video controls src={urls[0]} /></div>;
+  if (exercise.media.type === 'animation') return <div className="atal-session-media"><img src={urls[0]} alt={`Animación de ${exercise.name}`} /></div>;
+  if (exercise.media.type === 'sequence') return <div className="atal-session-media is-sequence">{urls.map((url,index)=><img key={url} src={url} alt={`Paso ${index+1} de ${exercise.name}`} />)}<TimerReset /></div>;
+  return <div className="atal-session-media"><img src={urls[0]} alt={`Demostración de ${exercise.name}`} /></div>;
 }

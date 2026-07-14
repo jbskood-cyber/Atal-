@@ -1,64 +1,20 @@
-import { createLocalExercise, getExerciseCatalog, LOCAL_EXERCISES_KEY } from '@/src/data/localExercises';
-import { createLocalPlan, LOCAL_PLANS_KEY } from '@/src/data/localPlans';
-import { createLocalPatient, LOCAL_PATIENTS_KEY } from '@/src/data/localPatients';
-import { CLINICAL_RECORDS_KEY, createClinicalRecord } from '@/src/features/clinical-record/clinicalRecordRepository';
-import type { AtalAIDraft, PrivateContactDraft } from '../types';
-
-const transactionKeys = [LOCAL_PATIENTS_KEY, LOCAL_EXERCISES_KEY, LOCAL_PLANS_KEY, CLINICAL_RECORDS_KEY] as const;
-
-function normalize(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-function numberFromText(value: string) {
-  const match = value.match(/\d+/);
-  return match ? Number(match[0]) : undefined;
-}
-
-function durationText(draft: AtalAIDraft['plan']['duration']) {
-  if (draft.customText.trim()) return draft.customText.trim();
-  if (draft.value === null) return 'Por definir';
-  return `${draft.value} ${draft.unit === 'days' ? 'días' : draft.unit === 'months' ? 'meses' : 'semanas'}`;
-}
-
-function frequencyText(draft: AtalAIDraft['plan']['frequency']) {
-  if (draft.customText.trim()) return draft.customText.trim();
-  if (draft.value === null) return 'Según tolerancia';
-  const period = draft.period === 'day' ? 'día' : draft.period === 'month' ? 'mes' : 'semana';
-  return `${draft.value} ${draft.value === 1 ? 'vez' : 'veces'} por ${period}`;
-}
-
-export function applyAtalAIDraft(draft: AtalAIDraft, contact: PrivateContactDraft) {
-  if (!draft.patient.name.trim()) throw new Error('Añade el nombre del paciente antes de confirmar.');
-  if (!draft.plan.title.trim()) throw new Error('Añade un título al plan antes de confirmar.');
-  const snapshots = new Map(transactionKeys.map((key) => [key, window.localStorage.getItem(key)]));
-  try {
-    const patient = createLocalPatient({ name: draft.patient.name, diagnosis: draft.patient.providedDiagnosis || draft.patient.reasonForVisit, age: draft.patient.age, birthDate: draft.patient.birthDate, sex: draft.patient.sex, affectedArea: draft.patient.affectedArea, contact });
-    const existing = getExerciseCatalog();
-    const exerciseIds = draft.exercises.filter((exercise) => exercise.name.trim()).map((exercise) => {
-      if (exercise.sets === null) throw new Error(`Completa las series de “${exercise.name}” antes de confirmar.`);
-      const clearMatch = existing.find((item) => normalize(item.name) === normalize(exercise.name) && (!exercise.region.trim() || normalize(item.region) === normalize(exercise.region)));
-      if (clearMatch && exercise.reusePreference !== 'create-new') return clearMatch.id;
-      const repetitions = numberFromText(exercise.repetitions);
-      return createLocalExercise({
-        name: exercise.name, region: exercise.region, category: exercise.category, objective: exercise.objective,
-        startingPosition: exercise.startingPosition, instructions: exercise.instructions, precautions: exercise.precautions.join('\n'),
-        equipment: exercise.equipment, difficulty: exercise.difficulty, sets: Math.max(1, exercise.sets), repetitions,
-        time: repetitions ? undefined : exercise.duration || undefined, rest: exercise.rest, maxPain: exercise.maxPain,
-        tags: exercise.tags, notes: exercise.notes, media: { type: 'none' },
-      }).id;
-    });
-    const plan = createLocalPlan({ patientId: patient.id, title: draft.plan.title, focus: draft.plan.focus, duration: durationText(draft.plan.duration), frequency: frequencyText(draft.plan.frequency), goal: draft.plan.goal, exerciseIds, status: draft.plan.status });
-    const clinicalRecord = createClinicalRecord({
-      patientId: patient.id, date: new Date().toISOString(), reasonForVisit: draft.patient.reasonForVisit,
-      evolution: draft.patient.evolutionTime, affectedArea: draft.patient.affectedArea, symptoms: draft.patient.symptoms, painLevel: draft.patient.painLevel,
-      providedDiagnosis: draft.patient.providedDiagnosis, functionalLimitations: draft.patient.functionalLimitations, goals: draft.patient.goals,
-      relevantHistory: draft.patient.relevantHistory, precautions: draft.patient.precautions, clinicalNotes: draft.patient.clinicalNotes,
-      planId: plan.id, professional: 'Cuenta demo',
-    });
-    return { patientId: patient.id, planId: plan.id, clinicalRecordId: clinicalRecord.id };
-  } catch (error) {
-    for (const [key, value] of snapshots) value === null ? window.localStorage.removeItem(key) : window.localStorage.setItem(key, value);
-    throw error;
-  }
-}
+import { createEntityId,mutateAtalStore,type ActivityEvent,type ExerciseEntity,type PatientEntity,type PlanEntity } from '@/src/data/atalStore';
+import type { ClinicalRecord } from '@/src/features/clinical-record/types';
+import type { AtalAIDraft,PrivateContactDraft } from '../types';
+function normalize(value:string){return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ')}
+function numberFromText(value:string){const match=value.match(/\d+/);return match?Number(match[0]):undefined}
+function durationText(value:AtalAIDraft['plan']['duration']){return (value.customText.trim()||value.value!==null)?value.customText.trim()||`${value.value} ${value.unit==='days'?'días':value.unit==='months'?'meses':'semanas'}`:'Por definir'}
+function frequencyText(value:AtalAIDraft['plan']['frequency']){if(value.customText.trim())return value.customText.trim();if(value.value===null)return'Por definir';return`${value.value} ${value.value===1?'vez':'veces'} por ${value.period==='day'?'día':value.period==='month'?'mes':'semana'}`}
+function event(kind:ActivityEvent['kind'],title:string,detail:string,ids:Partial<Pick<ActivityEvent,'patientId'|'planId'|'sessionId'>>={}):ActivityEvent{return{id:createEntityId('event'),kind,title,detail,createdAt:new Date().toISOString(),...ids}}
+function filled(next:string,current:string){return next.trim()?next.trim():current}
+export function applyAtalAIDraft(ai:AtalAIDraft,contact:PrivateContactDraft){let result:{patientId?:string;planId?:string;clinicalRecordId?:string;exerciseId?:string;summary:string[]}={summary:[]};mutateAtalStore((store)=>{const timestamp=new Date().toISOString();let patient:PatientEntity|undefined;let plan:PlanEntity|undefined;const recordApplied=()=>{store.events.unshift(event('ai_applied','Atal IA aplicado',result.summary.join(' '),{patientId:patient?.id,planId:plan?.id}));if(store.settings.notifications)store.notifications.unshift({id:createEntityId('notification'),title:'Cambios de Atal IA aplicados',detail:result.summary.join(' '),severity:'stable',href:plan?`/plans/${plan.id}`:patient?`/patients/${patient.id}`:result.exerciseId?`/exercises/${result.exerciseId}`:'/exercises',read:false,createdAt:timestamp});};
+ if(ai.intent==='create_patient_plan'){if(!ai.patient.name.trim())throw new Error('Añade el nombre del paciente.');patient={id:createEntityId('patient'),name:ai.patient.name.trim(),diagnosis:ai.patient.providedDiagnosis||ai.patient.reasonForVisit||'Motivo por completar',age:ai.patient.age,birthDate:ai.patient.birthDate,sex:ai.patient.sex,affectedArea:ai.patient.affectedArea,status:'active',visitType:'first',contact:{phone:contact.phone,email:contact.email,address:contact.address,emergencyContact:contact.emergencyContact},createdAt:timestamp,updatedAt:timestamp};store.patients.push(patient);store.events.unshift(event('patient_created','Paciente creado',patient.name,{patientId:patient.id}));result.patientId=patient.id;result.summary.push('Paciente creado.');}
+ else if(ai.intent!=='create_exercise'){const id=ai.selectedPatientId;if(!id)throw new Error('Selecciona un paciente existente antes de aplicar.');patient=store.patients.find((item)=>item.id===id);if(!patient)throw new Error('El paciente seleccionado ya no existe.');result.patientId=patient.id;result.summary.push('Paciente existente conservado.');}
+ const exerciseIds:string[]=[];const requestedExercises=ai.intent==='update_patient_record'?[]:ai.exercises.filter((item)=>item.name.trim());for(const exercise of requestedExercises){const exact=store.exercises.find((item)=>normalize(item.name)===normalize(exercise.name)&&(!exercise.region.trim()||normalize(item.region)===normalize(exercise.region)));if(exact&&exercise.reusePreference!=='create-new'){exerciseIds.push(exact.id);result.summary.push(`Ejercicio reutilizado: ${exact.name}.`);continue;}if(exercise.sets===null)throw new Error(`Completa las series de “${exercise.name}”.`);const repetitions=numberFromText(exercise.repetitions);const created:ExerciseEntity={id:createEntityId('exercise'),name:exercise.name.trim(),region:exercise.region.trim()||'Personalizada',category:exercise.category.trim()||'Personalizado',objective:exercise.objective,startingPosition:exercise.startingPosition,instructions:exercise.instructions,precautions:exercise.precautions.join('\n'),equipment:exercise.equipment,difficulty:exercise.difficulty,sets:Math.max(1,exercise.sets),repetitions,time:repetitions?undefined:exercise.duration||undefined,rest:exercise.rest,maxPain:exercise.maxPain,tags:exercise.tags,notes:exercise.notes,media:{type:'none'},status:'active',source:'local',createdAt:timestamp,updatedAt:timestamp};store.exercises.push(created);exerciseIds.push(created.id);store.events.unshift(event('exercise_created','Ejercicio creado',created.name));result.exerciseId??=created.id;result.summary.push(`Ejercicio creado: ${created.name}.`);}
+ if(ai.intent==='create_exercise'){if(!exerciseIds.length)throw new Error('Añade al menos un ejercicio.');recordApplied();return;}
+ if(!patient)throw new Error('No se pudo resolver el paciente.');const existingRecord=store.clinicalRecords.find((item)=>item.patientId===patient!.id);const shouldRecord=['create_patient_plan','update_patient_record'].includes(ai.intent)||(!existingRecord&&ai.intent==='create_plan_for_existing_patient');if(shouldRecord){let record:ClinicalRecord;if(existingRecord){store.clinicalRecordVersions.push({id:createEntityId('record-version'),recordId:existingRecord.id,patientId:patient.id,version:existingRecord.version,snapshot:structuredClone(existingRecord),createdAt:timestamp});record={...existingRecord,version:existingRecord.version+1,date:timestamp,reasonForVisit:filled(ai.patient.reasonForVisit,existingRecord.reasonForVisit),evolution:filled(ai.patient.evolutionTime,existingRecord.evolution),affectedArea:filled(ai.patient.affectedArea,existingRecord.affectedArea),symptoms:ai.patient.symptoms.length?ai.patient.symptoms:existingRecord.symptoms,painLevel:ai.patient.painLevel??existingRecord.painLevel,providedDiagnosis:filled(ai.patient.providedDiagnosis,existingRecord.providedDiagnosis),functionalLimitations:ai.patient.functionalLimitations.length?ai.patient.functionalLimitations:existingRecord.functionalLimitations,goals:ai.patient.goals.length?ai.patient.goals:existingRecord.goals,relevantHistory:ai.patient.relevantHistory.length?ai.patient.relevantHistory:existingRecord.relevantHistory,precautions:ai.patient.precautions.length?ai.patient.precautions:existingRecord.precautions,clinicalNotes:filled(ai.patient.clinicalNotes,existingRecord.clinicalNotes),updatedAt:timestamp};store.clinicalRecords=store.clinicalRecords.map((item)=>item.id===record.id?record:item);store.events.unshift(event('record_updated','Expediente actualizado',`Versión ${record.version}`,{patientId:patient.id}));result.summary.push('Expediente actualizado.');}else{record={id:createEntityId('record'),patientId:patient.id,version:1,date:timestamp,reasonForVisit:ai.patient.reasonForVisit,evolution:ai.patient.evolutionTime,affectedArea:ai.patient.affectedArea,symptoms:ai.patient.symptoms,painLevel:ai.patient.painLevel,providedDiagnosis:ai.patient.providedDiagnosis,functionalLimitations:ai.patient.functionalLimitations,goals:ai.patient.goals,relevantHistory:ai.patient.relevantHistory,precautions:ai.patient.precautions,clinicalNotes:ai.patient.clinicalNotes,planId:'',professional:store.settings.professionalName,createdAt:timestamp,updatedAt:timestamp};store.clinicalRecords.push(record);store.events.unshift(event('record_created','Expediente creado','Versión 1',{patientId:patient.id}));result.summary.push('Expediente creado.');}result.clinicalRecordId=record.id;}
+ if(ai.intent==='update_patient_record'){recordApplied();return;}
+ if(ai.intent==='update_existing_plan'){if(!ai.selectedPlanId)throw new Error('Selecciona el plan que deseas modificar.');plan=store.plans.find((item)=>item.id===ai.selectedPlanId);if(!plan||plan.patientId!==patient.id)throw new Error('El plan seleccionado no pertenece al paciente.');plan.title=filled(ai.plan.title,plan.title);plan.focus=filled(ai.plan.focus,plan.focus);plan.goal=filled(ai.plan.goal,plan.goal);plan.duration=ai.plan.duration.value!==null||ai.plan.duration.customText?durationText(ai.plan.duration):plan.duration;plan.frequency=ai.plan.frequency.value!==null||ai.plan.frequency.customText?frequencyText(ai.plan.frequency):plan.frequency;plan.progression=ai.plan.phases.length?ai.plan.phases.join('\n'):plan.progression;plan.generalInstructions=filled(ai.plan.generalInstructions,plan.generalInstructions);if(exerciseIds.length)plan.exerciseIds=exerciseIds;plan.updatedAt=timestamp;store.events.unshift(event('plan_updated','Plan actualizado',plan.title,{patientId:patient.id,planId:plan.id}));result.summary.push('Plan actualizado.');}
+ else{if(!ai.plan.title.trim())throw new Error('Añade un título al plan.');const desiredStatus=ai.plan.status;const activeConflict=desiredStatus==='active'&&store.plans.some((item)=>item.patientId===patient!.id&&item.status==='active');if(activeConflict)throw new Error('Este paciente ya tiene un plan activo. Guarda el nuevo como borrador o gestiona primero el plan actual.');plan={id:createEntityId('plan'),patientId:patient.id,title:ai.plan.title.trim(),focus:ai.plan.focus,duration:durationText(ai.plan.duration),frequency:frequencyText(ai.plan.frequency),goal:ai.plan.goal,exerciseIds,status:desiredStatus,progression:ai.plan.phases.join('\n'),reportCriteria:'Reportar dolor elevado, síntomas o imposibilidad para completar.',generalInstructions:ai.plan.generalInstructions,createdAt:timestamp,updatedAt:timestamp};store.plans.push(plan);store.events.unshift(event('plan_created','Plan creado',plan.title,{patientId:patient.id,planId:plan.id}));result.summary.push(`Plan creado como ${plan.status==='active'?'activo':'borrador'}.`);}
+ if(plan){result.planId=plan.id;const record=store.clinicalRecords.find((item)=>item.patientId===patient!.id);if(record)record.planId=plan.id;}
+ recordApplied();});return result;}

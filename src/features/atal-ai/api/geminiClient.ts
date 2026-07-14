@@ -6,5 +6,5 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest): Promise<Atal
   const result = await response.json().catch(() => ({})) as { draft?: unknown; transcript?: unknown; error?: unknown };
   if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Atal IA no pudo procesar la solicitud.');
   if (payload.mode === 'transcribe') return { transcript: typeof result.transcript === 'string' ? result.transcript : '' };
-  return { draft: normalizeAtalAIDraft(result.draft, payload.currentDraft?.id) };
+  const draft=normalizeAtalAIDraft(result.draft, payload.currentDraft?.id ?? payload.draftId);if(payload.workContext){draft.intent=payload.workContext.intent;draft.selectedPatientId=payload.workContext.selectedPatientId;draft.selectedPlanId=payload.workContext.selectedPlanId;}return { draft };
 }

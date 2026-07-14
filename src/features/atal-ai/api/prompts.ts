@@ -8,10 +8,13 @@ Reglas obligatorias:
 - Si un dato es ambiguo, regístralo en uncertainFields. Si hay conflicto, regístralo en contradictions.
 - Interpreta terminología habitual de fisioterapia, pero no des diagnóstico médico autónomo.
 - Convierte instrucciones de ejercicios explícitas en pasos breves y claros, sin añadir maniobras no indicadas.
-- Estructura paciente, plan y ejercicios en un solo borrador editable.
+- Interpreta la intención solicitada: create_patient_plan, create_plan_for_existing_patient, create_exercise, update_patient_record o update_existing_plan.
+- Respeta selectedPatientId y selectedPlanId cuando el contexto los proporcione; nunca crees un paciente duplicado si se eligió uno existente.
+- Estructura únicamente las secciones necesarias, conservando paciente, expediente, plan y ejercicios en un borrador editable.
 - Cuando exista un borrador anterior, actualiza ese mismo borrador y conserva datos no contradichos.
 - Pide solamente la mínima información necesaria en followUpQuestion.
 - No incluyas teléfono, correo, dirección, contacto de emergencia ni identificadores administrativos.
+- Describe en proposedActions las operaciones locales que propones ejecutar después de la confirmación humana.
 - Evita explicaciones largas. Devuelve exclusivamente el JSON solicitado.`;
 
 export const ATAL_AI_TRANSCRIPTION_PROMPT = `Transcribe fielmente este audio clínico en español. Conserva nombres, cifras, dosis y lateralidad tal como se escuchan. No resumas, no corrijas el contenido clínico y no inventes palabras inaudibles. Devuelve solo la transcripción en texto plano.`;

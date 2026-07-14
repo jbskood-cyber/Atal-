@@ -1,6 +1,5 @@
 import { getExerciseCatalogItem, type LocalExercise } from '@/src/data/localExercises';
-import { getCurrentPatientLocalPlan } from '@/src/data/localPlans';
-import { createDemoGuidedExercise, createDemoPatientPlan } from './demo';
+import { getPatientLocalPlans } from '@/src/data/localPlans';
 import type { GuidedExercise, GuidedPlan } from './types';
 
 function secondsFromText(value?: string) {
@@ -33,14 +32,16 @@ function localToGuided(exercise: LocalExercise): GuidedExercise {
 export function resolveGuidedExercise(id: string): GuidedExercise | null {
   const item = getExerciseCatalogItem(id);
   if (!item) return null;
-  return item.details ? localToGuided(item.details) : createDemoGuidedExercise(id);
+  return localToGuided(item.details);
 }
 
 export function resolvePatientPlan(patientId: string): GuidedPlan {
-  const localPlan = getCurrentPatientLocalPlan(patientId);
-  if (!localPlan) return createDemoPatientPlan(patientId);
+  const plans = getPatientLocalPlans(patientId);
+  const localPlan = plans.find((plan)=>plan.status==='active')??plans.find((plan)=>plan.status==='paused');
+  if (!localPlan) return {id:`no-active-${patientId}`,status:'none',name:'Sin plan activo',estimatedDuration:'Por definir',therapistMessage:'Tu fisioterapeuta todavía no ha activado un plan.',generalInstructions:'Cuando exista un plan activo aparecerá en este espacio.',exercises:[]};
   return {
     id: localPlan.id,
+    status: localPlan.status,
     name: localPlan.title,
     estimatedDuration: localPlan.duration || 'Por definir',
     therapistMessage: localPlan.goal || `Trabajaremos ${localPlan.focus || 'tu recuperación'} de manera progresiva.`,
