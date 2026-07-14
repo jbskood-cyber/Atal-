@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Camera, Check, Clock3, RefreshCw, Save } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
+import { createLocalPatient } from '@/src/data/localPatients';
 
 export function NewPatientScreen() {
   const router = useRouter();
@@ -17,8 +18,9 @@ export function NewPatientScreen() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!name.trim() || !diagnosis.trim()) return;
-    window.sessionStorage.setItem('atal:new-patient', JSON.stringify({ name: name.trim(), diagnosis: diagnosis.trim(), phone, age, notes, status: 'active' }));
-    router.push('/patients/p-new');
+    const patient = createLocalPatient({ name, diagnosis, age: age ? Number(age) : null, contact: { phone }, status: 'active' });
+    window.sessionStorage.setItem(`atal:patient-notes:${patient.id}`, notes);
+    router.push(`/patients/${patient.id}`);
   };
 
   return <AtalShell>

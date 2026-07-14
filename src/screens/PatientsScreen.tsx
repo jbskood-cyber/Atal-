@@ -6,7 +6,8 @@ import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { SearchBar } from '@/src/components/atal/SearchBar';
-import { patients, statusColor, type PatientStatus } from '@/src/data/atal-demo';
+import { statusColor, type PatientStatus } from '@/src/data/atal-demo';
+import { getPatientCatalog } from '@/src/data/localPatients';
 
 type Filter = 'all' | PatientStatus;
 
@@ -14,12 +15,13 @@ export function PatientsScreen() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('active');
   const router = useRouter();
+  const [patientCatalog] = useState(getPatientCatalog);
 
-  const visible = useMemo(() => patients.filter((patient) => {
+  const visible = useMemo(() => patientCatalog.filter((patient) => {
     const matchesFilter = filter === 'all' || patient.status === filter;
     const text = `${patient.name} ${patient.diagnosis}`.toLowerCase();
     return matchesFilter && text.includes(query.toLowerCase());
-  }), [patients, query, filter]);
+  }), [patientCatalog, query, filter]);
 
   return (
     <AtalShell onNew={() => router.push('/patients/new')}>

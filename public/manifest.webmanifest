@@ -1,0 +1,13 @@
+{
+  "name": "Atal Fisioterapia",
+  "short_name": "Atal",
+  "description": "Gestión clínica y sesiones guiadas de fisioterapia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16A36A",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

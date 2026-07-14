@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CalendarDays, ChevronRight, Eye, FileText, MessageCircle, Pencil, Plus, Target, TrendingUp } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { patients, type Patient } from '@/src/data/atal-demo';
+import { getCurrentPatientLocalPlan } from '@/src/data/localPlans';
+import { getPatientById } from '@/src/data/localPatients';
 
 type Tab = 'summary' | 'history' | 'notes' | 'metrics';
 
@@ -13,21 +15,9 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('summary');
   const [editing, setEditing] = useState(false);
-  const [patient, setPatient] = useState<Patient>(() => patients.find((item) => item.id === patientId) ?? patients[0]);
+  const patient = useMemo(() => getPatientById(patientId) ?? patients[0], [patientId]);
+  const activePlan = useMemo(() => getCurrentPatientLocalPlan(patientId), [patientId]);
   const [diagnosis, setDiagnosis] = useState(patient.diagnosis);
-
-  useEffect(() => {
-    if (patientId !== 'p-new') return;
-    const saved = window.sessionStorage.getItem('atal:new-patient');
-    if (!saved) return;
-    const draft = JSON.parse(saved) as Partial<Patient>;
-    const created = { ...patients[0], ...draft, id: 'p-new', plan: 'Sin plan', progress: 0, adherence: 0, time: 'Ahora' };
-    const timeoutId = setTimeout(() => {
-      setPatient(created);
-      setDiagnosis(created.diagnosis);
-    }, 0);
-    return () => clearTimeout(timeoutId);
-  }, [patientId]);
 
   return (
     <AtalShell onNew={() => router.push('/plans/new')}>
@@ -49,7 +39,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
           ))}
         </nav>
 
-        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} editing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push('/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onExport={() => router.push('/exports')} onPreview={() => router.push(`/patients/${patient.id}/portal-preview`)} />}
+        {tab === 'summary' && <Summary patient={patient} diagnosis={diagnosis} planTitle={activePlan?.title} diagnosisEditing={editing} setDiagnosis={setDiagnosis} onEdit={() => setEditing((value) => !value)} onPlan={() => router.push(activePlan ? `/plans/${activePlan.id}` : '/plans/pl01')} onCreatePlan={() => router.push('/plans/new')} onActivity={() => router.push('/activity')} onRecord={() => router.push(`/patients/${patient.id}/clinical-record`)} onPreview={() => router.push(`/patients/${patient.id}/portal-preview`)} />}
         {tab === 'history' && <History />}
         {tab === 'notes' && <Notes />}
         {tab === 'metrics' && <Metrics patient={patient} />}
@@ -58,15 +48,15 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
   );
 }
 
-function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onExport, onPreview }: { patient: Patient; diagnosis: string; editing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onExport: () => void; onPreview: () => void }) {
+function Summary({ patient, diagnosis, planTitle, diagnosisEditing, setDiagnosis, onEdit, onPlan, onCreatePlan, onActivity, onRecord, onPreview }: { patient: Patient; diagnosis: string; planTitle?: string; diagnosisEditing: boolean; setDiagnosis: (value: string) => void; onEdit: () => void; onPlan: () => void; onCreatePlan: () => void; onActivity: () => void; onRecord: () => void; onPreview: () => void }) {
   return <div className="atal-profile-body"><button type="button" className="atal-patient-preview-cta" onClick={onPreview}><Eye/><span><b>Vista del paciente</b><small>Previsualiza localmente su plan y seguimiento</small></span><ChevronRight/></button>
     <section className="atal-profile-section">
       <div className="atal-section-title"><h2>Diagnóstico / Motivo</h2><button type="button" onClick={onEdit} aria-label="Editar diagnóstico"><Pencil size={17} /></button></div>
-      {editing ? <input className="atal-inline-edit" value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} onBlur={onEdit} autoFocus /> : <><p className="atal-profile-lead">{diagnosis}</p><small>Seguimiento clínico demostrativo.</small></>}
+      {diagnosisEditing ? <input className="atal-inline-edit" value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} onBlur={onEdit} autoFocus /> : <><p className="atal-profile-lead">{diagnosis}</p><small>Seguimiento clínico demostrativo.</small></>}
     </section>
     <section className="atal-profile-section">
       <h2>Plan activo</h2>
-      <button type="button" className="atal-active-plan" onClick={onPlan}><span><CalendarDays /></span><span><b>Rehabilitación — Fase 1</b><small>Inicio: 2 may · Sesiones: 3 / 12</small></span><em>En progreso</em><ChevronRight /></button>
+      <button type="button" className="atal-active-plan" onClick={onPlan}><span><CalendarDays /></span><span><b>{planTitle ?? 'Rehabilitación — Fase 1'}</b><small>Plan asignado al paciente</small></span><em>En progreso</em><ChevronRight /></button>
     </section>
     <section className="atal-profile-section">
       <h2>Métricas clave</h2>
@@ -79,7 +69,7 @@ function Summary({ patient, diagnosis, editing, setDiagnosis, onEdit, onPlan, on
       <ReportRow title="Progreso funcional" date="Hoy, 8:45 a.m." onClick={onActivity} />
       <ReportRow title="Reporte de evaluación" date="Ayer, 5:30 p.m." onClick={onActivity} />
     </section>
-    <div className="atal-profile-actions"><button type="button" onClick={() => window.open('https://wa.me/?text=Seguimiento%20desde%20Atal', '_blank')}><MessageCircle /> WhatsApp</button><button type="button" onClick={onExport}><FileText /> PDF</button><button type="button" className="is-primary" onClick={onCreatePlan}>Crear plan <Plus /></button></div>
+    <div className="atal-profile-actions"><button type="button" onClick={onRecord}><FileText /> Ver expediente</button><button type="button" onClick={onRecord}><Pencil /> Editar expediente</button><button type="button" onClick={onRecord}><FileText /> Descargar PDF</button><button type="button" className="is-primary" onClick={onCreatePlan}>Crear plan <Plus /></button></div>
   </div>;
 }
 

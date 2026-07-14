@@ -22,7 +22,7 @@ export type LocalExercise = {
   repetitions?: number;
   time?: string;
   rest: string;
-  maxPain: number;
+  maxPain: number | null;
   tags: string[];
   notes: string;
   media: ExerciseMedia;
@@ -67,7 +67,7 @@ export function readLocalExercises(): LocalExercise[] {
   }
 }
 
-function writeLocalExercises(items: LocalExercise[]) {
+export function writeLocalExercises(items: LocalExercise[]) {
   window.localStorage.setItem(LOCAL_EXERCISES_KEY, JSON.stringify(items));
 }
 

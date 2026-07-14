@@ -11,7 +11,7 @@ export type GuidedExercise = {
   repetitions?: number;
   seconds?: number;
   restSeconds: number;
-  maxPain: number;
+  maxPain: number | null;
   equipment: string;
   startingPosition: string;
   instructions: string[];

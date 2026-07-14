@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { patients } from '@/src/data/atal-demo';
+import { getPatientById } from '@/src/data/localPatients';
 import { ActiveExercise } from './ActiveExercise';
 import { PatientSessionFrame } from './PatientSessionFrame';
 import { resolvePatientPlan } from './planResolver';
@@ -13,7 +13,7 @@ import type { GuidedSessionDraft } from './types';
 
 export function GuidedSessionFlow({ patientId }: { patientId: string }) {
   const router = useRouter();
-  const patient = patients.find((item) => item.id === patientId);
+  const patient = getPatientById(patientId);
   const plan = useMemo(() => resolvePatientPlan(patientId), [patientId]);
   const restored = useMemo(() => patient ? readSessionDraft(patientId, plan.id) : { draft: null, error: false }, [patient, patientId, plan.id]);
   const [draft, setDraft] = useState<GuidedSessionDraft>(() => restored.draft ?? createSessionDraft(patientId, plan.id, plan.exercises));

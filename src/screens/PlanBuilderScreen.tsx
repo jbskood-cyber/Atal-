@@ -7,13 +7,14 @@ import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
 import { CustomScheduleSelect } from '@/src/components/atal/CustomScheduleSelect';
-import { patients } from '@/src/data/atal-demo';
+import { getPatientCatalog } from '@/src/data/localPatients';
 import { getExerciseCatalog } from '@/src/data/localExercises';
 import { createLocalPlan } from '@/src/data/localPlans';
 
 export function PlanBuilderScreen() {
   const router = useRouter();
   const [selecting, setSelecting] = useState(false);
+  const [patients] = useState(getPatientCatalog);
   const [patientIndex, setPatientIndex] = useState(0);
   const [title, setTitle] = useState('');
   const [focus, setFocus] = useState('');
@@ -21,7 +22,7 @@ export function PlanBuilderScreen() {
   const [frequency, setFrequency] = useState('3 veces por semana');
   const [goal, setGoal] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const patient = patients[patientIndex];
+  const patient = patients[patientIndex] ?? patients[0];
   const [exerciseCatalog] = useState(getExerciseCatalog);
 
   const submit = (event: FormEvent) => {

@@ -8,12 +8,15 @@ import { Avatar } from '@/src/components/atal/Avatar';
 import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
 import { plans } from '@/src/data/atal-demo';
 import { getExerciseCatalog } from '@/src/data/localExercises';
+import { getLocalPlanById } from '@/src/data/localPlans';
+import { getPatientById } from '@/src/data/localPatients';
 
 type PlanTab = 'summary' | 'exercises' | 'progress' | 'review';
 
 export function PlanDetailScreen({ planId }: { planId: string }) {
   const router = useRouter();
-  const base = plans.find((item) => item.id === planId) ?? plans[0];
+  const localPlan = getLocalPlanById(planId);
+  const base = localPlan ? { id: localPlan.id, title: localPlan.title, patient: getPatientById(localPlan.patientId)?.name ?? 'Paciente local', duration: localPlan.duration, frequency: localPlan.frequency, updated: localPlan.updatedAt, status: localPlan.status, phase: 'Plan local' } : plans.find((item) => item.id === planId) ?? plans[0];
   const [tab, setTab] = useState<PlanTab>('exercises');
   const [selecting, setSelecting] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -24,7 +27,7 @@ export function PlanDetailScreen({ planId }: { planId: string }) {
   const [patient, setPatient] = useState(base.patient);
   const [duration, setDuration] = useState(base.duration);
   const [frequency, setFrequency] = useState(base.frequency);
-  const [exerciseIds, setExerciseIds] = useState(['e01', 'e02', 'e03', 'e04', 'e05', 'e06']);
+  const [exerciseIds, setExerciseIds] = useState(localPlan?.exerciseIds ?? ['e01', 'e02', 'e03', 'e04', 'e05', 'e06']);
   const [exerciseCatalog] = useState(getExerciseCatalog);
 
   useEffect(() => {

@@ -48,7 +48,7 @@ export function readLocalPlans(): LocalPlan[] {
   }
 }
 
-function writeLocalPlans(items: LocalPlan[]) {
+export function writeLocalPlans(items: LocalPlan[]) {
   window.localStorage.setItem(LOCAL_PLANS_KEY, JSON.stringify(items));
 }
 
@@ -76,4 +76,8 @@ export function getPatientLocalPlans(patientId: string) {
 export function getCurrentPatientLocalPlan(patientId: string) {
   const plans = getPatientLocalPlans(patientId);
   return plans.find((plan) => plan.status === 'active') ?? plans[0] ?? null;
+}
+
+export function getLocalPlanById(id: string) {
+  return readLocalPlans().find((plan) => plan.id === id) ?? null;
 }

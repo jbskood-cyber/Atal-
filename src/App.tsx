@@ -20,10 +20,12 @@ import { SettingsScreen } from '@/src/screens/SettingsScreen';
 import { SettingsDetailScreen, type SettingsKind } from '@/src/screens/SettingsDetailScreen';
 import { SystemStatesScreen } from '@/src/screens/SystemStatesScreen';
 import { ThemeProvider } from '@/src/context/ThemeContext';
+import { ClinicalRecordScreen } from '@/src/features/clinical-record/ClinicalRecordScreen';
 
 function PatientProfileRoute() { const { id = 'p01' } = useParams(); return <PatientProfileScreen patientId={id} />; }
 function PatientPreviewRoute() { const { id = 'p01' } = useParams(); return <PatientPortalPreviewScreen patientId={id} />; }
 function PatientSessionRoute() { const { id = 'p01' } = useParams(); return <GuidedSessionFlow patientId={id} />; }
+function ClinicalRecordRoute() { const { id = 'p01' } = useParams(); return <ClinicalRecordScreen patientId={id} />; }
 function PlanDetailRoute() { const { id = 'pl01' } = useParams(); return <PlanDetailScreen planId={id} />; }
 function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <ExerciseDetailScreen exerciseId={id} />; }
 function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
@@ -35,6 +37,7 @@ function PrivateAppRoutes() {
     <Route path="/patients" element={<PatientsScreen />} />
     <Route path="/patients/new" element={<NewPatientScreen />} />
     <Route path="/patients/:id" element={<PatientProfileRoute />} />
+    <Route path="/patients/:id/clinical-record" element={<ClinicalRecordRoute />} />
     <Route path="/plans" element={<PlansScreen />} />
     <Route path="/plans/new" element={<PlanBuilderScreen />} />
     <Route path="/plans/:id" element={<PlanDetailRoute />} />
