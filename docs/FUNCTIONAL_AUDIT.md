@@ -1,7 +1,9 @@
 # Auditoría funcional local de Atal
 
-Fecha: 2026-07-14  
-Esquema operativo: `atal:store:v2`  
+Fecha: 2026-07-14
+
+Esquema operativo: `atal:store:v2`
+
 Alcance: MVP local-first, sin Supabase, autenticación, pagos ni despliegue.
 
 ## Fuente única y migración
