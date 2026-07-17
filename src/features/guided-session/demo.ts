@@ -32,6 +32,7 @@ export function createDemoPatientPlan(patientId: string): GuidedPlan {
   const exerciseIds = Array.from({ length: 3 }, (_, index) => exercises[(patientIndex * 3 + index) % exercises.length].id);
   return {
     id: `demo-plan-${patientId}`,
+    status: 'active',
     name: demoPlan?.title ?? 'Plan de recuperación personalizado',
     estimatedDuration: demoPlan?.duration ?? '18–22 minutos',
     therapistMessage: `Este plan demostrativo está preparado para ${patient?.diagnosis.toLowerCase() ?? 'tu recuperación'}. Prioriza calidad antes que velocidad.`,
