@@ -55,8 +55,8 @@ button.native-clinical-row:active { background: color-mix(in srgb, var(--native-
 .native-clinical-row__copy em { margin-top: 3px; color: var(--native-green-strong); font-size: 10px; font-style: normal; font-weight: 600; }
 .native-clinical-row__trailing { display: flex; align-items: center; gap: 7px; color: var(--native-muted); }
 .native-clinical-row__trailing > svg { width: 18px; height: 18px; }
-.native-clinical-row.is-urgent { box-shadow: inset 3px 0 var(--native-danger); }
-.native-clinical-row.is-attention { box-shadow: inset 3px 0 var(--native-warning); }
+.native-clinical-row.is-urgent,
+.native-clinical-row.is-attention { box-shadow: none; }
 
 .native-priority { overflow: hidden; margin: 10px 0 14px; border: 1px solid color-mix(in srgb, var(--native-danger) 18%, var(--native-line)); border-radius: var(--native-radius); background: color-mix(in srgb, var(--native-danger) 6%, var(--native-surface)); }
 .native-priority.is-attention { border-color: color-mix(in srgb, var(--native-warning) 24%, var(--native-line)); background: color-mix(in srgb, var(--native-warning) 7%, var(--native-surface)); }
@@ -505,9 +505,6 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
 .native-priority.is-attention,
 .native-priority.is-urgent,
 .native-priority.is-stable { border-color:var(--line); background:var(--surface) !important; }
-.native-priority.is-attention { border-left:3px solid var(--status-warning); }
-.native-priority.is-urgent { border-left:3px solid var(--status-danger); }
-.native-priority.is-stable { border-left:3px solid var(--green); }
 .native-priority__head,
 .native-priority.is-attention .native-priority__head,
 .native-priority.is-urgent .native-priority__head { color:var(--ink); }
@@ -520,26 +517,28 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
 .native-priority.is-urgent .native-priority__content > button { min-width:44px; min-height:44px; padding:0; border:0; color:var(--ink); background:transparent; box-shadow:none; }
 .native-priority.is-attention .native-priority__content > button svg { color:var(--status-warning); }
 .native-priority.is-urgent .native-priority__content > button svg { color:var(--status-danger); }
-.native-status { gap:6px; color:var(--ink); background:transparent; }
+.native-status { gap:6px; color:var(--ink); background:color-mix(in srgb,var(--muted) 7%,transparent); font-size:var(--type-xs); font-weight:700; }
 .native-status::before { width:7px; height:7px; border-radius:50%; background:var(--muted); content:""; }
 .native-status.is-stable::before { background:var(--green); }
 .native-status.is-attention::before { background:var(--status-warning); }
 .native-status.is-urgent::before { background:var(--status-danger); }
-.native-status.is-attention,.native-status.is-urgent { color:var(--ink); background:transparent; }
+.native-status.is-attention,.native-status.is-urgent { color:var(--ink); background:color-mix(in srgb,var(--muted) 7%,transparent); }
 .native-row-icon.is-attention { color:var(--ink); background:var(--surface); box-shadow:inset 0 0 0 2px var(--status-warning); }
 .atal-activity-feed button>i.is-attention { background:var(--status-warning); }
 .atal-notification-list button>span.is-warning { color:var(--ink); background:var(--surface); box-shadow:inset 0 0 0 2px var(--status-warning); }
 .atal-command-error { border-left:3px solid var(--status-danger); }
 .atal-command-error>svg,.atal-section-error,.atal-command-menu>button.is-danger,.atal-command-menu>button.is-danger svg,.is-danger { color:var(--status-danger) !important; }
-.atal-draft-conflict,.atal-draft-status.is-review { border-left:3px solid var(--status-warning); }
+.atal-draft-conflict { border-left:3px solid var(--status-warning); }
 .atal-draft-conflict>svg,.atal-draft-missing { color:var(--status-warning) !important; }
+.atal-draft-status:not(.is-complete),.atal-draft-status.is-review { border:1px solid var(--line); color:var(--ink); background:var(--canvas); }
 
 /* One optical grid for the mobile header controls. */
 .atal-mobile-header>div:last-child { height:44px; align-items:center; gap:8px; }
 .atal-mobile-header :is(.atal-icon-button,.atal-new-button,.atal-header-avatar) { width:42px; height:42px; min-width:42px; min-height:42px; flex:0 0 42px; margin:0; padding:0; border-radius:12px; box-shadow:none; }
 .atal-mobile-header :is(.atal-icon-button,.atal-new-button,.atal-header-avatar)>svg { width:20px; height:20px; }
 .atal-mobile-header .atal-header-avatar .atal-avatar { width:36px; height:36px; }
-.atal-mobile-header .atal-notification>i { right:2px; top:2px; border:2px solid var(--surface); background:var(--status-danger); }
+.atal-mobile-header .atal-notification { position:relative; }
+.atal-mobile-header .atal-notification>i { position:absolute; right:2px; top:2px; border:2px solid var(--surface); background:var(--status-danger); }
 
 /* Moderately larger supporting copy across dense mobile surfaces. */
 .atal-mobile-dock .atal-primary-nav span { font-size:10px; line-height:1.15; }
@@ -554,22 +553,44 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
   font-size:max(11px,.72rem);
   line-height:1.4;
 }
+.atal-plan-row small,.atal-plan-row em,.atal-draft-copy small,.atal-draft-detail :is(dt,dd) { font-size:var(--type-xs); line-height:1.35; }
 .atal-note-form>label>span,.atal-selector-filters label span { font-size:11px; line-height:1.35; }
 :is(input,textarea)::placeholder { color:color-mix(in srgb,var(--muted) 82%,transparent); font-size:12px; opacity:1; }
 
 /* Accessible focus without the former rigid green rectangle or doubled outlines. */
-:is(.atal-app,.atal-command-page,.atal-patient-session) :is(button,a,input,textarea,[role="option"]):focus-visible {
+:is(.atal-app,.atal-command-page,.atal-patient-session) :is(button,a,[role="option"]):focus-visible {
+  outline:2px solid color-mix(in srgb,var(--green) 45%,transparent);
+  outline-offset:2px;
+  box-shadow:none;
+}
+:is(.atal-app,.atal-command-page,.atal-patient-session) :is(input,textarea,select):focus-visible {
   outline:0;
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 20%,transparent);
+  border-color:color-mix(in srgb,var(--green) 36%,var(--line));
+  box-shadow:none;
 }
 :is(.native-search,.atal-search,.atal-premium-search,.atal-icon-field,.atal-phone-field,.atal-suffix-field,.atal-draft-library-search,.atal-command-composer):has(:focus-visible) {
-  border-color:color-mix(in srgb,var(--green) 60%,var(--line));
-  box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 14%,transparent);
+  border-color:color-mix(in srgb,var(--green) 36%,var(--line));
+  box-shadow:none;
 }
 :is(.native-search,.atal-search,.atal-premium-search,.atal-icon-field,.atal-phone-field,.atal-suffix-field,.atal-draft-library-search,.atal-command-composer) :is(input,textarea):focus-visible,
 .atal-ai-field :is(input,textarea):focus,
 .atal-note-form textarea:focus { outline:0; box-shadow:none; }
 .atal-note-form textarea:focus { padding-left:0; }
+.atal-note-form>label { border-bottom-color:color-mix(in srgb,var(--line) 72%,transparent); }
+.atal-note-form>label:focus-within { border-bottom-color:color-mix(in srgb,var(--green) 34%,var(--line)); }
+
+/* The AI action rail keeps all three concise actions intact at narrow widths. */
+.atal-command-suggestions>div { width:100%; min-width:0; padding-right:12px; scroll-padding-inline-end:12px; overscroll-behavior-inline:contain; }
+.atal-command-suggestions>div::-webkit-scrollbar,.atal-command-composer textarea::-webkit-scrollbar { display:none; }
+.atal-command-suggestions button { flex:0 0 auto; }
+.atal-command-composer textarea { scrollbar-width:none; }
+
+/* Plans retain native rows while tightening metadata rhythm. */
+.atal-plan-row { min-height:76px; gap:10px; padding:7px 2px; }
+.atal-plan-row b { font-size:var(--type-sm); line-height:1.3; }
+.atal-plan-row small { margin-top:2px; }
+.atal-plan-row small:nth-of-type(2) { margin-top:4px; }
+.atal-plan-row em { margin-top:3px; }
 
 /* Patient selection is one responsive native row, not nested cards. */
 .atal-patient-picker { display:grid; min-width:0; min-height:70px; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:center; gap:10px; padding:10px 12px; border-color:var(--line); color:var(--ink); background:var(--surface); }
