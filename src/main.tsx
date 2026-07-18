@@ -1,9 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import '@fontsource/poppins/latin-400.css';
-import '@fontsource/poppins/latin-500.css';
-import '@fontsource/poppins/latin-600.css';
-import '@fontsource/poppins/latin-700.css';
+import '@/src/styles/fonts.css';
 import '@/app/globals.css';
 import '@/src/styles/closeout.css';
 import '@/src/styles/atal-ai.css';

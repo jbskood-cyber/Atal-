@@ -1,44 +1,61 @@
-# Design QA — Atal Native Clinical
+# Design QA — Atal Premium Native Clinical
 
-## Source references
+## Dirección visual aplicada
 
-- M087–M088: definitive Atal IA interaction behavior.
-- M089–M094: Native Clinical composition, density and mobile hierarchy.
-- B001–B002: official brand.
-- M080: Graphite Clinical.
+- Sistema mobile-first con superficies continuas, filas compactas y menos tarjetas anidadas.
+- Navegación inferior translúcida con blur, borde tenue, sombra ligera y soporte de `safe-area-inset-bottom`.
+- Navegación contextual oculta durante sheets, selectores, modales y editores; el scroll del fondo queda bloqueado.
+- Encabezado compacto sin identidad ficticia “CD”; el acceso de cuenta usa un icono neutral.
+- Copy clínico breve y orientado a acciones. Se eliminó de Inicio el bloque “Recomendación de Atal IA”.
+- Estados comunicados también por iconografía, texto, contraste y composición, sin depender únicamente del color.
 
-## Preserved Atal IA states
+## Temas
 
-- Exclusive `/assistant` shell with compact Atal IA header.
-- Compact draft card with real completion states.
-- Single-open-section accordion and a single edit action per expanded section.
-- Full-section mobile editor with save/cancel.
-- Contextual chips limited to three.
-- Dynamic composer: microphone when empty, send when content is ready, cancel while processing.
+- **Graphite Clinical:** preservado como modo oscuro.
+- **Blue Clinical:** incorporado al `ThemeContext` existente, con `#2563EB` como primario, `#173B72` profundo, `#EAF2FF` claro, `#F8FAFD` como fondo y `#101827` como texto principal.
+- El logotipo conserva el verde oficial en todos los temas.
+- La interfaz operativa evita rojo, amarillo, mostaza, dorado, beige, crema y café. Las prioridades usan jerarquía neutral y azul clínico.
 
-## Native Clinical comparison ledger
+## Tipografía
 
-| Reference | Implemented surface | Intended match |
-|---|---|---|
-| M089 | `/` | Compact clinical header, priority banner, metric strip, grouped activity and contextual AI recommendation. |
-| M090 | `/patients` | Search, segmented status filters, dense full-width rows and stable initials instead of generated portraits. |
-| M091 | `/patients/:id` | Patient identity, clinical summary, active-plan context, tabs and thumb-zone actions. |
-| M092 | `/plans/:id` | Existing-plan editor, compact facts, ordered exercises, AI recommendation and persistent actions. |
-| M093 | `/assistant` | M087–M088 behavior retained; Native Clinical surfaces and Graphite tokens integrated. |
-| M094 | `/patients/:id/session` | Focused shell, plan context, progress, larger instructions and real guided-session state. |
+Se eligió **Inter Variable** como única familia de interfaz. Se sirve localmente en WOFF2 con subconjunto latino, rango real `100 900`, `font-display: swap`, optical sizing y números tabulares en métricas. Esto evita pesos sintetizados, reduce solicitudes tipográficas y mantiene compatibilidad con PWA/Android.
 
-## Automated checks
+Fuentes consultadas:
 
-- TypeScript: passed.
-- Production build: passed.
-- Route-level code splitting: generated independent chunks for Atal IA, guided session, exports and primary screens.
-- `git diff --check`: passed before commit.
-- Existing `atal:store:v2` data and route relationships were retained.
+- [Inter — sitio oficial](https://rsms.me/inter/): diseño para pantallas, variable font y optical sizing.
+- [Inter — repositorio oficial](https://github.com/rsms/inter): distribución WOFF2 y licencia SIL Open Font License 1.1.
+- [WCAG 2.1 — Text Spacing](https://www.w3.org/WAI/WCAG21/Understanding/text-spacing): espaciado y legibilidad sin pérdida de contenido.
 
-## Visual comparison status
+## Flujos preservados y verificados
 
-The references were inspected at original resolution. This Work session did not expose a user-selected browser or the Browser plugin. Product-design policy therefore prohibited launching Playwright without approval, while the task requested uninterrupted execution. Same-browser screenshots, console inspection, interaction replay and pixel-level comparison at 390 × 844 could not be produced here.
+- `atal:store:v2`, versión 2, `useSyncExternalStore`, migraciones y relaciones por ID.
+- Creación de paciente y plan; selección múltiple desde la biblioteca existente.
+- Borrador de Atal IA: edición tipo nota, cancelar, guardar sección, aplicar atómicamente, auditoría y deshacer.
+- Recomendaciones de ejercicios revisables; los elementos de biblioteca conservan `sourceExerciseId` y se deduplican.
+- Sesión guiada con campos numéricos que admiten estado vacío y normalizan al finalizar la edición.
+- Blue Clinical, Graphite Clinical, scroll superior en navegación principal y restauración contextual en historial.
+- Registro y recarga del service worker en build de producción, conservando `atal:store:v2`.
 
-final result: blocked
+## Skeletons
 
-Blocker: browser-rendered screenshot comparison unavailable in the current workspace. Visual acceptance remains for Google AI Studio at 390 × 844 and 430 × 932, including Graphite Clinical and the mobile keyboard.
+El fallback de rutas selecciona una estructura estable según la pantalla: Inicio, Pacientes, Perfil, Planes, Plan, Actividad, Atal IA, Sesión, Ejercicios y Ajustes. Las variantes usan tonos fríos del tema activo, reservan las dimensiones de la interfaz real y respetan `prefers-reduced-motion`.
+
+## Rendimiento
+
+- Se conservaron las rutas lazy y se añadió precarga por intención (`pointerenter`/focus) y durante tiempo ocioso.
+- El router y sus acciones se memoizan para evitar renders derivados de identidades nuevas.
+- La tipografía pasó de varios archivos Poppins a un único WOFF2 de Inter Variable.
+- No se añadieron dependencias visuales, retrasos artificiales, spinners globales ni lecturas remotas por render.
+
+## Matriz visual automatizada
+
+Se ejecutó Chromium headless sobre 10 rutas en:
+
+- 360 × 800
+- 390 × 844
+- 412 × 915
+- 1024 × 900
+
+La matriz comprueba overflow horizontal, presencia de “CD”, bloque eliminado de recomendación, colores prohibidos calculados, sheets sin navegación inferior, retorno de la barra, scroll superior, tokens de ambos temas, compositor con viewport reducido y edición numérica sin cero atrapado. Resultado: sin hallazgos y sin errores de consola.
+
+El navegador remoto integrado bloqueó la URL local; la misma validación se ejecutó con Chromium headless aislado, sin añadir Playwright ni Chromium a las dependencias del repositorio.

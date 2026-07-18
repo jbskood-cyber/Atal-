@@ -108,6 +108,7 @@ export type AIPlanDraft = {
 
 export type AIExerciseDraft = {
   id: string;
+  sourceExerciseId?: string;
   name: string;
   region: string;
   category: string;

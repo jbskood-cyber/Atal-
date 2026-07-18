@@ -8,6 +8,7 @@ import {
   Bell,
   CheckCircle2,
   ChevronRight,
+  CircleUserRound,
   ClipboardList,
   Dumbbell,
   FileDown,
@@ -80,9 +81,10 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   }, []);
 
   const openNew = onNew ?? (() => setNewOpen(true));
+  const overlayOpen = secondaryOpen || searchOpen || notificationsOpen || newOpen;
 
   return (
-    <div className={`atal-app${settings.compact?' atal-app--compact':''}`}>
+    <div className={`atal-app${settings.compact?' atal-app--compact':''}${overlayOpen?' atal-overlay-open':''}`}>
       <aside className="atal-sidebar">
         <AtalLogo />
         <nav className="atal-sidebar__nav" aria-label="Navegación principal">
@@ -98,10 +100,9 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         <header className="atal-mobile-header">
           <AtalLogo />
           <div>
-            <button type="button" aria-label="Abrir funciones secundarias" onClick={() => setSecondaryOpen(true)} className="atal-header-avatar"><AvatarMini /></button>
             <button type="button" aria-label="Buscar en Atal" onClick={() => setSearchOpen(true)} className="atal-icon-button"><Search /></button>
-            <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" aria-label="Crear nuevo" onClick={openNew} className="atal-new-button"><Plus /></button>
+            <button type="button" aria-label={`Abrir cuenta y funciones${unread ? `, ${unread} notificaciones` : ''}`} onClick={() => setSecondaryOpen(true)} className="atal-header-avatar atal-notification"><AvatarMini />{unread>0&&<i />}</button>
           </div>
         </header>
 
@@ -126,13 +127,14 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
       {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
       {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} onNavigate={(href) => { setNotificationsOpen(false); router.push(href); }} />}
       {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
-      {secondaryOpen && <SecondaryPanel onClose={() => setSecondaryOpen(false)} onNavigate={(href) => { setSecondaryOpen(false); router.push(href); }} />}
+      {secondaryOpen && <SecondaryPanel onClose={() => setSecondaryOpen(false)} onNavigate={(href) => { setSecondaryOpen(false); router.push(href); }} onNotifications={() => { setSecondaryOpen(false); setNotificationsOpen(true); }} />}
     </div>
   );
 }
 
 function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
+  useEffect(() => { const previousOverflow=document.body.style.overflow;document.body.classList.add('atal-context-active');document.body.style.overflow='hidden';return () => {document.body.classList.remove('atal-context-active');document.body.style.overflow=previousOverflow;}; }, []);
+  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
 }
 
 function SearchPanel({ onClose }: { onClose: () => void }) {
@@ -150,11 +152,11 @@ function NewPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (h
   return <PanelFrame title="Crear nuevo" onClose={onClose}><div className="atal-quick-actions"><button type="button" onClick={() => onNavigate('/patients/new')}><span><UserPlus /></span><span><b>Paciente</b><small>Crear un expediente clínico</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/plans/new')}><span><ClipboardList /></span><span><b>Plan</b><small>Diseñar una nueva rehabilitación</small></span><ChevronRight /></button><button type="button" onClick={() => onNavigate('/exercises/new')}><span><Dumbbell /></span><span><b>Ejercicio</b><small>Crear un ejercicio personalizado</small></span><ChevronRight /></button></div></PanelFrame>;
 }
 
-function SecondaryPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
+function SecondaryPanel({ onClose, onNavigate, onNotifications }: { onClose: () => void; onNavigate: (href: string) => void; onNotifications: () => void }) {
   return <PanelFrame title="Funciones de Atal" onClose={onClose}><div className="atal-quick-actions">{[
     ...secondary,
     { href: '/exports', label: 'Exportaciones', icon: FileDown },
-  ].map(({ href, label, icon: Icon }) => <button type="button" key={href} onClick={() => onNavigate(href)}><span><Icon /></span><span><b>{label}</b><small>Abrir {label.toLowerCase()}</small></span><ChevronRight /></button>)}</div></PanelFrame>;
+  ].map(({ href, label, icon: Icon }) => <button type="button" key={href} onClick={() => onNavigate(href)}><span><Icon /></span><span><b>{label}</b></span><ChevronRight /></button>)}<button type="button" onClick={onNotifications}><span><Bell /></span><span><b>Notificaciones</b></span><ChevronRight /></button></div></PanelFrame>;
 }
 
-function AvatarMini() { return <span className="atal-avatar atal-avatar--md">CD</span>; }
+function AvatarMini() { return <span className="atal-avatar atal-avatar--md" aria-hidden><CircleUserRound /></span>; }

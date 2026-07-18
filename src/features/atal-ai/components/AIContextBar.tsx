@@ -46,10 +46,13 @@ export function AIContextBar({ open, context, patients, plans, exercises, onChan
 
   useEffect(() => {
     if (!open) return;
+    document.body.classList.add('atal-context-active');
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     closeRef.current?.focus();
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
     window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
+    return () => { window.removeEventListener('keydown', close); document.body.classList.remove('atal-context-active'); document.body.style.overflow = previousOverflow; };
   }, [open,onClose]);
   if (!open) return null;
 

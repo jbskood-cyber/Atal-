@@ -2,16 +2,18 @@
   "name": "ai-studio-applet",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "tsc --noEmit && vite build",
     "start": "vite preview --host 0.0.0.0 --port 3000",
     "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.2.8",
     "@google/genai": "^2.4.0",
-    "@fontsource/poppins": "^5.2.7",
     "@hookform/resolvers": "^5.2.1",
     "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
@@ -26,8 +28,8 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",
-    "@tailwindcss/vite": "^4.1.11",
     "@tailwindcss/typography": "^0.5.19",
+    "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

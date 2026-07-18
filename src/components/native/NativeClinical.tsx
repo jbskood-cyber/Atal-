@@ -61,12 +61,17 @@ export function BottomSheet({ open, title, onClose, children }: { open: boolean;
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     if (!open) return;
+    document.body.classList.add('atal-context-active');
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeRef.current?.focus();
     const close = (event: KeyboardEvent) => { if (event.key === 'Escape') onCloseRef.current(); };
     window.addEventListener('keydown', close);
     return () => {
       window.removeEventListener('keydown', close);
+      document.body.classList.remove('atal-context-active');
+      document.body.style.overflow = previousOverflow;
       previousFocusRef.current?.focus();
     };
   }, [open]);

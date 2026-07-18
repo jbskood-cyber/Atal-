@@ -3,8 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-
 import { AtalPersistentShell } from '@/src/components/atal/AtalShell';
 import type { SettingsKind } from '@/src/screens/SettingsDetailScreen';
 import { ThemeProvider } from '@/src/context/ThemeContext';
+import { routeLoaders } from '@/src/routes/routeLoaders';
+import { RouteScrollManager } from '@/src/components/atal/RouteScrollManager';
+import { RouteSkeleton } from '@/src/components/native/RouteSkeleton';
 
-const HomeScreen = lazy(() => import('@/src/screens/HomeScreen').then((module) => ({ default: module.HomeScreen })));
+const HomeScreen = lazy(() => routeLoaders.home().then((module) => ({ default: module.HomeScreen })));
 const PatientsScreen = lazy(() => import('@/src/screens/PatientsScreen').then((module) => ({ default: module.PatientsScreen })));
 const NewPatientScreen = lazy(() => import('@/src/screens/NewPatientScreen').then((module) => ({ default: module.NewPatientScreen })));
 const PatientProfileScreen = lazy(() => import('@/src/screens/PatientProfileScreen').then((module) => ({ default: module.PatientProfileScreen })));
@@ -36,7 +39,7 @@ function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <Exe
 function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
 function SettingsDetailRoute({ kind }: { kind: SettingsKind }) { return <SettingsDetailScreen kind={kind} />; }
 function AIDraftRoute() { const { draftId = '' } = useParams(); return <AtalAIDraftReviewScreen draftId={draftId} />; }
-function RouteLoader() { return <div className="atal-route-skeleton" role="status" aria-live="polite"><span /><span /><span /><small>Cargando Atal…</small></div>; }
+function RouteLoader() { return <RouteSkeleton />; }
 
 function PrivateAppRoutes() {
   return <AtalPersistentShell><Suspense fallback={<RouteLoader />}><Routes>
@@ -66,7 +69,7 @@ function PrivateAppRoutes() {
 }
 
 export function App() {
-  return <ThemeProvider><BrowserRouter><Routes>
+  return <ThemeProvider><BrowserRouter><RouteScrollManager /><Routes>
     <Route path="/patients/:id/portal-preview" element={<Suspense fallback={<RouteLoader />}><PatientPreviewRoute /></Suspense>} />
     <Route path="/patients/:id/session" element={<Suspense fallback={<RouteLoader />}><PatientSessionRoute /></Suspense>} />
     <Route path="/assistant" element={<Suspense fallback={<RouteLoader />}><AssistantScreen /></Suspense>} />

@@ -5,7 +5,7 @@ export function AIComposer({ textareaRef,value,hasReadyContent,processing,record
   useEffect(() => {
     const textarea=textareaRef.current;if(!textarea)return;
     textarea.style.height='0px';
-    textarea.style.height=`${Math.min(104,Math.max(24,textarea.scrollHeight))}px`;
+    textarea.style.height=`${Math.min(128,Math.max(24,textarea.scrollHeight))}px`;
   },[value,textareaRef]);
   const submit=(event:FormEvent)=>{event.preventDefault();if(hasReadyContent&&!processing)onSend()};
   const keyboard=(event:KeyboardEvent<HTMLTextAreaElement>)=>{if(event.key==='Enter'&&!event.shiftKey&&window.innerWidth>=768){event.preventDefault();if(hasReadyContent&&!processing)onSend()}};
