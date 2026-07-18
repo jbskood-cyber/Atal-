@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, X } from 'lucide-react';
+import { useModalIsolation } from './useModalIsolation';
 
 type Mode = 'duration' | 'frequency';
 
@@ -11,6 +12,7 @@ export function CustomScheduleSelect({ label, value, mode, options, icon, onChan
   const [freeText, setFreeText] = useState('');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  useModalIsolation(open);
 
   const close = () => { setOpen(false); setCustom(false); window.setTimeout(() => triggerRef.current?.focus(), 0); };
   useEffect(() => {

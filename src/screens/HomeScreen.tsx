@@ -29,7 +29,7 @@ export function HomeScreen() {
   const events = state.events.slice(0, 5);
   const date = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
   return <AtalShell><main className="atal-content native-home">
-    <MobileAppHeader title="Hoy" eyebrow="Atal Fisioterapia" />
+    <MobileAppHeader title="Hoy" />
     <p className="native-home__date">{date}</p>
     {lead ? <PriorityBanner
       tone={lead.priority}

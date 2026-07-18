@@ -18,7 +18,7 @@ export type Plan = {
   duration: string;
   frequency: string;
   updated: string;
-  status: 'active' | 'draft' | 'archived';
+  status: 'active' | 'draft' | 'paused' | 'completed' | 'archived';
   phase: string;
 };
 
@@ -43,6 +43,9 @@ export const patients: Patient[] = [
   { id: 'p10', name: 'Paciente Demo 10', diagnosis: 'Caso demostrativo J', plan: 'Plan 2/6', progress: 20, time: '3 jun, 11:40', status: 'archived', adherence: 61 },
   { id: 'p11', name: 'Paciente Demo 11', diagnosis: 'Caso demostrativo K', plan: 'Plan 3/9', progress: 33, time: '2 jun, 18:22', status: 'active', adherence: 84 },
   { id: 'p12', name: 'Paciente Demo 12', diagnosis: 'Caso demostrativo L', plan: 'Plan 2/8', progress: 25, time: '2 jun, 14:05', status: 'attention', adherence: 67 },
+  { id: 'p13', name: 'Paciente Demo 13', diagnosis: 'Dolor cervical demostrativo', plan: 'Sin plan', progress: 0, time: 'Sin sesiones', status: 'active', adherence: 0 },
+  { id: 'p14', name: 'Paciente Demo 14', diagnosis: 'Recuperación de hombro', plan: 'Plan pausado', progress: 55, time: '1 jun, 12:20', status: 'attention', adherence: 55 },
+  { id: 'p15', name: 'Paciente Demo 15', diagnosis: 'Alta funcional demostrativa', plan: 'Plan completado', progress: 100, time: '30 may, 17:05', status: 'active', adherence: 100 },
 ];
 
 export const plans: Plan[] = [
@@ -54,6 +57,8 @@ export const plans: Plan[] = [
   { id: 'pl06', title: 'Plan de movilidad', patient: 'Paciente Demo 07', duration: '3 semanas', frequency: '2x por semana', updated: 'Actualizado 18 may, 9:05 p.m.', status: 'draft', phase: 'Borrador' },
   { id: 'pl07', title: 'Fortalecimiento gradual', patient: 'Paciente Demo 08', duration: '6 semanas', frequency: '3x por semana', updated: 'Actualizado 17 may, 4:20 p.m.', status: 'draft', phase: 'Borrador' },
   { id: 'pl08', title: 'Control postural', patient: 'Paciente Demo 09', duration: '4 semanas', frequency: '2x por semana', updated: 'Actualizado 16 may, 11:30 a.m.', status: 'archived', phase: 'Finalizado' },
+  { id: 'pl09', title: 'Movilidad cervical', patient: 'Paciente Demo 14', duration: '6 semanas', frequency: '3x por semana', updated: 'Actualizado 1 jun, 12:20 p.m.', status: 'paused', phase: 'Pausado' },
+  { id: 'pl10', title: 'Retorno funcional', patient: 'Paciente Demo 15', duration: '8 semanas', frequency: '3x por semana', updated: 'Actualizado 30 may, 5:05 p.m.', status: 'completed', phase: 'Completado' },
 ];
 
 const exerciseImages = [
@@ -78,10 +83,14 @@ export const exercises: Exercise[] = [
   ['e12', 'Curl nórdico asistido', 'Rodilla', 'Fuerza'],
   ['e13', 'Retracción escapular', 'Hombro', 'Estabilidad'],
   ['e14', 'Rotación externa con banda', 'Hombro', 'Estabilidad'],
+  ['e15', 'Deslizamiento cervical', 'Cuello', 'Movilidad'],
+  ['e16', 'Peso muerto con banda', 'Cadera', 'Fuerza'],
+  ['e17', 'Equilibrio unipodal', 'Tobillo', 'Propiocepción'],
+  ['e18', 'Press escapular', 'Hombro', 'Fuerza'],
 ].map(([id, name, region, category], index) => ({ id, name, region, category, image: exerciseImages[index % exerciseImages.length] }));
 
 export const statusColor: Record<PatientStatus, string> = {
   active: '#00a66a',
-  attention: '#2563eb',
+  attention: '#e5a000',
   archived: '#7f8582',
 };

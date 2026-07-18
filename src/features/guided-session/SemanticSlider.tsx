@@ -5,8 +5,8 @@ type Scale = 'severity' | 'energy';
 export function semanticScale(value: number, scale: Scale, min: number, max: number) {
   const ratio = max === min ? 0 : Math.min(1, Math.max(0, (value - min) / (max - min)));
   const level = ratio < 1 / 3 ? 'low' : ratio < 2 / 3 ? 'medium' : 'high';
-  if (scale === 'energy') return level === 'low' ? { color: '#64748b', label: 'Baja' } : level === 'medium' ? { color: '#2563eb', label: 'Media' } : { color: '#16a36a', label: 'Alta' };
-  return level === 'low' ? { color: '#16a36a', label: 'Leve' } : level === 'medium' ? { color: '#2563eb', label: 'Moderada' } : { color: '#173b72', label: 'Alta' };
+  if (scale === 'energy') return level === 'low' ? { color: 'var(--muted)', label: 'Baja' } : level === 'medium' ? { color: 'var(--status-warning)', label: 'Media' } : { color: 'var(--green)', label: 'Alta' };
+  return level === 'low' ? { color: 'var(--green)', label: 'Leve' } : level === 'medium' ? { color: 'var(--status-warning)', label: 'Moderada' } : { color: 'var(--status-danger)', label: 'Alta' };
 }
 
 export function SemanticSlider({ label, value, onChange, scale = 'severity', min = 0, max = 10 }: { label: string; value: number; onChange: (value: number) => void; scale?: Scale; min?: number; max?: number }) {

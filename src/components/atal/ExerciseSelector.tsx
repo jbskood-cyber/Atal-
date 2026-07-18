@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Check, Filter, Plus, Search } from 'lucide-react';
 import { useExerciseCatalog } from '@/src/data/localExercises';
+import { AppSelect } from './AppSelect';
 
 export function ExerciseSelector({ initialIds = [], onBack, onConfirm }: { initialIds?: string[]; onBack: () => void; onConfirm: (ids: string[]) => void }) {
   const [selected, setSelected] = useState(initialIds);
@@ -32,9 +33,9 @@ export function ExerciseSelector({ initialIds = [], onBack, onConfirm }: { initi
     <label className="atal-selector-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar ejercicios" /><Filter /></label>
     <div className="atal-region-tabs">{regions.map((value) => <button type="button" key={value} className={region === value ? 'is-active' : ''} onClick={() => setRegion(value)}>{value}</button>)}</div>
     <div className="atal-selector-filters" aria-label="Filtros de ejercicios">
-      <label><span>Categoría</span><select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label><span>Dificultad</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>{difficulties.map((value) => <option key={value}>{value}</option>)}</select></label>
-      <label><span>Equipo</span><select value={equipment} onChange={(event) => setEquipment(event.target.value)}>{equipmentOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+      <label><span>Categoría</span><AppSelect label="Categoría" value={category} options={categories} className="is-compact" onChange={setCategory} /></label>
+      <label><span>Dificultad</span><AppSelect label="Dificultad" value={difficulty} options={difficulties} className="is-compact" onChange={setDifficulty} /></label>
+      <label><span>Equipo</span><AppSelect label="Equipo" value={equipment} options={equipmentOptions} className="is-compact" onChange={setEquipment} /></label>
     </div>
     <div className="atal-selector-list">{visible.map((exercise) => {
       const checked = selected.includes(exercise.id);
