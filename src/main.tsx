@@ -9,6 +9,7 @@ import '@/src/styles/closeout.css';
 import '@/src/styles/atal-ai.css';
 import '@/src/styles/functional.css';
 import '@/src/styles/atal-ai-command-center.css';
+import '@/src/styles/native-clinical.css';
 import { App } from './App';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
