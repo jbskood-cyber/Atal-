@@ -1,34 +1,28 @@
-import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import { AtalPersistentShell } from '@/src/components/atal/AtalShell';
-import type { SettingsKind } from '@/src/screens/SettingsDetailScreen';
+import { HomeScreen } from '@/src/screens/HomeScreen';
+import { PatientsScreen } from '@/src/screens/PatientsScreen';
+import { NewPatientScreen } from '@/src/screens/NewPatientScreen';
+import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
+import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
+import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
+import { PlansScreen } from '@/src/screens/PlansScreen';
+import { PlanBuilderScreen } from '@/src/screens/PlanBuilderScreen';
+import { PlanDetailScreen } from '@/src/screens/PlanDetailScreen';
+import { ExercisesScreen } from '@/src/screens/ExercisesScreen';
+import { NewExerciseScreen } from '@/src/screens/NewExerciseScreen';
+import { ExerciseDetailScreen } from '@/src/screens/ExerciseDetailScreen';
+import { ActivityScreen } from '@/src/screens/ActivityScreen';
+import { ActivityDetailScreen } from '@/src/screens/ActivityDetailScreen';
+import { AssistantScreen } from '@/src/screens/AssistantScreen';
+import { ExportsScreen } from '@/src/screens/ExportsScreen';
+import { SettingsScreen } from '@/src/screens/SettingsScreen';
+import { SettingsDetailScreen, type SettingsKind } from '@/src/screens/SettingsDetailScreen';
+import { SystemStatesScreen } from '@/src/screens/SystemStatesScreen';
 import { ThemeProvider } from '@/src/context/ThemeContext';
-import { routeLoaders } from '@/src/routes/routeLoaders';
-import { RouteScrollManager } from '@/src/components/atal/RouteScrollManager';
-import { RouteSkeleton } from '@/src/components/native/RouteSkeleton';
-
-const HomeScreen = lazy(() => routeLoaders.home().then((module) => ({ default: module.HomeScreen })));
-const PatientsScreen = lazy(() => import('@/src/screens/PatientsScreen').then((module) => ({ default: module.PatientsScreen })));
-const NewPatientScreen = lazy(() => import('@/src/screens/NewPatientScreen').then((module) => ({ default: module.NewPatientScreen })));
-const PatientProfileScreen = lazy(() => import('@/src/screens/PatientProfileScreen').then((module) => ({ default: module.PatientProfileScreen })));
-const PatientPortalPreviewScreen = lazy(() => import('@/src/screens/PatientPortalPreviewScreen').then((module) => ({ default: module.PatientPortalPreviewScreen })));
-const GuidedSessionFlow = lazy(() => import('@/src/features/guided-session/GuidedSessionFlow').then((module) => ({ default: module.GuidedSessionFlow })));
-const PlansScreen = lazy(() => import('@/src/screens/PlansScreen').then((module) => ({ default: module.PlansScreen })));
-const PlanBuilderScreen = lazy(() => import('@/src/screens/PlanBuilderScreen').then((module) => ({ default: module.PlanBuilderScreen })));
-const PlanDetailScreen = lazy(() => import('@/src/screens/PlanDetailScreen').then((module) => ({ default: module.PlanDetailScreen })));
-const ExercisesScreen = lazy(() => import('@/src/screens/ExercisesScreen').then((module) => ({ default: module.ExercisesScreen })));
-const NewExerciseScreen = lazy(() => import('@/src/screens/NewExerciseScreen').then((module) => ({ default: module.NewExerciseScreen })));
-const ExerciseDetailScreen = lazy(() => import('@/src/screens/ExerciseDetailScreen').then((module) => ({ default: module.ExerciseDetailScreen })));
-const ActivityScreen = lazy(() => import('@/src/screens/ActivityScreen').then((module) => ({ default: module.ActivityScreen })));
-const ActivityDetailScreen = lazy(() => import('@/src/screens/ActivityDetailScreen').then((module) => ({ default: module.ActivityDetailScreen })));
-const AssistantScreen = lazy(() => import('@/src/screens/AssistantScreen').then((module) => ({ default: module.AssistantScreen })));
-const ExportsScreen = lazy(() => import('@/src/screens/ExportsScreen').then((module) => ({ default: module.ExportsScreen })));
-const SettingsScreen = lazy(() => import('@/src/screens/SettingsScreen').then((module) => ({ default: module.SettingsScreen })));
-const SettingsDetailScreen = lazy(() => import('@/src/screens/SettingsDetailScreen').then((module) => ({ default: module.SettingsDetailScreen })));
-const SystemStatesScreen = lazy(() => import('@/src/screens/SystemStatesScreen').then((module) => ({ default: module.SystemStatesScreen })));
-const ClinicalRecordScreen = lazy(() => import('@/src/features/clinical-record/ClinicalRecordScreen').then((module) => ({ default: module.ClinicalRecordScreen })));
-const AtalAIDraftReviewScreen = lazy(() => import('@/src/features/atal-ai/AtalAIDraftReviewScreen').then((module) => ({ default: module.AtalAIDraftReviewScreen })));
-const FeedbackScreen = lazy(() => import('@/src/screens/FeedbackScreen').then((module) => ({ default: module.FeedbackScreen })));
+import { ClinicalRecordScreen } from '@/src/features/clinical-record/ClinicalRecordScreen';
+import { AtalAIDraftReviewScreen } from '@/src/features/atal-ai/AtalAIDraftReviewScreen';
+import { FeedbackScreen } from '@/src/screens/FeedbackScreen';
 
 function PatientProfileRoute() { const { id = 'p01' } = useParams(); return <PatientProfileScreen patientId={id} />; }
 function PatientPreviewRoute() { const { id = 'p01' } = useParams(); return <PatientPortalPreviewScreen patientId={id} />; }
@@ -39,10 +33,9 @@ function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <Exe
 function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
 function SettingsDetailRoute({ kind }: { kind: SettingsKind }) { return <SettingsDetailScreen kind={kind} />; }
 function AIDraftRoute() { const { draftId = '' } = useParams(); return <AtalAIDraftReviewScreen draftId={draftId} />; }
-function RouteLoader() { return <RouteSkeleton />; }
 
 function PrivateAppRoutes() {
-  return <AtalPersistentShell><Suspense fallback={<RouteLoader />}><Routes>
+  return <AtalPersistentShell><Routes>
     <Route path="/" element={<HomeScreen />} />
     <Route path="/patients" element={<PatientsScreen />} />
     <Route path="/patients/new" element={<NewPatientScreen />} />
@@ -56,6 +49,8 @@ function PrivateAppRoutes() {
     <Route path="/exercises/:id" element={<ExerciseDetailRoute />} />
     <Route path="/activity" element={<ActivityScreen />} />
     <Route path="/activity/:id" element={<ActivityDetailRoute />} />
+    <Route path="/assistant" element={<AssistantScreen />} />
+    <Route path="/assistant/drafts/:draftId" element={<AIDraftRoute />} />
     <Route path="/exports" element={<ExportsScreen />} />
     <Route path="/settings" element={<SettingsScreen />} />
     <Route path="/settings/profile" element={<SettingsDetailRoute kind="profile" />} />
@@ -65,15 +60,13 @@ function PrivateAppRoutes() {
     <Route path="/settings/feedback" element={<FeedbackScreen />} />
     <Route path="/system-states" element={<SystemStatesScreen />} />
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes></Suspense></AtalPersistentShell>;
+  </Routes></AtalPersistentShell>;
 }
 
 export function App() {
-  return <ThemeProvider><BrowserRouter><RouteScrollManager /><Routes>
-    <Route path="/patients/:id/portal-preview" element={<Suspense fallback={<RouteLoader />}><PatientPreviewRoute /></Suspense>} />
-    <Route path="/patients/:id/session" element={<Suspense fallback={<RouteLoader />}><PatientSessionRoute /></Suspense>} />
-    <Route path="/assistant" element={<Suspense fallback={<RouteLoader />}><AssistantScreen /></Suspense>} />
-    <Route path="/assistant/drafts/:draftId" element={<Suspense fallback={<RouteLoader />}><AIDraftRoute /></Suspense>} />
+  return <ThemeProvider><BrowserRouter><Routes>
+    <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
+    <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
     <Route path="*" element={<PrivateAppRoutes />} />
   </Routes></BrowserRouter></ThemeProvider>;
 }

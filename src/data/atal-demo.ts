@@ -82,6 +82,6 @@ export const exercises: Exercise[] = [
 
 export const statusColor: Record<PatientStatus, string> = {
   active: '#00a66a',
-  attention: '#2563eb',
+  attention: '#f4a61d',
   archived: '#7f8582',
 };

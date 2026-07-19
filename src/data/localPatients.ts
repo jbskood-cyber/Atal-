@@ -6,7 +6,7 @@ export type LocalPatient = PatientEntity;
 export type NewLocalPatient = { name:string; diagnosis:string; age?:number|null; birthDate?:string; sex?:string; affectedArea?:string; contact?:Partial<PatientContact>; status?:PatientStatus; visitType?:'first'|'followup' };
 export type PatientView = PatientEntity & { plan:string; progress:number; time:string; adherence:number };
 
-export const statusColor:Record<PatientStatus,string>={active:'#16a36a',attention:'#2563eb',archived:'#7f8582'};
+export const statusColor:Record<PatientStatus,string>={active:'#16a36a',attention:'#f4a61d',archived:'#7f8582'};
 
 function toView(patient:PatientEntity):PatientView{
   const state=getAtalState(); const plans=state.plans.filter((plan)=>plan.patientId===patient.id); const active=plans.find((plan)=>plan.status==='active');

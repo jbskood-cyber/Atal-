@@ -1,6 +1,6 @@
 # Auditoría funcional local de Atal
 
-Fecha: 2026-07-17
+Fecha: 2026-07-14
 
 Esquema operativo: `atal:store:v2`
 
@@ -31,8 +31,8 @@ Se recuperan las claves históricas `atal:local-patients:v1`, `atal:local-plans:
 | `/exercises/:id` | Detalle y edición | Store v2 + IndexedDB | Edita, duplica, archiva, restaura, reemplaza medio y elimina si no está relacionado | Compila; HTTP 200 |
 | `/activity` | Seguimiento y reportes | `SessionRecord` | Filtra sesiones reales y pendientes de revisión | Compila; HTTP 200 |
 | `/activity/:id` | Reporte de sesión | `SessionRecord`, paciente y plan | Guarda observación y marca reporte/notificación como revisados | Compila; HTTP 200 |
-| `/assistant` | Centro de mando conversacional exclusivo, contexto real, acordeón de borrador y compositor multimodal | Repositorios IA v1 + `atal:store:v2` | Consulta, prepara y confirma cambios; oculta shell clínico; aplica entidades y comandos sobre la fuente única | Compila; HTTP 200; flujo local verificado |
-| `/assistant/drafts/:draftId` | Revisión profunda editable sin shell clínico | Draft IA + Store v2 | Regenera sección y aplica la misma operación atómica del chat | Compila; HTTP 200 |
+| `/assistant` | Conversación multimodal y contexto de trabajo | Repositorios IA v1 + catálogos store v2 | Conserva conversación; limpia compositor al enviar; llama endpoint Gemini | Compila; HTTP 200 |
+| `/assistant/drafts/:draftId` | Revisión editable separada | Draft IA + Store v2 | Regenera sección, confirma y aplica una operación transaccional local | Compila; HTTP 200 |
 | `/exports` | CSV/JSON/backup | Store v2 | Descargas Blob reales; el backup excluye binarios grandes | Compila; HTTP 200 |
 | `/settings` | Preferencias | Store v2 | Toggles persistentes, densidad real y acceso a subsecciones | Compila; HTTP 200 |
 | `/settings/profile` | Perfil profesional | Store v2 | Guarda nombre, especialidad y clínica | Compila; HTTP 200 |
@@ -46,7 +46,7 @@ Se recuperan las claves históricas `atal:local-patients:v1`, `atal:local-plans:
 
 - Alta manual: el guardado crea paciente y expediente en una única mutación; las notas opcionales generan evento.
 - Plan manual: crea borrador, conserva relaciones por ID, y el detalle permite guardar y cambiar estado con conflicto explícito si ya existe un plan activo.
-- Atal IA: tiene encabezado y compositor propios, contexto por IDs de paciente/plan/ejercicio, tarjeta plegable con una sola sección abierta y un editor único por sección. Las consultas leen `atal:store:v2`; los borradores aplican en una mutación atómica; los comandos delicados exigen confirmación. Crear, actualizar y reemplazar un plan activo emite cambios reactivos y eventos de auditoría.
+- Atal IA: el contexto controla la intención y el paciente/plan; el borrador se revisa fuera del chat; la aplicación modifica solamente las entidades requeridas.
 - Sesión guiada: usa el plan activo del paciente, impide iniciar planes pausados, persiste progreso por paciente + plan y genera un registro terminado sin duplicados.
 - Reporte: se deriva de la sesión terminada; observación y revisión persisten y actualizan notificaciones.
 - Exportaciones: pacientes y progreso son CSV; planes y respaldo son JSON; todos se generan mediante `Blob`.
@@ -57,7 +57,7 @@ Se recuperan las claves históricas `atal:local-patients:v1`, `atal:local-plans:
 - `npm run typecheck`: aprobado.
 - `npm run build`: aprobado.
 - `git diff --check`: aprobado tras correcciones de whitespace.
-- Flujo específico de Atal IA: aprobado con alta atómica de paciente/expediente/ejercicio/plan, actualización del mismo ejercicio por ID, reemplazo atómico de plan activo, deshacer de ambos estados y bloqueo por conflicto de versión.
+- Flujo de repositorios en memoria: aprobado con alta atómica de paciente/expediente, tres ejercicios, plan, activación, edición, sesión terminada, revisión, nota, ajustes y persistencia v2.
 - Navegación HTTP: todas las rutas de la matriz respondieron 200 mediante Vite.
 - Endpoint Gemini sin secreto en el entorno de verificación: devolvió el error controlado y accionable esperado. No se declaró una llamada viva exitosa.
 - Dependencias: no se añadió ninguna.

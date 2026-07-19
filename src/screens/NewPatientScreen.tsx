@@ -27,14 +27,14 @@ export function NewPatientScreen() {
   return <AtalShell>
     <main className="atal-content atal-flow-page">
       <div className="atal-flow-topbar"><button type="button" onClick={() => router.back()} aria-label="Volver"><ArrowLeft /></button><span>Nuevo paciente</span><i /></div>
-      <div className="atal-form-heading"><h1>Nuevo paciente</h1></div>
+      <div className="atal-form-heading"><h1>Nuevo paciente</h1><p>Registra los datos esenciales. Podrás completar el expediente después.</p></div>
       <form className="atal-clinical-form" onSubmit={submit}>
-        <section className="atal-new-patient-hero"><button type="button" className="atal-photo-button" disabled title="Foto de perfil no disponible"><Camera /><span>Foto</span></button><div><small>Estado</small><span className="atal-status-pill"><i /> Activo</span></div></section>
+        <section className="atal-new-patient-hero"><button type="button" className="atal-photo-button" disabled title="Las fotografías de perfil se habilitarán con identidad y consentimiento."><Camera /><span>Foto no disponible en modo local</span></button><div><small>Estado</small><span className="atal-status-pill"><i /> Activo</span></div></section>
         <fieldset><legend>Datos personales</legend>
           <label className="atal-field atal-field--full"><span>Nombre completo</span><input required value={name} onChange={(event) => setName(event.target.value)} placeholder="Ej. Paciente Demo 13" /></label>
           <div className="atal-field-grid"><label className="atal-field"><span>WhatsApp</span><div className="atal-phone-field"><b>+52</b><input value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" placeholder="300 123 4567" /></div></label><label className="atal-field"><span>Edad</span><div className="atal-suffix-field"><input value={age} onChange={(event) => setAge(event.target.value)} inputMode="numeric" placeholder="35" /><b>años</b></div></label></div>
           <label className="atal-field atal-field--full"><span>Motivo / diagnóstico</span><input required value={diagnosis} onChange={(event) => setDiagnosis(event.target.value)} placeholder="Escribe el motivo o diagnóstico" /></label>
-          <label className="atal-field atal-field--full"><span>Notas clínicas</span><textarea maxLength={500} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Observaciones clínicas" /><small className="atal-character-count">{notes.length}/500</small></label>
+          <label className="atal-field atal-field--full"><span>Notas clínicas</span><textarea maxLength={500} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Observaciones relevantes, historia clínica, detalles importantes…" /><small className="atal-character-count">{notes.length}/500</small></label>
         </fieldset>
         <fieldset><legend>Datos rápidos</legend><div className="atal-choice-row"><button type="button" className={visit === 'first' ? 'is-active' : ''} onClick={() => setVisit('first')}><Clock3 /> Primera vez</button><button type="button" className={visit === 'followup' ? 'is-active' : ''} onClick={() => setVisit('followup')}><RefreshCw /> Seguimiento</button></div></fieldset>
         <button type="submit" className="atal-submit-button" disabled={!name.trim() || !diagnosis.trim()}><Save /> Guardar paciente <Check /></button>
