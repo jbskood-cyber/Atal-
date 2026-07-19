@@ -1,34 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --ui-primary: #18181b;
-  --ui-primary-strong: #09090b;
-  --ui-primary-soft: #f1f1f3;
-  --ui-on-primary: #ffffff;
-  --ui-canvas: #f8f8f9;
-  --ui-surface: #ffffff;
-  --ui-surface-raised: #ffffff;
-  --ui-text: #171719;
-  --ui-text-muted: #66666e;
-  --ui-border: #e4e4e7;
-  --ui-focus: #52525b;
-  --ui-overlay: rgba(24, 24, 27, 0.34);
-  --ui-shadow: 0 18px 48px rgba(24, 24, 27, 0.08);
-  --status-success: #168a5b;
-  --status-warning: #e5a000;
-  --status-danger: #cf3448;
-  --brand-green: #16a36a;
-  --green: var(--ui-primary);
-  --green-dark: var(--ui-primary-strong);
-  --mint: var(--ui-primary-soft);
-  --ink: var(--ui-text);
-  --muted: var(--ui-text-muted);
-  --line: var(--ui-border);
-  --surface: var(--ui-surface);
-  --canvas: var(--ui-canvas);
-  --warning: var(--status-warning);
-  --shadow: var(--ui-shadow);
-  --dock-shadow: 0 12px 35px rgba(24, 24, 27, 0.1);
+  --green: #16a36a;
+  --green-dark: #0d7d51;
+  --mint: #e8f5ef;
+  --ink: #0f1416;
+  --muted: #6c7771;
+  --line: #e2e8e5;
+  --surface: #ffffff;
+  --canvas: #f7f9f8;
+  --warning: #f4a61d;
+  --shadow: 0 18px 48px rgba(20, 58, 43, 0.11);
+  --dock-shadow: 0 12px 35px rgba(20, 58, 43, 0.14);
   --type-xs: 11px;
   --type-sm: 13px;
   --type-body: 15px;
@@ -333,7 +316,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .atal-desktop-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .atal-desktop-metric { display: flex; min-height: 111px; align-items: center; gap: 17px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
   .atal-desktop-metric > span { display: flex; width: 60px; height: 60px; flex: 0 0 60px; align-items: center; justify-content: center; border-radius: 50%; color: var(--green); background: var(--mint); }
-  .atal-desktop-metric.is-warning > span { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 2px var(--status-warning); }
+  .atal-desktop-metric.is-warning > span { color: #f18a11; background: #fff4e5; }
   .atal-desktop-metric small, .atal-desktop-metric strong, .atal-desktop-metric em { display: block; }
   .atal-desktop-metric small { color: #526159; font-size: 12px; }
   .atal-desktop-metric strong { margin-top: 6px; font-size: 24px; line-height: 1; }
@@ -361,12 +344,12 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .atal-dashboard-column > footer b { display: inline-flex; width: 23px; height: 23px; align-items: center; justify-content: center; border-radius: 5px; color: #fff; background: var(--green); }
   .atal-dashboard-plan, .atal-activity-row { display: flex; width: 100%; min-height: 74px; align-items: center; gap: 10px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
   .atal-plan-icon { display: flex; width: 40px; height: 40px; flex: 0 0 40px; align-items: center; justify-content: center; border-radius: 50%; color: var(--green); background: var(--mint); }
-  .atal-plan-icon--1,.atal-plan-icon--2,.atal-plan-icon--3 { color: var(--green-dark); background: var(--mint); }
+  .atal-plan-icon--1 { color: #4382d1; background: #eaf3ff; }.atal-plan-icon--2 { color: #f18a11; background: #fff3e4; }.atal-plan-icon--3 { color: #8756cc; background: #f2ebff; }
   .atal-dashboard-plan__copy { min-width: 0; flex: 1; }
   .atal-dashboard-plan__copy b, .atal-dashboard-plan__copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .atal-dashboard-plan__copy b { font-size: 11px; }.atal-dashboard-plan__copy small { margin-top: 3px; color: var(--muted); font-size: 9px; }
   .atal-plan-phase { flex: 0 0 auto; padding: 4px 7px; border-radius: 7px; color: var(--green-dark); background: var(--mint); font-size: 8px; }
-  .atal-activity-row > span:first-child { display: flex; width: 40px; height: 40px; flex: 0 0 40px; align-items: center; justify-content: center; border-radius: 50%; color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 2px var(--status-warning); }
+  .atal-activity-row > span:first-child { display: flex; width: 40px; height: 40px; flex: 0 0 40px; align-items: center; justify-content: center; border-radius: 50%; color: #f18a11; background: #fff3e4; }
   .atal-activity-row > span:first-child.is-done { color: var(--green); background: var(--mint); }
   .atal-activity-row > span:nth-child(2) { min-width: 0; flex: 1; }
   .atal-activity-row b, .atal-activity-row small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -587,7 +570,7 @@ button:active, a:active { transform: scale(.975); }
 .atal-native-sheet > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }.atal-native-sheet > header h2 { margin: 0; font-size: 19px; letter-spacing: -.025em; }.atal-native-sheet > header button { display: flex; width: 36px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: #f2f5f3; }.atal-native-sheet > header svg { width: 18px; }
 .atal-command-search { display: flex; height: 50px; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid var(--line); border-radius: 13px; background: #f8faf9; }.atal-command-search svg { width: 19px; color: var(--muted); }.atal-command-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; }
 .atal-command-results { display: grid; gap: 4px; margin-top: 10px; }.atal-command-results a, .atal-quick-actions button, .atal-notification-list button { display: flex; width: 100%; min-height: 64px; align-items: center; gap: 11px; padding: 8px; border: 0; border-radius: 13px; color: var(--ink); background: transparent; text-align: left; text-decoration: none; }.atal-command-results a:hover, .atal-quick-actions button:hover, .atal-notification-list button:hover { background: #f4f9f6; }.atal-command-results a > span:first-child, .atal-quick-actions button > span:first-child, .atal-notification-list button > span:first-child { display: flex; width: 40px; height: 40px; flex: 0 0 40px; align-items: center; justify-content: center; border-radius: 12px; color: var(--green); background: var(--mint); }.atal-command-results a > span:nth-child(2), .atal-quick-actions button > span:nth-child(2), .atal-notification-list button > span:nth-child(2) { min-width: 0; flex: 1; }.atal-command-results b, .atal-command-results small, .atal-quick-actions b, .atal-quick-actions small, .atal-notification-list b, .atal-notification-list small { display: block; }.atal-command-results b, .atal-quick-actions b, .atal-notification-list b { font-size: 13px; }.atal-command-results small, .atal-quick-actions small, .atal-notification-list small { margin-top: 3px; color: var(--muted); font-size: 10px; }.atal-command-results a > svg, .atal-quick-actions button > svg { width: 16px; color: #8d9892; }.atal-command-results > p { padding: 25px; color: var(--muted); text-align: center; }
-.atal-notification-list button > span.is-warning { color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 2px var(--status-warning); }.atal-notification-list button > i { align-self: flex-start; padding-top: 5px; color: var(--muted); font-size: 9px; font-style: normal; }
+.atal-notification-list button > span.is-warning { color: #e78c11; background: #fff3e4; }.atal-notification-list button > i { align-self: flex-start; padding-top: 5px; color: var(--muted); font-size: 9px; font-style: normal; }
 
 .atal-mobile-header { position: sticky; z-index: 30; top: 0; border-bottom: 1px solid rgba(226,232,229,.55); background: rgba(255,255,255,.86); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
 .atal-new-button { box-shadow: 0 8px 20px rgba(0,166,106,.2); }.atal-new-button:hover { background: #009960; box-shadow: 0 10px 24px rgba(0,166,106,.27); }

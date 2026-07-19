@@ -16,10 +16,10 @@ Se recuperan las claves históricas `atal:local-patients:v1`, `atal:local-plans:
 
 | Ruta | Funcionalidad visible | Fuente de datos | Acción real y persistencia | Verificación |
 |---|---|---|---|---|
-| `/` | Inicio, métricas, alertas y reportes recientes | Store v2, notificaciones y sesiones | Navega a pacientes, planes, reportes, ejercicios, exportaciones, ajustes y Atal IA | Compila; respuesta HTTP 200 |
+| `/` | Inicio, métricas, alertas y actividad reciente | Store v2, sesiones y eventos | Navega a pacientes, planes y reportes reales | Compila; respuesta HTTP 200 |
 | `/patients` | Lista, búsqueda, filtros y orden | Store v2 | Refleja crear, editar, archivar y restaurar sin recarga | Compila; HTTP 200 |
 | `/patients/new` | Alta de paciente y expediente | Store v2 | Operación conjunta paciente + expediente; nota opcional | Compila; HTTP 200 |
-| `/patients/:id` | Perfil, plan actual, notas, historial y métricas | Store v2 | Edita datos; notas CRUD; archiva/restaura; abre plan/expediente | Compila; HTTP 200 |
+| `/patients/:id` | Perfil, plan activo, notas, historial y métricas | Store v2 | Edita datos; notas CRUD; archiva/restaura; abre plan/expediente | Compila; HTTP 200 |
 | `/patients/:id/clinical-record` | Documento clínico editable e imprimible | Store v2 + versiones | Guarda versión, asocia plan vigente y abre impresión A4/PDF | Compila; HTTP 200 |
 | `/patients/:id/portal-preview` | Plan activo o pausado y progreso reciente | Store v2 + borrador de sesión | Revisa ejercicios, reanuda o reinicia solo el borrador actual | Compila; HTTP 200 |
 | `/patients/:id/session` | Sesión guiada sin shell clínico | Plan y ejercicios del store; IndexedDB para medios | Persiste borrador por paciente/plan y crea `SessionRecord` al finalizar | Compila; HTTP 200 |
@@ -38,7 +38,7 @@ Se recuperan las claves históricas `atal:local-patients:v1`, `atal:local-plans:
 | `/settings/profile` | Perfil profesional | Store v2 | Guarda nombre, especialidad y clínica | Compila; HTTP 200 |
 | `/settings/privacy` | Privacidad local | Store v2 | Persiste bloqueo y separación clínica | Compila; HTTP 200 |
 | `/settings/ai` | Preferencias de Atal IA | Store v2 | Persiste sugerencias, alertas e instrucciones | Compila; HTTP 200 |
-| `/settings/appearance` | Atal Green / Atal Dark / sistema | Theme repository local | Persiste apariencia, migra valores históricos no reconocidos a Green y la aplica a toda la app | Compila; HTTP 200 |
+| `/settings/appearance` | Claro / Graphite Clinical / sistema | Theme repository local | Persiste apariencia y la aplica a toda la app | Compila; HTTP 200 |
 | `/settings/feedback` | Ayuda y comentarios | Store v2 | Guarda historial y usa Web Share, portapapeles o descarga real | Compila; HTTP 200 |
 | `/system-states` | Estados vacíos, carga, error y éxito | UI local | Referencia funcional de estados del producto | Compila; HTTP 200 |
 

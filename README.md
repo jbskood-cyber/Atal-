@@ -23,16 +23,17 @@ El servidor de desarrollo usa el puerto `3000`. Verificaciones disponibles:
 
 ```bash
 npm run typecheck
-npm run test
 npm run build
 ```
 
 ## Dirección visual
 
-- Atal Green: identidad principal sobre superficies claras, con verde estructural para navegación y acciones.
-- Atal Dark: entorno grafito de alto contraste con el mismo acento verde.
-- El selector está en `Ajustes → Apariencia` y conserva la preferencia localmente.
-- Una preferencia histórica no reconocida, incluida `blue`, migra automáticamente a Atal Green.
+- B001/B002: sistema oficial de marca.
+- M003/M004: navegación e Inicio en modo claro.
+- M080 Graphite Clinical: modo oscuro oficial.
+- M065: referencia histórica; no se utiliza como fuente principal.
+
+El selector está en `Ajustes → Apariencia` y conserva la preferencia localmente.
 
 ## Alcance
 

@@ -4,58 +4,52 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { AvatarOrInitials, ClinicalListRow, EmptyState, GroupedList, MobileAppHeader, NativeSearchField, SegmentedTabs, StatusBadge } from '@/src/components/native/NativeClinical';
-import { usePatientCatalog, type PatientStatus } from '@/src/data/localPatients';
-import { useAtalStore } from '@/src/data/atalStore';
+import { Avatar } from '@/src/components/atal/Avatar';
+import { SearchBar } from '@/src/components/atal/SearchBar';
+import { statusColor, usePatientCatalog, type PatientStatus } from '@/src/data/localPatients';
 
 type Filter = 'all' | PatientStatus;
 
-function shortDate(value: string) {
-  return new Date(value).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-}
-
 export function PatientsScreen() {
-  const router = useRouter();
-  const patients = usePatientCatalog();
-  const state = useAtalStore((store) => ({ plans: store.plans, sessions: store.sessions }));
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('active');
-  const [ascending, setAscending] = useState(true);
-  const visible = useMemo(() => patients.filter((patient) => {
-    const matchesFilter = filter === 'all' || patient.status === filter;
-    return matchesFilter && `${patient.name} ${patient.diagnosis} ${patient.affectedArea}`.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'));
-  }).sort((a, b) => ascending ? a.name.localeCompare(b.name, 'es') : b.name.localeCompare(a.name, 'es')), [patients, query, filter, ascending]);
+  const [ascending,setAscending]=useState(true);
+  const router = useRouter();
+  const patientCatalog = usePatientCatalog();
 
-  return <AtalShell onNew={() => router.push('/patients/new')}><main className="atal-content native-patients atal-patients-rescue">
-    <MobileAppHeader title="Pacientes" actions={<button type="button" onClick={() => router.push('/patients/new')} aria-label="Nuevo paciente"><Plus /></button>} />
-    <NativeSearchField value={query} onChange={setQuery} placeholder="Buscar por nombre, motivo o región" />
-    <SegmentedTabs value={filter} label="Estado de pacientes" onChange={setFilter} items={[
-      { value: 'active', label: 'Activos', count: patients.filter((patient) => patient.status === 'active').length },
-      { value: 'attention', label: 'Atención', count: patients.filter((patient) => patient.status === 'attention').length },
-      { value: 'archived', label: 'Archivados', count: patients.filter((patient) => patient.status === 'archived').length },
-    ]} />
-    <div className="native-patients__meta"><span>{visible.length} {visible.length === 1 ? 'paciente' : 'pacientes'}</span><button type="button" onClick={() => setAscending((value) => !value)}>Nombre {ascending ? 'A–Z' : 'Z–A'} <ChevronDown size={14} /></button></div>
-    <GroupedList>
-      {visible.map((patient) => {
-        const activePlan = state.plans.find((item) => item.patientId === patient.id && item.status === 'active');
-        const latest = state.sessions.filter((item) => item.patientId === patient.id).sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0];
-        const pendingReport = Boolean(latest && !latest.reviewedAt);
-        const tone = latest?.endPain >= 7 ? 'urgent' : patient.status === 'attention' || pendingReport ? 'attention' : patient.status === 'archived' ? 'neutral' : 'stable';
-        const statusLabel = latest?.endPain >= 7 ? 'Dolor alto' : pendingReport ? 'Por revisar' : patient.status === 'attention' ? 'Atención' : patient.status === 'archived' ? 'Archivado' : !activePlan ? 'Sin plan' : '';
-        const subtitle = [patient.affectedArea, patient.diagnosis].filter(Boolean).join(' · ') || 'Motivo clínico por completar';
-        const meta = latest ? `Última sesión ${shortDate(latest.completedAt)} · Dolor ${latest.endPain}/10` : activePlan ? 'Sin actividad registrada' : 'Sin plan activo';
-        return <ClinicalListRow
-          key={patient.id}
-          leading={<AvatarOrInitials id={patient.id} name={patient.name} />}
-          title={patient.name}
-          subtitle={subtitle}
-          meta={meta}
-          tone={tone}
-          onClick={() => router.push(`/patients/${patient.id}`)}
-          trailing={<span className="atal-patient-row-action">{statusLabel && <StatusBadge tone={tone}>{statusLabel}</StatusBadge>}<ChevronRight /></span>}
-        />;
-      })}
-      {!visible.length && <EmptyState title="No encontramos pacientes" detail="Ajusta la búsqueda o crea un paciente nuevo." action="Nuevo paciente" onAction={() => router.push('/patients/new')} />}
-    </GroupedList>
-  </main></AtalShell>;
+  const visible = useMemo(() => patientCatalog.filter((patient) => {
+    const matchesFilter = filter === 'all' || patient.status === filter;
+    const text = `${patient.name} ${patient.diagnosis}`.toLowerCase();
+    return matchesFilter && text.includes(query.toLowerCase());
+  }).sort((a,b)=>ascending?a.name.localeCompare(b.name):b.name.localeCompare(a.name)), [patientCatalog, query, filter,ascending]);
+
+  return (
+    <AtalShell onNew={() => router.push('/patients/new')}>
+      <main className="atal-content atal-list-page atal-patient-directory">
+        <div className="atal-page-heading"><h1>Pacientes</h1><button type="button" onClick={() => router.push('/patients/new')}><Plus size={19} /> Nuevo paciente</button></div>
+        <SearchBar value={query} onChange={setQuery} placeholder="Buscar paciente" />
+        <div className="atal-segments">
+          <Segment active={filter === 'active'} onClick={() => setFilter('active')} dot={statusColor.active}>Activos</Segment>
+          <Segment active={filter === 'attention'} onClick={() => setFilter('attention')} dot={statusColor.attention}>Atención</Segment>
+          <Segment active={filter === 'archived'} onClick={() => setFilter('archived')} dot={statusColor.archived}>Archivados</Segment>
+        </div>
+        <div className="atal-list-meta"><span>{visible.length} pacientes</span><button type="button" onClick={()=>setAscending((value)=>!value)}>Nombre {ascending?'A–Z':'Z–A'} <ChevronDown size={17} /></button></div>
+        <div className="atal-dense-list">
+          {visible.map((patient) => (
+            <button key={patient.id} type="button" className="atal-dense-row" onClick={() => router.push(`/patients/${patient.id}`)}>
+              <Avatar name={patient.name} />
+              <span><b>{patient.name}</b><small>{patient.diagnosis}</small><small>{patient.progress}% del plan completado</small></span>
+              <i style={{ background: statusColor[patient.status] }} />
+              <ChevronRight size={20} />
+            </button>
+          ))}
+        </div>
+        {!visible.length && <div className="atal-empty">No encontramos pacientes con estos filtros.</div>}
+      </main>
+    </AtalShell>
+  );
+}
+
+function Segment({ children, active, onClick, dot }: { children: React.ReactNode; active: boolean; onClick: () => void; dot: string }) {
+  return <button type="button" className={active ? 'is-active' : ''} onClick={onClick}><i style={{ background: dot }} />{children}</button>;
 }

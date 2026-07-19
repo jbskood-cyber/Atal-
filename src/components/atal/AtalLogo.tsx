@@ -10,5 +10,5 @@ export function AtalMark({ className = '' }: { className?: string }) {
 }
 
 export function AtalLogo({ compact = false }: { compact?: boolean }) {
-  return <div aria-label="Atal" className="atal-logo"><AtalMark className="atal-logo__mark" />{!compact&&<div><div className="atal-logo__name">Atal</div></div>}</div>;
+  return <div aria-label="Atal Fisioterapia" className="atal-logo"><AtalMark className="atal-logo__mark" />{!compact&&<div><div className="atal-logo__name">Atal</div><div className="atal-logo__descriptor">Fisioterapia</div></div>}</div>;
 }

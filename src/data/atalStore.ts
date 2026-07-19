@@ -2,11 +2,9 @@ import { useMemo, useSyncExternalStore } from 'react';
 import { exercises as demoExercises, patients as demoPatients, plans as demoPlans } from './atal-demo';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import type { GuidedSessionDraft, Symptom } from '@/src/features/guided-session/types';
-import { mergeMissingById } from './demoSeed';
 
 export const ATAL_STORE_KEY = 'atal:store:v2';
 export const ATAL_STORE_VERSION = 2;
-export const ATAL_DEMO_SEED_KEY = 'atal:demo-seed:v3';
 
 export type PatientStatus = 'active' | 'attention' | 'archived';
 export type PlanStatus = 'draft' | 'active' | 'paused' | 'completed' | 'archived';
@@ -85,20 +83,12 @@ function iso(value: unknown, fallback: string) { return typeof value === 'string
 
 function seedState(): AtalState {
   const timestamp = now();
-  const areas=['Rodilla','Hombro','Columna','Cadera','Tobillo','Cuello'];
-  const patients: PatientEntity[] = demoPatients.map((patient,index) => ({ id: patient.id, name: patient.name, diagnosis: patient.diagnosis, age: 24+(index*3)%48, birthDate: '', sex: '', affectedArea: areas[index%areas.length], status: patient.status, visitType:index%3===0?'followup':'first', contact: { phone:'',email:'',address:'',emergencyContact:'' }, createdAt: timestamp, updatedAt: timestamp }));
-  const exercises: ExerciseEntity[] = demoExercises.map((exercise, index) => ({ id: exercise.id, name: exercise.name, region: exercise.region, category: exercise.category, objective: 'Mejorar control, movilidad y tolerancia al esfuerzo.', startingPosition: 'Posición estable y cómoda.', instructions: ['Realiza el movimiento con control.','Respira con normalidad y evita compensaciones.'], precautions: 'Detente ante dolor intenso o síntomas nuevos.', equipment: ['Sin equipo','Banda elástica','Mancuernas'][index%3], difficulty: ['Inicial','Intermedio','Avanzado'][index%3], sets: 2+(index%3), repetitions: 8+(index%5)*2, rest: `${30+(index%3)*15} segundos`, maxPain: index%4===3?5:3, tags: [exercise.region, exercise.category], notes: '', media: { type: 'image' }, status: 'active', source: 'seed', createdAt: timestamp, updatedAt: timestamp }));
+  const patients: PatientEntity[] = demoPatients.map((patient) => ({ id: patient.id, name: patient.name, diagnosis: patient.diagnosis, age: null, birthDate: '', sex: '', affectedArea: '', status: patient.status, visitType:'first', contact: { phone:'',email:'',address:'',emergencyContact:'' }, createdAt: timestamp, updatedAt: timestamp }));
+  const exercises: ExerciseEntity[] = demoExercises.map((exercise, index) => ({ id: exercise.id, name: exercise.name, region: exercise.region, category: exercise.category, objective: 'Mejorar el movimiento de forma progresiva.', startingPosition: 'Colócate en una posición cómoda y estable.', instructions: ['Realiza el movimiento con control.','Respira con normalidad y evita compensaciones.'], precautions: 'Detente si aparece dolor fuerte o una molestia fuera de lo indicado.', equipment: 'Según indicación', difficulty: 'Inicial', sets: 3, repetitions: 10, rest: '30 segundos', maxPain: 3, tags: [exercise.region, exercise.category], notes: '', media: { type: 'image' }, status: 'active', source: 'seed', createdAt: timestamp, updatedAt: timestamp }));
   const plans: PlanEntity[] = demoPlans.map((plan, index) => ({ id: plan.id, patientId: patients.find((patient) => patient.name === plan.patient)?.id ?? patients[index % patients.length].id, title: plan.title, focus: plan.phase, duration: plan.duration, frequency: plan.frequency, goal: 'Recuperar función y tolerancia al movimiento.', exerciseIds: exercises.slice(index % 6, index % 6 + 3).map((exercise) => exercise.id), status: plan.status, progression: 'Aumentar según tolerancia y calidad del movimiento.', reportCriteria: 'Reportar dolor elevado, síntomas o imposibilidad para completar.', generalInstructions: 'Realiza los ejercicios con calma y sigue las indicaciones de tu fisioterapeuta.', createdAt: timestamp, updatedAt: timestamp }));
-  const session=(id:string,patientId:string,planId:string,days:number,status:'partial'|'completed',endPain:number,reviewed:boolean):SessionRecord=>{const completedAt=new Date(Date.now()-days*86400000).toISOString();return{id,patientId,planId,startedAt:new Date(Date.parse(completedAt)-32*60000).toISOString(),completedAt,status,startPain:Math.min(10,endPain+2),startEnergy:6,startComment:'',exercises:{},endPain,endEnergy:status==='completed'?7:4,effort:endPain>=7?5:3,symptoms:endPain>=7?['dolor']:['ninguno'],comment:status==='partial'?'Sesión interrumpida por molestia.':'Sesión completada.',easiest:'',hardest:'',discomfort:endPain>=7?'Molestia durante el último ejercicio.':'',durationMinutes:status==='completed'?32:18,reviewedAt:reviewed?completedAt:undefined,clinicalObservation:reviewed?'Evolución revisada.':'',createdAt:completedAt,updatedAt:completedAt};};
-  const sessions:SessionRecord[]=[session('seed-session-01','p01','pl01',0,'completed',2,true),session('seed-session-02','p01','pl01',3,'completed',3,true),session('seed-session-03','p02','pl02',0,'partial',8,false),session('seed-session-04','p03','pl03',1,'completed',5,false),session('seed-session-05','p14','pl09',2,'partial',6,false),session('seed-session-06','p15','pl10',5,'completed',1,true)];
-  const clinicalRecords:ClinicalRecord[]=patients.slice(0,8).map((patient,index)=>({id:`seed-record-${patient.id}`,patientId:patient.id,version:1,date:timestamp,reasonForVisit:patient.diagnosis,evolution:`${2+index} semanas`,affectedArea:patient.affectedArea,symptoms:index%3===0?['dolor','rigidez']:['dolor'],painLevel:[2,8,5,4,3,6,2,7][index],providedDiagnosis:patient.diagnosis,functionalLimitations:['Actividad demostrativa limitada'],goals:['Recuperar movilidad funcional'],relevantHistory:[],precautions:index===1?['Vigilar dolor irradiado']:[],clinicalNotes:'Expediente demostrativo para evaluación visual.',planId:plans.find((plan)=>plan.patientId===patient.id)?.id??'',professional:'Cuenta demo',createdAt:timestamp,updatedAt:timestamp}));
-  const notes:PatientNote[]=[{id:'seed-note-01',patientId:'p01',content:'Tolera mejor la progresión de carga.',professional:'Cuenta demo',createdAt:timestamp,updatedAt:timestamp},{id:'seed-note-02',patientId:'p02',content:'Revisar dolor alto antes de continuar.',professional:'Cuenta demo',createdAt:timestamp,updatedAt:timestamp},{id:'seed-note-03',patientId:'p14',content:'Plan pausado de forma preventiva.',professional:'Cuenta demo',createdAt:timestamp,updatedAt:timestamp}];
-  const events: ActivityEvent[] = [...sessions.map((item)=>({id:`seed-event-${item.id}`,kind:item.status==='completed'?'session_completed' as const:'session_partial' as const,patientId:item.patientId,planId:item.planId,sessionId:item.id,title:item.status==='completed'?'Sesión completada':'Sesión parcial',detail:patients.find((patient)=>patient.id===item.patientId)?.name??'Paciente demo',createdAt:item.completedAt})),...patients.slice(0,4).map((patient, index) => ({ id: `seed-event-${patient.id}`, kind: 'patient_created' as const, patientId: patient.id, title: 'Paciente', detail: patient.name, createdAt: new Date(Date.now() - (index+8) * 3600000).toISOString() }))];
-  const notifications:AppNotification[]=[{id:'seed-notification-critical',title:'Dolor alto',detail:'Paciente Demo 02 · Dolor 8/10',severity:'urgent',href:'/activity/seed-session-03',read:false,createdAt:sessions[2].completedAt},{id:'seed-notification-review',title:'Reporte pendiente',detail:'Paciente Demo 03 · Dolor 5/10',severity:'attention',href:'/activity/seed-session-04',read:false,createdAt:sessions[3].completedAt},{id:'seed-notification-stable',title:'Evolución estable',detail:'Paciente Demo 01 · Dolor 2/10',severity:'stable',href:'/activity/seed-session-01',read:true,createdAt:sessions[0].completedAt}];
-  return { version: 2, seededAt: timestamp, updatedAt: timestamp, patients, plans, exercises, clinicalRecords, clinicalRecordVersions: [], sessions, notes, events, notifications, settings: { notifications: true, haptics: true, compact: true, professionalName: 'Cuenta demo', specialty: 'Fisioterapeuta', clinic: '', sessionLock: true, clinicalPrivacy: true, aiSuggestions: true, aiAlerts: true, aiInstructions: 'Prioriza claridad, seguridad clínica y decisiones fáciles de revisar.' }, feedback: [] };
+  const events: ActivityEvent[] = patients.slice(0,4).map((patient, index) => ({ id: `seed-event-${patient.id}`, kind: 'patient_created', patientId: patient.id, title: 'Paciente disponible', detail: `${patient.name} forma parte de los datos iniciales de demostración.`, createdAt: new Date(Date.now() - index * 3600000).toISOString() }));
+  return { version: 2, seededAt: timestamp, updatedAt: timestamp, patients, plans, exercises, clinicalRecords: [], clinicalRecordVersions: [], sessions: [], notes: [], events, notifications: [], settings: { notifications: true, haptics: true, compact: true, professionalName: 'Cuenta demo', specialty: 'Fisioterapeuta', clinic: '', sessionLock: true, clinicalPrivacy: true, aiSuggestions: true, aiAlerts: true, aiInstructions: 'Prioriza claridad, seguridad clínica y decisiones fáciles de revisar.' }, feedback: [] };
 }
-
-function mergeDemoSeed(state:AtalState):AtalState{const seed=seedState();return{...state,patients:mergeMissingById(state.patients,seed.patients),plans:mergeMissingById(state.plans,seed.plans),exercises:mergeMissingById(state.exercises,seed.exercises),clinicalRecords:mergeMissingById(state.clinicalRecords,seed.clinicalRecords),sessions:mergeMissingById(state.sessions,seed.sessions),notes:mergeMissingById(state.notes,seed.notes),events:mergeMissingById(state.events,seed.events),notifications:mergeMissingById(state.notifications,seed.notifications)};}
 
 function mergeLegacy(base: AtalState): AtalState {
   const timestamp = now();
@@ -128,66 +118,9 @@ function isState(value: unknown): value is AtalState { const state = value as Pa
 function loadState() {
   if (cache) return cache;
   const stored = typeof window !== 'undefined' ? safeJson(ATAL_STORE_KEY) : null;
-  if (isState(stored)) {
-    const timestamp = now();
-    let normalized: AtalState = {
-      ...stored,
-      patients: stored.patients.map((patient) => ({
-        ...patient,
-        age: typeof patient.age === 'number' ? patient.age : null,
-        birthDate: patient.birthDate ?? '',
-        sex: patient.sex ?? '',
-        affectedArea: patient.affectedArea ?? '',
-        visitType: patient.visitType === 'followup' ? 'followup' : 'first',
-        contact: {
-          phone: patient.contact?.phone ?? '',
-          email: patient.contact?.email ?? '',
-          address: patient.contact?.address ?? '',
-          emergencyContact: patient.contact?.emergencyContact ?? '',
-        },
-        createdAt: iso(patient.createdAt, timestamp),
-        updatedAt: iso(patient.updatedAt, timestamp),
-      })),
-      plans: stored.plans.map((plan) => ({
-        ...plan,
-        exerciseIds: safeArray(plan.exerciseIds).filter((value): value is string => typeof value === 'string'),
-        progression: plan.progression ?? '',
-        reportCriteria: plan.reportCriteria ?? '',
-        generalInstructions: plan.generalInstructions ?? '',
-        createdAt: iso(plan.createdAt, timestamp),
-        updatedAt: iso(plan.updatedAt, timestamp),
-      })),
-      exercises: stored.exercises.map((exercise) => ({
-        ...exercise,
-        instructions: safeArray(exercise.instructions).filter((value): value is string => typeof value === 'string'),
-        tags: safeArray(exercise.tags).filter((value): value is string => typeof value === 'string'),
-        media: exercise.media ?? { type: 'none' },
-        status: exercise.status === 'archived' ? 'archived' : 'active',
-        createdAt: iso(exercise.createdAt, timestamp),
-        updatedAt: iso(exercise.updatedAt, timestamp),
-      })),
-      clinicalRecords: safeArray(stored.clinicalRecords) as ClinicalRecord[],
-      clinicalRecordVersions: safeArray(stored.clinicalRecordVersions) as ClinicalRecordVersion[],
-      sessions: safeArray(stored.sessions) as SessionRecord[],
-      notes: safeArray(stored.notes) as PatientNote[],
-      events: safeArray(stored.events) as ActivityEvent[],
-      notifications: safeArray(stored.notifications) as AppNotification[],
-      feedback: safeArray(stored.feedback) as FeedbackEntry[],
-      settings: { ...seedState().settings, ...stored.settings },
-    };
-    if (typeof window !== 'undefined' && localStorage.getItem(ATAL_DEMO_SEED_KEY) !== '1') {
-      normalized = mergeDemoSeed(normalized);
-      localStorage.setItem(ATAL_DEMO_SEED_KEY, '1');
-    }
-    cache = normalized;
-    if (typeof window !== 'undefined') localStorage.setItem(ATAL_STORE_KEY, JSON.stringify(cache));
-    return cache;
-  }
+  if (isState(stored)) { const timestamp=now();cache = { ...stored,patients:stored.patients.map((patient)=>({...patient,age:typeof patient.age==='number'?patient.age:null,birthDate:patient.birthDate??'',sex:patient.sex??'',affectedArea:patient.affectedArea??'',visitType:patient.visitType==='followup'?'followup':'first',contact:{phone:patient.contact?.phone??'',email:patient.contact?.email??'',address:patient.contact?.address??'',emergencyContact:patient.contact?.emergencyContact??''},createdAt:iso(patient.createdAt,timestamp),updatedAt:iso(patient.updatedAt,timestamp)})),plans:stored.plans.map((plan)=>({...plan,exerciseIds:safeArray(plan.exerciseIds).filter((value):value is string=>typeof value==='string'),progression:plan.progression??'',reportCriteria:plan.reportCriteria??'',generalInstructions:plan.generalInstructions??'',createdAt:iso(plan.createdAt,timestamp),updatedAt:iso(plan.updatedAt,timestamp)})),exercises:stored.exercises.map((exercise)=>({...exercise,instructions:safeArray(exercise.instructions).filter((value):value is string=>typeof value==='string'),tags:safeArray(exercise.tags).filter((value):value is string=>typeof value==='string'),media:exercise.media??{type:'none'},status:exercise.status==='archived'?'archived':'active',createdAt:iso(exercise.createdAt,timestamp),updatedAt:iso(exercise.updatedAt,timestamp)})),clinicalRecords:safeArray(stored.clinicalRecords) as ClinicalRecord[],clinicalRecordVersions:safeArray(stored.clinicalRecordVersions) as ClinicalRecordVersion[],sessions:safeArray(stored.sessions) as SessionRecord[],notes:safeArray(stored.notes) as PatientNote[],events:safeArray(stored.events) as ActivityEvent[],notifications:safeArray(stored.notifications) as AppNotification[],feedback:safeArray(stored.feedback) as FeedbackEntry[],settings:{...seedState().settings,...stored.settings} };if(typeof window!=='undefined')localStorage.setItem(ATAL_STORE_KEY,JSON.stringify(cache));return cache; }
   cache = mergeLegacy(seedState());
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(ATAL_STORE_KEY, JSON.stringify(cache));
-    localStorage.setItem(ATAL_DEMO_SEED_KEY, '1');
-  }
+  if (typeof window !== 'undefined') localStorage.setItem(ATAL_STORE_KEY, JSON.stringify(cache));
   return cache;
 }
 
@@ -226,7 +159,7 @@ export function deleteExercise(id:string){const state=loadState();if(state.plans
 
 export function saveClinicalRecord(input:ClinicalRecord){let result=input;mutateAtalStore((draft)=>{const existing=draft.clinicalRecords.find((item)=>item.patientId===input.patientId);if(existing){draft.clinicalRecordVersions.push({id:createEntityId('record-version'),recordId:existing.id,patientId:existing.patientId,version:existing.version,snapshot:structuredClone(existing),createdAt:now()});result={...existing,...input,id:existing.id,version:existing.version+1,createdAt:existing.createdAt,updatedAt:now()};draft.clinicalRecords=draft.clinicalRecords.map((item)=>item.id===existing.id?result:item);addEvent(draft,{kind:'record_updated',patientId:input.patientId,title:'Expediente actualizado',detail:`Versión ${result.version}`});}else{result={...input,id:input.id||createEntityId('record'),version:Math.max(1,input.version||1),createdAt:input.createdAt||now(),updatedAt:now()};draft.clinicalRecords.push(result);addEvent(draft,{kind:'record_created',patientId:input.patientId,title:'Expediente creado',detail:`Versión ${result.version}`});}});return result;}
 export function saveCompletedSession(patientId:string,planId:string,draftSession:GuidedSessionDraft){const existing=loadState().sessions.find((item)=>item.patientId===patientId&&item.planId===planId&&item.startedAt===draftSession.startedAt);if(existing)return existing;const completedAt=draftSession.completedAt??now();const durationMinutes=Math.max(1,Math.round((Date.parse(completedAt)-Date.parse(draftSession.startedAt??completedAt))/60000));const session:SessionRecord={id:createEntityId('session'),patientId,planId,startedAt:draftSession.startedAt??completedAt,completedAt,status:draftSession.status==='completed'?'completed':'partial',startPain:draftSession.start.pain,startEnergy:draftSession.start.energy,startComment:draftSession.start.comment,exercises:structuredClone(draftSession.exercises),endPain:draftSession.end.pain,endEnergy:draftSession.end.energy,effort:draftSession.end.effort,symptoms:draftSession.end.symptoms,comment:draftSession.end.comment,easiest:draftSession.end.easiest,hardest:draftSession.end.hardest,discomfort:draftSession.end.discomfort,durationMinutes,clinicalObservation:'',createdAt:completedAt,updatedAt:completedAt};mutateAtalStore((state)=>{state.sessions.unshift(session);const patient=state.patients.find((item)=>item.id===patientId);const alert=session.endPain>=7||session.symptoms.some((item)=>!['ninguno','otro'].includes(item));addEvent(state,{kind:session.status==='completed'?'session_completed':'session_partial',patientId,planId,sessionId:session.id,title:session.status==='completed'?'Sesión completada':'Sesión parcial',detail:patient?.name??'Paciente'});addNotification(state,{title:alert?'Sesión requiere atención':'Sesión lista para revisar',detail:`${patient?.name??'Paciente'} · Dolor ${session.endPain}/10`,severity:alert?'urgent':'attention',href:`/activity/${session.id}`});});return session;}
-export function recordSessionStarted(patientId:string,planId:string,startedAt:string){mutateAtalStore((draft)=>{if(draft.events.some((event)=>event.kind==='session_started'&&event.patientId===patientId&&event.planId===planId&&event.createdAt===startedAt))return;const patient=draft.patients.find((item)=>item.id===patientId);addEvent(draft,{kind:'session_started',patientId,planId,title:'Sesión iniciada',detail:patient?.name??'Paciente'});});}
+export function recordSessionStarted(patientId:string,planId:string,startedAt:string){mutateAtalStore((draft)=>{if(draft.events.some((event)=>event.kind==='session_started'&&event.patientId===patientId&&event.planId===planId&&event.createdAt===startedAt))return;addEvent(draft,{kind:'session_started',patientId,planId,title:'Sesión iniciada',detail:'El paciente comenzó su rutina.'});});}
 export function reviewSession(id:string,observation:string){mutateAtalStore((draft)=>{const session=draft.sessions.find((item)=>item.id===id);if(!session)throw new Error('Sesión no encontrada.');session.clinicalObservation=observation.trim();session.reviewedAt=now();session.updatedAt=now();addEvent(draft,{kind:'report_reviewed',patientId:session.patientId,planId:session.planId,sessionId:id,title:'Reporte revisado',detail:observation.trim()||'Sin observación adicional'});draft.notifications=draft.notifications.map((item)=>item.href===`/activity/${id}`?{...item,read:true}:item);});}
 
 export function updateSettings(patch:Partial<AppSettings>){mutateAtalStore((draft)=>{draft.settings={...draft.settings,...patch};});}

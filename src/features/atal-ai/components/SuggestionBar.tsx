@@ -4,13 +4,13 @@ import type { AtalAIDraft } from '../types';
 export function SuggestionBar({ text, draft, attachments, onChip }: { text: string; draft: AtalAIDraft | null; attachments: number; onChip: (text: string) => void }) {
   const missing=draft?.missingFields.join(' ').toLowerCase()??'';
   const chips = draft ? missing.includes('frecuencia') ? [
-    {label:'Frecuencia',text:'Define la frecuencia según la información disponible y pregúntame si falta algo.',icon:Crosshair},
-    {label:'Precaución',text:'Añade esta precaución al borrador: ',icon:ShieldPlus},
-    {label:'Revisar',text:'Comprueba qué falta antes de aplicar los cambios.',icon:CheckCircle2},
+    {label:'Definir frecuencia',text:'Define la frecuencia según la información disponible y pregúntame si falta algo.',icon:Crosshair},
+    {label:'Añadir precaución',text:'Añade esta precaución al borrador: ',icon:ShieldPlus},
+    {label:'¿Listo para aplicar?',text:'Comprueba qué falta antes de aplicar los cambios.',icon:CheckCircle2},
   ] : [
-    {label:'Progresión',text:'Sugiere una progresión conservadora usando únicamente los datos confirmados.',icon:TrendingUp},
+    {label:'Sugerir progresión',text:'Sugiere una progresión conservadora usando únicamente los datos confirmados.',icon:TrendingUp},
     {label:'Ajustar enfoque',text:'Ayúdame a ajustar el enfoque clínico del borrador actual.',icon:Crosshair},
-    {label:'Revisar',text:'Comprueba qué falta antes de aplicar los cambios.',icon:CheckCircle2},
+    {label:'¿Listo para aplicar?',text:'Comprueba qué falta antes de aplicar los cambios.',icon:CheckCircle2},
   ] : [
     {label:'Objetivo',text:'Objetivo funcional: ',icon:Crosshair},
     {label:'Precauciones',text:'Precauciones: ',icon:ShieldPlus},
