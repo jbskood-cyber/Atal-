@@ -1,0 +1,38 @@
+/* Atal IA — approved minimal polish only. */
+
+/* Header: preserve the approved structure, reduce visual weight and remove the descriptive second line. */
+.atal-command-header{min-height:60px;grid-template-columns:40px 34px minmax(0,1fr) 40px;gap:5px;padding:max(7px,env(safe-area-inset-top)) max(11px,env(safe-area-inset-right)) 7px max(11px,env(safe-area-inset-left));background:var(--command-surface);backdrop-filter:none}
+.atal-command-back,.atal-command-menu-trigger{width:40px;height:40px;border-radius:12px}
+.atal-command-back svg,.atal-command-menu-trigger svg{width:23px}
+.atal-command-mark{width:32px;height:32px}
+.atal-command-context{display:flex;min-width:0;align-items:center;gap:4px;padding:0 3px;text-align:left}
+.atal-command-context strong{font-size:18px;line-height:1.1;letter-spacing:-.035em}
+.atal-command-context-chevron{width:14px!important;height:14px;flex:0 0 auto;color:var(--command-muted)}
+
+/* Composer: clean ChatGPT-like focus, no green rectangle and no visible internal scrollbar. */
+.atal-command-composer{transition:border-color .16s ease,box-shadow .16s ease}
+.atal-command-composer:focus-within{border-color:var(--command-border);box-shadow:0 10px 28px rgba(15,20,22,.08)}
+.atal-command-page .atal-command-composer textarea,.atal-command-page .atal-command-composer textarea:focus,.atal-command-page .atal-command-composer textarea:focus-visible{outline:0!important;outline-offset:0!important;border:0!important;box-shadow:none!important;-webkit-appearance:none;appearance:none;scrollbar-width:none!important}
+.atal-command-composer textarea::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+.atal-command-composer textarea::-webkit-scrollbar-thumb,.atal-command-composer textarea::-webkit-scrollbar-track{display:none!important;background:transparent!important}
+
+/* Section editor: open note-writing surface instead of boxed controls. */
+.atal-section-editor.is-note-editor .atal-note-form{gap:20px!important}
+.atal-section-editor.is-note-editor .atal-note-form>label{gap:4px!important;padding:0 0 3px!important}
+.atal-section-editor.is-note-editor .atal-note-form>label>span{color:var(--ink)!important;font-size:11px!important;font-weight:600!important}
+.atal-section-editor.is-note-editor .atal-note-form input,.atal-section-editor.is-note-editor .atal-note-form textarea{padding:8px 0 10px!important;border:0!important;border-bottom:1px solid var(--command-border)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;caret-color:var(--green)}
+.atal-section-editor.is-note-editor .atal-note-form input{min-height:42px!important;height:42px!important}
+.atal-section-editor.is-note-editor .atal-note-form textarea{min-height:72px!important;max-height:260px!important;padding-top:7px!important;line-height:1.65!important}
+.atal-section-editor.is-note-editor .atal-note-form :is(input,textarea):focus,.atal-section-editor.is-note-editor .atal-note-form :is(input,textarea):focus-visible{border-bottom-color:var(--green)!important;outline:0!important;box-shadow:none!important}
+
+/* Attachment sheet: icon plus exact option name, without descriptions. */
+.atal-ai-attachment-menu>button{min-height:58px;grid-template-columns:42px minmax(0,1fr);gap:10px}
+.atal-ai-attachment-menu>button div{display:flex;align-items:center;min-width:0}
+.atal-ai-attachment-menu>button b{font-size:12px;line-height:1.2}
+
+html[data-theme="dark"] .atal-command-header{background:#000}
+html[data-theme="dark"] .atal-command-composer:focus-within{border-color:#343438;box-shadow:none}
+html[data-theme="dark"] .atal-section-editor.is-note-editor .atal-note-form :is(input,textarea){color:#f4f4f5!important;background:transparent!important}
+html[data-theme="dark"] .atal-section-editor.is-note-editor .atal-note-form :is(input,textarea):focus{border-bottom-color:var(--green)!important}
+
+@media(max-height:700px){.atal-command-header{min-height:56px}}
