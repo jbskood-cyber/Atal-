@@ -1,0 +1,533 @@
+/* Atal — cierre visual definitivo.
+   Regla maestra: cards blancas/grafito, tipografía negra/blanca,
+   verde para acciones e iconos; degradados solo como fondo ambiental
+   o dentro de icon tiles sólidos con glifo blanco. */
+
+:root,
+html:not([data-theme="dark"]) {
+  --atal-ambient: #f7f9f8;
+  --atal-card: #ffffff;
+  --atal-card-soft: #fafbfa;
+  --atal-ink: #111513;
+  --atal-copy: #5e6762;
+  --atal-border: #e1e7e3;
+  --atal-green: #12945f;
+  --atal-green-deep: #087447;
+  --atal-green-light: #21ad73;
+  --atal-mint: #edf7f1;
+  --atal-danger: #d9364f;
+  --atal-warning: #e4a000;
+  --atal-neutral: #68716c;
+  --atal-card-shadow: 0 12px 32px rgba(18, 46, 32, .055);
+  --atal-icon-shadow: 0 10px 22px rgba(11, 116, 71, .18);
+}
+
+html[data-theme="dark"] {
+  --atal-ambient: #0b0d0c;
+  --atal-card: #161917;
+  --atal-card-soft: #1b1f1c;
+  --atal-ink: #f3f6f4;
+  --atal-copy: #a7afaa;
+  --atal-border: #2d342f;
+  --atal-green: #2abb7d;
+  --atal-green-deep: #16935f;
+  --atal-green-light: #45c991;
+  --atal-mint: #1a3026;
+  --atal-danger: #dc4a5d;
+  --atal-warning: #d69a12;
+  --atal-neutral: #707a74;
+  --atal-card-shadow: 0 16px 38px rgba(0, 0, 0, .25);
+  --atal-icon-shadow: 0 10px 24px rgba(0, 0, 0, .28);
+}
+
+/* El degradado vive en el ambiente, nunca en cards de contenido. */
+body,
+.atal-app,
+.atal-route-content {
+  color: var(--atal-ink);
+  background-color: var(--atal-ambient);
+  background-image:
+    radial-gradient(circle at 14% -8%, color-mix(in srgb, var(--atal-green) 8%, transparent) 0, transparent 330px),
+    linear-gradient(180deg, color-mix(in srgb, var(--atal-ambient) 96%, #fff) 0, var(--atal-ambient) 260px);
+  background-attachment: fixed;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] .atal-app,
+html[data-theme="dark"] .atal-route-content {
+  background-image:
+    radial-gradient(circle at 14% -8%, rgba(42, 187, 125, .09) 0, transparent 330px),
+    linear-gradient(180deg, #0d100e 0, var(--atal-ambient) 260px);
+}
+
+/* Tipografía: negro/grafito en claro, blanco/gris en oscuro. */
+:where(
+  .atal-content,
+  .atal-command-page,
+  .atal-patient-plan,
+  .atal-patient-session,
+  .native-sheet,
+  .atal-select-overlay,
+  .atal-command-dialog
+) :where(h1, h2, h3, h4, b, strong, legend, label, dt) {
+  color: var(--atal-ink);
+}
+
+:where(
+  .atal-content,
+  .atal-command-page,
+  .atal-patient-plan,
+  .atal-patient-session,
+  .native-sheet,
+  .atal-select-overlay,
+  .atal-command-dialog
+) :where(p, small, em, dd, time) {
+  color: var(--atal-copy);
+}
+
+.atal-eyebrow,
+.native-header__copy > small,
+.atal-command-message header b,
+.atal-draft-card-header small,
+.atal-command-intro b,
+.native-group > header button,
+.native-group > header a {
+  color: var(--atal-ink);
+}
+
+/* Cards: siempre blancas/grafito, sin degradados internos. */
+:where(
+  .native-group__body,
+  .atal-home-more button,
+  .atal-clinical-form fieldset,
+  .atal-settings-card,
+  .atal-settings-profile,
+  .atal-settings-group > div,
+  .atal-export-list,
+  .atal-panel-placeholder,
+  .atal-system-state,
+  .atal-profile-facts,
+  .atal-profile-section,
+  .atal-current-plan,
+  .atal-profile-compact-row,
+  .atal-record-paper,
+  .atal-record-section,
+  .atal-instruction-card,
+  .atal-clinical-cue,
+  .atal-patient-plan-card,
+  .atal-session-card,
+  .atal-draft-card,
+  .atal-draft-detail,
+  .atal-command-result,
+  .atal-command-error,
+  .atal-command-match,
+  .atal-draft-conflict,
+  .atal-history-sheet,
+  .atal-confirm-sheet,
+  .atal-compare-sheet,
+  .native-sheet,
+  .atal-select-overlay > section,
+  .atal-preview-card,
+  .atal-activity-summary article
+) {
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+  color: var(--atal-ink);
+}
+
+:where(
+  .native-group__body,
+  .atal-home-more button,
+  .atal-clinical-form fieldset,
+  .atal-settings-profile,
+  .atal-settings-group > div,
+  .atal-export-list,
+  .atal-system-state,
+  .atal-record-paper,
+  .atal-patient-plan-card,
+  .atal-session-card,
+  .atal-draft-card,
+  .atal-activity-summary article
+) {
+  box-shadow: var(--atal-card-shadow);
+}
+
+/* Icon tiles premium: fondo verde sólido/degradado corto + glifo blanco. */
+:where(
+  .native-row-icon,
+  .native-metric-strip button > span,
+  .atal-home-more button > span,
+  .atal-settings-row > span:first-child,
+  .atal-export-list button > span:first-child,
+  .atal-current-plan__icon,
+  .atal-profile-compact-row > span:first-child,
+  .atal-record-section > div > span,
+  .atal-report-metric > span:first-child,
+  .atal-activity-summary article > span,
+  .atal-draft-icon,
+  .atal-system-state > span,
+  .atal-detail-heading > span,
+  .atal-quick-actions button > span:first-child,
+  .atal-ai-attachment-menu button > span
+) {
+  color: #fff;
+  background-color: var(--atal-green);
+  background-image: linear-gradient(145deg, var(--atal-green-light), var(--atal-green-deep));
+  border: 0;
+  box-shadow: var(--atal-icon-shadow);
+}
+
+:where(
+  .native-row-icon,
+  .native-metric-strip button > span,
+  .atal-home-more button > span,
+  .atal-settings-row > span:first-child,
+  .atal-export-list button > span:first-child,
+  .atal-current-plan__icon,
+  .atal-profile-compact-row > span:first-child,
+  .atal-record-section > div > span,
+  .atal-report-metric > span:first-child,
+  .atal-activity-summary article > span,
+  .atal-draft-icon,
+  .atal-system-state > span,
+  .atal-detail-heading > span,
+  .atal-quick-actions button > span:first-child,
+  .atal-ai-attachment-menu button > span
+) svg {
+  color: #fff;
+  stroke: currentColor;
+}
+
+.native-row-icon.is-urgent,
+.atal-system-state.is-error > span {
+  background-color: var(--atal-danger);
+  background-image: linear-gradient(145deg, #e4475d, #c92b43);
+  box-shadow: 0 10px 22px rgba(217, 54, 79, .2);
+}
+
+.native-row-icon.is-attention,
+.atal-system-state.is-offline > span,
+.atal-activity-summary article > span.is-warm {
+  background-color: var(--atal-warning);
+  background-image: linear-gradient(145deg, #efb31c, #d68d00);
+  box-shadow: 0 10px 22px rgba(228, 160, 0, .2);
+}
+
+.native-row-icon.is-stable,
+.atal-system-state.is-success > span {
+  background-color: var(--atal-green);
+  background-image: linear-gradient(145deg, var(--atal-green-light), var(--atal-green-deep));
+}
+
+/* Inicio: CTA sólido, cards blancas y semántica clara. */
+.atal-home-new-patient {
+  border-color: var(--atal-green-deep);
+  color: #fff;
+  background-color: var(--atal-green);
+  background-image: none;
+  box-shadow: 0 15px 32px rgba(18, 148, 95, .2);
+}
+
+.atal-home-new-patient :where(b, small),
+.atal-home-new-patient > svg { color: #fff; }
+.atal-home-new-patient > span:first-child {
+  color: var(--atal-green-deep);
+  background: #fff;
+  background-image: none;
+}
+
+.native-metric-strip {
+  background: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+  box-shadow: var(--atal-card-shadow);
+}
+.native-metric-strip > button { color: var(--atal-ink); background: transparent; }
+.native-metric-strip > button.is-attention > span {
+  background-color: var(--atal-warning);
+  background-image: linear-gradient(145deg, #efb31c, #d68d00);
+  box-shadow: 0 10px 22px rgba(228, 160, 0, .18);
+}
+.native-metric-strip :where(strong, small) { color: var(--atal-ink); }
+.native-metric-strip small { color: var(--atal-copy); }
+
+.atal-home-more button :where(b, small) { color: var(--atal-ink); }
+.atal-home-more button small { color: var(--atal-copy); }
+
+/* Botones principales: verde sólido; texto siempre blanco. */
+:where(
+  .atal-new-button,
+  .atal-desktop-new,
+  .atal-page-heading > button,
+  .native-action.is-primary,
+  .native-sticky-action .is-primary,
+  .atal-settings-save,
+  .atal-submit-button,
+  .atal-session-primary,
+  .atal-draft-card > footer button.is-primary,
+  .atal-command-dynamic.is-send,
+  .atal-confirm-sheet button.is-primary
+) {
+  border-color: var(--atal-green-deep);
+  color: #fff;
+  background-color: var(--atal-green);
+  background-image: none;
+  box-shadow: 0 10px 24px rgba(18, 148, 95, .18);
+}
+
+:where(
+  .atal-new-button,
+  .atal-desktop-new,
+  .atal-page-heading > button,
+  .native-action.is-primary,
+  .native-sticky-action .is-primary,
+  .atal-settings-save,
+  .atal-submit-button,
+  .atal-session-primary,
+  .atal-draft-card > footer button.is-primary,
+  .atal-command-dynamic.is-send,
+  .atal-confirm-sheet button.is-primary
+) :where(span, b, small, svg) { color: #fff; }
+
+/* Tabs y selecciones: verde sólido + texto blanco, sin tipografía verde. */
+:where(
+  .native-segments,
+  .atal-segments,
+  .atal-view-switch,
+  .atal-mode-switch,
+  .atal-state-tabs,
+  .atal-tabbar
+) {
+  background: color-mix(in srgb, var(--atal-neutral) 8%, var(--atal-card));
+  background-image: none;
+  border-color: var(--atal-border);
+}
+
+:where(
+  .native-segments button.is-active,
+  .atal-segments button.is-active,
+  .atal-view-switch button.is-active,
+  .atal-mode-switch button.is-active,
+  .atal-state-tabs button.is-active,
+  .atal-tabbar button.is-active
+) {
+  color: #fff;
+  background-color: var(--atal-green);
+  background-image: none;
+  border-color: var(--atal-green-deep);
+  box-shadow: 0 8px 20px rgba(18, 148, 95, .16);
+}
+
+:where(
+  .native-segments button.is-active,
+  .atal-segments button.is-active,
+  .atal-view-switch button.is-active,
+  .atal-mode-switch button.is-active,
+  .atal-state-tabs button.is-active,
+  .atal-tabbar button.is-active
+) :where(span, small, b, svg) { color: #fff; }
+
+/* Navegación inferior: fondo blanco, icono activo verde, texto negro. */
+.atal-mobile-dock .atal-primary-nav {
+  color: var(--atal-copy);
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-mobile-dock .atal-primary-nav a,
+.atal-mobile-dock .atal-primary-nav button,
+.atal-mobile-dock .atal-primary-nav span { color: var(--atal-copy); }
+.atal-mobile-dock.native-root-dock .atal-primary-nav a.is-active {
+  color: var(--atal-green);
+  background-color: var(--atal-mint);
+  background-image: none;
+}
+.atal-mobile-dock.native-root-dock .atal-primary-nav a.is-active span { color: var(--atal-ink); }
+
+/* Pacientes: estados correctos; "Sin plan" nunca verde. */
+.native-avatar {
+  color: var(--atal-ink);
+  background-color: var(--atal-mint);
+  background-image: none;
+  border: 1px solid color-mix(in srgb, var(--atal-green) 18%, var(--atal-border));
+}
+.native-status { color: var(--atal-ink); background: #eef1ef; }
+.native-status.is-stable { color: #fff; background: var(--atal-green); }
+.native-status.is-attention { color: var(--atal-ink); background: #f5d574; }
+.native-status.is-urgent { color: #fff; background: var(--atal-danger); }
+.atal-patients-rescue .native-clinical-row.is-stable .native-status { color: var(--atal-ink); background: #eef1ef; }
+
+/* Planes y Actividad: sin cambiar estructura, solo identidad. */
+.atal-plan-row,
+.atal-activity-feed > button {
+  color: var(--atal-ink);
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-plan-row :where(b, small, em),
+.atal-activity-feed > button :where(b, small, em, time) { color: var(--atal-ink); }
+.atal-plan-row small,
+.atal-plan-row em,
+.atal-activity-feed > button small,
+.atal-activity-feed > button em,
+.atal-activity-feed > button time { color: var(--atal-copy); }
+.atal-activity-feed > button > i { background: var(--atal-green); }
+.atal-activity-feed > button > i.is-attention { background: var(--atal-warning); }
+.atal-activity-summary article:first-child { border-color: color-mix(in srgb, var(--atal-green) 24%, var(--atal-border)); }
+.atal-activity-summary article:last-child { border-color: color-mix(in srgb, var(--atal-warning) 28%, var(--atal-border)); }
+
+/* Ajustes: cards blancas; tile verde con icono blanco; sin texto verde. */
+.atal-settings-row {
+  color: var(--atal-ink);
+  background: transparent;
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-settings-row :where(b, small) { color: var(--atal-ink); }
+.atal-settings-row small { color: var(--atal-copy); }
+.atal-settings-row > span:first-child {
+  background-image: linear-gradient(145deg, var(--atal-green-light), var(--atal-green-deep));
+}
+.atal-settings-row > span:first-child svg { color: #fff; }
+
+/* Apariencia: opción seleccionada clara, no card lavada. */
+.atal-theme-option,
+.atal-appearance-option {
+  color: var(--atal-ink);
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-theme-option.is-active,
+.atal-appearance-option.is-active {
+  border-color: var(--atal-green);
+  box-shadow: inset 4px 0 0 var(--atal-green);
+  background-color: var(--atal-card);
+  background-image: none;
+}
+.atal-theme-option.is-active :where(b, small, span),
+.atal-appearance-option.is-active :where(b, small, span) { color: var(--atal-ink); }
+
+/* Atal IA: iconos verdes sólidos, porcentajes sobrios, aplicar en verde. */
+.atal-command-page {
+  --command-surface: var(--atal-card);
+  --command-canvas: var(--atal-ambient);
+  --command-border: var(--atal-border);
+  --command-muted: var(--atal-copy);
+  color: var(--atal-ink);
+  background-color: var(--atal-ambient);
+  background-image: radial-gradient(circle at 14% 0%, color-mix(in srgb, var(--atal-green) 7%, transparent), transparent 300px);
+}
+.atal-command-header,
+.atal-command-compose-zone {
+  background-color: color-mix(in srgb, var(--atal-card) 96%, transparent);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-command-message header b { color: var(--atal-ink); }
+.atal-command-intro p,
+.atal-command-message p,
+.atal-command-message.is-user p {
+  color: var(--atal-ink);
+  background-color: var(--atal-card-soft);
+  background-image: none;
+}
+.atal-command-message.is-user p { border: 1px solid var(--atal-border); }
+.atal-draft-icon {
+  color: #fff;
+  background-image: linear-gradient(145deg, var(--atal-green-light), var(--atal-green-deep));
+}
+.atal-draft-status {
+  color: var(--atal-ink);
+  background: #eef1ef;
+  border: 1px solid var(--atal-border);
+}
+.atal-draft-status.is-review { color: var(--atal-ink); background: #f5d574; }
+.atal-draft-status.is-complete { color: #fff; background: var(--atal-green); border-color: var(--atal-green); }
+.atal-draft-card > footer button.is-primary { color: #fff; background: var(--atal-green); }
+.atal-command-toast,
+.atal-command-result {
+  color: var(--atal-ink);
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+.atal-command-toast > svg,
+.atal-command-result > svg { color: var(--atal-green); }
+
+/* Formularios, overlays y sheets: superficies limpias. */
+:where(
+  .native-search,
+  .atal-premium-search,
+  .atal-app-select,
+  .atal-command-composer,
+  .atal-field input,
+  .atal-field textarea,
+  .atal-settings-form input,
+  .atal-settings-form textarea,
+  .atal-session-comment textarea,
+  .atal-observations textarea
+) {
+  color: var(--atal-ink);
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+:where(input, textarea)::placeholder { color: #929995; }
+.native-overlay,
+.atal-select-overlay,
+.atal-command-dialog { background: rgba(10, 20, 15, .34); }
+.native-sheet,
+.atal-select-overlay > section,
+.atal-history-sheet,
+.atal-confirm-sheet,
+.atal-compare-sheet { background: var(--atal-card); background-image: none; }
+
+/* Dark: cards grafito, texto blanco, mismos icon tiles. */
+html[data-theme="dark"] :where(
+  .native-group__body,
+  .atal-home-more button,
+  .atal-clinical-form fieldset,
+  .atal-settings-card,
+  .atal-settings-profile,
+  .atal-settings-group > div,
+  .atal-export-list,
+  .atal-panel-placeholder,
+  .atal-system-state,
+  .atal-record-paper,
+  .atal-record-section,
+  .atal-instruction-card,
+  .atal-patient-plan-card,
+  .atal-session-card,
+  .atal-draft-card,
+  .atal-draft-detail,
+  .atal-command-result,
+  .native-sheet,
+  .atal-select-overlay > section,
+  .atal-activity-summary article
+) {
+  color: var(--atal-ink);
+  background-color: var(--atal-card);
+  background-image: none;
+  border-color: var(--atal-border);
+}
+html[data-theme="dark"] .atal-home-new-patient {
+  color: #fff;
+  background: var(--atal-green-deep);
+}
+html[data-theme="dark"] .atal-mobile-dock.native-root-dock .atal-primary-nav a.is-active {
+  color: var(--atal-green-light);
+  background: var(--atal-mint);
+}
+html[data-theme="dark"] .atal-mobile-dock.native-root-dock .atal-primary-nav a.is-active span { color: #fff; }
+
+@media (max-width: 420px) {
+  .atal-home-new-patient { min-height: 72px; }
+  .native-metric-strip > button { padding-inline: 8px; }
+  .native-metric-strip button > span { width: 32px; height: 32px; border-radius: 10px; }
+  .atal-settings-row > span:first-child,
+  .atal-home-more button > span,
+  .atal-draft-icon { width: 40px; height: 40px; border-radius: 12px; }
+}
