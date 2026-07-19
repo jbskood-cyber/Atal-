@@ -250,6 +250,18 @@ html[data-theme="dark"] .native-sticky-action { background: linear-gradient(180d
 }
 
 html[data-theme="blue"] {
+  --ui-primary: #2563eb;
+  --ui-primary-strong: #173b72;
+  --ui-primary-soft: #eaf2ff;
+  --ui-on-primary: #ffffff;
+  --ui-canvas: #f8fafd;
+  --ui-surface: #ffffff;
+  --ui-surface-raised: #ffffff;
+  --ui-text: #101827;
+  --ui-text-muted: #5e6b7c;
+  --ui-border: #dce5f1;
+  --ui-focus: #2563eb;
+  --ui-overlay: rgba(23, 59, 114, .34);
   --green: #2563eb;
   --green-dark: #173b72;
   --mint: #eaf2ff;
@@ -478,26 +490,80 @@ html[data-theme="blue"] .atal-mobile-dock.native-root-dock .atal-primary-nav { b
 
 /* Refinement 37–66: scoped themes, precise state color, native selectors and safer controls. */
 :root {
+  --status-success: #168a5b;
   --status-danger: #cf3448;
   --status-warning: #e5a000;
   --native-danger: var(--status-danger);
   --native-warning: var(--status-warning);
 }
 
-/* Theme colors remain fully scoped. Semantic status colors intentionally remain stable. */
+/* Pure Light is the default structural system. Semantic status colors remain independent. */
 html:not([data-theme="blue"]):not([data-theme="dark"]) {
-  --green: #16a36a;
-  --green-dark: #087747;
-  --mint: #e8f5ef;
-  --canvas: #f8fbf9;
+  --ui-primary: #18181b;
+  --ui-primary-strong: #09090b;
+  --ui-primary-soft: #f1f1f3;
+  --ui-on-primary: #ffffff;
+  --ui-canvas: #f8f8f9;
+  --ui-surface: #ffffff;
+  --ui-surface-raised: #ffffff;
+  --ui-text: #171719;
+  --ui-text-muted: #66666e;
+  --ui-border: #e4e4e7;
+  --ui-focus: #52525b;
+  --ui-overlay: rgba(24,24,27,.34);
+  --ui-shadow: 0 18px 48px rgba(24,24,27,.08);
+  --green: var(--ui-primary);
+  --green-dark: var(--ui-primary-strong);
+  --mint: var(--ui-primary-soft);
+  --ink: var(--ui-text);
+  --muted: var(--ui-text-muted);
+  --line: var(--ui-border);
+  --canvas: var(--ui-canvas);
   --surface: #ffffff;
-  --line: #dce6e1;
-  --native-green: #16a36a;
-  --native-green-strong: #087747;
-  --native-mint: #e8f5ef;
-  --native-canvas: #f8fbf9;
-  --native-surface: #ffffff;
-  --native-line: #dce6e1;
+  --shadow: var(--ui-shadow);
+  --dock-shadow: 0 12px 35px rgba(24,24,27,.1);
+  --native-green: var(--ui-primary);
+  --native-green-strong: var(--ui-primary-strong);
+  --native-mint: var(--ui-primary-soft);
+  --native-ink: var(--ui-text);
+  --native-muted: var(--ui-text-muted);
+  --native-canvas: var(--ui-canvas);
+  --native-surface: var(--ui-surface);
+  --native-line: var(--ui-border);
+}
+
+/* Pure Dark uses the same token contract without structural green. */
+html[data-theme="dark"] {
+  --ui-primary: #f4f4f5;
+  --ui-primary-strong: #ffffff;
+  --ui-primary-soft: #27272a;
+  --ui-on-primary: #111113;
+  --ui-canvas: #0b0b0c;
+  --ui-surface: #171719;
+  --ui-surface-raised: #1f1f22;
+  --ui-text: #f4f4f5;
+  --ui-text-muted: #a4a4ab;
+  --ui-border: #2c2c30;
+  --ui-focus: #d4d4d8;
+  --ui-overlay: rgba(0,0,0,.6);
+  --ui-shadow: 0 20px 54px rgba(0,0,0,.38);
+  --green: var(--ui-primary);
+  --green-dark: var(--ui-primary-strong);
+  --mint: var(--ui-primary-soft);
+  --ink: var(--ui-text);
+  --muted: var(--ui-text-muted);
+  --line: var(--ui-border);
+  --canvas: var(--ui-canvas);
+  --surface: var(--ui-surface);
+  --shadow: var(--ui-shadow);
+  --native-green: var(--ui-primary);
+  --native-green-strong: var(--ui-primary-strong);
+  --native-mint: var(--ui-primary-soft);
+  --native-ink: var(--ui-text);
+  --native-muted: var(--ui-text-muted);
+  --native-canvas: var(--ui-canvas);
+  --native-surface: var(--ui-surface);
+  --native-line: var(--ui-border);
 }
 
 /* Compact clinical state language: color is an accent, never the whole surface. */
@@ -508,7 +574,7 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
 .native-priority__head,
 .native-priority.is-attention .native-priority__head,
 .native-priority.is-urgent .native-priority__head { color:var(--ink); }
-.native-priority__head::before { width:7px; height:7px; margin-right:7px; border-radius:50%; background:var(--green); content:""; }
+.native-priority__head::before { width:7px; height:7px; margin-right:7px; border-radius:50%; background:var(--status-success); content:""; }
 .native-priority.is-attention .native-priority__head::before { background:var(--status-warning); }
 .native-priority.is-urgent .native-priority__head::before { background:var(--status-danger); }
 .native-priority__head strong { margin-left:auto; }
@@ -519,7 +585,7 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
 .native-priority.is-urgent .native-priority__content > button svg { color:var(--status-danger); }
 .native-status { gap:6px; color:var(--ink); background:color-mix(in srgb,var(--muted) 7%,transparent); font-size:var(--type-xs); font-weight:700; }
 .native-status::before { width:7px; height:7px; border-radius:50%; background:var(--muted); content:""; }
-.native-status.is-stable::before { background:var(--green); }
+.native-status.is-stable::before { background:var(--status-success); }
 .native-status.is-attention::before { background:var(--status-warning); }
 .native-status.is-urgent::before { background:var(--status-danger); }
 .native-status.is-attention,.native-status.is-urgent { color:var(--ink); background:color-mix(in srgb,var(--muted) 7%,transparent); }
@@ -598,7 +664,7 @@ html:not([data-theme="blue"]):not([data-theme="dark"]) {
 .atal-patient-picker__copy b,.atal-patient-picker__copy small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .atal-patient-picker__copy small { color:var(--muted); }
 .atal-patient-picker__state { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:11px; white-space:nowrap; }
-.atal-patient-picker__state i { width:7px; height:7px; border-radius:50%; background:var(--green); }
+.atal-patient-picker__state i { width:7px; height:7px; border-radius:50%; background:var(--status-success); }
 .atal-patient-picker .atal-patient-change { width:auto; min-width:82px; height:42px; padding:0 10px; border:0; background:transparent; }
 
 /* Every contextual task owns the viewport and suppresses root navigation. */
@@ -664,4 +730,100 @@ html[data-theme="dark"] .atal-select-overlay header button { color:#f5f5f7; back
   .atal-patient-picker { gap:7px; padding:9px; }
   .atal-patient-picker .atal-patient-change { min-width:68px; padding:0 6px; }
   .atal-patient-picker__state { font-size:10px; }
+}
+
+/* Pure visual system: one neutral token contract across every visible surface. */
+:root {
+  --focus-ring: color-mix(in srgb,var(--ui-focus) 38%,transparent);
+}
+
+body,
+.atal-app,
+.atal-workspace,
+.atal-route-content,
+.atal-command-page,
+.atal-patient-session { color:var(--ui-text); background:var(--ui-canvas); }
+
+.atal-command-page {
+  --command-surface:var(--ui-surface);
+  --command-canvas:var(--ui-canvas);
+  --command-border:var(--ui-border);
+  --command-muted:var(--ui-text-muted);
+}
+
+:is(.atal-overlay,.native-overlay,.atal-command-dialog,.atal-select-overlay,.atal-draft-library) {
+  background:var(--ui-overlay);
+}
+
+:is(.atal-mobile-dock .atal-primary-nav a.is-active,.atal-sidebar__nav a.is-active,.native-segments button.is-active,.atal-view-switch button.is-active,.atal-filter-scroll button.is-active,.atal-state-tabs button.is-active,.atal-theme-options button.is-active,.atal-context-actions button.is-selected,.atal-history-sheet>div>button.is-selected,.atal-ai-context-results button.is-selected,.atal-custom-unit-options button.is-selected) {
+  color:var(--ui-primary-strong);
+  background:var(--ui-primary-soft);
+}
+
+:is(.atal-new-button,.atal-desktop-new,.atal-submit-button,.atal-settings-save,.atal-observations>button,.atal-system-state button,.atal-notes-panel>button,.atal-ai-draft-summary button:first-child,.atal-context-done,.atal-confirm-sheet button.is-primary,.atal-section-editor>footer button.is-primary,.atal-draft-card>footer button.is-primary,.atal-draft-library footer button,.atal-ai-confirm,.atal-record-toolbar button.is-primary,.atal-record-print-action,.atal-session-dialog>section>button.atal-session-primary,.atal-preview-session>button,.atal-preview-success button,.atal-command-dynamic.is-send) {
+  border-color:var(--ui-primary);
+  color:var(--ui-on-primary);
+  background:var(--ui-primary);
+  box-shadow:none;
+}
+
+:is(.atal-app,.atal-command-page,.atal-patient-session) :is(button,a,[role="option"]):focus-visible {
+  outline-color:color-mix(in srgb,var(--ui-focus) 54%,transparent);
+}
+:is(.atal-app,.atal-command-page,.atal-patient-session) :is(input,textarea,select):focus-visible,
+:is(.native-search,.atal-search,.atal-premium-search,.atal-icon-field,.atal-phone-field,.atal-suffix-field,.atal-draft-library-search,.atal-command-composer):has(:focus-visible) {
+  border-color:color-mix(in srgb,var(--ui-focus) 42%,var(--ui-border));
+}
+.atal-note-form>label:focus-within { border-bottom-color:color-mix(in srgb,var(--ui-focus) 38%,var(--ui-border)); }
+
+/* Atal IA consumes the shared tokens; the official mark alone keeps the brand green. */
+.atal-command-mark { color:var(--brand-green); }
+.atal-command-intro b,.atal-command-message header b { color:var(--ui-text); }
+:is(.atal-command-menu>button>svg,.atal-command-processing>svg,.atal-command-suggestions button svg,.atal-draft-card-header small,.atal-draft-icon,.atal-draft-edit,.atal-command-composer>button,.atal-context-sheet header small,.atal-history-sheet header small,.atal-section-editor header small,.atal-context-actions button>span,.atal-context-entity>div button>svg,.atal-compare-sheet small,.atal-section-add) {
+  color:var(--ui-primary);
+}
+:is(.atal-command-intro>svg,.atal-command-message>span,.atal-context-actions button>span) { color:var(--ui-primary); background:var(--ui-primary-soft); }
+.atal-command-intro p { background:var(--ui-surface-raised); }
+.atal-command-message.is-user>span { background:var(--ui-primary-soft); }
+.atal-command-message.is-user p { color:var(--ui-on-primary); background:var(--ui-primary); }
+.atal-command-composer { border-color:var(--ui-border); background:var(--ui-surface); box-shadow:0 7px 24px rgba(24,24,27,.06); }
+.atal-command-composer>button { color:var(--ui-primary); }
+.atal-command-transcribe { color:var(--ui-primary-strong); background:var(--ui-primary-soft); }
+.atal-draft-status.is-complete { border-color:var(--status-success); color:var(--status-success); }
+.atal-command-result>svg,.atal-command-toast>svg { color:var(--status-success); }
+.atal-command-result { border-color:var(--ui-border); background:var(--ui-surface); }
+
+/* Status color remains semantic rather than structural. */
+.atal-ai-circuit button.is-complete { color:var(--status-success); }
+.atal-ai-circuit button.is-complete svg { border-color:var(--status-success); color:#fff; background:var(--status-success); }
+.atal-preview-success>span { color:#fff; background:var(--status-success); }
+.native-row-icon.is-stable { color:var(--status-success); }
+.native-avatar,.atal-avatar { color:var(--ui-text); background:var(--ui-primary-soft); }
+.atal-view-switch { background:var(--ui-primary-soft); }
+.atal-sidebar__nav :is(a,button) { color:var(--ui-text-muted); }
+.atal-sidebar__nav .is-active { color:var(--ui-text); background:var(--ui-primary-soft); }
+
+/* Focused routes and the local patient portal follow the active theme tokens. */
+.atal-patient-preview { color:var(--ui-text); background:var(--ui-canvas); }
+.atal-preview-toolbar { background:color-mix(in srgb,var(--ui-surface) 90%,transparent); }
+.atal-preview-hero { background:linear-gradient(145deg,var(--ui-primary-soft),var(--ui-surface)); }
+:is(.atal-preview-tabs,.atal-instruction-card,.atal-report-comment blockquote) { background:var(--ui-primary-soft); }
+:is(.atal-preview-card,.atal-report-plan,.atal-state-tabs button,.atal-modal,.atal-detail-sheet) { color:var(--ui-text); background:var(--ui-surface); }
+
+html[data-theme="dark"] :is(.atal-app,.atal-workspace,.atal-route-content,.atal-command-page,.atal-patient-session) { background:var(--ui-canvas); }
+html[data-theme="dark"] :is(.atal-mobile-header,.atal-command-header,.atal-command-compose-zone,.atal-session-topbar) { border-color:var(--ui-border); background:color-mix(in srgb,var(--ui-canvas) 90%,transparent); }
+html[data-theme="dark"] :is(.atal-native-sheet,.native-sheet,.atal-context-sheet,.atal-history-sheet,.atal-confirm-sheet,.atal-compare-sheet,.atal-section-editor,.atal-draft-library>section,.atal-select-overlay>section,.atal-patient-picker,.atal-exercise-more-menu,.atal-exercise-delete-confirm) { color:var(--ui-text); background:var(--ui-surface); }
+html[data-theme="dark"] :is(.atal-command-intro p,.atal-command-message p,.atal-command-composer,.atal-message p) { color:var(--ui-text); background:var(--ui-surface-raised); }
+html[data-theme="dark"] .atal-command-message.is-user p { color:var(--ui-on-primary); background:var(--ui-primary); }
+html[data-theme="dark"] .atal-mobile-dock .atal-primary-nav { border-color:var(--ui-border); background:color-mix(in srgb,var(--ui-surface) 80%,transparent); box-shadow:0 12px 38px rgba(0,0,0,.4); }
+html[data-theme="dark"] .atal-mobile-dock .atal-primary-nav a.is-active { color:var(--ui-text); background:var(--ui-primary-soft); }
+html[data-theme="dark"] .atal-sidebar { border-color:var(--ui-border); color:var(--ui-text); background:var(--ui-canvas); }
+html[data-theme="dark"] .atal-sidebar__profile { border-color:var(--ui-border); background:var(--ui-surface); }
+html[data-theme="dark"] :is(.native-avatar,.atal-avatar) { color:var(--ui-text); background:var(--ui-primary-soft); }
+html[data-theme="dark"] .atal-profile-actions button { border-color:var(--ui-border); color:var(--ui-text); background:var(--ui-surface); }
+
+html[data-theme="blue"] {
+  --native-green:var(--ui-primary);
+  --native-green-strong:var(--ui-primary-strong);
+  --native-mint:var(--ui-primary-soft);
 }

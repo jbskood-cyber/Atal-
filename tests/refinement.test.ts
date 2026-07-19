@@ -16,16 +16,22 @@ test('demo seed is idempotent and never overwrites existing entities', () => {
   assert.equal(twice[0], existing[0]);
 });
 
-test('Blue Clinical tokens are scoped while the default identity remains green', () => {
+test('Pure Light and Pure Dark are neutral while Blue Clinical remains scoped', () => {
   const css = read('src/styles/native-clinical.css');
   const defaultTheme = css.match(/html:not\(\[data-theme="blue"\]\):not\(\[data-theme="dark"\]\)\s*\{([^}]+)\}/)?.[1] ?? '';
   const blueTheme = css.match(/html\[data-theme="blue"\]\s*\{([^}]+)\}/)?.[1] ?? '';
+  const darkThemes = [...css.matchAll(/html\[data-theme="dark"\]\s*\{([^}]+)\}/g)].map((match) => match[1]).join('\n');
 
-  assert.match(defaultTheme, /--green:\s*#16a36a/i);
+  assert.match(defaultTheme, /--ui-primary:\s*#18181b/i);
+  assert.match(defaultTheme, /--green:\s*var\(--ui-primary\)/i);
   assert.doesNotMatch(defaultTheme, /#2563eb/i);
   assert.match(blueTheme, /--green:\s*#2563eb/i);
+  assert.match(darkThemes, /--ui-primary:\s*#f4f4f5/i);
+  assert.match(darkThemes, /--ui-canvas:\s*#0b0b0c/i);
+  assert.match(css, /--status-success:\s*#168a5b/i);
   assert.match(css, /--status-danger:\s*#cf3448/i);
   assert.match(css, /--status-warning:\s*#e5a000/i);
+  assert.match(css, /\.atal-logo__mark,.atal-logo__descriptor\s*\{\s*color:\s*var\(--brand-green\)/i);
 });
 
 test('important mobile selectors use the controlled sheet instead of native select', () => {
