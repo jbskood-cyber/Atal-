@@ -59,7 +59,6 @@ export function DraftEditor({ draft, contact, saving, saved, onChange, onContact
       <Field label="Frecuencia libre" value={plan.frequency.customText} onChange={(customText) => setPlan({ frequency: { ...plan.frequency, customText } })} wide />
       <Field label="Fases (una por línea)" value={plan.phases.join('\n')} onChange={(value) => setPlan({ phases: splitList(value) })} wide multiline />
       <Field label="Indicaciones generales" value={plan.generalInstructions} onChange={(generalInstructions) => setPlan({ generalInstructions })} wide multiline />
-      <Field label="Criterios de progreso" value={plan.progressCriteria} onChange={(progressCriteria) => setPlan({ progressCriteria })} wide multiline />
       <label className="atal-ai-field"><span>Estado al confirmar</span><AppSelect label="Estado del plan" value={plan.status === 'active' ? 'Activo' : 'Borrador'} options={['Borrador','Activo']} onChange={(value) => setPlan({ status: value === 'Activo' ? 'active' : 'draft' })} /></label>
       <button type="button" className="atal-ai-regenerate" onClick={onRegeneratePlan}><RefreshCw /> Regenerar solo el plan</button>
     </div></details>}

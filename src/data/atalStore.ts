@@ -39,25 +39,7 @@ export type SessionRecord = {
 
 export type PatientNote = { id: string; patientId: string; content: string; professional: string; createdAt: string; updatedAt: string };
 export type ActivityKind = 'patient_created'|'patient_updated'|'patient_archived'|'patient_restored'|'record_created'|'record_updated'|'plan_created'|'plan_updated'|'plan_activated'|'plan_paused'|'plan_completed'|'plan_archived'|'plan_restored'|'session_started'|'session_completed'|'session_partial'|'report_reviewed'|'observation_added'|'exercise_created'|'ai_applied';
-export type ActivityEvent = {
-  id: string;
-  kind: ActivityKind;
-  patientId?: string;
-  planId?: string;
-  sessionId?: string;
-  title: string;
-  detail: string;
-  createdAt: string;
-  origin?: 'manual' | 'atal-ai';
-  intent?: string;
-  entity?: string;
-  entityId?: string;
-  changedFields?: string[];
-  previousValue?: unknown;
-  nextValue?: unknown;
-  conversationId?: string;
-  draftId?: string;
-};
+export type ActivityEvent = { id: string; kind: ActivityKind; patientId?: string; planId?: string; sessionId?: string; title: string; detail: string; createdAt: string };
 export type AppNotification = { id: string; title: string; detail: string; severity: 'urgent'|'attention'|'stable'; href: string; read: boolean; createdAt: string };
 export type AppSettings = {
   notifications: boolean; haptics: boolean; compact: boolean; professionalName: string; specialty: string; clinic: string;
@@ -168,9 +150,6 @@ export function markAllNotificationsRead(){mutateAtalStore((draft)=>{draft.notif
 export function addFeedback(input:Omit<FeedbackEntry,'id'|'createdAt'>){const item={...input,id:createEntityId('feedback'),createdAt:now()};mutateAtalStore((draft)=>{draft.feedback.unshift(item);});return item;}
 export function updateFeedbackStatus(id:string,status:FeedbackEntry['status']){mutateAtalStore((draft)=>{const item=draft.feedback.find((entry)=>entry.id===id);if(item)item.status=status;});}
 export function addSuccessNotification(title:string,detail:string,href:string){mutateAtalStore((draft)=>{addNotification(draft,{title,detail,severity:'stable',href});addEvent(draft,{kind:'ai_applied',title,detail});});}
-export function recordAtalAIEvent(input: Omit<ActivityEvent,'id'|'createdAt'|'kind'|'origin'>) {
-  mutateAtalStore((draft) => addEvent(draft, { ...input, kind: 'ai_applied', origin: 'atal-ai' }));
-}
 export function exportStoreSnapshot(){const state=loadState();return {...state,exportedAt:now(),mediaExcluded:true};}
 
 if (typeof window !== 'undefined') window.addEventListener('storage',(event)=>{if(event.key===ATAL_STORE_KEY){cache=null;emit();}});

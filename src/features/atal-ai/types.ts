@@ -1,57 +1,6 @@
 export type AtalAIStatus = 'empty' | 'composing' | 'recording' | 'uploading' | 'processing' | 'needs_information' | 'ready_for_review' | 'saved' | 'error';
-export type AtalAIIntent =
-  | 'create_patient_plan'
-  | 'create_plan_for_existing_patient'
-  | 'create_exercise'
-  | 'update_patient_record'
-  | 'update_existing_plan'
-  | 'update_existing_exercise'
-  | 'search_patient'
-  | 'summarize_patient'
-  | 'add_patient_note'
-  | 'update_plan_status'
-  | 'archive_plan'
-  | 'restore_plan'
-  | 'replace_active_plan'
-  | 'summarize_sessions'
-  | 'create_report'
-  | 'export_data'
-  | 'update_settings';
-
-export type AIWorkContext = {
-  intent: AtalAIIntent;
-  patientMode: 'new' | 'existing' | 'none';
-  selectedPatientId: string;
-  selectedPlanId: string;
-  selectedExerciseId: string;
-};
-
-export type AICommandType =
-  | 'search_patient'
-  | 'summarize_patient'
-  | 'add_patient_note'
-  | 'activate_plan'
-  | 'pause_plan'
-  | 'complete_plan'
-  | 'archive_plan'
-  | 'restore_plan'
-  | 'replace_active_plan'
-  | 'summarize_sessions'
-  | 'create_report'
-  | 'export_data'
-  | 'update_settings';
-
-export type AICommand = {
-  type: AICommandType;
-  patientId: string;
-  planId: string;
-  exerciseId: string;
-  sessionId: string;
-  query: string;
-  content: string;
-  exportType: 'patients' | 'progress' | 'plans' | 'backup' | '';
-  settings: Record<string, boolean | string>;
-};
+export type AtalAIIntent='create_patient_plan'|'create_plan_for_existing_patient'|'create_exercise'|'update_patient_record'|'update_existing_plan';
+export type AIWorkContext={intent:AtalAIIntent;patientMode:'new'|'existing'|'none';selectedPatientId:string;selectedPlanId:string};
 
 export type AIAttachmentKind = 'image' | 'pdf' | 'audio';
 
@@ -102,7 +51,6 @@ export type AIPlanDraft = {
   frequency: { value: number | null; period: 'day' | 'week' | 'month' | 'custom'; customText: string };
   phases: string[];
   generalInstructions: string;
-  progressCriteria: string;
   status: 'draft' | 'active';
 };
 
@@ -132,23 +80,14 @@ export type AtalAIDraft = {
   intent: AtalAIIntent;
   selectedPatientId: string;
   selectedPlanId: string;
-  selectedExerciseId: string;
   patient: AIPatientDraft;
   plan: AIPlanDraft;
   exercises: AIExerciseDraft[];
-  responseMode: 'draft' | 'query' | 'command';
-  assistantMessage: string;
-  command: AICommand | null;
   missingFields: string[];
   uncertainFields: string[];
   contradictions: string[];
   followUpQuestion: string;
   proposedActions:string[];
-  baseVersions: {
-    patientUpdatedAt: string;
-    recordUpdatedAt: string;
-    planUpdatedAt: string;
-  };
   createdAt: string;
   updatedAt: string;
 };
@@ -172,22 +111,8 @@ export type AIConversation = {
   attachmentMetadata: AIAttachmentMeta[];
   privateContact: PrivateContactDraft;
   workContext:AIWorkContext;
-  savedResult?: { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?:string; summary:string[]; undo?: AIUndoToken };
+  savedResult?: { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?:string; summary:string[] };
   error?: string;
-};
-
-export type AIUndoToken = {
-  entity: 'plan' | 'record' | 'settings';
-  entityId: string;
-  previous: unknown;
-  expiresAt: string;
-};
-
-export type AICommandResult = {
-  message: string;
-  href?: string;
-  summary?: string[];
-  undo?: AIUndoToken;
 };
 
 export type AtalAIAnalyzeRequest = {
@@ -203,7 +128,6 @@ export type AtalAIAnalyzeRequest = {
     patient?: { id: string; name: string; diagnosis: string; age: number | null; affectedArea: string };
     clinicalRecord?: { reasonForVisit: string; evolution: string; affectedArea: string; symptoms: string[]; painLevel: number | null; providedDiagnosis: string; functionalLimitations: string[]; goals: string[]; relevantHistory: string[]; precautions: string[]; clinicalNotes: string };
     plan?: { id: string; title: string; focus: string; duration: string; frequency: string; goal: string; exerciseIds: string[]; status: string; progression: string; reportCriteria: string; generalInstructions: string };
-    exercise?: { id: string; name: string; region: string; category: string; objective: string; sets: number; repetitions?: number; time?: string; status: string };
   };
 };
 

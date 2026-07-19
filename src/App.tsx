@@ -49,6 +49,8 @@ function PrivateAppRoutes() {
     <Route path="/exercises/:id" element={<ExerciseDetailRoute />} />
     <Route path="/activity" element={<ActivityScreen />} />
     <Route path="/activity/:id" element={<ActivityDetailRoute />} />
+    <Route path="/assistant" element={<AssistantScreen />} />
+    <Route path="/assistant/drafts/:draftId" element={<AIDraftRoute />} />
     <Route path="/exports" element={<ExportsScreen />} />
     <Route path="/settings" element={<SettingsScreen />} />
     <Route path="/settings/profile" element={<SettingsDetailRoute kind="profile" />} />
@@ -65,8 +67,6 @@ export function App() {
   return <ThemeProvider><BrowserRouter><Routes>
     <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
     <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
-    <Route path="/assistant" element={<AssistantScreen />} />
-    <Route path="/assistant/drafts/:draftId" element={<AIDraftRoute />} />
     <Route path="*" element={<PrivateAppRoutes />} />
   </Routes></BrowserRouter></ThemeProvider>;
 }
