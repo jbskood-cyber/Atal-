@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { useLayoutEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AtalPersistentShell } from '@/src/components/atal/AtalShell';
 import { HomeScreen } from '@/src/screens/HomeScreen';
 import { PatientsScreen } from '@/src/screens/PatientsScreen';
@@ -34,6 +35,22 @@ function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <Act
 function SettingsDetailRoute({ kind }: { kind: SettingsKind }) { return <SettingsDetailScreen kind={kind} />; }
 function AIDraftRoute() { const { draftId = '' } = useParams(); return <AtalAIDraftReviewScreen draftId={draftId} />; }
 
+function RouteScrollReset() {
+  const location = useLocation();
+  useLayoutEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.querySelectorAll<HTMLElement>('.atal-route-content, .atal-command-thread, main').forEach((element) => {
+      element.scrollTop = 0;
+      element.scrollLeft = 0;
+    });
+    return () => { window.history.scrollRestoration = previous; };
+  }, [location.pathname, location.search]);
+  return null;
+}
+
 function PrivateAppRoutes() {
   return <AtalPersistentShell><Routes>
     <Route path="/" element={<HomeScreen />} />
@@ -62,7 +79,7 @@ function PrivateAppRoutes() {
 }
 
 export function App() {
-  return <ThemeProvider><BrowserRouter><Routes>
+  return <ThemeProvider><BrowserRouter><RouteScrollReset /><Routes>
     <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
     <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
     <Route path="/assistant" element={<AssistantScreen />} />
