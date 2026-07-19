@@ -16,22 +16,46 @@ test('demo seed is idempotent and never overwrites existing entities', () => {
   assert.equal(twice[0], existing[0]);
 });
 
-test('Pure Light and Pure Dark are neutral while Blue Clinical remains scoped', () => {
-  const css = read('src/styles/native-clinical.css');
-  const defaultTheme = css.match(/html:not\(\[data-theme="blue"\]\):not\(\[data-theme="dark"\]\)\s*\{([^}]+)\}/)?.[1] ?? '';
-  const blueTheme = css.match(/html\[data-theme="blue"\]\s*\{([^}]+)\}/)?.[1] ?? '';
-  const darkThemes = [...css.matchAll(/html\[data-theme="dark"\]\s*\{([^}]+)\}/g)].map((match) => match[1]).join('\n');
+test('Atal Green and Atal Dark are the only selectable visual modes', () => {
+  const themeMode = read('src/context/themeMode.ts');
+  const settings = read('src/screens/SettingsDetailScreen.tsx');
+  const css = read('src/styles/atal-rescue.css');
 
-  assert.match(defaultTheme, /--ui-primary:\s*#18181b/i);
-  assert.match(defaultTheme, /--green:\s*var\(--ui-primary\)/i);
-  assert.doesNotMatch(defaultTheme, /#2563eb/i);
-  assert.match(blueTheme, /--green:\s*#2563eb/i);
-  assert.match(darkThemes, /--ui-primary:\s*#f4f4f5/i);
-  assert.match(darkThemes, /--ui-canvas:\s*#0b0b0c/i);
-  assert.match(css, /--status-success:\s*#168a5b/i);
-  assert.match(css, /--status-danger:\s*#cf3448/i);
-  assert.match(css, /--status-warning:\s*#e5a000/i);
-  assert.match(css, /\.atal-logo__mark,.atal-logo__descriptor\s*\{\s*color:\s*var\(--brand-green\)/i);
+  assert.doesNotMatch(themeMode, /'blue'/i);
+  assert.match(themeMode, /value === 'dark' \|\| value === 'system' \|\| value === 'light'/);
+  assert.match(css, /--ui-primary:\s*#16a36a/i);
+  assert.match(css, /html\[data-theme="dark"\]/i);
+  assert.match(css, /--ui-primary:\s*#2abb7d/i);
+  assert.match(css, /--status-danger|var\(--status-danger\)/i);
+  assert.doesNotMatch(settings, /Blue Clinical|mode="blue"|Droplets/i);
+  assert.match(settings, /Atal Green/);
+  assert.match(settings, /Atal Dark/);
+});
+
+test('home uses real clinical resources without inventing agenda or appointments', () => {
+  const home = read('src/screens/HomeScreen.tsx');
+  assert.match(home, /Nuevo paciente/);
+  assert.match(home, /Alertas recientes/);
+  assert.match(home, /Reportes recientes/);
+  assert.match(home, /Más opciones/);
+  assert.match(home, /store\.notifications/);
+  assert.match(home, /store\.sessions/);
+  assert.match(home, /\/patients\/new/);
+  assert.match(home, /\/activity\/\$\{session\.id\}/);
+  assert.doesNotMatch(home, /agenda|citas?/i);
+});
+
+test('patients and profile remove redundant plan labels', () => {
+  const patients = read('src/screens/PatientsScreen.tsx');
+  const profile = read('src/screens/PatientProfileScreen.tsx');
+  assert.doesNotMatch(patients, />Plan activo<|>Borrador</i);
+  assert.match(patients, /Dolor alto/);
+  assert.match(patients, /Por revisar/);
+  assert.match(patients, /Sin plan/);
+  assert.equal((profile.match(/Plan actual/g) ?? []).length, 1);
+  assert.doesNotMatch(profile, />Plan activo</i);
+  assert.match(profile, /Último reporte/);
+  assert.match(profile, /Nota reciente/);
 });
 
 test('important mobile selectors use the controlled sheet instead of native select', () => {
