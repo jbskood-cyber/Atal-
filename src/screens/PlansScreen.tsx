@@ -36,7 +36,7 @@ export function PlansScreen() {
             </button>
           ))}
         </div>
-        {!visible.length&&<div className="atal-empty">No hay planes en este estado.</div>}
+        {!visible.length&&<div className="atal-empty">Sin planes</div>}
       </main>
     </AtalShell>
   );
