@@ -4,7 +4,8 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Camera, Check, Clock3, RefreshCw, Save } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { addPatientNote,createPatientWithRecord,useAtalStore } from '@/src/data/atalStore';
+import { createPatientWithRecord,useAtalStore } from '@/src/data/atalStore';
+import { validatePatientInput } from '@/src/domain/validation';
 
 export function NewPatientScreen() {
   const router = useRouter();
@@ -13,14 +14,17 @@ export function NewPatientScreen() {
   const [age, setAge] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
+  const [error, setError] = useState('');
   const [visit, setVisit] = useState<'first' | 'followup'>('first');
   const professional=useAtalStore((state)=>state.settings.professionalName);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim() || !diagnosis.trim()) return;
-    const {patient}=createPatientWithRecord({name:name.trim(),diagnosis:diagnosis.trim(),age:age?Number(age):null,birthDate:'',sex:'',affectedArea:'',status:'active',visitType:visit,contact:{phone,email:'',address:'',emergencyContact:''}},{date:new Date().toISOString(),reasonForVisit:diagnosis.trim(),evolution:'',affectedArea:'',symptoms:[],painLevel:null,providedDiagnosis:diagnosis.trim(),functionalLimitations:[],goals:[],relevantHistory:[],precautions:[],clinicalNotes:notes.trim(),planId:'',professional});
-    if(notes.trim())addPatientNote(patient.id,notes,professional);
+    const ageValue=age.trim()?Number(age):null;
+    const validation=validatePatientInput({name,diagnosis,age:ageValue});
+    if(!validation.valid){setError(Object.values(validation.errors)[0]);return;}
+    setError('');
+    const {patient}=createPatientWithRecord({name:name.trim(),diagnosis:diagnosis.trim(),age:ageValue,birthDate:'',sex:'',affectedArea:'',status:'active',visitType:visit,contact:{phone:phone.trim(),email:'',address:'',emergencyContact:''}},{date:new Date().toISOString(),reasonForVisit:diagnosis.trim(),evolution:'',affectedArea:'',symptoms:[],painLevel:null,providedDiagnosis:diagnosis.trim(),functionalLimitations:[],goals:[],relevantHistory:[],precautions:[],clinicalNotes:notes.trim(),planId:'',professional});
     router.push(`/patients/${patient.id}`);
   };
 
@@ -37,7 +41,8 @@ export function NewPatientScreen() {
           <label className="atal-field atal-field--full"><span>Notas clínicas</span><textarea maxLength={500} value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Observaciones relevantes, historia clínica, detalles importantes…" /><small className="atal-character-count">{notes.length}/500</small></label>
         </fieldset>
         <fieldset><legend>Datos rápidos</legend><div className="atal-choice-row"><button type="button" className={visit === 'first' ? 'is-active' : ''} onClick={() => setVisit('first')}><Clock3 /> Primera vez</button><button type="button" className={visit === 'followup' ? 'is-active' : ''} onClick={() => setVisit('followup')}><RefreshCw /> Seguimiento</button></div></fieldset>
-        <button type="submit" className="atal-submit-button" disabled={!name.trim() || !diagnosis.trim()}><Save /> Guardar paciente <Check /></button>
+        {error&&<p className="atal-form-error" role="alert">{error}</p>}
+        <button type="submit" className="atal-submit-button"><Save /> Guardar paciente <Check /></button>
       </form>
     </main>
   </AtalShell>;
