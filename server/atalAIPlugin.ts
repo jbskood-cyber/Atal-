@@ -7,6 +7,14 @@ import type { AtalAIAnalyzeRequest } from '../src/features/atal-ai/types';
 
 const MAX_BODY_BYTES = 32 * 1024 * 1024;
 
+type AtalAIPayload = AtalAIAnalyzeRequest & {
+  preferences?: {
+    suggestions?: boolean;
+    alerts?: boolean;
+    instructions?: string;
+  };
+};
+
 function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.statusCode = status;
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -23,7 +31,7 @@ async function readJson(request: IncomingMessage) {
     if (size > MAX_BODY_BYTES) throw new Error('La solicitud supera el límite de 32 MB. Reduce el número o tamaño de los archivos.');
     chunks.push(buffer);
   }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as AtalAIAnalyzeRequest;
+  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as AtalAIPayload;
 }
 
 function cleanDataUrl(data: string) {
@@ -39,19 +47,21 @@ function safeMessage(error: unknown) {
   return message || 'Gemini no pudo procesar la solicitud. Tu contenido no se perdió.';
 }
 
-function promptFor(payload: AtalAIAnalyzeRequest) {
+function promptFor(payload: AtalAIPayload) {
   const previous = payload.currentDraft ? `\nBorrador actual que debes actualizar sin perder datos confirmados:\n${JSON.stringify(payload.currentDraft)}` : '';
   const instruction = payload.mode === 'regenerate-plan'
     ? 'Regenera solamente el plan; conserva paciente y ejercicios, salvo ajustes necesarios para mantener coherencia.'
     : payload.mode === 'regenerate-exercise'
       ? `Regenera solamente el ejercicio con id ${payload.targetExerciseId ?? 'indicado'}; conserva paciente, plan y los demás ejercicios.`
       : 'Extrae o completa un único borrador de paciente, expediente, plan y ejercicios.';
-  const context=payload.workContext?`\nContexto elegido por el fisioterapeuta (vinculante):\n${JSON.stringify(payload.workContext)}`:'';
-  const existing=payload.existingContext?`\nDatos clínicos locales estrictamente necesarios que debes conservar salvo cambio explícito:\n${JSON.stringify(payload.existingContext)}`:'';
-  return `${instruction}${context}${existing}\n\nTexto del fisioterapeuta:\n${payload.text || '(sin texto adicional)'}\n\nTranscripción revisada:\n${payload.transcription || '(sin transcripción)'}${previous}`;
+  const context = payload.workContext ? `\nContexto elegido por el fisioterapeuta (vinculante):\n${JSON.stringify(payload.workContext)}` : '';
+  const existing = payload.existingContext ? `\nDatos clínicos locales estrictamente necesarios que debes conservar salvo cambio explícito:\n${JSON.stringify(payload.existingContext)}` : '';
+  const preferences = payload.preferences;
+  const preferenceContext = preferences ? `\nPreferencias profesionales para esta respuesta:\n- Sugerencias clínicas opcionales: ${preferences.suggestions === false ? 'desactivadas; limita la respuesta a lo solicitado' : 'activadas cuando aporten valor'}\n- Alertas inteligentes: ${preferences.alerts === false ? 'desactivadas, salvo riesgos clínicos o de seguridad que nunca deben omitirse' : 'activadas cuando exista algo concreto que revisar'}\n- Instrucciones del fisioterapeuta: ${preferences.instructions?.trim() || 'sin indicaciones adicionales'}\n` : '';
+  return `${instruction}${context}${existing}${preferenceContext}\nTexto del fisioterapeuta:\n${payload.text || '(sin texto adicional)'}\n\nTranscripción revisada:\n${payload.transcription || '(sin transcripción)'}${previous}`;
 }
 
-async function analyze(payload: AtalAIAnalyzeRequest) {
+async function analyze(payload: AtalAIPayload) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
   const ai = new GoogleGenAI({ apiKey });
@@ -88,14 +98,19 @@ async function analyze(payload: AtalAIAnalyzeRequest) {
 export function atalAIPlugin(): Plugin {
   const handler = async (request: IncomingMessage, response: ServerResponse) => {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'Método no permitido.' });
-    try { sendJson(response, 200, await analyze(await readJson(request))); }
-    catch (error) { sendJson(response, /límite|demasiado/i.test(safeMessage(error)) ? 413 : 503, { error: safeMessage(error) }); }
+    try {
+      sendJson(response, 200, await analyze(await readJson(request)));
+    } catch (error) {
+      sendJson(response, /límite|demasiado/i.test(safeMessage(error)) ? 413 : 503, { error: safeMessage(error) });
+    }
   };
   return {
     name: 'atal-ai-secure-endpoint',
     configureServer(server) {
       server.middlewares.use('/api/atal-ai/analyze', handler);
     },
-    configurePreviewServer(server) { server.middlewares.use('/api/atal-ai/analyze', handler); },
+    configurePreviewServer(server) {
+      server.middlewares.use('/api/atal-ai/analyze', handler);
+    },
   };
 }
