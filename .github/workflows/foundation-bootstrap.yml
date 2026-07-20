@@ -31,6 +31,7 @@ jobs:
               "message:`Puedes combinar hasta ${MAX_AI_FILES} archivos.`": "message:'Puedes combinar hasta '+MAX_AI_FILES+' archivos.'",
               "message:`${oversized.name}: supera 8 MB.`": "message:oversized.name+': supera 8 MB.'",
               "throw new Error(\\`${file.name}: formato no compatible.\\`)": "throw new Error(file.name+': formato no compatible.')",
+              "The stylesheet import order in `src/main.tsx`, the approved dock, official green `#7EB695`, light mode and black dark mode are unchanged by this functional block.": "The stylesheet import order in src/main.tsx, the approved dock, official green #7EB695, light mode and black dark mode are unchanged by this functional block.",
           }
           for old, new in replacements.items():
               if old not in source:
