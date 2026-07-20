@@ -1,0 +1,496 @@
+/*
+ * Atal Jade Clinical
+ * Global visual standardization layer.
+ * Loaded last so it can normalize the existing screens without changing
+ * component structure, routes, data, or behavior.
+ */
+
+:root {
+  --green: #137a5a;
+  --green-dark: #0d684b;
+  --mint: #f1f6f4;
+  --ink: #151a1e;
+  --muted: #5e6965;
+  --line: #e3eae6;
+  --surface: #ffffff;
+  --canvas: #f7f9f8;
+  --warning: #b66b16;
+  --danger: #c83d4a;
+  --info: #3f6f8e;
+  --success: #1f8a5b;
+  --atal-icon: #559e88;
+  --atal-icon-strong: #438a74;
+  --atal-soft: #eaf3ef;
+  --atal-selected: #edf5f2;
+  --atal-selected-border: #d3e4dd;
+  --atal-shadow: 0 14px 38px rgba(22, 50, 39, 0.08);
+  --atal-shadow-soft: 0 8px 24px rgba(22, 50, 39, 0.06);
+  --shadow: var(--atal-shadow);
+  --dock-shadow: 0 14px 36px rgba(22, 50, 39, 0.12);
+}
+
+html[data-theme='dark'] {
+  --green: #55a88a;
+  --green-dark: #70b99e;
+  --mint: #1b2823;
+  --ink: #f4f6f5;
+  --muted: #a9b2ae;
+  --line: #2b312e;
+  --surface: #151817;
+  --canvas: #0b0c0d;
+  --warning: #d89a4f;
+  --danger: #e16a73;
+  --info: #78a4be;
+  --success: #5bb98a;
+  --atal-icon: #3f9278;
+  --atal-icon-strong: #56a489;
+  --atal-soft: #1c2924;
+  --atal-selected: #1f2f29;
+  --atal-selected-border: #30463d;
+  --atal-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
+  --atal-shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.24);
+  --shadow: var(--atal-shadow);
+  --dock-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+}
+
+body,
+.atal-app,
+.atal-workspace,
+.atal-route-content {
+  color: var(--ink);
+  background-color: var(--canvas);
+}
+
+/* Remove the green-on-green gradient language from every Atal UI surface.
+   Images remain untouched because this targets class-based UI containers. */
+.atal-app [class^='atal-'],
+.atal-app [class*=' atal-'],
+.atal-app [class^='atal-']::before,
+.atal-app [class^='atal-']::after,
+.atal-app [class*=' atal-']::before,
+.atal-app [class*=' atal-']::after,
+.atal-patient-plan [class^='atal-'],
+.atal-patient-plan [class*=' atal-'],
+.atal-patient-session [class^='atal-'],
+.atal-patient-session [class*=' atal-'] {
+  background-image: none !important;
+}
+
+/* Core surfaces */
+.atal-mobile-header,
+.atal-desktop-header,
+.atal-sidebar,
+.atal-native-sheet,
+.atal-select-overlay > section,
+.atal-settings-group > div,
+.atal-settings-profile,
+.atal-card,
+.atal-list-card,
+.atal-plan-card,
+.atal-preview-card,
+.atal-patient-plan-card,
+.atal-command-draft,
+.atal-command-composer,
+.atal-command-message,
+.atal-form-card,
+.atal-detail-card,
+.atal-report-card,
+.atal-system-state,
+.atal-overlay-card {
+  color: var(--ink);
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+
+.atal-settings-group > div,
+.atal-settings-profile,
+.atal-card,
+.atal-list-card,
+.atal-plan-card,
+.atal-form-card,
+.atal-detail-card,
+.atal-report-card {
+  box-shadow: var(--atal-shadow-soft);
+}
+
+/* Brand and primary actions */
+.atal-logo__mark,
+.atal-logo__descriptor,
+.atal-section-heading button,
+.atal-eyebrow,
+.atal-command-kicker,
+.atal-session-kicker {
+  color: var(--green) !important;
+}
+
+.atal-new-button,
+.atal-desktop-new,
+.atal-submit-button,
+.atal-settings-save,
+.atal-session-primary,
+.atal-command-dynamic:not(.is-processing),
+.atal-patient-preview-session > button,
+.atal-preview-success button,
+.atal-system-state button,
+.atal-observations > button,
+.atal-form-actions button[type='submit'],
+.atal-sticky-actions button:last-child,
+.atal-plan-actions button:last-child,
+.atal-draft-actions button:last-child,
+.atal-patient-plan-cta,
+.atal-primary-button {
+  color: #ffffff !important;
+  background-color: var(--green) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 8px 20px rgba(19, 122, 90, 0.18) !important;
+}
+
+.atal-new-button:hover,
+.atal-desktop-new:hover,
+.atal-submit-button:hover,
+.atal-settings-save:hover,
+.atal-session-primary:hover,
+.atal-primary-button:hover {
+  filter: brightness(0.96);
+}
+
+/* Solid soft-green icon tiles with white glyphs. */
+.atal-settings-row > span:first-child,
+.atal-settings-detail .atal-detail-heading > span,
+.atal-mobile-metrics > div > span,
+.atal-report-metric > span:first-child,
+.atal-system-state > span,
+.atal-quick-actions button > span:first-child,
+.atal-command-results a > span:first-child,
+.atal-more-options-button > span:first-child,
+.atal-home-action > span:first-child,
+.atal-home-option > span:first-child,
+.atal-summary-action > span:first-child,
+.atal-overview-action > span:first-child,
+.atal-feature-row > span:first-child,
+.atal-menu-row > span:first-child,
+.atal-settings-icon,
+.atal-icon-tile {
+  color: #ffffff !important;
+  background-color: var(--atal-icon) !important;
+  border-color: var(--atal-icon) !important;
+  box-shadow: none !important;
+}
+
+.atal-settings-row > span:first-child svg,
+.atal-settings-detail .atal-detail-heading > span svg,
+.atal-mobile-metrics > div > span svg,
+.atal-report-metric > span:first-child svg,
+.atal-system-state > span svg,
+.atal-quick-actions button > span:first-child svg,
+.atal-command-results a > span:first-child svg,
+.atal-settings-icon svg,
+.atal-icon-tile svg {
+  color: #ffffff !important;
+  stroke: currentColor !important;
+}
+
+/* More sheet uses the same solid icon language globally. */
+.atal-more-sheet .atal-more-icon,
+.atal-nav-slot .atal-more-icon {
+  color: #ffffff !important;
+  background-color: var(--atal-icon) !important;
+  border-color: var(--atal-icon) !important;
+  box-shadow: none !important;
+}
+
+/* Avatars stay quiet and distinct from action icons. */
+.atal-avatar,
+.atal-plan-row > span:first-child,
+.atal-dense-row > span:first-child,
+.atal-patient-row > span:first-child,
+.atal-report-person > span:first-child {
+  color: var(--green) !important;
+  background-color: var(--atal-soft) !important;
+  background-image: none !important;
+  border-color: transparent !important;
+}
+
+/* Inputs and search */
+.atal-search,
+.atal-command-search,
+.atal-field input,
+.atal-field textarea,
+.atal-icon-field,
+.atal-phone-field,
+.atal-suffix-field,
+.atal-app-select,
+.atal-settings-textarea textarea,
+.atal-command-composer,
+.atal-observations label {
+  color: var(--ink) !important;
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+.atal-search:focus-within,
+.atal-command-search:focus-within,
+.atal-field input:focus,
+.atal-field textarea:focus,
+.atal-app-select:focus-visible,
+.atal-settings-textarea textarea:focus {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 3px rgba(19, 122, 90, 0.10) !important;
+  outline: 0 !important;
+}
+
+/* Filters, tabs and chips: neutral first, restrained jade selection. */
+.atal-segments button,
+.atal-state-tabs button,
+.atal-preview-tabs button,
+.atal-activity-tabs button,
+.atal-filter-chip,
+.atal-chip,
+.atal-pill,
+.atal-category-chip,
+.atal-command-chip {
+  color: var(--muted) !important;
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+  box-shadow: none !important;
+}
+
+.atal-segments button.is-active,
+.atal-state-tabs button.is-active,
+.atal-preview-tabs button.is-active,
+.atal-activity-tabs button.is-active,
+.atal-filter-chip.is-active,
+.atal-chip.is-active,
+.atal-pill.is-active,
+.atal-category-chip.is-active,
+.atal-command-chip.is-active,
+.atal-exercise-list > div.is-selected {
+  color: var(--green-dark) !important;
+  background-color: var(--atal-selected) !important;
+  border-color: var(--atal-selected-border) !important;
+  box-shadow: inset 0 -2px 0 var(--green) !important;
+}
+
+/* Progress and semantic status remain meaningful, always solid. */
+.atal-draft-status,
+.atal-status-chip,
+.atal-semantic-chip {
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.atal-draft-status.is-low,
+.atal-status-chip.is-danger,
+.atal-semantic-chip.is-danger {
+  color: #9f3440 !important;
+  background-color: #f8e4e7 !important;
+  border-color: #efc7cd !important;
+}
+
+.atal-draft-status.is-mid,
+.atal-status-chip.is-neutral,
+.atal-semantic-chip.is-neutral {
+  color: #52605a !important;
+  background-color: #edf1ef !important;
+  border-color: #dfe6e2 !important;
+}
+
+.atal-status-chip.is-warning,
+.atal-semantic-chip.is-warning {
+  color: #8b5715 !important;
+  background-color: #fff1d8 !important;
+  border-color: #f1d7a8 !important;
+}
+
+.atal-draft-status.is-high,
+.atal-status-chip.is-success,
+.atal-semantic-chip.is-success {
+  color: #176b49 !important;
+  background-color: #e1f1e9 !important;
+  border-color: #c9e4d5 !important;
+}
+
+.atal-draft-status.is-complete {
+  color: #ffffff !important;
+  background-color: var(--success) !important;
+  border-color: var(--success) !important;
+}
+
+.atal-status-dot.is-success,
+.atal-task-dot.is-success { background-color: var(--success) !important; }
+.atal-status-dot.is-warning,
+.atal-task-dot.is-warning { background-color: var(--warning) !important; }
+.atal-status-dot.is-danger,
+.atal-task-dot.is-danger { background-color: var(--danger) !important; }
+.atal-status-dot.is-neutral,
+.atal-task-dot.is-neutral { background-color: #8a9490 !important; }
+
+/* Settings toggles */
+.atal-settings-row > i {
+  background-color: #dce4e0 !important;
+  border-color: #dce4e0 !important;
+}
+
+.atal-settings-row > i.is-on {
+  background-color: var(--green) !important;
+  border-color: var(--green) !important;
+}
+
+.atal-settings-row > i em {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(21, 26, 30, 0.18) !important;
+}
+
+/* Navigation: white glass, black structure, restrained jade selection. */
+@media (max-width: 1023px) {
+  .atal-mobile-dock nav,
+  .atal-ai-button,
+  .atal-more-sheet {
+    background-color: rgba(255, 255, 255, 0.90) !important;
+    border-color: rgba(227, 234, 230, 0.92) !important;
+    box-shadow: var(--dock-shadow) !important;
+  }
+
+  .atal-primary-nav a,
+  .atal-primary-nav button {
+    color: var(--ink) !important;
+    background-color: transparent !important;
+  }
+
+  .atal-primary-nav .is-active {
+    color: var(--green) !important;
+    background-color: var(--atal-selected) !important;
+    box-shadow: none !important;
+  }
+
+  .atal-primary-nav .is-active::after {
+    background-color: var(--green) !important;
+  }
+
+  .atal-ai-button {
+    color: var(--green) !important;
+    background-color: rgba(255, 255, 255, 0.94) !important;
+  }
+
+  .atal-ai-button.is-active {
+    color: var(--green-dark) !important;
+    background-color: var(--atal-selected) !important;
+  }
+
+  .atal-more-sheet .atal-more-menu {
+    background-color: transparent !important;
+  }
+
+  .atal-more-sheet .atal-secondary-link {
+    color: var(--ink) !important;
+    background-color: transparent !important;
+    border-color: var(--line) !important;
+  }
+
+  .atal-more-sheet .atal-secondary-link.is-active,
+  .atal-more-sheet .atal-secondary-link:active {
+    color: var(--green-dark) !important;
+    background-color: var(--atal-selected) !important;
+  }
+}
+
+/* Overlays and sheets */
+.atal-overlay,
+.atal-select-overlay,
+.atal-nav-backdrop {
+  background-color: rgba(15, 20, 22, 0.30) !important;
+}
+
+.atal-native-sheet,
+.atal-select-overlay > section,
+.atal-exercise-actions-dialog > section,
+.atal-exercise-delete-dialog > section {
+  color: var(--ink) !important;
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+}
+
+/* Patient portal and Atal IA use the same palette without recoloring content. */
+.atal-preview-hero,
+.atal-patient-plan-hero,
+.atal-command-header,
+.atal-command-page,
+.atal-command-thread {
+  background-color: var(--canvas) !important;
+}
+
+.atal-preview-security,
+.atal-patient-preview-cta,
+.atal-plan-guidance,
+.atal-clinical-cue,
+.atal-instruction-card,
+.atal-role-note.is-neutral {
+  color: var(--ink) !important;
+  background-color: var(--atal-soft) !important;
+  border-color: var(--atal-selected-border) !important;
+}
+
+/* Processing control is a solid action, without glow rings or gradients. */
+.atal-command-dynamic.is-processing {
+  color: #ffffff !important;
+  background-color: var(--green) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 8px 20px rgba(19, 122, 90, 0.18) !important;
+}
+
+.atal-command-dynamic.is-processing::before {
+  display: none !important;
+}
+
+/* Dark-mode refinements */
+html[data-theme='dark'] .atal-mobile-dock nav,
+html[data-theme='dark'] .atal-ai-button,
+html[data-theme='dark'] .atal-more-sheet {
+  background-color: rgba(21, 24, 23, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme='dark'] .atal-settings-row > i {
+  background-color: #343c38 !important;
+  border-color: #343c38 !important;
+}
+
+html[data-theme='dark'] .atal-draft-status.is-low {
+  color: #ffb6bd !important;
+  background-color: #3a1f23 !important;
+  border-color: #553037 !important;
+}
+
+html[data-theme='dark'] .atal-draft-status.is-mid {
+  color: #d1d5d3 !important;
+  background-color: #292e2b !important;
+  border-color: #39413d !important;
+}
+
+html[data-theme='dark'] .atal-draft-status.is-high {
+  color: #9ce2be !important;
+  background-color: #173427 !important;
+  border-color: #28503d !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atal-app *,
+  .atal-app *::before,
+  .atal-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .atal-settings-row > span:first-child,
+  .atal-settings-detail .atal-detail-heading > span,
+  .atal-more-icon,
+  .atal-mobile-metrics > div > span {
+    color: ButtonText !important;
+    background-color: ButtonFace !important;
+    border: 1px solid ButtonText !important;
+  }
+}
