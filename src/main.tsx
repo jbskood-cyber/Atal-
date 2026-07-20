@@ -16,6 +16,7 @@ import '@/src/styles/visual-closeout-plan-form.css';
 import '@/src/styles/visual-closeout-plan-detail.css';
 import '@/src/styles/visual-closeout-exercises.css';
 import '@/src/styles/commercial-closeout.css';
+import '@/src/styles/ai-navigation-polish.css';
 import { AppCloseout } from './AppCloseout';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AppCloseout /></React.StrictMode>);
