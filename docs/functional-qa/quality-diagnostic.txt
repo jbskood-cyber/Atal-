@@ -1,1 +1,1 @@
-Foundation quality diagnostics are paused while the branch is completed without automatic email-generating runs.
+Automatic quality runs are disabled while the branch is completed to avoid notification noise.
