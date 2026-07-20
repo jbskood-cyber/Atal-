@@ -4,7 +4,7 @@
 
 **Goal:** Standardize Atal's color, typography, and shared component language without changing routes, data, screen structure, or behavior.
 
-**Architecture:** Add one canonical visual-system stylesheet loaded after the existing legacy layers, followed by one screenshot-driven surgical QA layer. The layers define the approved mint-green scale, semantic colors, typography scale, light/dark tokens, and targeted overrides for the 16 reviewed mobile captures. Existing JSX and business logic remain untouched.
+**Architecture:** Add canonical visual-system styles loaded after the existing legacy layers. They define the approved mint-green scale, semantic colors, typography scale, light/dark tokens, screenshot-driven surgical corrections, and residual compatibility overrides. Two presentation-only React edits remove redundant brand copy.
 
 **Tech Stack:** React 19, TypeScript, Vite, CSS, Lucide React.
 
@@ -37,31 +37,46 @@
 **Files:**
 - Modify: `src/main.tsx`
 
-- [x] Import `@/src/styles/atal-unified-visual-system.css` after every legacy stylesheet.
+- [x] Import the canonical visual system after every legacy stylesheet.
 - [x] Confirm no React route or provider code changes.
 
-### Task 3: Apply the 67 screenshot-driven corrections
+### Task 3: Apply the first screenshot-driven QA round
 
 **Files:**
 - Create: `src/styles/atal-surgical-qa.css`
 - Create: `docs/visual-qa/2026-07-20-surgical-checklist.md`
-- Modify: `src/main.tsx`
 
-- [x] Implement the 25 corrections for Inicio, Pacientes, Planes and Atal IA.
-- [x] Implement the 24 corrections for Ajustes, preferences and forms.
-- [x] Implement the 18 corrections for plan detail, plan exercises and patient record.
-- [x] Load the surgical QA layer after the canonical visual system.
-- [x] Keep all React components, routes, stores and clinical behavior unchanged.
+- [x] Implement 67 visual corrections from 16 mobile screenshots.
+- [x] Correct clipping, overlap, typography, spacing, safe areas, and component consistency.
+- [x] Preserve routes, data, storage, and clinical behavior.
 
-### Task 4: Verify the integration
+### Task 4: Apply residual QA round
 
-- [x] Confirm the branch contains only documentation and visual-system changes.
-- [x] Confirm the surgical stylesheet is loaded last.
-- [x] Review the diff against `main`.
+**Files:**
+- Modify: `src/components/atal/AtalLogo.tsx`
+- Modify: `src/features/atal-ai/components/ConversationalDraftCard.tsx`
+- Create: `src/styles/atal-residual-polish.css`
+- Create: `src/styles/atal-residual-compat.css`
+- Create: `docs/visual-qa/2026-07-20-residual-polish-checklist.md`
+
+- [x] Standardize all visible brand greens to `#7EB695`.
+- [x] Remove “Fisioterapia” from the wordmark.
+- [x] Remove “Borrador editable” from Atal IA.
+- [x] Correct Atal IA header, chips, progress badges, toast, and composer placeholder.
+- [x] Correct notification bell and Home metrics.
+- [x] Invert semantic clinical icon treatment.
+- [x] Replace dock underline with liquid-glass active capsules.
+- [x] Integrate the Atal IA action into the dock material.
+
+### Task 5: Verify the integration
+
+- [x] Confirm the branch changes only documentation, presentation components, and visual styles.
+- [x] Confirm the residual compatibility stylesheet is loaded last.
+- [x] Review the static diff against `main`.
 - [ ] Run `npm run build` in Google AI Studio or a connected development environment.
-- [ ] Visually review the 16 captured states and dark mode before merging.
+- [ ] Visually review the approved screenshots, residual checklist, and dark mode before merging.
 - [ ] Confirm there are no console errors, clipped content, overlaps or regressions.
 
 ## Current status
 
-The 67 checklist items are implemented in code and individually mapped in `docs/visual-qa/2026-07-20-surgical-checklist.md`. They remain **pending rendered QA** because this GitHub-only environment cannot start the Vite preview or execute the build.
+The 67 initial items and the 25 residual items are implemented and mapped in their respective QA checklists. They remain **pending rendered QA** because this GitHub-only environment cannot start the Vite preview or execute the build.
