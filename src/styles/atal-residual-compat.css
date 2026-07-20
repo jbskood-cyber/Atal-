@@ -71,7 +71,7 @@ html[data-theme="dark"] {
   background: transparent !important;
 }
 
-/* Final micro-polish: thinner liquid-glass dock and flat outlined avatars. */
+/* Final micro-polish: thinner liquid-glass dock. */
 @media (max-width: 1023px) {
   :root {
     --atal-qa-dock-clearance: calc(92px + env(safe-area-inset-bottom));
@@ -140,15 +140,6 @@ html[data-theme="dark"] {
     width: 29px !important;
     height: 29px !important;
   }
-
-  .atal-patient-directory .atal-dense-row .atal-avatar,
-  .atal-plan-list .atal-plan-row .atal-avatar {
-    color: var(--atal-official-green) !important;
-    border: 2px solid var(--atal-official-green) !important;
-    background: #fff !important;
-    background-image: none !important;
-    box-shadow: none !important;
-  }
 }
 
 html[data-theme="dark"] .atal-mobile-dock {
@@ -160,4 +151,70 @@ html[data-theme="dark"] .atal-mobile-dock {
 html[data-theme="dark"] .atal-mobile-dock .atal-ai-button {
   border-color: rgb(255 255 255 / 0.08) !important;
   background: rgb(255 255 255 / 0.035) !important;
+}
+
+/* Final approved inversion: solid green containers with white glyphs or initials. */
+:where(
+  .atal-avatar,
+  .atal-settings-row > span:first-child,
+  .atal-detail-heading > span:first-child,
+  .atal-theme-options > button > span:first-child,
+  .atal-home-more > div > button > span:first-child,
+  .atal-draft-icon,
+  .atal-command-message > span,
+  .atal-command-intro > svg,
+  .atal-patient-preview-cta > svg:first-child,
+  .atal-active-plan > span:first-child,
+  .atal-report-row > span:first-child
+) {
+  color: #fff !important;
+  border-color: var(--atal-official-green) !important;
+  background-color: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .atal-settings-row > span:first-child,
+  .atal-detail-heading > span:first-child,
+  .atal-theme-options > button > span:first-child,
+  .atal-home-more > div > button > span:first-child,
+  .atal-draft-icon,
+  .atal-command-message > span,
+  .atal-patient-preview-cta > svg:first-child,
+  .atal-active-plan > span:first-child,
+  .atal-report-row > span:first-child
+) svg {
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* Summary icons follow the same visual rule while preserving real semantic states. */
+.atal-home-metrics > button:not(.is-attention) > span:first-child,
+.atal-activity-summary > article > span:not(.is-warm) {
+  color: #fff !important;
+  border-color: var(--atal-official-green) !important;
+  background: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.atal-home-metrics > button.is-attention > span:first-child,
+.atal-activity-summary > article > span.is-warm {
+  color: #fff !important;
+  border-color: var(--atal-warning) !important;
+  background: var(--atal-warning) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.atal-home-metrics > button > span:first-child svg,
+.atal-activity-summary > article > span svg {
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* Preserve the separately approved white semantic treatment for clinical alert/report rows. */
+.atal-home-row .atal-home-row-icon {
+  background: var(--atal-surface) !important;
 }
