@@ -1,0 +1,326 @@
+/* Surgical polish: Atal IA composer, progress states and mobile navigation only. */
+
+/* Minimal Atal IA header while preserving context and menu actions. */
+.atal-command-header.is-minimal {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+.atal-command-context.is-logo-only {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  justify-self: center;
+  padding: 0;
+  border-radius: 18px;
+}
+.atal-command-context.is-logo-only .atal-command-mark {
+  width: 42px;
+  height: 42px;
+}
+
+/* Composer grows cleanly up to six readable lines. */
+.atal-command-composer textarea {
+  max-height: 168px !important;
+  line-height: 1.45;
+  overscroll-behavior: contain;
+}
+
+/* Chat-style stop control: solid, restrained and clearly actionable. */
+.atal-command-dynamic.is-processing {
+  isolation: isolate;
+  overflow: visible;
+  border: 1px solid rgba(255,255,255,.72) !important;
+  color: #fff !important;
+  background: #159b65 !important;
+  box-shadow:
+    0 0 0 5px rgba(21,155,101,.10),
+    0 9px 24px rgba(21,155,101,.28) !important;
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+.atal-command-dynamic.is-processing::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -6px;
+  border: 1px solid rgba(21,155,101,.22);
+  border-radius: inherit;
+  animation: atal-processing-pulse 1.7s ease-out infinite;
+}
+.atal-command-dynamic.is-processing:active {
+  transform: scale(.94);
+}
+.atal-command-dynamic.is-processing svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: currentColor;
+  stroke-width: 2.2 !important;
+}
+.atal-command-processing {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}
+
+/* Solid progress language: coral -> neutral -> mint -> green. */
+.atal-draft-status {
+  min-width: 52px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-variant-numeric: tabular-nums;
+}
+.atal-draft-status.is-low {
+  color: #a93642 !important;
+  background: #f8e4e7 !important;
+}
+.atal-draft-status.is-mid {
+  color: #46545a !important;
+  background: #e8edef !important;
+}
+.atal-draft-status.is-high {
+  color: #147a52 !important;
+  background: #dff2e8 !important;
+}
+.atal-draft-status.is-complete {
+  width: auto !important;
+  min-width: 52px !important;
+  color: #fff !important;
+  background: #159b65 !important;
+}
+.atal-draft-status.has-review {
+  outline: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  outline-offset: -1px;
+}
+
+/* Liquid-glass mobile dock and More sheet. */
+@media (max-width: 1023px) {
+  .atal-mobile-dock {
+    transition: opacity .2s ease, transform .24s cubic-bezier(.2,.8,.2,1);
+  }
+  .atal-mobile-dock.is-hidden {
+    opacity: 0;
+    transform: translateY(24px);
+    pointer-events: none;
+  }
+  .atal-mobile-dock nav,
+  .atal-ai-button {
+    border-color: rgba(255,255,255,.72) !important;
+    background: rgba(255,255,255,.72) !important;
+    box-shadow:
+      0 18px 48px rgba(31,51,42,.14),
+      inset 0 1px 0 rgba(255,255,255,.8) !important;
+    backdrop-filter: blur(26px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(150%) !important;
+  }
+  .atal-primary-nav a,
+  .atal-primary-nav button,
+  .atal-ai-button {
+    position: relative;
+    transition: color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .atal-primary-nav a:active,
+  .atal-primary-nav button:active,
+  .atal-ai-button:active {
+    transform: scale(.94);
+  }
+  .atal-primary-nav .is-active {
+    color: var(--green) !important;
+    background: rgba(232,245,239,.78) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
+    animation: atal-nav-select .22s ease-out;
+  }
+  .atal-primary-nav .is-active::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    bottom: 3px;
+    left: 16px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--green);
+    transform-origin: center;
+    animation: atal-nav-underline .22s ease-out;
+  }
+  .atal-ai-button {
+    color: var(--green) !important;
+  }
+  .atal-ai-button > svg {
+    width: 32px;
+    height: 32px;
+  }
+  .atal-ai-button.is-active {
+    background: rgba(232,245,239,.82) !important;
+  }
+
+  .atal-nav-backdrop {
+    position: fixed;
+    z-index: 58;
+    inset: 0;
+    border: 0;
+    background: rgba(15,20,22,.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .atal-more-sheet {
+    position: fixed;
+    z-index: 60;
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    left: 14px;
+    width: min(calc(100% - 28px), 520px);
+    margin: 0 auto;
+    padding: 9px 10px 12px;
+    border: 1px solid rgba(255,255,255,.76);
+    border-radius: 28px;
+    background: rgba(255,255,255,.78);
+    box-shadow:
+      0 28px 80px rgba(22,38,31,.22),
+      inset 0 1px 0 rgba(255,255,255,.88);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    animation: atal-more-sheet-in .24s cubic-bezier(.2,.8,.2,1);
+  }
+  .atal-more-sheet__handle {
+    display: block;
+    width: 42px;
+    height: 4px;
+    margin: 1px auto 8px;
+    border-radius: 999px;
+    background: rgba(98,108,103,.28);
+  }
+  .atal-more-sheet .atal-more-menu {
+    position: static !important;
+    display: grid;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 8px !important;
+    border: 0 !important;
+    border-radius: 22px !important;
+    background: rgba(255,255,255,.42) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  .atal-more-sheet .atal-secondary-link {
+    display: grid !important;
+    min-height: 70px !important;
+    grid-template-columns: 48px minmax(0,1fr) !important;
+    align-items: center;
+    gap: 14px !important;
+    padding: 0 10px !important;
+    border-bottom: 1px solid rgba(112,124,118,.14) !important;
+    border-radius: 0 !important;
+    color: #1d2924 !important;
+    background: transparent !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    text-decoration: none;
+    transition: background .17s ease, color .17s ease, transform .17s ease;
+  }
+  .atal-more-sheet .atal-secondary-link:last-child {
+    border-bottom: 0 !important;
+  }
+  .atal-more-sheet .atal-secondary-link:active {
+    transform: scale(.985);
+    background: rgba(232,245,239,.55) !important;
+  }
+  .atal-more-sheet .atal-secondary-link.is-active {
+    color: var(--green-dark) !important;
+    background: rgba(232,245,239,.62) !important;
+  }
+  .atal-more-sheet .atal-more-icon {
+    display: grid !important;
+    width: 44px !important;
+    height: 44px !important;
+    place-items: center;
+    border: 1px solid rgba(112,124,118,.12);
+    border-radius: 15px !important;
+    color: currentColor !important;
+    background: rgba(255,255,255,.58) !important;
+  }
+  .atal-more-sheet .atal-more-icon svg {
+    width: 23px !important;
+    height: 23px !important;
+    stroke-width: 2.05;
+  }
+}
+
+html[data-theme='dark'] .atal-command-dynamic.is-processing {
+  background: #20b978 !important;
+  box-shadow:
+    0 0 0 5px rgba(32,185,120,.11),
+    0 9px 24px rgba(0,0,0,.42) !important;
+}
+html[data-theme='dark'] .atal-draft-status.is-low {
+  color: #ffb6bd !important;
+  background: #3a1f23 !important;
+}
+html[data-theme='dark'] .atal-draft-status.is-mid {
+  color: #d1d5d8 !important;
+  background: #2a2d30 !important;
+}
+html[data-theme='dark'] .atal-draft-status.is-high {
+  color: #9ce2be !important;
+  background: #173427 !important;
+}
+html[data-theme='dark'] .atal-draft-status.is-complete {
+  color: #07150f !important;
+  background: #67dda9 !important;
+}
+
+@media (max-width: 1023px) {
+  html[data-theme='dark'] .atal-mobile-dock nav,
+  html[data-theme='dark'] .atal-ai-button,
+  html[data-theme='dark'] .atal-more-sheet {
+    border-color: rgba(255,255,255,.08) !important;
+    background: rgba(18,18,20,.76) !important;
+    box-shadow:
+      0 24px 64px rgba(0,0,0,.5),
+      inset 0 1px 0 rgba(255,255,255,.06) !important;
+  }
+  html[data-theme='dark'] .atal-more-sheet .atal-more-menu,
+  html[data-theme='dark'] .atal-more-sheet .atal-more-icon {
+    background: rgba(255,255,255,.035) !important;
+  }
+  html[data-theme='dark'] .atal-more-sheet .atal-secondary-link {
+    border-color: rgba(255,255,255,.07) !important;
+    color: #e4e4e7 !important;
+  }
+  html[data-theme='dark'] .atal-more-sheet .atal-secondary-link.is-active,
+  html[data-theme='dark'] .atal-primary-nav .is-active,
+  html[data-theme='dark'] .atal-ai-button.is-active {
+    color: #67dda9 !important;
+    background: rgba(32,185,120,.14) !important;
+  }
+}
+
+@keyframes atal-processing-pulse {
+  0% { opacity: .7; transform: scale(.92); }
+  70%,100% { opacity: 0; transform: scale(1.2); }
+}
+@keyframes atal-nav-select {
+  from { transform: scale(.92); opacity: .72; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes atal-nav-underline {
+  from { transform: scaleX(.25); opacity: 0; }
+  to { transform: scaleX(1); opacity: 1; }
+}
+@keyframes atal-more-sheet-in {
+  from { opacity: 0; transform: translateY(20px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atal-command-dynamic.is-processing::before,
+  .atal-primary-nav .is-active,
+  .atal-primary-nav .is-active::after,
+  .atal-more-sheet {
+    animation: none !important;
+  }
+}

@@ -3,5 +3,15 @@ import type { GuidedPlan, GuidedSessionDraft } from './types';
 import { SemanticSlider } from './SemanticSlider';
 
 export function SessionPreparation({ plan, draft, onChange, onStart }: { plan: GuidedPlan; draft: GuidedSessionDraft; onChange: (draft: GuidedSessionDraft) => void; onStart: () => void }) {
-  return <section className="atal-session-card atal-session-preparation"><span className="atal-session-kicker">Antes de empezar</span><h1>¿Cómo te sientes hoy?</h1><p>Esta información se conservará únicamente en esta demostración local.</p><div className="atal-session-plan-summary"><span><Dumbbell /></span><div><b>{plan.name}</b><small>{plan.exercises.length} ejercicios</small></div><em><Clock3 /> {plan.estimatedDuration}</em></div><blockquote>{plan.therapistMessage}</blockquote><div className="atal-session-sliders"><SemanticSlider label="Dolor antes de iniciar" value={draft.start.pain} onChange={(pain) => onChange({ ...draft, start: { ...draft.start, pain } })} /><SemanticSlider label="Energía" scale="energy" value={draft.start.energy} onChange={(energy) => onChange({ ...draft, start: { ...draft.start, energy } })} /></div><label className="atal-session-comment"><span>Comentario opcional</span><textarea value={draft.start.comment} onChange={(event) => onChange({ ...draft, start: { ...draft.start, comment: event.target.value } })} placeholder="Cuéntanos algo que debamos considerar…" /></label><div className="atal-session-safety"><AlertTriangle /><p>Realiza los ejercicios con calma. Detente y contacta a tu fisioterapeuta si aparece dolor fuerte, mareo, adormecimiento o una molestia fuera de lo indicado.</p></div><button type="button" className="atal-session-primary" onClick={onStart}><Play /> Comenzar ejercicios</button></section>;
+  return <section className="atal-session-card atal-session-preparation">
+    <span className="atal-session-kicker">Antes de empezar</span>
+    <h1>¿Cómo te sientes hoy?</h1>
+    <p>Registra cómo te encuentras antes de iniciar la rutina.</p>
+    <div className="atal-session-plan-summary"><span><Dumbbell /></span><div><b>{plan.name}</b><small>{plan.exercises.length} ejercicios</small></div><em><Clock3 /> {plan.estimatedDuration}</em></div>
+    <blockquote>{plan.therapistMessage}</blockquote>
+    <div className="atal-session-sliders"><SemanticSlider label="Dolor antes de iniciar" value={draft.start.pain} onChange={(pain) => onChange({ ...draft, start: { ...draft.start, pain } })} /><SemanticSlider label="Energía" scale="energy" value={draft.start.energy} onChange={(energy) => onChange({ ...draft, start: { ...draft.start, energy } })} /></div>
+    <label className="atal-session-comment"><span>Comentario opcional</span><textarea value={draft.start.comment} onChange={(event) => onChange({ ...draft, start: { ...draft.start, comment: event.target.value } })} placeholder="Cuéntanos algo que debamos considerar…" /></label>
+    <div className="atal-session-safety"><AlertTriangle /><p>Realiza los ejercicios con calma. Detente y contacta a tu fisioterapeuta si aparece dolor fuerte, mareo, adormecimiento o una molestia fuera de lo indicado.</p></div>
+    <button type="button" className="atal-session-primary" onClick={onStart}><Play /> Comenzar ejercicios</button>
+  </section>;
 }

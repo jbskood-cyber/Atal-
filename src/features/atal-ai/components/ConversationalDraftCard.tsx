@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ChevronDown, ClipboardList, Dumbbell, FileDown, FileText, FolderOpen, Pencil, Save, StickyNote, UserRound } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ClipboardList, Dumbbell, FileDown, FileText, FolderOpen, Pencil, Save, StickyNote, UserRound } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { AtalAIDraft } from '../types';
 import { DraftSectionEditor, type DraftSectionId } from './DraftSectionEditor';
@@ -43,7 +43,10 @@ export function ConversationalDraftCard({ draft,patientLabel,applying,applied,co
   </>;
 }
 
-function Status({percent,review}:{percent:number;review:boolean}) { if(percent===100&&!review)return <span className="atal-draft-status is-complete" aria-label="Completo"><Check/></span>;return <span className={`atal-draft-status${review?' is-review':''}`} aria-label={`${percent}% completo`}>{review&&percent===100?'Revisar':`${percent}%`}</span>; }
+function Status({percent,review}:{percent:number;review:boolean}) {
+  const tone=percent>=100?'is-complete':percent<=25?'is-low':percent<75?'is-mid':'is-high';
+  return <span className={`atal-draft-status ${tone}${review?' has-review':''}`} aria-label={`${percent}% completo`}>{percent}%</span>;
+}
 
 function SectionPreview({section,draft}:{section:DraftSectionId;draft:AtalAIDraft}) {
   if(section==='patient')return <dl><div><dt>Identidad</dt><dd>{draft.patient.name||'Por completar'}{draft.patient.age!==null?` · ${draft.patient.age} años`:''}</dd></div><div><dt>Motivo</dt><dd>{draft.patient.reasonForVisit||'Por completar'}</dd></div><div><dt>Objetivo funcional</dt><dd>{draft.patient.goals.join(', ')||'Por completar'}</dd></div></dl>;

@@ -5,24 +5,23 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   Activity,
-  ChevronsUp,
   Bell,
   CheckCircle2,
   ChevronRight,
   ClipboardList,
   Dumbbell,
+  Ellipsis,
   FileDown,
   FileText,
   Home,
   Plus,
   Search,
   Settings,
-  Sparkles,
   UserPlus,
   UsersRound,
   X,
 } from 'lucide-react';
-import { AtalLogo } from './AtalLogo';
+import { AtalLogo, AtalMark } from './AtalLogo';
 import { markAllNotificationsRead,markNotificationRead,useAtalStore } from '@/src/data/atalStore';
 
 const primary = [
@@ -116,22 +115,24 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         <div className="atal-route-content">{children}</div>
       </div>
 
-      {menuOpen && <button type="button" aria-label="Cerrar menú" className="atal-nav-backdrop" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <>
+        <button type="button" aria-label="Cerrar menú" className="atal-nav-backdrop" onClick={() => setMenuOpen(false)} />
+        <section className="atal-more-sheet" role="dialog" aria-modal="true" aria-label="Más secciones">
+          <span className="atal-more-sheet__handle" aria-hidden="true" />
+          <nav className="atal-more-menu" aria-label="Más secciones">
+            {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} prefetch onClick={() => setMenuOpen(false)} className={`atal-secondary-link ${isActive(href) ? 'is-active' : ''}`}><span className="atal-more-icon"><Icon /></span><span>{label}</span></Link>)}
+          </nav>
+        </section>
+      </>}
 
-      <div className="atal-mobile-dock">
+      <div className={`atal-mobile-dock${menuOpen?' is-hidden':''}`}>
         <div className="atal-nav-slot">
-            {!menuOpen ? (
-              <nav aria-label="Navegación principal" className="atal-primary-nav">
-                {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
-                <button type="button" aria-label="Más secciones" className={menuOpen || isActive('/activity') || isActive('/exercises') || isActive('/settings') ? 'is-active' : ''} onClick={() => setMenuOpen(true)}><ChevronsUp /><span>Más</span></button>
-              </nav>
-            ) : (
-              <div className="atal-more-menu" role="dialog" aria-label="Más secciones">
-                {secondary.map(({ href, label, icon: Icon }) => <Link key={label} href={href} prefetch onClick={() => setMenuOpen(false)} className={`atal-secondary-link ${isActive(href) ? 'is-active' : ''}`}><span className="atal-more-icon"><Icon /></span><span>{label}</span><ChevronRight /></Link>)}
-              </div>
-            )}
+          <nav aria-label="Navegación principal" className="atal-primary-nav">
+            {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
+            <button type="button" aria-label="Más secciones" className={isActive('/activity') || isActive('/exercises') || isActive('/settings') ? 'is-active' : ''} onClick={() => setMenuOpen(true)}><Ellipsis /><span>Más</span></button>
+          </nav>
         </div>
-        <Link href="/assistant" aria-label="Atal IA" className={isActive('/assistant') ? 'atal-ai-button is-active' : 'atal-ai-button'}><Sparkles /><span>Atal IA</span></Link>
+        <Link href="/assistant" aria-label="Atal IA" className={isActive('/assistant') ? 'atal-ai-button is-active' : 'atal-ai-button'}><AtalMark /><span className="sr-only">Atal IA</span></Link>
       </div>
 
       {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}

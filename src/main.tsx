@@ -9,9 +9,17 @@ import '@/src/styles/closeout.css';
 import '@/src/styles/atal-ai.css';
 import '@/src/styles/functional.css';
 import '@/src/styles/atal-ai-command-center.css';
-import { App } from './App';
+import '@/src/styles/surgical-corrections.css';
+import '@/src/styles/atal-ai-minimal-polish.css';
+import '@/src/styles/visual-closeout-selectors.css';
+import '@/src/styles/visual-closeout-plan-form.css';
+import '@/src/styles/visual-closeout-plan-detail.css';
+import '@/src/styles/visual-closeout-exercises.css';
+import '@/src/styles/commercial-closeout.css';
+import '@/src/styles/ai-navigation-polish.css';
+import { AppCloseout } from './AppCloseout';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AppCloseout /></React.StrictMode>);
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));

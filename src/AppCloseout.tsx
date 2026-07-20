@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AtalPersistentShell } from '@/src/components/atal/AtalShell';
 import { HomeScreen } from '@/src/screens/HomeScreen';
@@ -8,10 +8,10 @@ import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
 import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
 import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
 import { PlansScreen } from '@/src/screens/PlansScreen';
-import { PlanBuilderScreen } from '@/src/screens/PlanBuilderScreen';
-import { PlanDetailScreen } from '@/src/screens/PlanDetailScreen';
+import { PlanBuilderCloseoutScreen } from '@/src/screens/PlanBuilderCloseoutScreen';
+import { PlanDetailCloseoutScreen } from '@/src/screens/PlanDetailCloseoutScreen';
 import { ExercisesScreen } from '@/src/screens/ExercisesScreen';
-import { NewExerciseScreen } from '@/src/screens/NewExerciseScreen';
+import { NewExerciseCloseoutScreen } from '@/src/screens/NewExerciseCloseoutScreen';
 import { ExerciseDetailScreen } from '@/src/screens/ExerciseDetailScreen';
 import { ActivityScreen } from '@/src/screens/ActivityScreen';
 import { ActivityDetailScreen } from '@/src/screens/ActivityDetailScreen';
@@ -24,16 +24,51 @@ import { ThemeProvider } from '@/src/context/ThemeContext';
 import { ClinicalRecordScreen } from '@/src/features/clinical-record/ClinicalRecordScreen';
 import { AtalAIDraftReviewScreen } from '@/src/features/atal-ai/AtalAIDraftReviewScreen';
 import { FeedbackScreen } from '@/src/screens/FeedbackScreen';
+import { useAtalStore } from '@/src/data/atalStore';
 
-function PatientProfileRoute() { const { id = 'p01' } = useParams(); return <PatientProfileScreen patientId={id} />; }
-function PatientPreviewRoute() { const { id = 'p01' } = useParams(); return <PatientPortalPreviewScreen patientId={id} />; }
-function PatientSessionRoute() { const { id = 'p01' } = useParams(); return <GuidedSessionFlow patientId={id} />; }
-function ClinicalRecordRoute() { const { id = 'p01' } = useParams(); return <ClinicalRecordScreen patientId={id} />; }
-function PlanDetailRoute() { const { id = 'pl01' } = useParams(); return <PlanDetailScreen planId={id} />; }
-function ExerciseDetailRoute() { const { id = 'e01' } = useParams(); return <ExerciseDetailScreen exerciseId={id} />; }
-function ActivityDetailRoute() { const { id = 'p01' } = useParams(); return <ActivityDetailScreen patientId={id} />; }
-function SettingsDetailRoute({ kind }: { kind: SettingsKind }) { return <SettingsDetailScreen kind={kind} />; }
-function AIDraftRoute() { const { draftId = '' } = useParams(); return <AtalAIDraftReviewScreen draftId={draftId} />; }
+function PatientProfileRoute() {
+  const { id = 'p01' } = useParams();
+  return <PatientProfileScreen patientId={id} />;
+}
+
+function PatientPreviewRoute() {
+  const { id = 'p01' } = useParams();
+  return <PatientPortalPreviewScreen patientId={id} />;
+}
+
+function PatientSessionRoute() {
+  const { id = 'p01' } = useParams();
+  return <GuidedSessionFlow patientId={id} />;
+}
+
+function ClinicalRecordRoute() {
+  const { id = 'p01' } = useParams();
+  return <ClinicalRecordScreen patientId={id} />;
+}
+
+function PlanDetailRoute() {
+  const { id = 'pl01' } = useParams();
+  return <PlanDetailCloseoutScreen planId={id} />;
+}
+
+function ExerciseDetailRoute() {
+  const { id = 'e01' } = useParams();
+  return <ExerciseDetailScreen exerciseId={id} />;
+}
+
+function ActivityDetailRoute() {
+  const { id = 'p01' } = useParams();
+  return <ActivityDetailScreen patientId={id} />;
+}
+
+function SettingsDetailRoute({ kind }: { kind: SettingsKind }) {
+  return <SettingsDetailScreen kind={kind} />;
+}
+
+function AIDraftRoute() {
+  const { draftId = '' } = useParams();
+  return <AtalAIDraftReviewScreen draftId={draftId} />;
+}
 
 function RouteScrollReset() {
   const location = useLocation();
@@ -46,8 +81,18 @@ function RouteScrollReset() {
       element.scrollTop = 0;
       element.scrollLeft = 0;
     });
-    return () => { window.history.scrollRestoration = previous; };
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
   }, [location.pathname, location.search]);
+  return null;
+}
+
+function GlobalPreferenceEffects() {
+  const compact = useAtalStore((state) => state.settings.compact);
+  useEffect(() => {
+    document.documentElement.classList.toggle('atal-compact', compact);
+  }, [compact]);
   return null;
 }
 
@@ -59,10 +104,10 @@ function PrivateAppRoutes() {
     <Route path="/patients/:id" element={<PatientProfileRoute />} />
     <Route path="/patients/:id/clinical-record" element={<ClinicalRecordRoute />} />
     <Route path="/plans" element={<PlansScreen />} />
-    <Route path="/plans/new" element={<PlanBuilderScreen />} />
+    <Route path="/plans/new" element={<PlanBuilderCloseoutScreen />} />
     <Route path="/plans/:id" element={<PlanDetailRoute />} />
     <Route path="/exercises" element={<ExercisesScreen />} />
-    <Route path="/exercises/new" element={<NewExerciseScreen />} />
+    <Route path="/exercises/new" element={<NewExerciseCloseoutScreen />} />
     <Route path="/exercises/:id" element={<ExerciseDetailRoute />} />
     <Route path="/activity" element={<ActivityScreen />} />
     <Route path="/activity/:id" element={<ActivityDetailRoute />} />
@@ -78,8 +123,8 @@ function PrivateAppRoutes() {
   </Routes></AtalPersistentShell>;
 }
 
-export function App() {
-  return <ThemeProvider><BrowserRouter><RouteScrollReset /><Routes>
+export function AppCloseout() {
+  return <ThemeProvider><BrowserRouter><GlobalPreferenceEffects /><RouteScrollReset /><Routes>
     <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
     <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
     <Route path="/assistant" element={<AssistantScreen />} />

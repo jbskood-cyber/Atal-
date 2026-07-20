@@ -1,0 +1,302 @@
+/* Final commercial closeout. Scoped overrides only; no global redesign. */
+
+/* Atal IA: a clear, branded processing control. */
+.atal-command-dynamic.is-processing {
+  color: #fff !important;
+  background: var(--green) !important;
+  border-color: var(--green) !important;
+  box-shadow: 0 7px 20px color-mix(in srgb, var(--green) 28%, transparent) !important;
+}
+.atal-command-dynamic.is-processing:hover { filter: brightness(.96); }
+.atal-command-dynamic.is-processing svg { width: 17px; height: 17px; stroke-width: 2.4; }
+.atal-command-processing small { display: none; }
+.atal-command-processing b { font-size: 14px; line-height: 1.35; }
+
+/* Exercise actions: destructive behavior is deliberate and separated. */
+.atal-exercise-safe-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
+.atal-more-options-button {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  grid-template-columns: 22px 1fr 18px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+}
+.atal-more-options-button svg { width: 19px; color: var(--muted); }
+.atal-more-options-button svg:last-child { width: 16px; justify-self: end; }
+.atal-exercise-restriction {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--ink);
+  background: var(--canvas);
+}
+.atal-exercise-restriction > svg { width: 20px; flex: 0 0 20px; color: var(--muted); }
+.atal-exercise-restriction b,
+.atal-exercise-restriction small { display: block; }
+.atal-exercise-restriction b { font-size: 13px; }
+.atal-exercise-restriction small { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.atal-exercise-actions-dialog,
+.atal-exercise-delete-dialog { z-index: 180; }
+.atal-exercise-actions-dialog > section,
+.atal-exercise-delete-dialog > section {
+  width: min(calc(100% - 24px), 520px);
+  max-height: min(86vh, 720px);
+  margin: auto auto max(12px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+}
+.atal-exercise-actions-dialog > section { padding: 18px; }
+.atal-exercise-actions-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 8px;
+}
+.atal-exercise-actions-dialog header small { color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.atal-exercise-actions-dialog header h2 { margin: 2px 0 0; font-size: 22px; }
+.atal-exercise-actions-dialog header > button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: var(--ink);
+  background: var(--canvas);
+}
+.atal-exercise-actions-dialog > section > button:not(header button) {
+  display: grid;
+  width: 100%;
+  min-height: 66px;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+.atal-exercise-actions-dialog > section > button > svg { width: 22px; color: var(--green); }
+.atal-exercise-actions-dialog > section > button b,
+.atal-exercise-actions-dialog > section > button small { display: block; }
+.atal-exercise-actions-dialog > section > button b { font-size: 15px; }
+.atal-exercise-actions-dialog > section > button small { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.atal-exercise-actions-dialog > section > button.is-destructive { color: #c7343e; }
+.atal-exercise-actions-dialog > section > button.is-destructive > svg { color: #c7343e; }
+.atal-exercise-dialog-note { display: flex; gap: 10px; padding: 13px 4px 3px; border-top: 1px solid var(--line); color: var(--muted); }
+.atal-exercise-dialog-note svg { width: 19px; flex: 0 0 19px; }
+.atal-exercise-dialog-note p { margin: 0; font-size: 13px; line-height: 1.45; }
+.atal-exercise-delete-dialog > section { display: grid; gap: 12px; padding: 24px; }
+.atal-exercise-delete-dialog > section > svg { width: 34px; color: #c7343e; }
+.atal-exercise-delete-dialog h2 { margin: 0; font-size: 24px; }
+.atal-exercise-delete-dialog p { margin: 0 0 6px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.atal-exercise-delete-dialog button { min-height: 48px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink); background: var(--surface); font: inherit; font-weight: 650; }
+.atal-exercise-delete-dialog button.is-destructive { border-color: #c7343e; color: #fff; background: #c7343e; }
+
+/* Settings: concise product language and balanced controls. */
+.atal-settings-page .atal-form-heading p,
+.atal-settings-detail .atal-detail-heading p { max-width: 500px; }
+.atal-settings-detail .atal-flow-topbar { margin-bottom: 18px; }
+.atal-settings-detail .atal-detail-heading {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  margin-bottom: 22px;
+}
+.atal-settings-detail .atal-detail-heading > span {
+  grid-row: 1 / span 2;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 17px;
+  color: var(--green);
+  background: var(--mint);
+}
+.atal-settings-detail .atal-detail-heading > span svg { width: 27px; }
+.atal-settings-detail .atal-detail-heading h1 { margin: 0; font-size: clamp(25px, 6vw, 34px); line-height: 1.08; }
+.atal-settings-detail .atal-detail-heading p { margin: 5px 0 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.atal-settings-save { min-width: min(100%, 280px); min-height: 52px; margin-top: 18px; padding: 0 20px; border-radius: 15px; }
+.atal-settings-textarea textarea { min-height: 150px; font-size: 15px; line-height: 1.55; }
+.atal-role-note.is-neutral {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--ink);
+  background: var(--canvas);
+  border: 1px solid var(--line);
+}
+.atal-role-note.is-neutral > svg { width: 22px; flex: 0 0 22px; color: var(--green); }
+.atal-role-note.is-neutral b { font-size: 15px; }
+.atal-role-note.is-neutral p { margin-top: 5px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.atal-theme-options button { min-height: 86px; }
+.atal-theme-options button b { font-size: 16px; }
+.atal-theme-options button small { margin-top: 4px; font-size: 13px; line-height: 1.35; }
+
+/* Feedback: one clear action and lighter attachment treatment. */
+.atal-feedback-page .atal-feedback-file { min-height: 94px; }
+.atal-feedback-page .atal-feedback-file b { font-size: 16px; }
+.atal-feedback-page .atal-feedback-file small { font-size: 12px; }
+.atal-feedback-page .atal-submit-button { min-height: 52px; }
+.atal-feedback-history { margin-top: 24px; }
+.atal-feedback-history .atal-note-history > p { color: var(--muted); font-size: 14px; }
+
+/* Patient portal and guided session: native system typography and readable scale. */
+.atal-patient-plan,
+.atal-patient-session {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.atal-patient-plan-header { min-height: 68px; grid-template-columns: 44px 1fr auto; padding-inline: 18px; }
+.atal-patient-plan-header > button { width: 44px; height: 44px; }
+.atal-patient-plan-header > button svg { width: 21px; }
+.atal-patient-plan-header .atal-logo__mark { width: 34px; height: 34px; }
+.atal-patient-plan-header .atal-logo__name { font-size: 20px; }
+.atal-patient-plan-header .atal-logo__descriptor { font-size: 7px; }
+.atal-patient-plan-header > span { font-size: 12px; }
+.atal-patient-plan-header > span svg { width: 16px; }
+.atal-patient-plan-hero { padding: 36px 24px 30px; }
+.atal-patient-plan-hero span { font-size: 14px; }
+.atal-patient-plan-hero h1 { margin: 10px 0; font-size: clamp(34px, 9vw, 48px); line-height: 1.05; letter-spacing: -.045em; }
+.atal-patient-plan-hero p { font-size: 16px; line-height: 1.5; }
+.atal-patient-plan-card { width: min(calc(100% - 28px), 680px); padding: 24px 20px 34px; border-radius: 26px 26px 0 0; }
+.atal-session-kicker { font-size: 12px; }
+.atal-patient-plan-card h2 { margin: 8px 0 12px; font-size: 26px; line-height: 1.15; }
+.atal-patient-plan-card blockquote { padding: 15px; font-size: 16px; line-height: 1.5; }
+.atal-patient-plan-facts { gap: 9px; margin: 20px 0; }
+.atal-patient-plan-facts > span { min-height: 104px; padding: 14px 6px; border-radius: 15px; }
+.atal-patient-plan-facts svg { width: 23px; }
+.atal-patient-plan-facts b { margin-top: 7px; font-size: 15px; }
+.atal-patient-plan-facts small { margin-top: 4px; font-size: 12px; }
+.atal-patient-exercise-preview > header { margin: 24px 0 8px; }
+.atal-patient-exercise-preview h3 { font-size: 21px; }
+.atal-patient-exercise-preview header small { font-size: 14px; }
+.atal-patient-exercise-preview > button { min-height: 76px; grid-template-columns: 38px minmax(0,1fr) 22px; gap: 12px; }
+.atal-patient-exercise-preview > button > span { width: 38px; height: 38px; border-radius: 12px; font-size: 14px; }
+.atal-patient-exercise-preview b { font-size: 16px; line-height: 1.3; }
+.atal-patient-exercise-preview small { margin-top: 4px; font-size: 13px; line-height: 1.35; }
+.atal-patient-exercise-preview svg { width: 20px; }
+.atal-plan-guidance { gap: 12px; margin: 20px 0; padding: 16px; border-radius: 15px; }
+.atal-plan-guidance svg { width: 22px; flex-basis: 22px; }
+.atal-plan-guidance b { font-size: 16px; }
+.atal-plan-guidance p { margin-top: 5px; font-size: 14px; line-height: 1.5; }
+.atal-session-primary { min-height: 54px; border-radius: 15px; font-size: 16px; }
+.atal-plan-session-actions > button:last-child,
+.atal-summary-actions > button:last-child,
+.atal-resume-card > div > button:last-child { min-height: 48px; font-size: 14px; }
+.atal-local-save-copy { margin-top: 12px; font-size: 12px; }
+
+.atal-session-header { min-height: 74px; grid-template-columns: 112px minmax(0,1fr) 48px; }
+.atal-session-header .atal-logo__mark { width: 31px; height: 31px; }
+.atal-session-header .atal-logo__name { font-size: 20px; }
+.atal-session-header .atal-logo__descriptor { font-size: 6px; }
+.atal-session-progress > span { font-size: 12px; }
+.atal-session-header > button { width: 46px; height: 46px; }
+.atal-session-header > button svg { width: 21px; }
+.atal-session-stage { padding: 20px 16px max(34px, env(safe-area-inset-bottom)); }
+.atal-session-card { padding: 26px 20px; border-radius: 22px; }
+.atal-session-card h1 { margin: 9px 0; font-size: clamp(30px, 8vw, 42px); line-height: 1.08; }
+.atal-session-card > p { margin-bottom: 20px; font-size: 16px; line-height: 1.5; }
+.atal-session-plan-summary { grid-template-columns: 46px 1fr auto; gap: 12px; padding: 14px; border-radius: 15px; }
+.atal-session-plan-summary > span { width: 44px; height: 44px; }
+.atal-session-plan-summary svg { width: 22px; }
+.atal-session-plan-summary b { font-size: 16px; }
+.atal-session-plan-summary small,
+.atal-session-plan-summary em { font-size: 13px; }
+.atal-session-preparation blockquote { margin: 14px 0 20px; padding: 14px; font-size: 15px; line-height: 1.5; }
+.atal-semantic-slider b,
+.atal-semantic-slider strong { font-size: 15px; }
+.atal-semantic-slider small { font-size: 12px; }
+.atal-semantic-slider input::-webkit-slider-thumb { width: 26px; height: 26px; }
+.atal-session-comment { gap: 8px; margin: 18px 0; font-size: 14px; }
+.atal-session-comment textarea { min-height: 110px; padding: 14px; border-radius: 13px; font-size: 16px; line-height: 1.5; }
+.atal-session-safety { gap: 11px; margin: 18px 0; padding: 15px; border-radius: 14px; }
+.atal-session-safety svg { width: 22px; flex-basis: 22px; }
+.atal-session-safety p { font-size: 14px; line-height: 1.5; }
+.atal-exercise-position { font-size: 13px; }
+.atal-session-media.is-empty b { font-size: 15px; }
+.atal-session-media.is-empty small { font-size: 13px; }
+.atal-guided-exercise > header > span { font-size: 12px; }
+.atal-guided-exercise > header h1 { font-size: clamp(30px, 8vw, 42px); }
+.atal-guided-exercise > header p { font-size: 16px; line-height: 1.45; }
+.atal-exercise-prescription { gap: 8px; }
+.atal-exercise-prescription > span { min-height: 88px; padding: 12px 4px; border-radius: 13px; }
+.atal-exercise-prescription svg { width: 20px; }
+.atal-exercise-prescription b { margin-top: 6px; font-size: 16px; }
+.atal-exercise-prescription small { font-size: 11px; }
+.atal-exercise-instructions article { padding: 16px; border-radius: 14px; }
+.atal-exercise-instructions article b { font-size: 16px; }
+.atal-exercise-instructions article p,
+.atal-exercise-instructions article ol { font-size: 16px; line-height: 1.55; }
+.atal-exercise-instructions blockquote { padding: 14px; font-size: 15px; line-height: 1.5; }
+.atal-set-control,
+.atal-exercise-result { padding: 17px; border-radius: 17px; }
+.atal-set-heading span,
+.atal-exercise-result > span { font-size: 11px; }
+.atal-set-heading h2 { font-size: 19px; }
+.atal-set-heading strong { width: 44px; height: 44px; font-size: 14px; }
+.atal-set-row { min-height: 62px; grid-template-columns: 44px 1fr auto; gap: 10px; }
+.atal-set-row > button { width: 40px; height: 40px; }
+.atal-set-row > button svg { width: 19px; }
+.atal-set-row b { font-size: 15px; }
+.atal-set-row label { grid-template-columns: auto 58px; font-size: 12px; }
+.atal-set-row input { width: 58px; height: 40px; font-size: 15px; }
+.atal-exercise-result > div > button { min-height: 50px; font-size: 12px; }
+.atal-report-discomfort { min-height: 44px; font-size: 13px; }
+.atal-session-navigation > button:first-child { min-height: 50px; font-size: 13px; }
+.atal-finish-early { min-height: 44px; font-size: 13px; }
+
+/* Lists: slightly stronger hierarchy without restructuring. */
+.atal-patient-directory .atal-dense-row { min-height: 82px; }
+.atal-patient-directory .atal-dense-row > span > b { font-size: 15px; line-height: 1.25; }
+.atal-patient-directory .atal-dense-row > span > small { font-size: 12px; line-height: 1.35; }
+.atal-patient-directory .atal-dense-row > span > small:last-child { margin-top: 3px; color: var(--ink); font-weight: 600; }
+.atal-plan-list .atal-plan-row { min-height: 100px; }
+.atal-plan-list .atal-plan-row > span > b { font-size: 15px; }
+.atal-plan-list .atal-plan-row > span > small { font-size: 12px; }
+.atal-plan-list .atal-plan-row > span > em { margin-top: 5px; color: var(--muted); font-size: 11px; }
+
+@media (max-width: 420px) {
+  .atal-patient-plan-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .atal-patient-plan-facts b { font-size: 13px; }
+  .atal-patient-plan-facts small { font-size: 10.5px; }
+  .atal-exercise-prescription { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .atal-settings-detail .atal-detail-heading { grid-template-columns: 52px minmax(0, 1fr); }
+  .atal-settings-detail .atal-detail-heading > span { width: 52px; height: 52px; }
+}
+
+html[data-theme='dark'] .atal-exercise-actions-dialog > section,
+html[data-theme='dark'] .atal-exercise-delete-dialog > section,
+html[data-theme='dark'] .atal-more-options-button,
+html[data-theme='dark'] .atal-exercise-delete-dialog button { background: #151516; }
+html[data-theme='dark'] .atal-exercise-restriction,
+html[data-theme='dark'] .atal-role-note.is-neutral { background: #101011; }
+html[data-theme='dark'] .atal-patient-plan-hero { background: #0b0b0c; }
+html[data-theme='dark'] .atal-patient-plan-card,
+html[data-theme='dark'] .atal-session-card,
+html[data-theme='dark'] .atal-exercise-instructions article,
+html[data-theme='dark'] .atal-set-control,
+html[data-theme='dark'] .atal-exercise-result { background: #151516; }
