@@ -25,6 +25,7 @@ export function SafePlanExerciseList({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ id: string; index: number } | null>(null);
   const menuExercise = menuId ? catalog.find((item) => item.id === menuId) : null;
+  const confirmExercise = confirmId ? catalog.find((item) => item.id === confirmId) : null;
 
   const closeMenu = () => {
     setMenuId(null);
@@ -49,6 +50,22 @@ export function SafePlanExerciseList({
       window.removeEventListener('scroll', closeMenu, true);
     };
   }, [menuId]);
+
+  useEffect(() => {
+    if (!confirmId) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setConfirmId(null);
+    };
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [confirmId]);
 
   const toggleMenu = (id: string, anchor: HTMLButtonElement) => {
     if (menuId === id) {
@@ -187,15 +204,27 @@ export function SafePlanExerciseList({
         </div>
       )}
 
-      {confirmId && (
-        <div className="atal-overlay" onMouseDown={() => setConfirmId(null)}>
-          <section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-            <header><h2>¿Quitar {catalog.find((item) => item.id === confirmId)?.name ?? 'este ejercicio'}?</h2></header>
-            <p>Se quitará de este plan, pero seguirá disponible en la biblioteca de ejercicios.</p>
-            <button type="button" className="atal-submit-button is-danger" onClick={remove}>Quitar del plan</button>
-            <button type="button" onClick={() => setConfirmId(null)}>Cancelar</button>
+      {confirmId && typeof document !== 'undefined' && createPortal(
+        <div className="atal-exercise-confirm-backdrop" onMouseDown={() => setConfirmId(null)}>
+          <section
+            className="atal-exercise-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="atal-exercise-confirm-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <span className="atal-exercise-confirm-icon"><Trash2 /></span>
+            <div className="atal-exercise-confirm-copy">
+              <h2 id="atal-exercise-confirm-title">¿Quitar {confirmExercise?.name ?? 'este ejercicio'}?</h2>
+              <p>Se quitará de este plan, pero seguirá disponible en la biblioteca de ejercicios.</p>
+            </div>
+            <div className="atal-exercise-confirm-actions">
+              <button type="button" autoFocus onClick={() => setConfirmId(null)}>Cancelar</button>
+              <button type="button" className="is-danger" onClick={remove}><Trash2 />Quitar del plan</button>
+            </div>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
