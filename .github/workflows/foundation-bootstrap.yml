@@ -7,4 +7,4 @@ jobs:
   paused:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Foundation checks are paused while the branch is completed."
+      - run: echo "Automatic runs disabled while the branch is completed."
