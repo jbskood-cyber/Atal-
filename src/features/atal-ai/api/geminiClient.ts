@@ -1,8 +1,27 @@
+import { getAtalState } from '@/src/data/atalStore';
 import { normalizeAtalAIDraft } from './schemas';
 import type { AtalAIAnalyzeRequest, AtalAIAnalyzeResponse } from '../types';
 
+type AtalAIPreferences = {
+  suggestions: boolean;
+  alerts: boolean;
+  instructions: string;
+};
+
 export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: AbortSignal): Promise<AtalAIAnalyzeResponse> {
-  const response = await fetch('/api/atal-ai/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal });
+  const settings = getAtalState().settings;
+  const preferences: AtalAIPreferences = {
+    suggestions: settings.aiSuggestions,
+    alerts: settings.aiAlerts,
+    instructions: settings.aiInstructions.trim(),
+  };
+  const requestPayload = { ...payload, preferences };
+  const response = await fetch('/api/atal-ai/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestPayload),
+    signal,
+  });
   const result = await response.json().catch(() => ({})) as { draft?: unknown; transcript?: unknown; error?: unknown };
   if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Atal IA no pudo procesar la solicitud.');
   if (payload.mode === 'transcribe') return { transcript: typeof result.transcript === 'string' ? result.transcript : '' };
