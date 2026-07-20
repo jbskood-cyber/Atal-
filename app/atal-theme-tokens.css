@@ -1,0 +1,200 @@
+/*
+ * Atal Jade Clinical — global design tokens
+ *
+ * This file centralizes the visual language before screen-level adoption.
+ * Rules: solid colors only, no gradients, white icon glyphs on soft jade
+ * containers, and green reserved for brand, primary actions and positive state.
+ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Brand and interaction */
+  --atal-brand-logo: #2f8a70;
+  --atal-icon-solid: #559e88;
+  --atal-icon-on-solid: #ffffff;
+  --atal-action-primary: #137a5a;
+  --atal-action-primary-hover: #0f684c;
+  --atal-action-primary-pressed: #0b5941;
+  --atal-action-on-primary: #ffffff;
+  --atal-accent: #2f8a70;
+  --atal-accent-subtle: #edf5f2;
+
+  /* Neutral structure */
+  --atal-canvas: #f7f9f8;
+  --atal-surface: #ffffff;
+  --atal-surface-raised: #ffffff;
+  --atal-surface-selected: #f1f4f3;
+  --atal-surface-muted: #f4f6f5;
+  --atal-text-primary: #151a1e;
+  --atal-text-secondary: #5e6965;
+  --atal-text-tertiary: #7f8985;
+  --atal-border-subtle: #e2e7e4;
+  --atal-border-functional: #7f8e87;
+  --atal-icon-neutral: #313936;
+  --atal-icon-muted: #68726e;
+
+  /* Semantic states — never used as decoration */
+  --atal-success: #1f8a5b;
+  --atal-success-subtle: #edf7f1;
+  --atal-attention: #b66b16;
+  --atal-attention-subtle: #fff6e8;
+  --atal-danger: #c83d4a;
+  --atal-danger-subtle: #fff0f2;
+  --atal-info: #3f6f8e;
+  --atal-info-subtle: #eef5f8;
+
+  /* Progress */
+  --atal-progress-low: #d7656f;
+  --atal-progress-low-surface: #fff0f2;
+  --atal-progress-medium: #69746f;
+  --atal-progress-medium-surface: #f1f4f3;
+  --atal-progress-high: #559e88;
+  --atal-progress-high-surface: #edf5f2;
+  --atal-progress-complete: #1f8a5b;
+  --atal-progress-on-complete: #ffffff;
+
+  /* Elevation — neutral, never green tinted */
+  --atal-shadow-soft: 0 12px 32px rgba(21, 26, 30, 0.08);
+  --atal-shadow-raised: 0 18px 48px rgba(21, 26, 30, 0.11);
+  --atal-shadow-dock: 0 12px 35px rgba(21, 26, 30, 0.12);
+  --atal-overlay: rgba(11, 12, 13, 0.34);
+  --atal-focus-ring: #2f8a70;
+
+  /* Backward-compatible aliases during migration */
+  --green: var(--atal-action-primary);
+  --green-dark: var(--atal-action-primary-hover);
+  --mint: var(--atal-accent-subtle);
+  --ink: var(--atal-text-primary);
+  --muted: var(--atal-text-secondary);
+  --line: var(--atal-border-subtle);
+  --surface: var(--atal-surface);
+  --canvas: var(--atal-canvas);
+  --warning: var(--atal-attention);
+  --shadow: var(--atal-shadow-raised);
+  --dock-shadow: var(--atal-shadow-dock);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --atal-brand-logo: #55a88a;
+  --atal-icon-solid: #3f9278;
+  --atal-icon-on-solid: #ffffff;
+  --atal-action-primary: #24785f;
+  --atal-action-primary-hover: #2d8b6e;
+  --atal-action-primary-pressed: #1d684f;
+  --atal-action-on-primary: #ffffff;
+  --atal-accent: #55a88a;
+  --atal-accent-subtle: #1a2b25;
+
+  --atal-canvas: #0b0c0d;
+  --atal-surface: #151817;
+  --atal-surface-raised: #1c211f;
+  --atal-surface-selected: #242a27;
+  --atal-surface-muted: #191d1b;
+  --atal-text-primary: #f4f6f5;
+  --atal-text-secondary: #a9b2ae;
+  --atal-text-tertiary: #818b86;
+  --atal-border-subtle: #2b312e;
+  --atal-border-functional: #69746f;
+  --atal-icon-neutral: #e8ecea;
+  --atal-icon-muted: #a9b2ae;
+
+  --atal-success: #55a88a;
+  --atal-success-subtle: #173126;
+  --atal-attention: #d99a45;
+  --atal-attention-subtle: #332719;
+  --atal-danger: #e36a75;
+  --atal-danger-subtle: #351d21;
+  --atal-info: #73a2bf;
+  --atal-info-subtle: #1d2b34;
+
+  --atal-progress-low: #e36a75;
+  --atal-progress-low-surface: #351d21;
+  --atal-progress-medium: #a9b2ae;
+  --atal-progress-medium-surface: #242a27;
+  --atal-progress-high: #55a88a;
+  --atal-progress-high-surface: #1a2b25;
+  --atal-progress-complete: #55a88a;
+  --atal-progress-on-complete: #08110d;
+
+  --atal-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.26);
+  --atal-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.34);
+  --atal-shadow-dock: 0 12px 35px rgba(0, 0, 0, 0.38);
+  --atal-overlay: rgba(0, 0, 0, 0.62);
+  --atal-focus-ring: #55a88a;
+
+  --green: var(--atal-action-primary);
+  --green-dark: var(--atal-action-primary-hover);
+  --mint: var(--atal-accent-subtle);
+  --ink: var(--atal-text-primary);
+  --muted: var(--atal-text-secondary);
+  --line: var(--atal-border-subtle);
+  --surface: var(--atal-surface);
+  --canvas: var(--atal-canvas);
+  --warning: var(--atal-attention);
+  --shadow: var(--atal-shadow-raised);
+  --dock-shadow: var(--atal-shadow-dock);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    color-scheme: dark;
+
+    --atal-brand-logo: #55a88a;
+    --atal-icon-solid: #3f9278;
+    --atal-icon-on-solid: #ffffff;
+    --atal-action-primary: #24785f;
+    --atal-action-primary-hover: #2d8b6e;
+    --atal-action-primary-pressed: #1d684f;
+    --atal-action-on-primary: #ffffff;
+    --atal-accent: #55a88a;
+    --atal-accent-subtle: #1a2b25;
+    --atal-canvas: #0b0c0d;
+    --atal-surface: #151817;
+    --atal-surface-raised: #1c211f;
+    --atal-surface-selected: #242a27;
+    --atal-surface-muted: #191d1b;
+    --atal-text-primary: #f4f6f5;
+    --atal-text-secondary: #a9b2ae;
+    --atal-text-tertiary: #818b86;
+    --atal-border-subtle: #2b312e;
+    --atal-border-functional: #69746f;
+    --atal-icon-neutral: #e8ecea;
+    --atal-icon-muted: #a9b2ae;
+    --atal-success: #55a88a;
+    --atal-success-subtle: #173126;
+    --atal-attention: #d99a45;
+    --atal-attention-subtle: #332719;
+    --atal-danger: #e36a75;
+    --atal-danger-subtle: #351d21;
+    --atal-info: #73a2bf;
+    --atal-info-subtle: #1d2b34;
+    --atal-progress-low: #e36a75;
+    --atal-progress-low-surface: #351d21;
+    --atal-progress-medium: #a9b2ae;
+    --atal-progress-medium-surface: #242a27;
+    --atal-progress-high: #55a88a;
+    --atal-progress-high-surface: #1a2b25;
+    --atal-progress-complete: #55a88a;
+    --atal-progress-on-complete: #08110d;
+    --atal-shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.26);
+    --atal-shadow-raised: 0 18px 48px rgba(0, 0, 0, 0.34);
+    --atal-shadow-dock: 0 12px 35px rgba(0, 0, 0, 0.38);
+    --atal-overlay: rgba(0, 0, 0, 0.62);
+    --atal-focus-ring: #55a88a;
+    --green: var(--atal-action-primary);
+    --green-dark: var(--atal-action-primary-hover);
+    --mint: var(--atal-accent-subtle);
+    --ink: var(--atal-text-primary);
+    --muted: var(--atal-text-secondary);
+    --line: var(--atal-border-subtle);
+    --surface: var(--atal-surface);
+    --canvas: var(--atal-canvas);
+    --warning: var(--atal-attention);
+    --shadow: var(--atal-shadow-raised);
+    --dock-shadow: var(--atal-shadow-dock);
+  }
+}
