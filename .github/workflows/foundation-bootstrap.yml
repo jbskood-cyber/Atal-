@@ -2,6 +2,8 @@ name: foundation-bootstrap
 on:
   push:
     branches: [feature/atal-functional-foundation]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -26,6 +28,7 @@ jobs:
       - name: Remove bootstrap machinery
         run: rm scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml
       - name: Commit verified implementation
+        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
