@@ -1,5 +1,134 @@
-import{useLayoutEffect}from'react';import{BrowserRouter,Navigate,Route,Routes,useLocation,useParams}from'react-router-dom';import{AtalPersistentShell}from'@/src/components/atal/AtalShell';import{HomeScreen}from'@/src/screens/HomeScreen';import{PatientsScreen}from'@/src/screens/PatientsScreen';import{NewPatientScreen}from'@/src/screens/NewPatientScreen';import{PatientProfileScreen}from'@/src/screens/PatientProfileScreen';import{PatientPortalPreviewScreen}from'@/src/screens/PatientPortalPreviewScreen';import{GuidedSessionFlow}from'@/src/features/guided-session/GuidedSessionFlow';import{PlansScreen}from'@/src/screens/PlansScreen';import{PlanBuilderCloseoutScreen}from'@/src/screens/PlanBuilderCloseoutScreen';import{PlanDetailCloseoutScreen}from'@/src/screens/PlanDetailCloseoutScreen';import{ExercisesScreen}from'@/src/screens/ExercisesScreen';import{NewExerciseCloseoutScreen}from'@/src/screens/NewExerciseCloseoutScreen';import{ExerciseDetailScreen}from'@/src/screens/ExerciseDetailScreen';import{ActivityScreen}from'@/src/screens/ActivityScreen';import{ActivityDetailScreen}from'@/src/screens/ActivityDetailScreen';import{AssistantScreen}from'@/src/screens/AssistantScreen';import{ExportsScreen}from'@/src/screens/ExportsScreen';import{SettingsScreen}from'@/src/screens/SettingsScreen';import{SettingsDetailScreen,type SettingsKind}from'@/src/screens/SettingsDetailScreen';import{SystemStatesScreen}from'@/src/screens/SystemStatesScreen';import{ThemeProvider}from'@/src/context/ThemeContext';import{ClinicalRecordScreen}from'@/src/features/clinical-record/ClinicalRecordScreen';import{AtalAIDraftReviewScreen}from'@/src/features/atal-ai/AtalAIDraftReviewScreen';import{FeedbackScreen}from'@/src/screens/FeedbackScreen';
-function PatientProfileRoute(){const{id='p01'}=useParams();return <PatientProfileScreen patientId={id}/>}function PatientPreviewRoute(){const{id='p01'}=useParams();return <PatientPortalPreviewScreen patientId={id}/>}function PatientSessionRoute(){const{id='p01'}=useParams();return <GuidedSessionFlow patientId={id}/>}function ClinicalRecordRoute(){const{id='p01'}=useParams();return <ClinicalRecordScreen patientId={id}/>}function PlanDetailRoute(){const{id='pl01'}=useParams();return <PlanDetailCloseoutScreen planId={id}/>}function ExerciseDetailRoute(){const{id='e01'}=useParams();return <ExerciseDetailScreen exerciseId={id}/>}function ActivityDetailRoute(){const{id='p01'}=useParams();return <ActivityDetailScreen patientId={id}/>}function SettingsDetailRoute({kind}:{kind:SettingsKind}){return <SettingsDetailScreen kind={kind}/>}function AIDraftRoute(){const{draftId=''}=useParams();return <AtalAIDraftReviewScreen draftId={draftId}/>}
-function RouteScrollReset(){const location=useLocation();useLayoutEffect(()=>{const previous=window.history.scrollRestoration;window.history.scrollRestoration='manual';window.scrollTo({top:0,left:0,behavior:'auto'});document.scrollingElement?.scrollTo({top:0,left:0,behavior:'auto'});document.querySelectorAll<HTMLElement>('.atal-route-content, .atal-command-thread, main').forEach(element=>{element.scrollTop=0;element.scrollLeft=0});return()=>{window.history.scrollRestoration=previous}},[location.pathname,location.search]);return null}
-function PrivateAppRoutes(){return <AtalPersistentShell><Routes><Route path="/" element={<HomeScreen/>}/><Route path="/patients" element={<PatientsScreen/>}/><Route path="/patients/new" element={<NewPatientScreen/>}/><Route path="/patients/:id" element={<PatientProfileRoute/>}/><Route path="/patients/:id/clinical-record" element={<ClinicalRecordRoute/>}/><Route path="/plans" element={<PlansScreen/>}/><Route path="/plans/new" element={<PlanBuilderCloseoutScreen/>}/><Route path="/plans/:id" element={<PlanDetailRoute/>}/><Route path="/exercises" element={<ExercisesScreen/>}/><Route path="/exercises/new" element={<NewExerciseCloseoutScreen/>}/><Route path="/exercises/:id" element={<ExerciseDetailRoute/>}/><Route path="/activity" element={<ActivityScreen/>}/><Route path="/activity/:id" element={<ActivityDetailRoute/>}/><Route path="/exports" element={<ExportsScreen/>}/><Route path="/settings" element={<SettingsScreen/>}/><Route path="/settings/profile" element={<SettingsDetailRoute kind="profile"/>}/><Route path="/settings/privacy" element={<SettingsDetailRoute kind="privacy"/>}/><Route path="/settings/ai" element={<SettingsDetailRoute kind="ai"/>}/><Route path="/settings/appearance" element={<SettingsDetailRoute kind="appearance"/>}/><Route path="/settings/feedback" element={<FeedbackScreen/>}/><Route path="/system-states" element={<SystemStatesScreen/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes></AtalPersistentShell>}
-export function AppCloseout(){return <ThemeProvider><BrowserRouter><RouteScrollReset/><Routes><Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute/>}/><Route path="/patients/:id/session" element={<PatientSessionRoute/>}/><Route path="/assistant" element={<AssistantScreen/>}/><Route path="/assistant/drafts/:draftId" element={<AIDraftRoute/>}/><Route path="*" element={<PrivateAppRoutes/>}/></Routes></BrowserRouter></ThemeProvider>}
+import { useEffect, useLayoutEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { AtalPersistentShell } from '@/src/components/atal/AtalShell';
+import { HomeScreen } from '@/src/screens/HomeScreen';
+import { PatientsScreen } from '@/src/screens/PatientsScreen';
+import { NewPatientScreen } from '@/src/screens/NewPatientScreen';
+import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
+import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
+import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
+import { PlansScreen } from '@/src/screens/PlansScreen';
+import { PlanBuilderCloseoutScreen } from '@/src/screens/PlanBuilderCloseoutScreen';
+import { PlanDetailCloseoutScreen } from '@/src/screens/PlanDetailCloseoutScreen';
+import { ExercisesScreen } from '@/src/screens/ExercisesScreen';
+import { NewExerciseCloseoutScreen } from '@/src/screens/NewExerciseCloseoutScreen';
+import { ExerciseDetailScreen } from '@/src/screens/ExerciseDetailScreen';
+import { ActivityScreen } from '@/src/screens/ActivityScreen';
+import { ActivityDetailScreen } from '@/src/screens/ActivityDetailScreen';
+import { AssistantScreen } from '@/src/screens/AssistantScreen';
+import { ExportsScreen } from '@/src/screens/ExportsScreen';
+import { SettingsScreen } from '@/src/screens/SettingsScreen';
+import { SettingsDetailScreen, type SettingsKind } from '@/src/screens/SettingsDetailScreen';
+import { SystemStatesScreen } from '@/src/screens/SystemStatesScreen';
+import { ThemeProvider } from '@/src/context/ThemeContext';
+import { ClinicalRecordScreen } from '@/src/features/clinical-record/ClinicalRecordScreen';
+import { AtalAIDraftReviewScreen } from '@/src/features/atal-ai/AtalAIDraftReviewScreen';
+import { FeedbackScreen } from '@/src/screens/FeedbackScreen';
+import { useAtalStore } from '@/src/data/atalStore';
+
+function PatientProfileRoute() {
+  const { id = 'p01' } = useParams();
+  return <PatientProfileScreen patientId={id} />;
+}
+
+function PatientPreviewRoute() {
+  const { id = 'p01' } = useParams();
+  return <PatientPortalPreviewScreen patientId={id} />;
+}
+
+function PatientSessionRoute() {
+  const { id = 'p01' } = useParams();
+  return <GuidedSessionFlow patientId={id} />;
+}
+
+function ClinicalRecordRoute() {
+  const { id = 'p01' } = useParams();
+  return <ClinicalRecordScreen patientId={id} />;
+}
+
+function PlanDetailRoute() {
+  const { id = 'pl01' } = useParams();
+  return <PlanDetailCloseoutScreen planId={id} />;
+}
+
+function ExerciseDetailRoute() {
+  const { id = 'e01' } = useParams();
+  return <ExerciseDetailScreen exerciseId={id} />;
+}
+
+function ActivityDetailRoute() {
+  const { id = 'p01' } = useParams();
+  return <ActivityDetailScreen patientId={id} />;
+}
+
+function SettingsDetailRoute({ kind }: { kind: SettingsKind }) {
+  return <SettingsDetailScreen kind={kind} />;
+}
+
+function AIDraftRoute() {
+  const { draftId = '' } = useParams();
+  return <AtalAIDraftReviewScreen draftId={draftId} />;
+}
+
+function RouteScrollReset() {
+  const location = useLocation();
+  useLayoutEffect(() => {
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.querySelectorAll<HTMLElement>('.atal-route-content, .atal-command-thread, main').forEach((element) => {
+      element.scrollTop = 0;
+      element.scrollLeft = 0;
+    });
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
+  }, [location.pathname, location.search]);
+  return null;
+}
+
+function GlobalPreferenceEffects() {
+  const compact = useAtalStore((state) => state.settings.compact);
+  useEffect(() => {
+    document.documentElement.classList.toggle('atal-compact', compact);
+  }, [compact]);
+  return null;
+}
+
+function PrivateAppRoutes() {
+  return <AtalPersistentShell><Routes>
+    <Route path="/" element={<HomeScreen />} />
+    <Route path="/patients" element={<PatientsScreen />} />
+    <Route path="/patients/new" element={<NewPatientScreen />} />
+    <Route path="/patients/:id" element={<PatientProfileRoute />} />
+    <Route path="/patients/:id/clinical-record" element={<ClinicalRecordRoute />} />
+    <Route path="/plans" element={<PlansScreen />} />
+    <Route path="/plans/new" element={<PlanBuilderCloseoutScreen />} />
+    <Route path="/plans/:id" element={<PlanDetailRoute />} />
+    <Route path="/exercises" element={<ExercisesScreen />} />
+    <Route path="/exercises/new" element={<NewExerciseCloseoutScreen />} />
+    <Route path="/exercises/:id" element={<ExerciseDetailRoute />} />
+    <Route path="/activity" element={<ActivityScreen />} />
+    <Route path="/activity/:id" element={<ActivityDetailRoute />} />
+    <Route path="/exports" element={<ExportsScreen />} />
+    <Route path="/settings" element={<SettingsScreen />} />
+    <Route path="/settings/profile" element={<SettingsDetailRoute kind="profile" />} />
+    <Route path="/settings/privacy" element={<SettingsDetailRoute kind="privacy" />} />
+    <Route path="/settings/ai" element={<SettingsDetailRoute kind="ai" />} />
+    <Route path="/settings/appearance" element={<SettingsDetailRoute kind="appearance" />} />
+    <Route path="/settings/feedback" element={<FeedbackScreen />} />
+    <Route path="/system-states" element={<SystemStatesScreen />} />
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes></AtalPersistentShell>;
+}
+
+export function AppCloseout() {
+  return <ThemeProvider><BrowserRouter><GlobalPreferenceEffects /><RouteScrollReset /><Routes>
+    <Route path="/patients/:id/portal-preview" element={<PatientPreviewRoute />} />
+    <Route path="/patients/:id/session" element={<PatientSessionRoute />} />
+    <Route path="/assistant" element={<AssistantScreen />} />
+    <Route path="/assistant/drafts/:draftId" element={<AIDraftRoute />} />
+    <Route path="*" element={<PrivateAppRoutes />} />
+  </Routes></BrowserRouter></ThemeProvider>;
+}
