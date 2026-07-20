@@ -1,0 +1,188 @@
+Functional foundation changes applied.
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated json-ptr@3.1.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 870 packages in 21s
+npm warn allow-scripts 5 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   @google/genai@2.11.0 (preinstall: echo 'preinstall: no-op')
+npm warn allow-scripts   @tailwindcss/oxide@4.1.11 (postinstall: node ./scripts/install.js)
+npm warn allow-scripts   esbuild@0.25.12 (postinstall: node install.js)
+npm warn allow-scripts   protobufjs@7.6.5 (postinstall: node scripts/postinstall)
+npm warn allow-scripts   re2@1.26.0 (install: install-from-cache --artifact build/Release/re2.node --host-var RE2_DOWNLOAD_MIRROR --skip-path-var RE2_DOWNLOAD_SKIP_PATH --skip-ver-var RE2_DOWNLOAD_SKIP_VER --force-build-var RE2_DOWNLOAD_FORCE_BUILD || node-gyp -j max rebuild)
+npm warn allow-scripts
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+
+> ai-studio-applet@0.1.0 quality
+> npm run typecheck && npm run test:run && npm run build
+
+
+> ai-studio-applet@0.1.0 typecheck
+> tsc --noEmit
+
+
+> ai-studio-applet@0.1.0 test:run
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/Atal-/Atal-[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 11 [49m[22m[31m⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/test/architecture/canonicalApp.test.ts[2m [ src/test/architecture/canonicalApp.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/architecture/canonicalApp.test.ts:[2m4:1[22m[39m
+    [90m  2| [39m[35mimport[39m path [35mfrom[39m [32m'node:path'[39m[33m;[39m
+    [90m  3| [39m
+    [90m  4| [39m[34mdescribe[39m([32m'canonical application tree'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  5| [39m  [34mit[39m([32m'keeps App.tsx as a compatibility export only'[39m[33m,[39m () [33m=>[39m {
+    [90m  6| [39m    const source = fs.readFileSync(path.resolve('src/App.tsx'), 'utf8'…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/domain/planAssociation.test.ts[2m [ src/test/domain/planAssociation.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/domain/planAssociation.test.ts:[2m9:1[22m[39m
+    [90m  7| [39m})[33m;[39m
+    [90m  8| [39m
+    [90m  9| [39m[34mdescribe[39m([32m'clinical plan association'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m 10| [39m  [34mit[39m([32m'keeps the active plan when a newer draft is created'[39m[33m,[39m () [33m=>[39m {
+    [90m 11| [39m    [35mconst[39m state [33m=[39m [34mcreateEmptyAtalState[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/domain/validation.test.ts[2m [ src/test/domain/validation.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/domain/validation.test.ts:[2m3:1[22m[39m
+    [90m  1| [39mimport { validateExerciseInput, validatePatientInput, validatePlanInpu…
+    [90m  2| [39m
+    [90m  3| [39m[34mdescribe[39m([32m'clinical validation'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  [34mit[39m([32m'rejects blank patient names and invalid ages'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m    const value=validatePatientInput({name:' ',diagnosis:'Dolor',age:1…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/features/planEditSession.test.ts[2m [ src/test/features/planEditSession.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/features/planEditSession.test.ts:[2m3:1[22m[39m
+    [90m  1| [39mimport { createPlanEditSession, discardPlanEditSession, promotePlanEdi…
+    [90m  2| [39m
+    [90m  3| [39m[34mdescribe[39m([32m'plan edit session'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  [34mit[39m([32m'returns staged exercises for cleanup when discarded'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m    const session=createPlanEditSession();stagePlanExercise(session,'e…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/hooks/useUnsavedChangesGuard.test.tsx[2m [ src/test/hooks/useUnsavedChangesGuard.test.tsx ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/hooks/useUnsavedChangesGuard.test.tsx:[2m5:1[22m[39m
+    [90m  3| [39mimport { useUnsavedChangesGuard } from '@/src/hooks/useUnsavedChangesG…
+    [90m  4| [39m
+    [90m  5| [39m[34mdescribe[39m([32m'useUnsavedChangesGuard'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  6| [39m  [34mit[39m([32m'runs navigation immediately when clean'[39m[33m,[39m () [33m=>[39m {
+    [90m  7| [39m    const action=vi.fn();const{result}=renderHook(()=>useUnsavedChange…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/smoke/appRoutes.test.tsx[2m [ src/test/smoke/appRoutes.test.tsx ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/smoke/appRoutes.test.tsx:[2m9:1[22m[39m
+    [90m  7| [39m}
+    [90m  8| [39m
+    [90m  9| [39m[34mdescribe[39m([32m'canonical Atal routes'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m 10| [39m  it[33m.[39m[34meach[39m([
+    [90m 11| [39m    [[32m'/'[39m[33m,[39m [32m'Hoy'[39m][33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/atal-ai/attachmentLimits.test.ts[2m [ src/test/atal-ai/attachmentLimits.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/atal-ai/attachmentLimits.test.ts:[2m2:1[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/atal-ai/contradictionGate.test.ts[2m [ src/test/atal-ai/contradictionGate.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/atal-ai/contradictionGate.test.ts:[2m4:1[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/atal-ai/exerciseMutation.test.ts[2m [ src/test/atal-ai/exerciseMutation.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/atal-ai/exerciseMutation.test.ts:[2m2:1[22m[39m
+    [90m  1| [39mimport { applyExerciseMutation } from '@/src/features/atal-ai/domain/e…
+    [90m  2| [39m[34mdescribe[39m([32m'AI exercise mutations'[39m[33m,[39m()[33m=>[39m{
+    [90m   | [39m[31m^[39m
+    [90m  3| [39m  it('preserves a complete plan when Gemini returns a partial list',()…
+    [90m  4| [39m  it('appends without duplicates',()=>expect(applyExerciseMutation(['a…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/data/exerciseDuplication.test.ts[2m [ src/test/data/exerciseDuplication.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/data/exerciseDuplication.test.ts:[2m7:1[22m[39m
+    [90m  5| [39mimport { getExerciseMedia, saveExerciseMedia } from '@/src/data/exerci…
+    [90m  6| [39m
+    [90m  7| [39m[34mdescribe[39m([32m'exercise duplication'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  8| [39m  beforeEach(() => { localStorage.clear(); resetAtalStoreCache(); init…
+    [90m  9| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/test/data/workspaceInitialization.test.ts[2m [ src/test/data/workspaceInitialization.test.ts ][22m
+[31m[1mReferenceError[22m: describe is not defined[39m
+[36m [2m❯[22m src/test/data/workspaceInitialization.test.ts:[2m3:1[22m[39m
+    [90m  1| [39mimport { createDemoAtalState, createEmptyAtalState } from '@/src/data/…
+    [90m  2| [39m
+    [90m  3| [39m[34mdescribe[39m([32m'workspace initialization'[39m[33m,[39m () [33m=>[39m {
+    [90m   | [39m[31m^[39m
+    [90m  4| [39m  [34mit[39m([32m'starts a real local workspace empty'[39m[33m,[39m () [33m=>[39m {
+    [90m  5| [39m    [35mconst[39m state [33m=[39m [34mcreateEmptyAtalState[39m([32m'2026-07-20T00:00:00.000Z'[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m11 failed[39m[22m[90m (11)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 23:36:27
+[2m   Duration [22m 4.47s[2m (transform 748ms, setup 1.67s, collect 0ms, tests 0ms, environment 5.19s, prepare 1.20s)[22m
+
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/architecture/canonicalApp.test.ts,title=src/test/architecture/canonicalApp.test.ts,line=4,column=1::ReferenceError: describe is not defined%0A ❯ src/test/architecture/canonicalApp.test.ts:4:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/domain/planAssociation.test.ts,title=src/test/domain/planAssociation.test.ts,line=9,column=1::ReferenceError: describe is not defined%0A ❯ src/test/domain/planAssociation.test.ts:9:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/domain/validation.test.ts,title=src/test/domain/validation.test.ts,line=3,column=1::ReferenceError: describe is not defined%0A ❯ src/test/domain/validation.test.ts:3:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/features/planEditSession.test.ts,title=src/test/features/planEditSession.test.ts,line=3,column=1::ReferenceError: describe is not defined%0A ❯ src/test/features/planEditSession.test.ts:3:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/hooks/useUnsavedChangesGuard.test.tsx,title=src/test/hooks/useUnsavedChangesGuard.test.tsx,line=5,column=1::ReferenceError: describe is not defined%0A ❯ src/test/hooks/useUnsavedChangesGuard.test.tsx:5:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/smoke/appRoutes.test.tsx,title=src/test/smoke/appRoutes.test.tsx,line=9,column=1::ReferenceError: describe is not defined%0A ❯ src/test/smoke/appRoutes.test.tsx:9:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/atal-ai/attachmentLimits.test.ts,title=src/test/atal-ai/attachmentLimits.test.ts,line=2,column=1::ReferenceError: describe is not defined%0A ❯ src/test/atal-ai/attachmentLimits.test.ts:2:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/atal-ai/contradictionGate.test.ts,title=src/test/atal-ai/contradictionGate.test.ts,line=4,column=1::ReferenceError: describe is not defined%0A ❯ src/test/atal-ai/contradictionGate.test.ts:4:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/atal-ai/exerciseMutation.test.ts,title=src/test/atal-ai/exerciseMutation.test.ts,line=2,column=1::ReferenceError: describe is not defined%0A ❯ src/test/atal-ai/exerciseMutation.test.ts:2:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/data/exerciseDuplication.test.ts,title=src/test/data/exerciseDuplication.test.ts,line=7,column=1::ReferenceError: describe is not defined%0A ❯ src/test/data/exerciseDuplication.test.ts:7:1%0A%0A
+
+::error file=/home/runner/work/Atal-/Atal-/src/test/data/workspaceInitialization.test.ts,title=src/test/data/workspaceInitialization.test.ts,line=3,column=1::ReferenceError: describe is not defined%0A ❯ src/test/data/workspaceInitialization.test.ts:3:1%0A%0A
+
+syntax=0
+apply=0
+install=0
+quality=1
