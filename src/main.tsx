@@ -17,6 +17,12 @@ import '@/src/styles/visual-closeout-plan-detail.css';
 import '@/src/styles/visual-closeout-exercises.css';
 import '@/src/styles/commercial-closeout.css';
 import '@/src/styles/ai-navigation-polish.css';
+import '@/src/styles/atal-unified-visual-system.css';
+import '@/src/styles/atal-surgical-qa.css';
+import '@/src/styles/atal-residual-polish.css';
+import '@/src/styles/atal-residual-compat.css';
+import '@/src/styles/atal-final-closeout.css';
+import '@/src/styles/atal-context-menu-fix.css';
 import { AppCloseout } from './AppCloseout';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AppCloseout /></React.StrictMode>);

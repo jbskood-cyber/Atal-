@@ -1,0 +1,1355 @@
+/*
+ * ATAL SURGICAL VISUAL QA
+ * Correcciones acumuladas de las 16 capturas aprobadas.
+ * Esta capa se carga al final y no modifica rutas, datos ni comportamiento clínico.
+ */
+
+:root {
+  --atal-qa-dock-clearance: calc(118px + env(safe-area-inset-bottom));
+  --atal-qa-compose-clearance: calc(28px + env(safe-area-inset-bottom));
+  --atal-qa-secondary: #58645f;
+  --atal-qa-disabled: #c8d0cc;
+}
+
+/* G01–G05 · lenguaje global, contraste y zonas seguras */
+.atal-app,
+.atal-content,
+.atal-command-page,
+.atal-native-sheet,
+.atal-patient-plan,
+.atal-patient-session {
+  font-family: var(--atal-font-ui) !important;
+}
+
+.atal-content {
+  color: var(--atal-text);
+  padding-bottom: var(--atal-qa-dock-clearance) !important;
+}
+
+.atal-content :is(p, small, em),
+.atal-command-page :is(p, small, time),
+.atal-settings-detail :is(p, small),
+.atal-feedback-page :is(p, small) {
+  color: var(--atal-qa-secondary);
+}
+
+.atal-content :is(button, a),
+.atal-command-page :is(button, a) {
+  touch-action: manipulation;
+}
+
+.atal-flow-topbar {
+  display: grid !important;
+  min-height: 52px !important;
+  grid-template-columns: 44px minmax(0, 1fr) 44px !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 16px !important;
+  padding: 0 !important;
+}
+
+.atal-flow-topbar > span {
+  overflow: hidden;
+  color: var(--atal-text) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atal-flow-topbar > :is(button, i) {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+.atal-flow-topbar > button {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  color: var(--atal-text) !important;
+  background: transparent !important;
+}
+
+.atal-flow-topbar > button svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.atal-section-title > button,
+.atal-home-section-heading > button,
+.atal-list-meta > button {
+  min-height: 36px !important;
+  padding: 0 8px !important;
+  border-radius: 10px !important;
+  color: var(--atal-brand-700) !important;
+  font-size: 13px !important;
+  font-weight: 680 !important;
+}
+
+.atal-dense-row > svg:last-child,
+.atal-plan-row > svg:last-child,
+.atal-report-row > svg:last-child,
+.atal-active-plan > svg:last-child,
+.atal-patient-preview-cta > svg:last-child {
+  width: 20px !important;
+  min-width: 20px;
+  color: var(--atal-brand-700) !important;
+  stroke-width: 2.2;
+}
+
+/* H01–H04 · Inicio */
+.atal-home-v2 {
+  padding-bottom: var(--atal-qa-dock-clearance) !important;
+}
+
+.atal-home-primary {
+  min-height: 82px !important;
+  padding: 13px 16px !important;
+  border-radius: 20px !important;
+}
+
+.atal-home-primary > span:first-child {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, #ffffff 92%, var(--atal-brand-100)) !important;
+  color: var(--atal-brand-700) !important;
+}
+
+.atal-home-primary b {
+  color: #ffffff !important;
+  font-size: 16px !important;
+  line-height: 1.25;
+}
+
+.atal-home-primary small {
+  margin-top: 4px !important;
+  color: rgb(255 255 255 / 0.84) !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
+.atal-home-metrics {
+  align-items: stretch !important;
+}
+
+.atal-home-metrics > button {
+  min-height: 88px !important;
+  align-content: center !important;
+  gap: 3px !important;
+  padding: 10px 8px !important;
+}
+
+.atal-home-metrics > button > span:first-child {
+  width: 36px !important;
+  height: 36px !important;
+  margin: 0 auto 3px !important;
+}
+
+.atal-home-metrics strong {
+  font-size: 17px !important;
+  line-height: 1.1;
+}
+
+.atal-home-metrics small {
+  min-height: 30px;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.atal-home-section-heading {
+  min-height: 44px;
+  align-items: center !important;
+}
+
+.atal-home-section-heading h2,
+.atal-home-more > h2 {
+  font-size: 20px !important;
+  line-height: 1.2;
+}
+
+.atal-home-more > div {
+  gap: 10px !important;
+}
+
+.atal-home-more button {
+  min-height: 86px !important;
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  padding: 12px !important;
+}
+
+.atal-home-more button > span:first-child {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.atal-home-more button b {
+  font-size: 13px !important;
+}
+
+.atal-home-more button small {
+  margin-top: 3px !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 11px !important;
+  line-height: 1.3;
+}
+
+/* P01–P03 · directorio de pacientes */
+.atal-patient-directory .atal-dense-list {
+  display: grid;
+  gap: 8px !important;
+}
+
+.atal-patient-directory .atal-dense-row {
+  min-height: 88px !important;
+  grid-template-columns: 48px minmax(0, 1fr) 12px 22px !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 11px 12px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 17px !important;
+}
+
+.atal-patient-directory .atal-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  font-size: 13px !important;
+}
+
+.atal-patient-directory .atal-dense-row > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.atal-patient-directory .atal-dense-row b {
+  overflow: hidden;
+  font-size: 16px !important;
+  line-height: 1.22;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atal-patient-directory .atal-dense-row small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.3;
+}
+
+.atal-patient-directory .atal-dense-row small:last-child {
+  color: var(--atal-text) !important;
+  font-weight: 650;
+}
+
+.atal-patient-directory .atal-dense-row > i {
+  width: 10px !important;
+  height: 10px !important;
+  align-self: center;
+  border-radius: 50%;
+}
+
+/* PL01–PL05 · lista de planes */
+.atal-plan-segments {
+  display: grid !important;
+  grid-auto-columns: max-content !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: none !important;
+  gap: 8px !important;
+  margin: 10px 0 14px !important;
+  padding: 1px 2px 5px !important;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 2px 18px;
+  scrollbar-width: none;
+}
+
+.atal-plan-segments::-webkit-scrollbar {
+  display: none;
+}
+
+.atal-plan-segments > button {
+  min-width: max-content !important;
+  min-height: 40px !important;
+  padding: 0 14px !important;
+  font-size: 13px !important;
+  white-space: nowrap;
+}
+
+.atal-plan-segments > button b {
+  display: grid;
+  min-width: 26px;
+  height: 26px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--atal-text);
+  background: var(--atal-bg);
+  font-size: 12px;
+}
+
+.atal-plan-list {
+  display: grid;
+  gap: 8px !important;
+  padding-bottom: 32px !important;
+}
+
+.atal-plan-row {
+  min-height: 104px !important;
+  grid-template-columns: 50px minmax(0, 1fr) 24px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 18px !important;
+}
+
+.atal-plan-row .atal-avatar {
+  width: 50px !important;
+  height: 50px !important;
+  min-width: 50px !important;
+  font-size: 13px !important;
+}
+
+.atal-plan-row > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.atal-plan-row b {
+  font-size: 16px !important;
+  line-height: 1.22;
+}
+
+.atal-plan-row small,
+.atal-plan-row em {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
+.atal-plan-row small:last-of-type {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 7px;
+}
+
+.atal-plan-row small svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* AI01–AI08 · conversación, chips, borrador y compositor */
+.atal-command-page {
+  --command-muted: var(--atal-qa-secondary) !important;
+  font-family: var(--atal-font-ui) !important;
+}
+
+.atal-command-header {
+  min-height: 72px !important;
+  padding-bottom: 10px !important;
+}
+
+.atal-command-thread {
+  padding-top: 18px !important;
+  padding-bottom: 32px !important;
+  scroll-padding-top: 18px;
+  scroll-padding-bottom: 48px;
+}
+
+.atal-command-message p,
+.atal-command-intro p {
+  font-size: 15px !important;
+  line-height: 1.55 !important;
+}
+
+.atal-command-suggestions {
+  min-width: 0;
+  margin-bottom: 14px !important;
+}
+
+.atal-command-suggestions > div {
+  width: 100%;
+  gap: 8px !important;
+  padding: 2px 18px 5px 1px !important;
+  overflow-x: auto !important;
+  scroll-padding-inline: 1px 18px;
+  scrollbar-width: none;
+}
+
+.atal-command-suggestions > div::-webkit-scrollbar {
+  display: none;
+}
+
+.atal-command-suggestions button {
+  min-height: 42px !important;
+  padding: 0 14px !important;
+  font-size: 12px !important;
+}
+
+.atal-command-suggestions button:last-child {
+  margin-right: 2px;
+}
+
+.atal-draft-card {
+  border-color: var(--atal-border) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+}
+
+.atal-draft-card-header {
+  min-height: 68px !important;
+  padding: 10px 14px !important;
+}
+
+.atal-draft-card-header small {
+  color: var(--atal-brand-700) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.08em;
+}
+
+.atal-draft-card-header b {
+  font-size: 16px !important;
+}
+
+.atal-draft-status {
+  min-width: 54px !important;
+  height: 34px !important;
+  color: var(--atal-brand-700) !important;
+  border: 1px solid var(--atal-brand-200) !important;
+  background: var(--atal-brand-100) !important;
+  font-size: 12px !important;
+}
+
+.atal-draft-status.is-low,
+.atal-draft-status.is-low.has-review,
+.atal-draft-status.has-review {
+  color: var(--atal-qa-secondary) !important;
+  border-color: var(--atal-border-strong) !important;
+  background: var(--atal-bg) !important;
+}
+
+.atal-draft-status.is-complete {
+  color: #ffffff !important;
+  border-color: var(--atal-success) !important;
+  background: var(--atal-success) !important;
+}
+
+.atal-draft-row {
+  min-height: 76px !important;
+  grid-template-columns: 46px minmax(0, 1fr) auto 22px !important;
+  gap: 10px !important;
+}
+
+.atal-draft-icon {
+  width: 44px !important;
+  height: 44px !important;
+  color: #ffffff !important;
+  border-radius: 13px !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-draft-copy b {
+  font-size: 15px !important;
+}
+
+.atal-draft-copy small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+}
+
+.atal-draft-detail {
+  margin-left: 0 !important;
+  padding: 14px 48px 14px 14px !important;
+  border-radius: 16px !important;
+  background: var(--atal-surface) !important;
+}
+
+.atal-draft-detail dt,
+.atal-draft-detail dd {
+  font-size: 12px !important;
+}
+
+.atal-draft-edit {
+  width: 40px !important;
+  height: 40px !important;
+  color: #ffffff !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-draft-card > footer {
+  gap: 9px !important;
+  padding: 12px 14px 14px !important;
+}
+
+.atal-draft-card > footer button {
+  min-height: 48px !important;
+  font-size: 13px !important;
+}
+
+.atal-command-compose-zone {
+  padding-top: 8px !important;
+  padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+}
+
+.atal-command-composer {
+  min-height: 58px !important;
+  border-color: var(--atal-border-strong) !important;
+  box-shadow: 0 8px 24px rgb(21 26 30 / 0.06) !important;
+}
+
+.atal-command-composer:focus-within {
+  border-color: var(--atal-brand-400) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--atal-brand-200) 65%, transparent) !important;
+}
+
+.atal-command-composer textarea {
+  max-height: 144px !important;
+  font-size: 16px !important;
+}
+
+.atal-command-compose-zone > small {
+  font-size: 10px !important;
+}
+
+/* G06–G11, S01–S03 · Ajustes y pantallas secundarias */
+.atal-settings-page,
+.atal-settings-detail,
+.atal-feedback-page {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.atal-settings-page .atal-form-heading,
+.atal-feedback-page .atal-form-heading {
+  margin-bottom: 16px !important;
+}
+
+.atal-settings-page .atal-form-heading h1,
+.atal-feedback-page .atal-form-heading h1 {
+  font-size: clamp(26px, 7vw, 30px) !important;
+}
+
+.atal-settings-page .atal-form-heading p,
+.atal-feedback-page .atal-form-heading p {
+  margin-top: 5px !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.4;
+}
+
+.atal-settings-profile {
+  min-height: 94px !important;
+  grid-template-columns: 52px minmax(0, 1fr) 22px !important;
+  gap: 12px !important;
+  padding: 14px !important;
+}
+
+.atal-settings-profile .atal-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+}
+
+.atal-settings-profile h2 {
+  margin: 0 !important;
+  font-size: 17px !important;
+}
+
+.atal-settings-profile p {
+  margin: 3px 0 0 !important;
+  font-size: 13px !important;
+}
+
+.atal-settings-group {
+  margin-top: 22px !important;
+}
+
+.atal-settings-group > h2 {
+  margin-bottom: 9px !important;
+  font-size: 15px !important;
+  letter-spacing: 0.04em;
+}
+
+.atal-settings-row {
+  min-height: 72px !important;
+  grid-template-columns: 44px minmax(0, 1fr) auto !important;
+  gap: 11px !important;
+  padding: 9px 12px !important;
+}
+
+.atal-settings-row > span:first-child {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-settings-row > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.atal-settings-row b {
+  font-size: 14px !important;
+  line-height: 1.25;
+}
+
+.atal-settings-row small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+}
+
+.atal-settings-row > i {
+  width: 50px !important;
+  height: 30px !important;
+  min-width: 50px;
+  padding: 3px !important;
+  border-radius: 999px !important;
+  background: var(--atal-border-strong) !important;
+}
+
+.atal-settings-row > i > em {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 4px rgb(21 26 30 / 0.18);
+  transition: transform 0.18s ease;
+}
+
+.atal-settings-row > i.is-on {
+  background: var(--atal-brand-600) !important;
+}
+
+.atal-settings-row > i.is-on > em {
+  transform: translateX(20px) !important;
+}
+
+/* AP01–AP02, AIP01–AIP03, PV01–PV02, PF01–PF03 */
+.atal-settings-detail .atal-detail-heading {
+  display: grid !important;
+  grid-template-columns: 50px minmax(0, 1fr) !important;
+  align-items: center !important;
+  column-gap: 13px !important;
+  margin: 0 0 18px !important;
+}
+
+.atal-settings-detail .atal-detail-heading > span {
+  grid-row: 1 / span 2;
+  display: grid !important;
+  width: 50px !important;
+  height: 50px !important;
+  place-items: center;
+  color: #ffffff !important;
+  border-radius: 14px !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-settings-detail .atal-detail-heading > span svg {
+  width: 23px !important;
+  height: 23px !important;
+}
+
+.atal-settings-detail .atal-detail-heading h1 {
+  margin: 0 !important;
+  font-size: clamp(25px, 7vw, 30px) !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.atal-settings-detail .atal-detail-heading p {
+  margin: 5px 0 0 !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.42;
+}
+
+.atal-settings-card,
+.atal-settings-form,
+.atal-settings-textarea,
+.atal-theme-options,
+.atal-role-note.is-neutral {
+  border-color: var(--atal-border) !important;
+  border-radius: 18px !important;
+  background: var(--atal-surface) !important;
+  box-shadow: none !important;
+}
+
+.atal-settings-form {
+  display: grid !important;
+  gap: 14px !important;
+  padding: 16px !important;
+}
+
+.atal-settings-form label {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+.atal-settings-form label > span,
+.atal-settings-textarea > span {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
+.atal-settings-form :is(input, textarea),
+.atal-settings-textarea textarea {
+  width: 100% !important;
+  min-height: 50px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 13px !important;
+  color: var(--atal-text) !important;
+  background: var(--atal-surface) !important;
+  font-size: 15px !important;
+  line-height: 1.45;
+  box-shadow: none !important;
+}
+
+.atal-settings-textarea {
+  display: grid !important;
+  gap: 7px !important;
+  margin-top: 14px !important;
+  padding: 14px !important;
+}
+
+.atal-settings-textarea textarea {
+  min-height: 118px !important;
+  resize: vertical;
+}
+
+.atal-settings-form :is(input, textarea)::placeholder,
+.atal-settings-textarea textarea::placeholder,
+.atal-feedback-page :is(input, textarea)::placeholder {
+  color: #929c97 !important;
+  opacity: 1;
+}
+
+.atal-settings-save {
+  display: flex !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 50px !important;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 14px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+}
+
+.atal-theme-options {
+  padding: 4px 16px !important;
+}
+
+.atal-theme-options > button {
+  min-height: 72px !important;
+  grid-template-columns: 44px minmax(0, 1fr) 32px !important;
+  gap: 11px !important;
+  padding: 10px 0 !important;
+}
+
+.atal-theme-options > button > span:first-child {
+  display: grid;
+  width: 42px !important;
+  height: 42px !important;
+  place-items: center;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-theme-options > button b {
+  font-size: 15px !important;
+}
+
+.atal-theme-options > button small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+}
+
+.atal-theme-options > button.is-active > svg:last-child {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 6px;
+  border-radius: 50%;
+  color: #ffffff !important;
+  background: var(--atal-brand-600) !important;
+}
+
+.atal-role-note.is-neutral {
+  display: grid !important;
+  grid-template-columns: 42px minmax(0, 1fr) !important;
+  gap: 11px !important;
+  padding: 15px !important;
+}
+
+.atal-role-note.is-neutral > svg {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 9px;
+  color: #ffffff !important;
+  border-radius: 12px;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-role-note.is-neutral b {
+  font-size: 15px !important;
+}
+
+.atal-role-note.is-neutral p {
+  margin: 4px 0 0 !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+}
+
+/* FB01–FB05 · Ayuda y comentarios */
+.atal-feedback-page .atal-clinical-form fieldset {
+  gap: 14px !important;
+}
+
+.atal-feedback-page .atal-field > span {
+  margin-bottom: 6px !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+  font-weight: 700;
+}
+
+.atal-feedback-page .atal-field :is(input, textarea),
+.atal-feedback-page .atal-app-select {
+  min-height: 50px !important;
+  padding-inline: 14px !important;
+  border-radius: 14px !important;
+  font-size: 15px !important;
+}
+
+.atal-feedback-page .atal-field textarea {
+  min-height: 112px !important;
+  padding-block: 12px !important;
+}
+
+.atal-feedback-page .atal-feedback-file {
+  min-height: 76px !important;
+  padding: 12px 14px !important;
+  border-color: var(--atal-brand-300) !important;
+  border-radius: 16px !important;
+}
+
+.atal-feedback-page .atal-feedback-file > svg {
+  width: 26px !important;
+  color: var(--atal-brand-700) !important;
+}
+
+.atal-feedback-page .atal-feedback-file b {
+  font-size: 15px !important;
+}
+
+.atal-feedback-page .atal-feedback-file small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+}
+
+.atal-feedback-page .atal-submit-button {
+  min-height: 50px !important;
+  margin-top: 14px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+}
+
+.atal-feedback-page .atal-submit-button:disabled {
+  color: #727d78 !important;
+  border: 1px solid var(--atal-border) !important;
+  background: #e9edeb !important;
+  opacity: 1 !important;
+}
+
+.atal-feedback-history {
+  margin-top: 28px !important;
+  padding-bottom: 20px;
+}
+
+.atal-feedback-history > h2 {
+  font-size: 20px !important;
+}
+
+/* PC01–PC09 · Detalle del plan */
+.atal-plan-detail {
+  padding-bottom: var(--atal-qa-dock-clearance) !important;
+}
+
+.atal-plan-identity {
+  display: grid !important;
+  grid-template-columns: 52px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.atal-plan-identity .atal-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+}
+
+.atal-plan-identity h1 {
+  margin: 0 !important;
+  font-size: 23px !important;
+  line-height: 1.15;
+}
+
+.atal-plan-identity b {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px !important;
+}
+
+.atal-plan-identity small {
+  display: block;
+  margin-top: 5px;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+}
+
+.atal-tabbar {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin: 14px 0 18px !important;
+  padding: 4px !important;
+  border-radius: 15px !important;
+  background: var(--atal-bg) !important;
+  overflow: visible !important;
+}
+
+.atal-tabbar > button {
+  min-width: 0 !important;
+  min-height: 42px !important;
+  padding: 0 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 11px !important;
+  color: var(--atal-qa-secondary) !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.atal-tabbar > button.is-active {
+  color: var(--atal-brand-700) !important;
+  border-color: var(--atal-brand-300) !important;
+  background: var(--atal-brand-100) !important;
+  box-shadow: none !important;
+}
+
+.atal-plan-detail .atal-panel-placeholder {
+  display: grid !important;
+  min-height: 280px !important;
+  place-content: center !important;
+  justify-items: center !important;
+  gap: 10px !important;
+  padding: 28px 20px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 20px !important;
+  background: var(--atal-surface) !important;
+  text-align: center;
+}
+
+.atal-plan-detail .atal-panel-placeholder > svg {
+  width: 48px !important;
+  height: 48px !important;
+  color: var(--atal-brand-600) !important;
+}
+
+.atal-plan-detail .atal-panel-placeholder h2 {
+  margin: 4px 0 0 !important;
+  font-size: 24px !important;
+}
+
+.atal-plan-detail .atal-panel-placeholder p {
+  margin: 0 !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 15px !important;
+  line-height: 1.45;
+}
+
+.atal-plan-detail .atal-panel-placeholder strong {
+  font-size: 21px !important;
+}
+
+.atal-plan-detail .atal-panel-placeholder > button {
+  min-height: 48px !important;
+  margin-top: 10px !important;
+  padding: 0 18px !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  color: #ffffff !important;
+  background: var(--atal-brand-600) !important;
+  font-size: 14px !important;
+  font-weight: 700;
+}
+
+.atal-plan-detail .atal-sticky-save {
+  position: static !important;
+  width: 100% !important;
+  min-height: 48px !important;
+  margin: 18px 0 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.atal-plan-detail .atal-sticky-save.is-neutral {
+  min-height: 40px !important;
+  color: var(--atal-qa-secondary) !important;
+  border: 1px solid var(--atal-border) !important;
+  background: var(--atal-surface) !important;
+  pointer-events: none;
+}
+
+.atal-plan-detail .atal-action-message {
+  width: fit-content;
+  max-width: min(92%, 420px);
+  margin: 12px auto 0 !important;
+  padding: 8px 12px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+}
+
+/* PE01–PE04 · ejercicios del plan */
+.atal-plan-editor {
+  padding-bottom: 24px;
+}
+
+.atal-plan-facts {
+  gap: 12px !important;
+  margin-bottom: 18px !important;
+}
+
+.atal-plan-facts > span {
+  min-height: 62px !important;
+  align-content: center;
+  padding: 10px 12px !important;
+}
+
+.atal-plan-facts small {
+  font-size: 12px !important;
+}
+
+.atal-plan-facts b {
+  margin-top: 3px !important;
+  font-size: 15px !important;
+}
+
+.atal-plan-exercises--safe {
+  display: grid;
+  gap: 10px !important;
+}
+
+.atal-plan-exercise-row {
+  display: grid !important;
+  min-height: 92px !important;
+  grid-template-columns: 56px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 17px !important;
+  background: var(--atal-surface) !important;
+}
+
+.atal-plan-exercise-row :is(img, video),
+.atal-plan-exercise-row .atal-exercise-thumb-empty {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  border-radius: 14px !important;
+}
+
+.atal-plan-exercise-copy {
+  display: grid !important;
+  min-width: 0;
+  gap: 4px;
+}
+
+.atal-plan-exercise-copy b {
+  overflow: hidden;
+  font-size: 15px !important;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atal-plan-exercise-copy small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+}
+
+.atal-plan-exercise-controls {
+  display: grid !important;
+  grid-template-columns: repeat(3, 40px) !important;
+  gap: 2px !important;
+}
+
+.atal-plan-exercise-controls > button {
+  display: grid !important;
+  width: 40px !important;
+  height: 40px !important;
+  place-items: center;
+  border: 0 !important;
+  border-radius: 11px !important;
+  color: var(--atal-qa-secondary) !important;
+  background: transparent !important;
+}
+
+.atal-plan-exercise-controls > button svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.atal-plan-exercise-controls > button:disabled {
+  color: var(--atal-qa-disabled) !important;
+  opacity: 1 !important;
+}
+
+.atal-plan-settings {
+  margin-top: 26px !important;
+  padding-bottom: 8px;
+}
+
+.atal-plan-settings .atal-field textarea {
+  min-height: 96px !important;
+}
+
+/* EP01–EP05 · expediente del paciente */
+.atal-patient-profile {
+  padding-bottom: var(--atal-qa-dock-clearance) !important;
+}
+
+.atal-profile-hero {
+  display: grid !important;
+  grid-template-columns: 58px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  margin-bottom: 16px !important;
+}
+
+.atal-profile-hero .atal-avatar {
+  width: 58px !important;
+  height: 58px !important;
+  min-width: 58px !important;
+}
+
+.atal-profile-hero h1 {
+  margin: 0 !important;
+  font-size: 23px !important;
+  line-height: 1.15;
+}
+
+.atal-profile-hero p,
+.atal-profile-hero small {
+  margin: 4px 0 0 !important;
+  color: var(--atal-qa-secondary) !important;
+  font-size: 13px !important;
+}
+
+.atal-patient-profile .atal-tabbar > button {
+  font-size: 12px !important;
+}
+
+.atal-patient-preview-cta {
+  min-height: 76px !important;
+  grid-template-columns: 42px minmax(0, 1fr) 22px !important;
+  gap: 11px !important;
+  padding: 12px !important;
+  border-color: var(--atal-brand-200) !important;
+  border-radius: 16px !important;
+  background: var(--atal-brand-50) !important;
+}
+
+.atal-patient-preview-cta > svg:first-child,
+.atal-active-plan > span:first-child,
+.atal-report-row > span:first-child {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 9px;
+  color: #ffffff !important;
+  border-radius: 12px !important;
+  background: var(--atal-brand-500) !important;
+}
+
+.atal-patient-preview-cta b,
+.atal-active-plan b,
+.atal-report-row b {
+  font-size: 15px !important;
+}
+
+.atal-patient-preview-cta small,
+.atal-active-plan small,
+.atal-report-row small {
+  color: var(--atal-qa-secondary) !important;
+  font-size: 12px !important;
+}
+
+.atal-profile-section {
+  margin-top: 24px !important;
+}
+
+.atal-profile-section > h2,
+.atal-profile-section .atal-section-title h2 {
+  font-size: 21px !important;
+  line-height: 1.2;
+}
+
+.atal-profile-lead {
+  margin: 9px 0 4px !important;
+  font-size: 16px !important;
+  line-height: 1.4;
+}
+
+.atal-active-plan,
+.atal-report-row {
+  min-height: 74px !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 10px 12px !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 15px !important;
+  background: var(--atal-surface) !important;
+}
+
+.atal-active-plan em {
+  color: var(--atal-brand-700) !important;
+  font-size: 12px !important;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.atal-profile-actions {
+  display: grid !important;
+  gap: 10px !important;
+  margin-top: 22px !important;
+  padding-bottom: 24px;
+}
+
+.atal-profile-actions > button {
+  min-height: 50px !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+}
+
+/* Dark mode parity for the surgical layer */
+html[data-theme='dark'] {
+  --atal-qa-secondary: #a9b2ae;
+  --atal-qa-disabled: #59615d;
+}
+
+html[data-theme='dark'] :is(
+  .atal-patient-directory .atal-dense-row,
+  .atal-plan-row,
+  .atal-settings-card,
+  .atal-settings-form,
+  .atal-settings-textarea,
+  .atal-theme-options,
+  .atal-role-note.is-neutral,
+  .atal-plan-detail .atal-panel-placeholder,
+  .atal-plan-exercise-row,
+  .atal-active-plan,
+  .atal-report-row,
+  .atal-plan-detail .atal-sticky-save.is-neutral
+) {
+  border-color: var(--atal-border) !important;
+  background: var(--atal-surface) !important;
+}
+
+html[data-theme='dark'] .atal-feedback-page .atal-submit-button:disabled {
+  color: #9ba39f !important;
+  background: #252a28 !important;
+}
+
+html[data-theme='dark'] .atal-command-composer:focus-within {
+  box-shadow: 0 0 0 3px rgb(126 182 149 / 0.18) !important;
+}
+
+@media (max-width: 700px) {
+  .atal-content {
+    padding-inline: 18px !important;
+  }
+
+  .atal-page-heading h1,
+  .atal-form-heading h1,
+  .atal-home-heading h1 {
+    font-size: 28px !important;
+  }
+
+  .atal-patient-directory .atal-dense-row,
+  .atal-plan-row {
+    width: 100%;
+  }
+
+  .atal-plan-exercise-row {
+    grid-template-columns: 50px minmax(0, 1fr) !important;
+  }
+
+  .atal-plan-exercise-row :is(img, video),
+  .atal-plan-exercise-row .atal-exercise-thumb-empty {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+  }
+
+  .atal-plan-exercise-controls {
+    grid-column: 2;
+    justify-self: end;
+    margin-top: -4px;
+  }
+
+  .atal-tabbar > button {
+    font-size: 11px !important;
+  }
+
+  .atal-settings-detail .atal-detail-heading h1 {
+    font-size: 27px !important;
+  }
+
+  .atal-command-suggestions button {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .atal-content {
+    padding-inline: 14px !important;
+  }
+
+  .atal-home-metrics small {
+    font-size: 11px !important;
+  }
+
+  .atal-patient-directory .atal-dense-row,
+  .atal-plan-row {
+    padding-inline: 10px !important;
+  }
+
+  .atal-tabbar {
+    gap: 3px !important;
+  }
+
+  .atal-tabbar > button {
+    padding-inline: 3px !important;
+    font-size: 10px !important;
+  }
+}
