@@ -1,0 +1,72 @@
+/* Final compatibility overrides for legacy hard-coded green values. */
+
+html[data-theme="dark"] {
+  --atal-brand-400: var(--atal-official-green) !important;
+  --atal-brand-500: var(--atal-official-green) !important;
+  --atal-brand-600: var(--atal-official-green) !important;
+  --atal-brand-700: var(--atal-official-green) !important;
+  --green: var(--atal-official-green) !important;
+  --green-dark: var(--atal-official-green) !important;
+}
+
+.atal-command-page :is(button, input, textarea):focus-visible {
+  outline-color: rgb(126 182 149 / 0.34) !important;
+}
+
+.atal-command-menu > button:not(.is-danger) > svg,
+.atal-command-processing > svg,
+.atal-command-suggestions button svg,
+.atal-draft-card-header small,
+.atal-draft-edit,
+.atal-command-result > svg,
+.atal-command-result a,
+.atal-command-undo,
+.atal-command-composer > button:not(.is-processing),
+.atal-context-actions button > span,
+.atal-context-entity > div button > svg,
+.atal-compare-sheet small,
+.atal-section-add {
+  color: var(--atal-official-green) !important;
+}
+
+.atal-draft-status.is-complete {
+  border-color: var(--atal-official-green) !important;
+  color: var(--atal-official-green) !important;
+}
+
+.atal-command-result {
+  border-color: rgb(126 182 149 / 0.34) !important;
+  background: rgb(126 182 149 / 0.12) !important;
+}
+
+.atal-command-dynamic.is-send,
+.atal-context-done,
+.atal-section-editor > footer button.is-primary {
+  color: #fff !important;
+  border-color: var(--atal-official-green) !important;
+  background: var(--atal-official-green) !important;
+  box-shadow: none !important;
+}
+
+.atal-context-actions button.is-selected,
+.atal-history-sheet > div > button.is-selected {
+  border-color: rgb(126 182 149 / 0.42) !important;
+  background: rgb(126 182 149 / 0.14) !important;
+}
+
+.atal-mobile-dock .atal-primary-nav > :is(a, button),
+.atal-mobile-dock .atal-primary-nav > :is(a, button).is-active {
+  border-bottom: 0 !important;
+  text-decoration: none !important;
+}
+
+.atal-mobile-dock .atal-primary-nav > :is(a, button) span::before,
+.atal-mobile-dock .atal-primary-nav > :is(a, button) span::after,
+.atal-mobile-dock .atal-primary-nav > :is(a, button).is-active span::before,
+.atal-mobile-dock .atal-primary-nav > :is(a, button).is-active span::after {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
