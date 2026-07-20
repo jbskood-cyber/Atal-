@@ -1,7 +1,8 @@
 name: foundation-runner
 on:
-  push:
-    branches: [feature/atal-functional-foundation]
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
 permissions:
   contents: write
 jobs:
@@ -43,19 +44,16 @@ jobs:
             quality_status=1
           fi
           printf '\nsyntax=%s\napply=%s\ninstall=%s\nquality=%s\n' "$syntax_status" "$apply_status" "$install_status" "$quality_status" >> docs/functional-qa/foundation-runner.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "$quality_status" -eq 0 ]; then
             rm -f scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml .github/workflows/export-branch.yml docs/functional-qa/bootstrap-diagnostic.txt docs/functional-qa/quality-diagnostic.txt docs/functional-qa/foundation-runner.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
             git diff --cached --check
             git commit -m "fix: establish Atal functional foundation"
-            git push origin HEAD:feature/atal-functional-foundation
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add docs/functional-qa/foundation-runner.txt
             git commit -m "chore: record foundation runner result" || true
-            git push origin HEAD:feature/atal-functional-foundation
           fi
+          git push origin HEAD:feature/atal-functional-foundation
           exit 0
