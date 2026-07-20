@@ -1,0 +1,86 @@
+/* Surgical fix: isolate the exercise context menu from legacy card and button rules. */
+
+.atal-exercise-context-menu {
+  position: fixed !important;
+  z-index: 420 !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: grid !important;
+  width: 216px !important;
+  min-width: 216px !important;
+  max-width: calc(100vw - 24px) !important;
+  height: auto !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 14px !important;
+  background: rgb(255 255 255 / 0.97) !important;
+  background-image: none !important;
+  box-shadow: 0 14px 34px rgb(21 26 30 / 0.16) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  writing-mode: horizontal-tb !important;
+}
+
+.atal-exercise-context-menu > button {
+  all: unset;
+  box-sizing: border-box !important;
+  display: grid !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 42px !important;
+  grid-template-columns: 26px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 6px 9px !important;
+  border-radius: 10px !important;
+  color: var(--atal-text) !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  text-align: left !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap !important;
+}
+
+.atal-exercise-context-menu > button:hover,
+.atal-exercise-context-menu > button:focus-visible {
+  background: rgb(126 182 149 / 0.12) !important;
+  outline: 2px solid rgb(126 182 149 / 0.28) !important;
+  outline-offset: -2px !important;
+}
+
+.atal-exercise-context-menu > button svg {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: var(--atal-official-green) !important;
+  stroke: currentColor !important;
+}
+
+.atal-exercise-context-menu > button span {
+  display: block !important;
+  width: auto !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  color: inherit !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+  writing-mode: horizontal-tb !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  text-overflow: ellipsis !important;
+}
+
+.atal-exercise-context-menu > button.is-danger,
+.atal-exercise-context-menu > button.is-danger svg {
+  color: #c83d49 !important;
+}
+
+html[data-theme="dark"] .atal-exercise-context-menu {
+  border-color: rgb(255 255 255 / 0.09) !important;
+  background: rgb(24 27 26 / 0.97) !important;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 0.36) !important;
+}
