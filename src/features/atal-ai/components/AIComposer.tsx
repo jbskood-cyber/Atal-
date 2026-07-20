@@ -27,7 +27,7 @@ export function AIComposer({ textareaRef,value,hasReadyContent,processing,record
     <button type="button" className="atal-command-attach" aria-label="Adjuntar cámara, foto, PDF o archivo" onClick={onAttach}><Plus/></button>
     <textarea ref={textareaRef} rows={1} value={value} onChange={(event)=>onChange(event.target.value)} onKeyDown={keyboard} placeholder="Escribe un mensaje…" aria-label="Mensaje para Atal IA"/>
     {processing ? (
-      <button type="button" className="atal-command-dynamic is-processing" aria-label="Detener respuesta" title="Detener respuesta" onClick={onCancelProcessing}><Square/></button>
+      <button type="button" className="atal-command-dynamic is-processing" aria-label="Detener respuesta" title="Detener respuesta" onClick={onCancelProcessing}><Square style={{ position:'relative', opacity:1 }}/></button>
     ) : hasReadyContent ? (
       <button type="submit" className="atal-command-dynamic is-send" aria-label="Enviar mensaje"><Send/></button>
     ) : (
