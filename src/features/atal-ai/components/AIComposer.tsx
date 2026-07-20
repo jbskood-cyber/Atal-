@@ -1,12 +1,14 @@
 import { Mic, Plus, Send, Square } from 'lucide-react';
 import { FormEvent, KeyboardEvent, RefObject, useEffect } from 'react';
 
+const MAX_COMPOSER_HEIGHT = 168;
+
 export function AIComposer({ textareaRef,value,hasReadyContent,processing,recording,onChange,onAttach,onSend,onMicrophone,onCancelProcessing }: { textareaRef:RefObject<HTMLTextAreaElement|null>;value:string;hasReadyContent:boolean;processing:boolean;recording:boolean;onChange:(value:string)=>void;onAttach:()=>void;onSend:()=>void;onMicrophone:()=>void;onCancelProcessing:()=>void }) {
   useEffect(() => {
     const textarea=textareaRef.current;
     if(!textarea)return;
     textarea.style.height='0px';
-    textarea.style.height=`${Math.min(128,Math.max(24,textarea.scrollHeight))}px`;
+    textarea.style.height=`${Math.min(MAX_COMPOSER_HEIGHT,Math.max(24,textarea.scrollHeight))}px`;
   },[value,textareaRef]);
 
   const submit=(event:FormEvent)=>{
