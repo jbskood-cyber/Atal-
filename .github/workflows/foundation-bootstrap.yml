@@ -38,7 +38,17 @@ jobs:
               source = source.replace(old, new)
           path.write_text(source)
       - name: Validate bootstrap syntax
-        run: node --check scripts/apply-functional-foundation.mjs
+        run: |
+          mkdir -p docs/functional-qa
+          if ! node --check scripts/apply-functional-foundation.mjs > docs/functional-qa/bootstrap-diagnostic.txt 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/functional-qa/bootstrap-diagnostic.txt
+            git commit -m "chore: capture foundation bootstrap diagnostic"
+            git push origin HEAD:feature/atal-functional-foundation
+            exit 1
+          fi
+          rm -f docs/functional-qa/bootstrap-diagnostic.txt
       - name: Apply functional foundation
         run: node scripts/apply-functional-foundation.mjs
       - name: Install dependencies and refresh lockfile
