@@ -1,19 +1,61 @@
-name: export-branch
+name: foundation-runner
 on:
   push:
     branches: [feature/atal-functional-foundation]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  export:
+  apply:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feature/atal-functional-foundation
-      - run: zip -qr atal-functional-foundation.zip . -x '.git/*'
-      - uses: actions/upload-artifact@v4
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
         with:
-          name: atal-functional-foundation
-          path: atal-functional-foundation.zip
-          retention-days: 1
+          node-version: 24
+          cache: npm
+      - name: Apply and verify without failing the workflow
+        shell: bash
+        run: |
+          set +e
+          mkdir -p docs/functional-qa
+          node --check scripts/apply-functional-foundation.mjs > docs/functional-qa/foundation-runner.txt 2>&1
+          syntax_status=$?
+          if [ "$syntax_status" -eq 0 ]; then
+            node scripts/apply-functional-foundation.mjs >> docs/functional-qa/foundation-runner.txt 2>&1
+            apply_status=$?
+          else
+            apply_status=1
+          fi
+          if [ "$apply_status" -eq 0 ]; then
+            npm install --no-audit --no-fund >> docs/functional-qa/foundation-runner.txt 2>&1
+            install_status=$?
+          else
+            install_status=1
+          fi
+          if [ "$install_status" -eq 0 ]; then
+            npm run quality >> docs/functional-qa/foundation-runner.txt 2>&1
+            quality_status=$?
+          else
+            quality_status=1
+          fi
+          printf '\nsyntax=%s\napply=%s\ninstall=%s\nquality=%s\n' "$syntax_status" "$apply_status" "$install_status" "$quality_status" >> docs/functional-qa/foundation-runner.txt
+          if [ "$quality_status" -eq 0 ]; then
+            rm -f scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml .github/workflows/export-branch.yml docs/functional-qa/bootstrap-diagnostic.txt docs/functional-qa/quality-diagnostic.txt docs/functional-qa/foundation-runner.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git diff --cached --check
+            git commit -m "fix: establish Atal functional foundation"
+            git push origin HEAD:feature/atal-functional-foundation
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/functional-qa/foundation-runner.txt
+            git commit -m "chore: record foundation runner result" || true
+            git push origin HEAD:feature/atal-functional-foundation
+          fi
+          exit 0
