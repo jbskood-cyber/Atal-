@@ -1,7 +1,7 @@
 name: foundation-bootstrap
 on:
-  push:
-    branches: [feature/atal-functional-foundation]
+  pull_request:
+    branches: [main]
 permissions:
   contents: write
 jobs:
