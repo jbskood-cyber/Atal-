@@ -1,0 +1,211 @@
+/* Final approved closeout: plan exercises, Atal IA draft visibility and compact context actions. */
+
+/* F01–F02 · exercise icon system: solid official green with white glyph. */
+.atal-exercise-thumb-empty {
+  display: grid !important;
+  place-items: center !important;
+  color: #fff !important;
+  border: 1px solid var(--atal-official-green) !important;
+  background: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.atal-exercise-thumb-empty svg {
+  width: 23px !important;
+  height: 23px !important;
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* F03–F04 · compact, aligned exercise cards and controls. */
+.atal-plan-exercise-row {
+  position: relative !important;
+  min-height: 88px !important;
+  grid-template-columns: 52px minmax(0, 1fr) 102px !important;
+  align-items: center !important;
+  align-content: center !important;
+  gap: 10px !important;
+  padding: 11px 12px !important;
+}
+
+.atal-plan-exercise-row :is(img, video),
+.atal-plan-exercise-row .atal-exercise-thumb-empty {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  border-radius: 14px !important;
+}
+
+.atal-plan-exercise-copy {
+  align-self: center !important;
+}
+
+.atal-plan-exercise-controls {
+  display: grid !important;
+  width: 102px !important;
+  grid-template-columns: repeat(3, 32px) !important;
+  align-items: center !important;
+  justify-content: end !important;
+  gap: 3px !important;
+}
+
+.atal-plan-exercise-controls > button,
+.atal-plan-exercise-controls > button:last-child {
+  display: grid !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  grid-column: auto !important;
+  place-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+}
+
+.atal-plan-exercise-controls > button svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+/* F05 · enough real scroll clearance above the liquid-glass dock. */
+.atal-plan-detail,
+.atal-plan-editor {
+  scroll-padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important;
+}
+
+.atal-plan-editor {
+  padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important;
+}
+
+.atal-plan-settings {
+  padding-bottom: 0 !important;
+}
+
+/* F06–F07 · visible white edit glyph on solid green edit buttons. */
+.atal-draft-edit {
+  display: grid !important;
+  place-items: center !important;
+  color: #fff !important;
+  border: 0 !important;
+  background: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.atal-draft-edit svg {
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  color: #fff !important;
+  stroke: currentColor !important;
+}
+
+/* F08 · one semantic amber treatment for missing information. */
+.atal-draft-missing,
+.atal-draft-missing svg {
+  color: var(--atal-warning) !important;
+  stroke: currentColor !important;
+}
+
+/* F09–F10 · allow every draft row, field and action to clear the composer. */
+.atal-command-thread {
+  padding-bottom: calc(148px + env(safe-area-inset-bottom)) !important;
+  scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom)) !important;
+}
+
+.atal-draft-card {
+  scroll-margin-bottom: calc(136px + env(safe-area-inset-bottom)) !important;
+}
+
+.atal-command-thread > div:last-child {
+  min-height: 4px;
+  scroll-margin-bottom: calc(136px + env(safe-area-inset-bottom));
+}
+
+/* F11 · compact anchored exercise menu; no blocking blur or full-screen overlay. */
+.atal-exercise-context-menu {
+  position: absolute;
+  z-index: 40;
+  right: 12px;
+  bottom: 50px;
+  display: grid;
+  width: min(214px, calc(100% - 24px));
+  padding: 6px;
+  border: 1px solid var(--atal-border) !important;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.96) !important;
+  background-image: none !important;
+  box-shadow: 0 14px 34px rgb(21 26 30 / 0.16) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
+}
+
+.atal-exercise-context-menu > button {
+  display: grid;
+  min-height: 42px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--atal-text);
+  background: transparent;
+  text-align: left;
+  font: inherit;
+}
+
+.atal-exercise-context-menu > button:hover,
+.atal-exercise-context-menu > button:focus-visible {
+  background: rgb(126 182 149 / 0.12);
+}
+
+.atal-exercise-context-menu > button svg {
+  width: 18px;
+  height: 18px;
+  color: var(--atal-official-green);
+}
+
+.atal-exercise-context-menu > button span {
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.atal-exercise-context-menu > button.is-danger,
+.atal-exercise-context-menu > button.is-danger svg {
+  color: #c83d49;
+}
+
+html[data-theme="dark"] .atal-exercise-context-menu {
+  border-color: rgb(255 255 255 / 0.09) !important;
+  background: rgb(24 27 26 / 0.96) !important;
+  box-shadow: 0 16px 38px rgb(0 0 0 / 0.36) !important;
+}
+
+@media (max-width: 430px) {
+  .atal-plan-exercise-row {
+    grid-template-columns: 50px minmax(0, 1fr) 96px !important;
+    gap: 9px !important;
+    padding: 10px !important;
+  }
+
+  .atal-plan-exercise-row :is(img, video),
+  .atal-plan-exercise-row .atal-exercise-thumb-empty {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+  }
+
+  .atal-plan-exercise-controls {
+    width: 96px !important;
+    grid-template-columns: repeat(3, 30px) !important;
+  }
+
+  .atal-plan-exercise-controls > button,
+  .atal-plan-exercise-controls > button:last-child {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+}
