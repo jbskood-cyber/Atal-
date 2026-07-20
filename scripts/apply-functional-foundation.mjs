@@ -237,7 +237,7 @@ export function createDemoAtalState(timestamp = new Date().toISOString()): AtalS
     updatedAt: timestamp,
   }));
   const events: ActivityEvent[] = patients.slice(0, 4).map((patient, index) => ({
-    id: `seed-event-${patient.id}`,
+    id: 'seed-event-' + patient.id,
     kind: 'patient_created',
     patientId: patient.id,
     title: 'Paciente',
@@ -278,7 +278,6 @@ describe('workspace initialization', () => {
 });
 `);
 
-// Plan association domain.
 write('src/domain/planAssociation.ts', `import type { AtalState } from '@/src/data/atalStore';
 
 export function resolveAssociatedPlanId(state: AtalState, patientId: string, preferredPlanId = '') {
@@ -336,12 +335,11 @@ describe('clinical plan association', () => {
 });
 `);
 
-// Modify the store using targeted transformations.
 replaceOnce('src/data/atalStore.ts',
   "import { exercises as demoExercises, patients as demoPatients, plans as demoPlans } from './atal-demo';",
   "import { createDemoAtalState, createEmptyAtalState } from './demoWorkspace';\nimport { syncClinicalRecordPlanAssociation } from '@/src/domain/planAssociation';"
 );
-replaceRegex('src/data/atalStore.ts', /function seedState\(\): AtalState \{[\s\S]*?\n\}\n\nfunction mergeLegacy/, 'function seedState(): AtalState { return createEmptyAtalState(); }\\n\\nfunction mergeLegacy');
+replaceRegex('src/data/atalStore.ts', /function seedState\(\): AtalState \{[\s\S]*?\n\}\n\nfunction mergeLegacy/, 'function seedState(): AtalState { return createEmptyAtalState(); }\n\nfunction mergeLegacy');
 replaceOnce('src/data/atalStore.ts', 'settings:{...seedState().settings,...stored.settings}', 'settings:{...createEmptyAtalState(timestamp).settings,...stored.settings}');
 replaceOnce('src/data/atalStore.ts', 'cache = mergeLegacy(seedState());', 'cache = mergeLegacy(createEmptyAtalState());');
 replaceOnce('src/data/atalStore.ts',
@@ -378,11 +376,10 @@ export function createExercise`
 );
 replaceRegex('src/data/atalStore.ts',
   /export function duplicateExercise\(id:string\)\{[\s\S]*?\}\nexport function archiveExercise/,
-  `export function duplicateExercise(id:string){const source=loadState().exercises.find((item)=>item.id===id);if(!source)throw new Error('Ejercicio no encontrado.');return createExercise({...source,id:undefined,createdAt:undefined,updatedAt:undefined,name:\`${source.name} — copia\`,media:{type:'none'},status:'active',source:'local'} as unknown as Omit<ExerciseEntity,'id'|'createdAt'|'updatedAt'>);}
+  `export function duplicateExercise(id:string){const source=loadState().exercises.find((item)=>item.id===id);if(!source)throw new Error('Ejercicio no encontrado.');return createExercise({...source,id:undefined,createdAt:undefined,updatedAt:undefined,name:source.name+' — copia',media:{type:'none'},status:'active',source:'local'} as unknown as Omit<ExerciseEntity,'id'|'createdAt'|'updatedAt'>);}
 export function archiveExercise`
 );
 
-// Explicit demo controls.
 write('src/screens/SystemStatesScreen.tsx', `'use client';
 import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, CloudOff, Database, Inbox, LoaderCircle, RotateCcw, Trash2 } from 'lucide-react';
@@ -396,11 +393,10 @@ export function SystemStatesScreen(){
   const[confirm,setConfirm]=useState<'demo'|'empty'|null>(null);
   const state=states[current];const Icon=state.icon;
   const apply=()=>{if(confirm==='demo')initializeDemoWorkspace();if(confirm==='empty')initializeEmptyWorkspace();setConfirm(null);window.location.assign('/');};
-  return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-form-heading"><span className="atal-eyebrow">Sistema visual</span><h1>Estados de la app</h1><p>Comportamientos locales antes de conectar servicios.</p></div><div className="atal-state-tabs">{Object.keys(states).map(key=><button type="button" key={key} className={current===key?'is-active':''} onClick={()=>setCurrent(key as keyof typeof states)}>{key}</button>)}</div><section className={`atal-system-state is-${current}`}><span><Icon className={current==='loading'?'is-spinning':''}/></span><h2>{state.title}</h2><p>{state.text}</p><button type="button"><RotateCcw/>Reintentar</button></section><section className="atal-profile-section"><h2>Herramientas de desarrollo local</h2><p>Estas acciones sustituyen todo el contenido del dispositivo y nunca se ejecutan automáticamente.</p><div className="atal-profile-actions"><button type="button" onClick={()=>setConfirm('demo')}><Database/>Cargar espacio demo</button><button type="button" onClick={()=>setConfirm('empty')}><Trash2/>Vaciar espacio local</button></div></section>{confirm&&<div className="atal-overlay" onMouseDown={()=>setConfirm(null)}><section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={event=>event.stopPropagation()}><header><h2>{confirm==='demo'?'¿Cargar datos demo?':'¿Vaciar este dispositivo?'}</h2></header><p>Se reemplazarán pacientes, planes, ejercicios, sesiones y ajustes almacenados localmente.</p><button type="button" className="atal-submit-button" onClick={apply}>{confirm==='demo'?'Cargar demo':'Vaciar datos'}</button><button type="button" onClick={()=>setConfirm(null)}>Cancelar</button></section></div>}</main></AtalShell>;
+  return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-form-heading"><span className="atal-eyebrow">Sistema visual</span><h1>Estados de la app</h1><p>Comportamientos locales antes de conectar servicios.</p></div><div className="atal-state-tabs">{Object.keys(states).map(key=><button type="button" key={key} className={current===key?'is-active':''} onClick={()=>setCurrent(key as keyof typeof states)}>{key}</button>)}</div><section className={'atal-system-state is-'+current}><span><Icon className={current==='loading'?'is-spinning':''}/></span><h2>{state.title}</h2><p>{state.text}</p><button type="button"><RotateCcw/>Reintentar</button></section><section className="atal-profile-section"><h2>Herramientas de desarrollo local</h2><p>Estas acciones sustituyen todo el contenido del dispositivo y nunca se ejecutan automáticamente.</p><div className="atal-profile-actions"><button type="button" onClick={()=>setConfirm('demo')}><Database/>Cargar espacio demo</button><button type="button" onClick={()=>setConfirm('empty')}><Trash2/>Vaciar espacio local</button></div></section>{confirm&&<div className="atal-overlay" onMouseDown={()=>setConfirm(null)}><section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={event=>event.stopPropagation()}><header><h2>{confirm==='demo'?'¿Cargar datos demo?':'¿Vaciar este dispositivo?'}</h2></header><p>Se reemplazarán pacientes, planes, ejercicios, sesiones y ajustes almacenados localmente.</p><button type="button" className="atal-submit-button" onClick={apply}>{confirm==='demo'?'Cargar demo':'Vaciar datos'}</button><button type="button" onClick={()=>setConfirm(null)}>Cancelar</button></section></div>}</main></AtalShell>;
 }
 `);
 
-// Multimedia-safe duplication.
 replaceOnce('src/data/exerciseMediaRepository.ts',
   "export async function deleteExerciseMedia(id:string){const db=await openDatabase();await requestResult(db.transaction(STORE,'readwrite').objectStore(STORE).delete(id));db.close();}",
   `export async function deleteExerciseMedia(id:string){const db=await openDatabase();await requestResult(db.transaction(STORE,'readwrite').objectStore(STORE).delete(id));db.close();}
@@ -462,7 +458,6 @@ describe('plan edit session', () => {
 });
 `);
 
-// Safe list uses async independent duplication and reports staged IDs.
 replaceOnce('src/features/plan-closeout/SafePlanExerciseList.tsx',
   "import { duplicateExercise, useExerciseCatalog } from '@/src/data/localExercises';",
   "import { duplicateExerciseWithMedia, useExerciseCatalog } from '@/src/data/localExercises';"
@@ -494,7 +489,6 @@ replaceRegex('src/features/plan-closeout/SafePlanExerciseList.tsx',
 );
 replaceOnce('src/features/plan-closeout/SafePlanExerciseList.tsx', 'onClick={duplicate}', 'onClick={() => void duplicate()}');
 
-// Validation.
 write('src/domain/validation.ts', `export type ValidationResult = { valid: boolean; errors: Record<string,string> };
 const result=(errors:Record<string,string>):ValidationResult=>({valid:Object.keys(errors).length===0,errors});
 
@@ -568,7 +562,6 @@ describe('useUnsavedChangesGuard', () => {
 });
 `);
 
-// Patient and exercise validation wiring.
 replaceOnce('src/screens/NewPatientScreen.tsx',
   "import { addPatientNote,createPatientWithRecord,useAtalStore } from '@/src/data/atalStore';",
   "import { addPatientNote,createPatientWithRecord,useAtalStore } from '@/src/data/atalStore';\nimport { validatePatientInput } from '@/src/domain/validation';"
@@ -626,7 +619,6 @@ replaceOnce('src/screens/NewExerciseCloseoutScreen.tsx',
   "instructions:instructionList"
 );
 
-// Plan detail: staged duplication, validation and unsaved guard.
 replaceOnce('src/screens/PlanDetailCloseoutScreen.tsx',
   "import{useEffect,useState}from'react';",
   "import{useEffect,useRef,useState}from'react';"
@@ -680,7 +672,6 @@ replaceOnce('src/screens/PlanDetailCloseoutScreen.tsx',
   "},[plan?.id]);useEffect(()=>()=>{for(const id of discardPlanEditSession(editSession.current))void deleteExerciseWithMedia(id)},[]);if(!plan)return"
 );
 
-// Exercise detail validation and async duplication.
 replaceOnce('src/screens/ExerciseDetailScreen.tsx',
   "  duplicateExercise,\n",
   "  duplicateExerciseWithMedia,\n"
@@ -703,7 +694,7 @@ replaceRegex('src/screens/ExerciseDetailScreen.tsx',
     setActionsOpen(false);
     try {
       const copy = await duplicateExerciseWithMedia(exercise.id);
-      router.push(\`/exercises/${copy.id}\`);
+      router.push('/exercises/'+copy.id);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No pudimos duplicar el ejercicio.');
     }
@@ -713,7 +704,6 @@ replaceRegex('src/screens/ExerciseDetailScreen.tsx',
 );
 replaceOnce('src/screens/ExerciseDetailScreen.tsx', 'onClick={duplicate}', 'onClick={() => void duplicate()}');
 
-// AI attachment and mutation domains.
 write('src/features/atal-ai/domain/attachmentLimits.ts', `export const MAX_AI_FILES=8;
 export const MAX_AI_FILE_BYTES=8*1024*1024;
 export const MAX_AI_ENCODED_ATTACHMENTS_BYTES=24*1024*1024;
@@ -723,9 +713,9 @@ export type AttachmentLimitResult={valid:boolean;message:string;encodedBytes:num
 export const estimateBase64Bytes=(bytes:number)=>Math.ceil(bytes/3)*4;
 export function validateAttachmentSelection(incoming:AttachmentSize[],existing:AttachmentSize[]=[]):AttachmentLimitResult{
   const files=[...existing,...incoming];
-  if(files.length>MAX_AI_FILES)return{valid:false,message:`Puedes combinar hasta ${MAX_AI_FILES} archivos.`,encodedBytes:0};
+  if(files.length>MAX_AI_FILES)return{valid:false,message:'Puedes combinar hasta '+MAX_AI_FILES+' archivos.',encodedBytes:0};
   const oversized=files.find((file)=>file.size>MAX_AI_FILE_BYTES);
-  if(oversized)return{valid:false,message:`${oversized.name}: supera 8 MB.`,encodedBytes:0};
+  if(oversized)return{valid:false,message:oversized.name+': supera 8 MB.',encodedBytes:0};
   const encodedBytes=files.reduce((sum,file)=>sum+estimateBase64Bytes(file.size),0);
   if(encodedBytes>MAX_AI_ENCODED_ATTACHMENTS_BYTES)return{valid:false,message:'La selección completa supera el límite seguro de envío. Reduce el número o tamaño de los archivos.',encodedBytes};
   return{valid:true,message:'',encodedBytes};
@@ -771,7 +761,6 @@ const draft={contradictions:['La lateralidad no coincide.']} as AtalAIDraft;
 describe('AI contradiction gate',()=>{it('blocks ordinary apply and permits an explicit override',()=>{expect(canApplyAtalDraft(draft)).toBe(false);expect(canApplyAtalDraft(draft,true)).toBe(true);});});
 `);
 
-// AI types/schema/prompt.
 replaceOnce('src/features/atal-ai/types.ts',
   "export type AIPlanDraft = {\n",
   "export type AIExerciseMutationMode = 'preserve' | 'append' | 'replace-one' | 'remove-one' | 'replace-all';\n\nexport type AIPlanDraft = {\n"
@@ -792,8 +781,6 @@ replaceOnce('src/features/atal-ai/api/prompts.ts',
   "- Para planes incluye progressCriteria explícito cuando el profesional lo proporcione; no lo inventes.",
   "- Para planes incluye progressCriteria explícito cuando el profesional lo proporcione; no lo inventes.\n- Para actualizar ejercicios de un plan define siempre plan.exerciseMutation: preserve si no se pidió cambiar la rutina; append para añadir; replace-one o remove-one con targetExerciseId; replace-all únicamente cuando el profesional pida sustituir toda la rutina."
 );
-
-// Apply deterministic AI mutations.
 replaceOnce('src/features/atal-ai/data/applyDraft.ts',
   "import type { AIUndoToken,AtalAIDraft,PrivateContactDraft } from '../types';",
   "import type { AIUndoToken,AtalAIDraft,PrivateContactDraft } from '../types';\nimport { applyExerciseMutation } from '../domain/exerciseMutation';"
@@ -815,7 +802,6 @@ replaceOnce('src/features/atal-ai/data/applyDraft.ts',
   "plan.exerciseIds=applyExerciseMutation(plan.exerciseIds,exerciseIds,ai.plan.exerciseMutation);"
 );
 
-// Attachment limits in UI/server.
 replaceOnce('src/features/atal-ai/AtalAIConversationScreen.tsx',
   "import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest } from './types';",
   "import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest } from './types';\nimport { validateAttachmentSelection } from './domain/attachmentLimits';\nimport { canApplyAtalDraft } from './domain/contradictionGate';"
@@ -833,7 +819,7 @@ replaceRegex('src/features/atal-ai/AtalAIConversationScreen.tsx',
   /  const addFiles=async\(files:FileList\|File\[\]\)=>\{[\s\S]*?\n  \};/,
   `  const addFiles=async(files:FileList|File[])=>{
     const incoming=Array.from(files);const limit=validateAttachmentSelection(incoming,attachments);if(!limit.valid)return setNotice(limit.message);
-    try{const converted:AIAttachmentPayload[]=[];for(const file of incoming){if(!allowedTypes.has(file.type)&&!file.type.startsWith('audio/'))throw new Error(\`${file.name}: formato no compatible.\`);converted.push({id:uid('attachment'),name:file.name,type:file.type,size:file.size,kind:attachmentKind(file),available:true,data:await fileData(file)})}setAttachments((current)=>[...current,...converted]);setNotice('');patchConversation({status:'composing'})}catch(error){setNotice(error instanceof Error?error.message:'No pudimos adjuntar el archivo.')}
+    try{const converted:AIAttachmentPayload[]=[];for(const file of incoming){if(!allowedTypes.has(file.type)&&!file.type.startsWith('audio/'))throw new Error(file.name+': formato no compatible.');converted.push({id:uid('attachment'),name:file.name,type:file.type,size:file.size,kind:attachmentKind(file),available:true,data:await fileData(file)})}setAttachments((current)=>[...current,...converted]);setNotice('');patchConversation({status:'composing'})}catch(error){setNotice(error instanceof Error?error.message:'No pudimos adjuntar el archivo.')}
   };`
 );
 replaceOnce('src/features/atal-ai/AtalAIConversationScreen.tsx',
@@ -865,7 +851,7 @@ replaceOnce('src/features/atal-ai/AtalAIConversationScreen.tsx',
   "function ConfirmDialog({kind,draft,onCancel,onConfirm}:{kind:'discard'|'restart'|'command'|'contradictions';"
 );
 replaceOnce('src/features/atal-ai/AtalAIConversationScreen.tsx',
-  ":['¿Aplicar esta acción?',draft?.assistantMessage||'La acción modificará datos reales de Atal y quedará registrada en el historial.','Confirmar y aplicar'];",
+  ":[\'¿Aplicar esta acción?\',draft?.assistantMessage||\'La acción modificará datos reales de Atal y quedará registrada en el historial.\',\'Confirmar y aplicar\'];",
   ":kind==='contradictions'?['Revisar contradicciones','El borrador contiene información contradictoria. Solo continúa si ya la verificaste clínicamente. La excepción quedará registrada.','He revisado y continuar']:['¿Aplicar esta acción?',draft?.assistantMessage||'La acción modificará datos reales de Atal y quedará registrada en el historial.','Confirmar y aplicar'];"
 );
 
@@ -888,13 +874,11 @@ replaceOnce('server/atalAIPlugin.ts',
 );
 replaceOnce('server/atalAIPlugin.ts', 'const MAX_BODY_BYTES = 32 * 1024 * 1024;', 'const MAX_BODY_BYTES = MAX_AI_REQUEST_BODY_BYTES;');
 
-// Keep portal-facing plan instructions faithful (safe local correctness).
 replaceOnce('src/features/guided-session/planResolver.ts',
   "generalInstructions: `${localPlan.frequency || 'Frecuencia por definir'}. Respeta las indicaciones, realiza cada movimiento con calma y detente ante dolor fuerte.`,",
   "generalInstructions: localPlan.generalInstructions || `${localPlan.frequency || 'Frecuencia por definir'}. Respeta las indicaciones, realiza cada movimiento con calma y detente ante dolor fuerte.`,"
 );
 
-// Quality workflow and QA record.
 write('.github/workflows/quality.yml', `name: quality
 on:
   pull_request:
@@ -909,7 +893,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run typecheck
@@ -935,7 +919,7 @@ write('docs/functional-qa/2026-07-20-foundation-checklist.md', `# Atal — Funct
 
 ## Protected visual baseline
 
-The stylesheet import order in `src/main.tsx`, the approved dock, official green `#7EB695`, light mode and black dark mode are unchanged by this functional block.
+The stylesheet import order in src/main.tsx, the approved dock, official green #7EB695, light mode and black dark mode are unchanged by this functional block.
 `);
 
 console.log('Functional foundation changes applied.');
