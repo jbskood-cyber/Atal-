@@ -20,6 +20,7 @@ import '@/src/styles/ai-navigation-polish.css';
 import '@/src/styles/atal-unified-visual-system.css';
 import '@/src/styles/atal-surgical-qa.css';
 import '@/src/styles/atal-residual-polish.css';
+import '@/src/styles/atal-residual-compat.css';
 import { AppCloseout } from './AppCloseout';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AppCloseout /></React.StrictMode>);
