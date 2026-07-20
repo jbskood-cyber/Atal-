@@ -55,7 +55,17 @@ jobs:
       - name: Install dependencies and refresh lockfile
         run: npm install --no-audit --no-fund
       - name: Verify typecheck, tests and production build
-        run: npm run quality
+        run: |
+          mkdir -p docs/functional-qa
+          if ! npm run quality > docs/functional-qa/quality-diagnostic.txt 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/functional-qa/quality-diagnostic.txt
+            git commit -m "chore: capture foundation quality diagnostic"
+            git push origin HEAD:feature/atal-functional-foundation
+            exit 1
+          fi
+          rm -f docs/functional-qa/quality-diagnostic.txt
       - name: Remove bootstrap machinery
         run: rm scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml
       - name: Commit verified implementation
