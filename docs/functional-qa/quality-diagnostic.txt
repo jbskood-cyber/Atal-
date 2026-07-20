@@ -1,14 +1,1 @@
-
-> ai-studio-applet@0.1.0 quality
-> npm run typecheck && npm run test:run && npm run build
-
-
-> ai-studio-applet@0.1.0 typecheck
-> tsc --noEmit
-
-src/data/atalStore.ts(85,67): error TS1127: Invalid character.
-src/data/atalStore.ts(85,69): error TS1127: Invalid character.
-src/data/atalStore.ts(85,70): error TS1435: Unknown keyword or identifier. Did you mean 'function'?
-src/data/atalStore.ts(85,96): error TS1005: ',' expected.
-src/data/atalStore.ts(85,108): error TS1005: ';' expected.
-src/data/atalStore.ts(85,110): error TS1434: Unexpected keyword or identifier.
+Foundation quality diagnostics are paused while the branch is completed without automatic email-generating runs.
