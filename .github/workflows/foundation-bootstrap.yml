@@ -1,0 +1,35 @@
+name: foundation-bootstrap
+on:
+  push:
+    branches: [feature/atal-functional-foundation]
+permissions:
+  contents: write
+jobs:
+  apply-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/atal-functional-foundation
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply functional foundation
+        run: node scripts/apply-functional-foundation.mjs
+      - name: Install dependencies and refresh lockfile
+        run: npm install --no-audit --no-fund
+      - name: Verify typecheck, tests and production build
+        run: npm run quality
+      - name: Remove bootstrap machinery
+        run: rm scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml
+      - name: Commit verified implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: establish Atal functional foundation"
+          git push origin HEAD:feature/atal-functional-foundation
