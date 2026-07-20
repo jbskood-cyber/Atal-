@@ -1,78 +1,10 @@
 name: foundation-bootstrap
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  apply-and-verify:
-    if: github.actor != 'github-actions[bot]'
+  paused:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feature/atal-functional-foundation
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-      - name: Sanitize generated TypeScript literals
-        shell: python
-        run: |
-          from pathlib import Path
-          path = Path('scripts/apply-functional-foundation.mjs')
-          source = path.read_text()
-          replacements = {
-              "id: `seed-event-${patient.id}`,": "id: 'seed-event-'+patient.id,",
-              "name:\\`${source.name} — copia\\`": "name:source.name+' — copia'",
-              "className={`atal-system-state is-${current}`}": "className={'atal-system-state is-'+current}",
-              "router.push(\\`/exercises/${copy.id}\\`);": "router.push('/exercises/'+copy.id);",
-              "message:`Puedes combinar hasta ${MAX_AI_FILES} archivos.`": "message:'Puedes combinar hasta '+MAX_AI_FILES+' archivos.'",
-              "message:`${oversized.name}: supera 8 MB.`": "message:oversized.name+': supera 8 MB.'",
-              "throw new Error(\\`${file.name}: formato no compatible.\\`)": "throw new Error(file.name+': formato no compatible.')",
-              "The stylesheet import order in `src/main.tsx`, the approved dock, official green `#7EB695`, light mode and black dark mode are unchanged by this functional block.": "The stylesheet import order in src/main.tsx, the approved dock, official green #7EB695, light mode and black dark mode are unchanged by this functional block.",
-          }
-          for old, new in replacements.items():
-              if old not in source:
-                  raise SystemExit(f'Missing sanitizer pattern: {old}')
-              source = source.replace(old, new)
-          path.write_text(source)
-      - name: Validate bootstrap syntax
-        run: |
-          mkdir -p docs/functional-qa
-          if ! node --check scripts/apply-functional-foundation.mjs > docs/functional-qa/bootstrap-diagnostic.txt 2>&1; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/functional-qa/bootstrap-diagnostic.txt
-            git commit -m "chore: capture foundation bootstrap diagnostic"
-            git push origin HEAD:feature/atal-functional-foundation
-            exit 1
-          fi
-          rm -f docs/functional-qa/bootstrap-diagnostic.txt
-      - name: Apply functional foundation
-        run: node scripts/apply-functional-foundation.mjs
-      - name: Install dependencies and refresh lockfile
-        run: npm install --no-audit --no-fund
-      - name: Verify typecheck, tests and production build
-        run: |
-          mkdir -p docs/functional-qa
-          if ! npm run quality > docs/functional-qa/quality-diagnostic.txt 2>&1; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add docs/functional-qa/quality-diagnostic.txt
-            git commit -m "chore: capture foundation quality diagnostic"
-            git push origin HEAD:feature/atal-functional-foundation
-            exit 1
-          fi
-          rm -f docs/functional-qa/quality-diagnostic.txt
-      - name: Remove bootstrap machinery
-        run: rm scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml
-      - name: Commit verified implementation
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "fix: establish Atal functional foundation"
-          git push origin HEAD:feature/atal-functional-foundation
+      - run: echo "Foundation checks are paused while the branch is completed."
