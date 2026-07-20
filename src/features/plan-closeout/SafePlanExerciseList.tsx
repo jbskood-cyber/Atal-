@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Pencil, Trash2, Undo2 } from 'lucide-react';
 import { duplicateExercise, useExerciseCatalog } from '@/src/data/localExercises';
 import { ExerciseMediaThumbnail } from '@/src/components/atal/ExerciseMediaThumbnail';
+
+type MenuPosition = { top: number; left: number };
 
 export function SafePlanExerciseList({
   exerciseIds,
@@ -18,25 +21,61 @@ export function SafePlanExerciseList({
   const router = useRouter();
   const catalog = useExerciseCatalog();
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [removed, setRemoved] = useState<{ id: string; index: number } | null>(null);
   const menuExercise = menuId ? catalog.find((item) => item.id === menuId) : null;
 
+  const closeMenu = () => {
+    setMenuId(null);
+    setMenuPosition(null);
+  };
+
   useEffect(() => {
     if (!menuId) return;
 
-    const closeMenu = () => setMenuId(null);
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeMenu();
     };
 
     window.addEventListener('pointerdown', closeMenu);
     window.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('resize', closeMenu);
+    window.addEventListener('scroll', closeMenu, true);
     return () => {
       window.removeEventListener('pointerdown', closeMenu);
       window.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('resize', closeMenu);
+      window.removeEventListener('scroll', closeMenu, true);
     };
   }, [menuId]);
+
+  const toggleMenu = (id: string, anchor: HTMLButtonElement) => {
+    if (menuId === id) {
+      closeMenu();
+      return;
+    }
+
+    const rect = anchor.getBoundingClientRect();
+    const menuWidth = 216;
+    const menuHeight = 150;
+    const viewportPadding = 12;
+    const gap = 8;
+    const left = Math.min(
+      Math.max(viewportPadding, rect.right - menuWidth),
+      window.innerWidth - menuWidth - viewportPadding,
+    );
+    const preferredTop = rect.top >= menuHeight + viewportPadding + gap
+      ? rect.top - menuHeight - gap
+      : rect.bottom + gap;
+    const top = Math.min(
+      Math.max(viewportPadding, preferredTop),
+      window.innerHeight - menuHeight - viewportPadding,
+    );
+
+    setMenuPosition({ top, left });
+    setMenuId(id);
+  };
 
   const move = (index: number, direction: -1 | 1) => {
     const next = [...exerciseIds];
@@ -53,7 +92,7 @@ export function SafePlanExerciseList({
     const next = [...exerciseIds];
     next.splice(index + 1, 0, copy.id);
     onChange(next);
-    setMenuId(null);
+    closeMenu();
     onMessage('Ejercicio duplicado en el plan.');
   };
 
@@ -107,36 +146,39 @@ export function SafePlanExerciseList({
                   aria-label={`Más opciones para ${exercise.name}`}
                   aria-expanded={menuOpen}
                   onPointerDown={(event) => event.stopPropagation()}
-                  onClick={() => setMenuId((current) => current === id ? null : id)}
+                  onClick={(event) => toggleMenu(id, event.currentTarget)}
                 >
                   <MoreHorizontal />
                 </button>
               </div>
-              {menuOpen && (
-                <div
-                  className="atal-exercise-context-menu"
-                  role="menu"
-                  aria-label={`Acciones para ${exercise.name}`}
-                  onPointerDown={(event) => event.stopPropagation()}
-                >
-                  <button type="button" role="menuitem" onClick={() => { setMenuId(null); router.push(`/exercises/${exercise.id}`); }}>
-                    <Pencil />
-                    <span>Ver y editar</span>
-                  </button>
-                  <button type="button" role="menuitem" onClick={duplicate}>
-                    <Copy />
-                    <span>Duplicar</span>
-                  </button>
-                  <button type="button" role="menuitem" className="is-danger" onClick={() => { setMenuId(null); setConfirmId(exercise.id); }}>
-                    <Trash2 />
-                    <span>Quitar del plan</span>
-                  </button>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
+
+      {menuId && menuExercise && menuPosition && typeof document !== 'undefined' && createPortal(
+        <div
+          className="atal-exercise-context-menu"
+          role="menu"
+          aria-label={`Acciones para ${menuExercise.name}`}
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button type="button" role="menuitem" onClick={() => { closeMenu(); router.push(`/exercises/${menuExercise.id}`); }}>
+            <Pencil />
+            <span>Ver y editar</span>
+          </button>
+          <button type="button" role="menuitem" onClick={duplicate}>
+            <Copy />
+            <span>Duplicar</span>
+          </button>
+          <button type="button" role="menuitem" className="is-danger" onClick={() => { const id = menuExercise.id; closeMenu(); setConfirmId(id); }}>
+            <Trash2 />
+            <span>Quitar del plan</span>
+          </button>
+        </div>,
+        document.body,
+      )}
 
       {removed && (
         <div className="atal-undo-toast" role="status">
