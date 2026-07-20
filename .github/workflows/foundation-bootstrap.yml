@@ -2,8 +2,6 @@ name: foundation-bootstrap
 on:
   push:
     branches: [feature/atal-functional-foundation]
-  pull_request:
-    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -17,8 +15,30 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+      - name: Sanitize generated TypeScript literals
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('scripts/apply-functional-foundation.mjs')
+          source = path.read_text()
+          replacements = {
+              "id: `seed-event-${patient.id}`,": "id: 'seed-event-'+patient.id,",
+              "name:\\`${source.name} — copia\\`": "name:source.name+' — copia'",
+              "className={`atal-system-state is-${current}`}": "className={'atal-system-state is-'+current}",
+              "router.push(\\`/exercises/${copy.id}\\`);": "router.push('/exercises/'+copy.id);",
+              "message:`Puedes combinar hasta ${MAX_AI_FILES} archivos.`": "message:'Puedes combinar hasta '+MAX_AI_FILES+' archivos.'",
+              "message:`${oversized.name}: supera 8 MB.`": "message:oversized.name+': supera 8 MB.'",
+              "throw new Error(\\`${file.name}: formato no compatible.\\`)": "throw new Error(file.name+': formato no compatible.')",
+          }
+          for old, new in replacements.items():
+              if old not in source:
+                  raise SystemExit(f'Missing sanitizer pattern: {old}')
+              source = source.replace(old, new)
+          path.write_text(source)
+      - name: Validate bootstrap syntax
+        run: node --check scripts/apply-functional-foundation.mjs
       - name: Apply functional foundation
         run: node scripts/apply-functional-foundation.mjs
       - name: Install dependencies and refresh lockfile
@@ -28,7 +48,6 @@ jobs:
       - name: Remove bootstrap machinery
         run: rm scripts/apply-functional-foundation.mjs .github/workflows/foundation-bootstrap.yml
       - name: Commit verified implementation
-        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
