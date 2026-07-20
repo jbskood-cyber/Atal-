@@ -1,0 +1,7 @@
+/home/runner/work/Atal-/Atal-/scripts/apply-functional-foundation.mjs:920
+write('docs/functional-qa/2026-07-20-foundation-checklist.md', `# Atal — Functional Foundation QA
+
+SyntaxError: missing ) after argument list
+    at checkSyntax (node:internal/main/check_syntax:72:5)
+
+Node.js v24.18.0
