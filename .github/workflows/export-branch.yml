@@ -1,0 +1,19 @@
+name: export-branch
+on:
+  push:
+    branches: [feature/atal-functional-foundation]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/atal-functional-foundation
+      - run: zip -qr atal-functional-foundation.zip . -x '.git/*'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atal-functional-foundation
+          path: atal-functional-foundation.zip
+          retention-days: 1
