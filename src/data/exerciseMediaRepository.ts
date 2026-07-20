@@ -10,6 +10,7 @@ export type ExerciseMediaRecord={id:string;exerciseId:string;type:'image'|'video
 
 function openDatabase(){return new Promise<IDBDatabase>((resolve,reject)=>{const request=indexedDB.open(DATABASE,DB_VERSION);request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STORE)){const store=db.createObjectStore(STORE,{keyPath:'id'});store.createIndex('exerciseId','exerciseId',{unique:false});}};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(new Error('No pudimos abrir el almacenamiento multimedia local.'));});}
 function requestResult<T>(request:IDBRequest<T>){return new Promise<T>((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(new Error('No pudimos completar la operación multimedia.'));});}
+function transactionDone(transaction:IDBTransaction){return new Promise<void>((resolve,reject)=>{transaction.oncomplete=()=>resolve();transaction.onerror=()=>reject(new Error('No pudimos completar la operación multimedia.'));transaction.onabort=()=>reject(new Error('La operación multimedia fue cancelada.'));});}
 
 export async function saveExerciseMedia(exerciseId:string,type:ExerciseMediaRecord['type'],files:File[],existingId?:string){
   if(!files.length)throw new Error('Selecciona al menos un archivo.');
@@ -19,9 +20,10 @@ export async function saveExerciseMedia(exerciseId:string,type:ExerciseMediaReco
   if(type!=='video'&&files.some((file)=>file.size>MAX_IMAGE_BYTES))throw new Error('Una imagen supera el límite de 8 MB.');
   if(type==='sequence'&&files.length>12)throw new Error('La secuencia admite hasta 12 imágenes.');
   const timestamp=new Date().toISOString();const record:ExerciseMediaRecord={id:existingId??createEntityId('media'),exerciseId,type,files,names:files.map((file)=>file.name),mimeTypes:files.map((file)=>file.type),size:files.reduce((sum,file)=>sum+file.size,0),createdAt:timestamp,updatedAt:timestamp};
-  const db=await openDatabase();const transaction=db.transaction(STORE,'readwrite');await requestResult(transaction.objectStore(STORE).put(record));db.close();return record;
+  const db=await openDatabase();const transaction=db.transaction(STORE,'readwrite');transaction.objectStore(STORE).put(record);await transactionDone(transaction);db.close();return record;
 }
 export async function getExerciseMedia(id:string){const db=await openDatabase();const result=await requestResult(db.transaction(STORE,'readonly').objectStore(STORE).get(id)) as ExerciseMediaRecord|undefined;db.close();return result??null;}
 export async function getExerciseMediaByExercise(exerciseId:string){const db=await openDatabase();const result=await requestResult(db.transaction(STORE,'readonly').objectStore(STORE).index('exerciseId').get(exerciseId)) as ExerciseMediaRecord|undefined;db.close();return result??null;}
-export async function deleteExerciseMedia(id:string){const db=await openDatabase();await requestResult(db.transaction(STORE,'readwrite').objectStore(STORE).delete(id));db.close();}
+export async function cloneExerciseMedia(mediaId:string,newExerciseId:string){const source=await getExerciseMedia(mediaId);if(!source)return null;const timestamp=new Date().toISOString();const copy:ExerciseMediaRecord={...source,id:createEntityId('media'),exerciseId:newExerciseId,files:[...source.files],names:[...source.names],mimeTypes:[...source.mimeTypes],createdAt:timestamp,updatedAt:timestamp};const db=await openDatabase();const transaction=db.transaction(STORE,'readwrite');transaction.objectStore(STORE).put(copy);await transactionDone(transaction);db.close();return copy;}
+export async function deleteExerciseMedia(id:string){const db=await openDatabase();const transaction=db.transaction(STORE,'readwrite');transaction.objectStore(STORE).delete(id);await transactionDone(transaction);db.close();}
 export function mediaObjectUrls(record:ExerciseMediaRecord){return record.files.map((file)=>URL.createObjectURL(file));}
