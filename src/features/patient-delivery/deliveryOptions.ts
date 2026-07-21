@@ -243,7 +243,7 @@ function packMeasuredRows<T extends { height: number }>(
   nonFinalBottom: number,
   finalBottom: number,
 ) {
-  const maximumAvailable = continuationTop - nonFinalBottom;
+  const maximumAvailable = continuationTop - finalBottom;
   if (rows.some((row) => row.height > maximumAvailable)) {
     throw new Error('Un ejercicio contiene más información de la que cabe completa en una página. Reduce únicamente el texto redundante antes de generar el documento.');
   }
