@@ -1,7 +1,6 @@
 import { normalizePatientPlanDeliveryOptions } from './deliveryOptions';
 import { createPatientPlanPdf as createDetailedPatientPlanPdf } from './pdfRenderer';
-import { renderPatientSessionLogPdf } from './pdfSessionLogRenderer';
-import { renderSimplePatientPlanPdf } from './pdfSimpleRenderer';
+import { renderUniversalPatientPlanPdf } from './pdfUniversalRenderer';
 import type {
   PatientPlanDeliveryOptions,
   PatientPlanDocument,
@@ -15,7 +14,6 @@ export async function createPatientPlanPdf(
   input: Partial<PatientPlanDeliveryOptions> | undefined,
 ): Promise<PatientPlanPdfResult> {
   const options = normalizePatientPlanDeliveryOptions(input);
-  if (options.mode === 'simple') return renderSimplePatientPlanPdf(documentModel, options);
-  if (options.mode === 'session-log') return renderPatientSessionLogPdf(documentModel, options);
+  if (options.mode !== 'detailed') return renderUniversalPatientPlanPdf(documentModel, options);
   return createDetailedPatientPlanPdf(documentModel, options.includeImages ? resolvedMedia : []);
 }
