@@ -21,6 +21,7 @@ const PDF_MARGIN = 38;
 const PLAN_TEXT_X = PDF_MARGIN + 57;
 const PLAN_TEXT_WIDTH = A4_WIDTH - PDF_MARGIN - PLAN_TEXT_X;
 const PLAN_DOSE_WIDTH = 285;
+const PLAN_REST_WIDTH = 155;
 const PLAN_FIRST_TOP = 380;
 const PLAN_CONTINUATION_TOP = 634;
 const PLAN_NON_FINAL_BOTTOM = 58;
@@ -36,6 +37,7 @@ export type PatientPlanMeasuredRow = {
   height: number;
   nameLines: number;
   doseLines: number;
+  restLines: number;
   cueLines: number;
 };
 
@@ -100,11 +102,13 @@ export function measurePatientPlanRow(
   const cue = exercise.therapistNotes || exercise.objective;
   const nameLines = visibleLineCount(exercise.name, PLAN_TEXT_WIDTH, nameSize, 'bold', 2);
   const doseLines = visibleLineCount(compactPatientPlanDose(exercise), PLAN_DOSE_WIDTH, doseSize, 'regular', 2);
+  const restLines = visibleLineCount(`Descanso: ${exercise.rest}`, PLAN_REST_WIDTH, doseSize - 0.5, 'regular', 2);
   const cueLines = visibleLineCount(`Clave: ${cue}`, PLAN_TEXT_WIDTH, cueSize, 'regular', 2);
+  const middleHeight = Math.max(doseLines, restLines) * doseLineHeight;
   const measured = 12
     + nameLines * nameLineHeight
     + 2
-    + doseLines * doseLineHeight
+    + middleHeight
     + 2
     + cueLines * cueLineHeight
     + 7;
@@ -114,6 +118,7 @@ export function measurePatientPlanRow(
     height: Math.max(extraLarge ? 68 : 63, Math.ceil(measured)),
     nameLines,
     doseLines,
+    restLines,
     cueLines,
   };
 }
