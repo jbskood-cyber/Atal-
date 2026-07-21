@@ -63,6 +63,66 @@ export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise
   }
 }
 
-export function printPatientPlan() {
-  window.print();
+export function printPatientPlanPdf(result: PatientPlanPdfResult): Promise<'printed' | 'opened'> {
+  const blob = patientPlanPdfBlob(result);
+  const url = URL.createObjectURL(blob);
+
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement('iframe');
+    let finished = false;
+    let fallbackTimer = 0;
+
+    const delayedCleanup = () => {
+      window.setTimeout(() => {
+        frame.remove();
+        URL.revokeObjectURL(url);
+      }, 60_000);
+    };
+
+    const finish = (resultValue: 'printed' | 'opened') => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(fallbackTimer);
+      delayedCleanup();
+      resolve(resultValue);
+    };
+
+    const openFallback = () => {
+      if (finished) return;
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        finished = true;
+        window.clearTimeout(fallbackTimer);
+        frame.remove();
+        URL.revokeObjectURL(url);
+        reject(new Error('El navegador bloqueó la ventana de impresión. Descarga el PDF para imprimirlo.'));
+        return;
+      }
+      finish('opened');
+    };
+
+    frame.title = 'Documento PDF para imprimir';
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '1px';
+    frame.style.height = '1px';
+    frame.style.border = '0';
+    frame.style.opacity = '0';
+    frame.onload = () => {
+      try {
+        const target = frame.contentWindow;
+        if (!target) { openFallback(); return; }
+        target.focus();
+        target.print();
+        finish('printed');
+      } catch {
+        openFallback();
+      }
+    };
+    frame.onerror = openFallback;
+    frame.src = url;
+    document.body.appendChild(frame);
+    fallbackTimer = window.setTimeout(openFallback, 3500);
+  });
 }
