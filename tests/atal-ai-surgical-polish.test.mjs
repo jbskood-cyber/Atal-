@@ -6,6 +6,7 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf
 
 const main = read('src/main.tsx');
 const conversation = read('src/features/atal-ai/AtalAIConversationScreen.tsx');
+const draftCard = read('src/features/atal-ai/components/ConversationalDraftCard.tsx');
 const composer = read('src/features/atal-ai/components/AIComposer.tsx');
 const attachmentMenu = read('src/features/atal-ai/components/AttachmentMenu.tsx');
 
@@ -24,14 +25,21 @@ test('keeps home alert icon surfaces neutral while preserving semantic icon colo
   assert.doesNotMatch(css, /\.atal-home-row-icon[^}]*color:/s);
 });
 
-test('keeps the real treatment draft rendered while removing the ghost gap', () => {
+test('anchors a collapsed draft above the composer and keeps the expanded draft complete', () => {
   const css = read('src/styles/atal-ai-surgical-polish.css');
+  assert.match(conversation, /<div className="atal-command-spacer" aria-hidden="true"\/>/);
   assert.match(conversation, /<ConversationalDraftCard/);
   assert.match(css, /\.atal-command-thread\s*\{[^}]*display:\s*flex/s);
   assert.match(css, /flex-direction:\s*column/);
-  assert.match(css, /\.atal-command-thread::before\s*\{[^}]*flex:\s*1\s+1\s+auto/s);
-  assert.match(css, /\.atal-command-thread\s*>\s*\*\s*\{[^}]*flex:\s*0\s+0\s+auto/s);
-  assert.doesNotMatch(css, /align-content:\s*safe end/);
+  assert.match(css, /\.atal-command-spacer\s*\{[^}]*flex:\s*1\s+1\s+auto/s);
+  assert.match(css, /\.atal-command-thread\s*>\s*:not\(\.atal-command-spacer\)\s*\{[^}]*flex:\s*0\s+0\s+auto/s);
+  assert.doesNotMatch(css, /\.atal-command-thread::before/);
+  assert.match(draftCard, /ref=\{cardRef\}/);
+  assert.match(draftCard, /scrollIntoView\(\{behavior:'smooth',block:'end'\}\)/);
+  assert.match(draftCard, /cardOpen\s*&&\s*<div className="atal-draft-sections"/);
+  assert.match(draftCard, /cardOpen\s*&&\s*<footer/);
+  assert.match(draftCard, /is-expanded/);
+  assert.match(draftCard, /is-collapsed/);
 });
 
 test('automatically dismisses notices with an exit state while preserving manual close', () => {
