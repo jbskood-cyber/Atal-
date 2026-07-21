@@ -6,6 +6,7 @@ import { PatientsScreen } from '@/src/screens/PatientsScreen';
 import { NewPatientScreen } from '@/src/screens/NewPatientScreen';
 import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
 import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
+import { PatientPlanDeliveryScreen } from '@/src/screens/PatientPlanDeliveryScreen';
 import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
 import { PlansScreen } from '@/src/screens/PlansScreen';
 import { PlanBuilderCloseoutScreen } from '@/src/screens/PlanBuilderCloseoutScreen';
@@ -49,6 +50,11 @@ function ClinicalRecordRoute() {
 function PlanDetailRoute() {
   const { id = 'pl01' } = useParams();
   return <PlanDetailCloseoutScreen planId={id} />;
+}
+
+function PatientPlanDeliveryRoute() {
+  const { id = 'pl01' } = useParams();
+  return <PatientPlanDeliveryScreen planId={id} />;
 }
 
 function ExerciseDetailRoute() {
@@ -106,6 +112,7 @@ function PrivateAppRoutes() {
     <Route path="/plans" element={<PlansScreen />} />
     <Route path="/plans/new" element={<PlanBuilderCloseoutScreen />} />
     <Route path="/plans/:id" element={<PlanDetailRoute />} />
+    <Route path="/plans/:id/delivery" element={<PatientPlanDeliveryRoute />} />
     <Route path="/exercises" element={<ExercisesScreen />} />
     <Route path="/exercises/new" element={<NewExerciseCloseoutScreen />} />
     <Route path="/exercises/:id" element={<ExerciseDetailRoute />} />
