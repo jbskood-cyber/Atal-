@@ -1,4 +1,4 @@
-import { createPatient, getAtalState, mutateAtalStore, setPatientArchived, updatePatient, useAtalStore, type PatientEntity, type PatientStatus } from './atalStore';
+import { createEntityId, createPatient, getAtalState, mutateAtalStore, setPatientArchived, updatePatient, useAtalStore, type PatientEntity, type PatientStatus } from './atalStore';
 
 export const LOCAL_PATIENTS_KEY = 'atal:local-patients:v1';
 export type PatientContact = PatientEntity['contact'];
@@ -20,7 +20,18 @@ export function readLocalPatients(){return getAtalState().patients;}
 export function writeLocalPatients(items:LocalPatient[]){mutateAtalStore((draft)=>{draft.patients=items;});}
 export function createLocalPatient(input:NewLocalPatient){return createPatient({name:input.name.trim(),diagnosis:input.diagnosis.trim()||'Motivo por completar',age:input.age??null,birthDate:input.birthDate??'',sex:input.sex??'',affectedArea:input.affectedArea??'',status:input.status??'active',visitType:input.visitType??'first',contact:{phone:input.contact?.phone??'',email:input.contact?.email??'',address:input.contact?.address??'',emergencyContact:input.contact?.emergencyContact??''}});}
 export function updateLocalPatient(id:string,patch:Partial<LocalPatient>){return updatePatient(id,patch);}
-export function archiveLocalPatient(id:string){return setPatientArchived(id,true);}
+export function archiveLocalPatient(id:string){
+  const result=setPatientArchived(id,true);
+  const timestamp=new Date().toISOString();
+  mutateAtalStore((draft)=>{
+    draft.plans.filter((plan)=>plan.patientId===id&&plan.status==='active').forEach((plan)=>{
+      plan.status='paused';
+      plan.updatedAt=timestamp;
+      draft.events.unshift({id:createEntityId('event'),kind:'plan_paused',patientId:id,planId:plan.id,title:'Plan pausado',detail:`${plan.title} · paciente archivado`,createdAt:timestamp});
+    });
+  });
+  return result;
+}
 export function restoreLocalPatient(id:string){return setPatientArchived(id,false);}
 export function getPatientCatalog(){return getAtalState().patients.map(toView);}
 export function usePatientCatalog(){return useAtalStore((state)=>state.patients.map((patient)=>{const plans=state.plans.filter((plan)=>plan.patientId===patient.id);const active=plans.find((plan)=>plan.status==='active');const sessions=state.sessions.filter((session)=>session.patientId===patient.id);const planSessions=active?sessions.filter((session)=>session.planId===active.id):[];const completed=planSessions.filter((session)=>session.status==='completed').length;return {...patient,plan:active?.title??'Sin plan activo',progress:planSessions.length?Math.round(completed/planSessions.length*100):0,adherence:planSessions.length?Math.round(completed/planSessions.length*100):0,time:sessions[0]?new Date(sessions[0].completedAt).toLocaleDateString('es-MX',{day:'numeric',month:'short'}):'Sin sesiones'};}));}
