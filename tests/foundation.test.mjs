@@ -20,19 +20,29 @@ test('starts new real workspaces empty and keeps demo explicit',()=>{
   assert.match(workspace,/initializeDemoWorkspace/);
 });
 
+test('preserves legacy data before creating an empty workspace',()=>{
+  const workspace=read('src/data/workspaceBootstrap.ts');
+  assert.match(workspace,/LEGACY_WORKSPACE_KEYS/);
+  assert.match(workspace,/hasLegacyWorkspaceData/);
+  assert.match(workspace,/if \(hasLegacyWorkspaceData\(storage\)\) return/);
+});
+
 test('keeps clinical records associated with the active plan',()=>{
   const association=read('src/domain/planAssociation.ts');
   const plans=read('src/data/localPlans.ts');
   assert.match(association,/status === 'active'/);
+  assert.match(association,/if \(record\.planId === planId\) continue/);
   assert.match(plans,/syncClinicalRecordPlanAssociation/);
 });
 
 test('duplicates multimedia into an independent record',()=>{
   const media=read('src/data/exerciseMediaRepository.ts');
   const exercises=read('src/data/localExercises.ts');
+  const detail=read('src/screens/ExerciseDetailScreen.tsx');
   assert.match(media,/cloneExerciseMedia/);
   assert.match(media,/id:createEntityId\('media'\)/);
   assert.match(exercises,/duplicateExerciseWithMedia/);
+  assert.match(detail,/await duplicateExerciseWithMedia\(exercise\.id\)/);
 });
 
 test('prevents unsafe Atal IA mutations and oversized requests',()=>{
