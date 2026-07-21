@@ -14,6 +14,17 @@ test('defaults to one universal plan plus session log and keeps flexible session
   assert.doesNotMatch(options,/week|semana/i);
 });
 
+test('preserves repetition plus time prescriptions and useful load or equipment details',()=>{
+  const builder=read('src/features/patient-delivery/buildPatientPlanDocument.ts');
+  const options=read('src/features/patient-delivery/deliveryOptions.ts');
+  assert.match(builder,/workParts/);
+  assert.match(builder,/exercise\.repetitions/);
+  assert.match(builder,/exercise\.time\?\.trim/);
+  assert.match(builder,/workParts\.join/);
+  assert.match(options,/exercise\.equipment/);
+  assert.match(options,/meaningfulEquipment/);
+});
+
 test('measures wrapped rows and uses the same adaptive page chunks for estimates',()=>{
   const options=read('src/features/patient-delivery/deliveryOptions.ts');
   assert.match(options,/measurePatientPlanRow/);
