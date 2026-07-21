@@ -49,14 +49,16 @@ test('automatically dismisses notices with an exit state while preserving manual
   assert.match(css, /\.atal-command-toast\.is-leaving/);
 });
 
-test('shows a large white upward arrow using the official Atal green', () => {
+test('uses a refined white ArrowUp icon and the official Atal green for send and processing', () => {
   const css = read('src/styles/atal-ai-surgical-polish.css');
-  assert.match(composer, /atal-command-send-glyph/);
-  assert.match(composer, />↑<\/span>/);
-  assert.doesNotMatch(composer, /ArrowUp/);
+  assert.match(composer, /import \{ ArrowUp, Mic, Plus, Square \}/);
+  assert.match(composer, /<ArrowUp strokeWidth=\{2\.4\}\/>/);
+  assert.doesNotMatch(composer, /atal-command-send-glyph/);
+  assert.doesNotMatch(composer, />↑<\/span>/);
   assert.match(css, /\.atal-command-dynamic\.is-send\s*\{[^}]*background:\s*var\(--green\)/s);
-  assert.match(css, /\.atal-command-send-glyph\s*\{[^}]*color:\s*#fff/s);
-  assert.match(css, /font-size:\s*32px/);
+  assert.match(css, /\.atal-command-dynamic\.is-processing\s*\{[^}]*background:\s*var\(--green\)/s);
+  assert.match(css, /\.atal-command-dynamic\.is-send\s+svg\s*\{[^}]*width:\s*24px/s);
+  assert.match(css, /\.atal-command-dynamic\.is-processing\s+svg\s*\{[^}]*color:\s*#fff/s);
 });
 
 test('uses a compact attachment popover without redundant heading copy', () => {
