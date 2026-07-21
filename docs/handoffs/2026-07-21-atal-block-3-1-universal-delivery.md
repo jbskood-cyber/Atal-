@@ -8,12 +8,12 @@
 - Base: `main`
 - Base SHA at branch creation: `be1258820a3c35d437ee9ea8d7774f7eef02d7da`
 - PR must remain draft and unmerged until runtime validation is complete.
-- Use the current PR head as the authoritative starting SHA; verify it with `git rev-parse HEAD` after checkout.
+- Verify the current head with `git rev-parse HEAD`; do not reuse an older SHA from chat history.
 
 ## User-approved product decisions
 
 1. The PDF must look premium, editorial and clinical, not like the application UI printed on paper.
-2. The document must be universal and work with repetitions, seconds, minutes, distance, load, laterality, isometrics, tolerance-based dosing and long text.
+2. The document must be universal and work with repetitions, time, repetitions plus time, minutes, distance, load, equipment, laterality, isometrics, tolerance-based dosing and long text.
 3. The template adapts to the plan; the plan is never distorted to fit the template.
 4. The default document is **Plan + registro**.
 5. Alternative primary modes are **Solo plan** and **Solo registro**.
@@ -38,16 +38,23 @@
 
 ### Canonical data
 
-`buildPatientPlanDocument.ts` still builds one immutable delivery snapshot from the saved plan. The patient snapshot now also includes:
+`buildPatientPlanDocument.ts` builds one immutable delivery snapshot from the saved plan. The patient snapshot includes:
 
-- `phone` from `patient.contact.phone`;
-- `responsibleContact` from `patient.contact.emergencyContact`.
+- patient phone from `patient.contact.phone`;
+- responsible contact from `patient.contact.emergencyContact`.
+
+Exercise dose formatting now preserves:
+
+- repetitions only;
+- time only;
+- repetitions plus time when the editor uses **Ambos**;
+- rest separately.
 
 No unsaved editor state is used.
 
 ### Options
 
-`PatientPlanDeliveryOptions` is intentionally small:
+`PatientPlanDeliveryOptions` remains intentionally small:
 
 ```ts
 {
@@ -58,25 +65,31 @@ No unsaved editor state is used.
 }
 ```
 
-This pure model is suitable for future Atal AI orchestration without reproducing a large set of UI toggles.
+This pure model is suitable for future Atal AI orchestration without reproducing a wall of independent toggles.
 
-### Universal page estimation
+### Adaptive universal layout
 
-`deliveryOptions.ts` owns deterministic capacities shared by UI and renderer:
+`deliveryOptions.ts` is the shared layout authority for both estimation and rendering.
 
-- plan, large: 4 exercises first page / 6 continuation;
-- plan, extra-large: 3 first / 4 continuation;
-- record, large: 6 exercises per page;
-- record, extra-large: 5 exercises per page.
+It measures visible wrapped lines for:
 
-The estimate includes:
+- exercise name;
+- dose;
+- rest;
+- key instruction;
+- log exercise name;
+- log prescribed dose.
 
-- total pages;
-- plan pages;
-- log pages;
-- pages per session.
+It then computes row heights and packs whole rows into page chunks:
 
-Long sessions continue on another labelled page; exercise rows are never split.
+- `measurePatientPlanRow`;
+- `measurePatientLogRow`;
+- `layoutPatientPlanPages`;
+- `layoutPatientLogPages`.
+
+The estimator uses those exact chunks, so estimated and generated page counts should match. Rows never split, type is never reduced, and final pages reserve room for safety or session outcomes.
+
+`compactPatientPlanDose` also appends useful load or equipment, while omitting generic values such as “sin material”, “no aplica” or “según indicación”.
 
 ### Universal PDF
 
@@ -89,18 +102,21 @@ Plan pages contain:
 - frequency and duration;
 - therapeutic objective;
 - exercise name;
-- saved `doseLabel` without fixed assumptions;
+- real saved dose, including repetitions plus time where applicable;
+- useful equipment or load;
 - rest;
 - key instruction, preferring therapist note and falling back to objective;
-- safety and professional footer.
+- safety;
+- professional responsible;
+- next-review line.
 
 Session pages contain:
 
 - numbered session;
 - date and pain before/after blanks;
 - universal result table;
-- completed/partial/stopped result;
-- perceived effort;
+- complete, partial or stopped result;
+- light, adequate or intense perceived effort;
 - observations;
 - clear continuation label when required.
 
@@ -112,7 +128,7 @@ The PDF uses black, neutral gray, fine lines and white paper. It does not use th
 
 ### WhatsApp
 
-`deliveryActions.ts` adds:
+`deliveryActions.ts` provides:
 
 - `normalizeWhatsAppPhone`;
 - `resolvePatientWhatsAppTarget`;
@@ -121,13 +137,14 @@ The PDF uses black, neutral gray, fine lines and white paper. It does not use th
 
 Behavior:
 
-1. normalize digits and optional `00` international prefix;
-2. accept 8–15 digits;
-3. select patient phone first;
-4. use responsible contact as fallback;
-5. open `https://wa.me/<number>?text=<prepared message>`;
-6. prepared message says the physiotherapist will attach the PDF next;
-7. never upload or automatically send the file.
+1. extract a phone from plain numbers or responsible-contact text;
+2. accept `+`, `00`, spaces, dots, hyphens and parentheses;
+3. normalize to 8–15 digits;
+4. select patient phone first;
+5. use responsible contact as fallback;
+6. open `https://wa.me/<number>?text=<prepared message>`;
+7. prepared message says the physiotherapist will attach the PDF next;
+8. never upload, attach or automatically send the file.
 
 ### Simplified screen
 
@@ -145,7 +162,7 @@ Visible controls:
 - page estimate;
 - Download, Open WhatsApp, Native Share and Print.
 
-WhatsApp is disabled when no valid contact can be resolved.
+WhatsApp is disabled when no valid contact can be resolved. Download remains the primary preparation action. Opening WhatsApp does not claim the document was delivered.
 
 ### Visual protection
 
@@ -174,19 +191,20 @@ WhatsApp is disabled when no valid contact can be resolved.
 - `docs/superpowers/specs/2026-07-21-atal-patient-delivery-3-1-design.md`
 - `docs/superpowers/plans/2026-07-21-atal-patient-delivery-3-1.md`
 
-`pdfSessionLogRenderer.ts` is a one-line compatibility re-export. The former simple renderer was removed because the universal renderer supersedes it.
+`pdfSessionLogRenderer.ts` remains a one-line compatibility re-export.
 
 ## What has not been claimed
 
-The current chat environment could not clone or execute the repository because outbound GitHub network resolution was unavailable. Therefore:
+The current chat environment cannot clone or execute the repository because outbound GitHub DNS resolution is unavailable. Therefore this environment has not run:
 
-- typecheck has not been run here;
-- tests have not been run here;
-- build has not been run here;
-- browser and mobile rendering have not been validated here;
-- generated PDFs from the TypeScript renderer have not been opened here.
+- `npm ci`;
+- typecheck;
+- tests;
+- build;
+- browser/mobile rendering;
+- TypeScript-generated PDF viewer checks.
 
-Do not describe the block as complete until the next environment produces evidence.
+Do not describe the block as complete until an executable environment produces evidence.
 
 ## Mandatory validation
 
@@ -214,8 +232,8 @@ Do not assume the expected test count. Report exact totals.
    - repetitions per side;
    - band;
    - external load;
+   - one exercise using repetitions plus time;
    - different rest values.
-
 2. **Older adult / extra-large type**
    - long patient name;
    - repetitions;
@@ -223,7 +241,6 @@ Do not assume the expected test count. Report exact totals.
    - minutes;
    - tolerance-based activity;
    - free or as-needed rest.
-
 3. **Mixed long plan**
    - six or more exercises;
    - long names and objective;
@@ -238,10 +255,13 @@ For each PDF verify:
 - `%PDF-1.4` signature;
 - real viewer opens it;
 - no fixed `3 × 10` assumptions;
+- repetitions plus time survive when configured together;
+- useful load/equipment appears;
 - no `Serie 1 / Serie 2 / Serie 3` columns;
 - dose, rest and cue come from saved data;
-- wrapping and pagination are clean;
-- large/extra-large text remains readable;
+- wrapping and measured pagination are clean;
+- professional responsible and next review appear;
+- complete/partial/stopped and light/adequate/intense appear;
 - no overlaps, clipping or footer collisions;
 - page estimate equals actual page count;
 - download, print and native share work.
@@ -253,10 +273,11 @@ Test 360, 390, 412 and 430 px in light and dark mode:
 - compact global Atal metrics;
 - no horizontal overflow;
 - no four-step flow;
+- no wall of session switches;
 - mode selection works;
 - session stepper clamps at 1 and 99;
 - estimate updates;
-- detailed option remains compact;
+- advanced detailed option remains compact;
 - dock remains unchanged;
 - no console errors.
 
@@ -266,7 +287,8 @@ Test 360, 390, 412 and 430 px in light and dark mode:
 - responsible contact only;
 - both available — patient must win;
 - invalid/empty contact — button disabled;
-- formatted numbers with `+`, spaces, parentheses and `00` prefix;
+- responsible name plus phone;
+- formatted numbers with `+`, spaces, dots, hyphens, parentheses and `00` prefix;
 - correct `wa.me` URL and prepared message;
 - no automatic attachment or send;
 - no clinical network upload.
@@ -290,7 +312,7 @@ When validation finds an issue:
 - do not reduce type to hide overflow;
 - do not modify `src/main.tsx`, dock or approved visual layers;
 - keep PR #11 and the same branch;
-- use one final correction commit after grouping validation fixes;
+- group runtime validation corrections in one final commit;
 - rerun typecheck, full tests and build.
 
 ## Merge rule
@@ -302,30 +324,3 @@ Only after all evidence is clean:
 3. merge with the expected-head guard;
 4. report the final merge SHA;
 5. formally close Block 3.1.
-
-## Paste-ready prompt for the next chat
-
-```text
-Continue Atal Block 3.1 from the repository handoff:
-docs/handoffs/2026-07-21-atal-block-3-1-universal-delivery.md
-
-Repository: jbskood-cyber/Atal-
-Branch: feature/atal-patient-delivery-3-1
-PR: #11
-
-Read the handoff, spec, implementation plan and QA document before changing code.
-Do not work on main and do not merge yet.
-
-First verify the current branch SHA, then run:
-npm ci
-npm run typecheck
-npm test
-npm run build
-npm run dev
-
-Validate the three universal PDF cases, the simplified screen at 360–430 px in both themes, patient/responsible WhatsApp fallback, download, native share, print, console and Network privacy.
-
-Fix only real Block 3.1 defects. Do not add dependencies, workflows, backend, public links, automatic WhatsApp attachment or sending. Do not modify src/main.tsx, dock, approved visual layers or green #7EB695.
-
-Return exact command results, test totals, final SHA, page counts, screenshots, PDF evidence, WhatsApp behavior, corrections and any blocker. Only after every check passes may PR #11 be marked ready and merged with the validated expected head SHA.
-```
