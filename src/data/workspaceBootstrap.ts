@@ -1,6 +1,13 @@
 import { ATAL_STORE_KEY, ATAL_STORE_VERSION, type AtalState } from './atalStore';
 import { exercises as demoExercises, patients as demoPatients, plans as demoPlans } from './atal-demo';
 
+const LEGACY_WORKSPACE_KEYS = [
+  'atal:local-patients:v1',
+  'atal:local-exercises:v1',
+  'atal:local-plans:v1',
+  'atal:clinical-records:v1',
+] as const;
+
 function timestamp() {
   return new Date().toISOString();
 }
@@ -36,10 +43,26 @@ export function createEmptyWorkspaceState(now = timestamp()): AtalState {
   };
 }
 
+export function hasLegacyWorkspaceData(storage: Pick<Storage, 'getItem'>) {
+  return LEGACY_WORKSPACE_KEYS.some((key) => {
+    const raw = storage.getItem(key);
+    if (!raw) return false;
+    try {
+      const value = JSON.parse(raw) as unknown;
+      if (Array.isArray(value)) return value.length > 0;
+      return Boolean(value && typeof value === 'object');
+    } catch {
+      return false;
+    }
+  });
+}
+
 export function bootstrapRealWorkspace() {
   if (typeof window === 'undefined') return;
-  if (window.localStorage.getItem(ATAL_STORE_KEY)) return;
-  window.localStorage.setItem(ATAL_STORE_KEY, JSON.stringify(createEmptyWorkspaceState()));
+  const storage = window.localStorage;
+  if (storage.getItem(ATAL_STORE_KEY)) return;
+  if (hasLegacyWorkspaceData(storage)) return;
+  storage.setItem(ATAL_STORE_KEY, JSON.stringify(createEmptyWorkspaceState()));
 }
 
 export function initializeDemoWorkspace() {
