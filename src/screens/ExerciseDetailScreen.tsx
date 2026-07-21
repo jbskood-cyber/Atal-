@@ -23,7 +23,7 @@ import { AtalShell } from '@/src/components/atal/AtalShell';
 import {
   archiveLocalExercise,
   deleteExercise,
-  duplicateExercise,
+  duplicateExerciseWithMedia,
   restoreLocalExercise,
   updateLocalExercise,
   useExerciseCatalog,
@@ -49,6 +49,7 @@ export function ExerciseDetailScreen({ exerciseId }: { exerciseId: string }) {
   const [urls, setUrls] = useState<string[]>([]);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [form, setForm] = useState({
     name: exercise?.name ?? '',
     region: exercise?.region ?? '',
@@ -173,10 +174,18 @@ export function ExerciseDetailScreen({ exerciseId }: { exerciseId: string }) {
     setMessage('Recurso eliminado.');
   };
 
-  const duplicate = () => {
-    const copy = duplicateExercise(exercise.id);
+  const duplicate = async () => {
+    if (duplicating) return;
+    setDuplicating(true);
     setActionsOpen(false);
-    router.push(`/exercises/${copy.id}`);
+    setMessage('Duplicando ejercicio y recurso…');
+    try {
+      const copy = await duplicateExerciseWithMedia(exercise.id);
+      router.push(`/exercises/${copy.id}`);
+    } catch (error) {
+      setDuplicating(false);
+      setMessage(error instanceof Error ? error.message : 'No pudimos duplicar el ejercicio.');
+    }
   };
 
   const toggleArchive = () => {
@@ -274,7 +283,7 @@ export function ExerciseDetailScreen({ exerciseId }: { exerciseId: string }) {
         )}
 
         <div className="atal-profile-actions atal-exercise-safe-actions">
-          <button type="button" onClick={duplicate}><Copy />Duplicar</button>
+          <button type="button" disabled={duplicating} onClick={() => void duplicate()}><Copy />{duplicating ? 'Duplicando…' : 'Duplicar'}</button>
           <button type="button" onClick={toggleArchive}>
             {exercise.status === 'archived' ? <RotateCcw /> : <Archive />}
             {exercise.status === 'archived' ? 'Restaurar' : 'Archivar'}
@@ -301,7 +310,7 @@ export function ExerciseDetailScreen({ exerciseId }: { exerciseId: string }) {
                 <button type="button" aria-label="Cerrar" onClick={() => setActionsOpen(false)}><X /></button>
               </header>
               <button type="button" onClick={() => { setEditing(true); setActionsOpen(false); }}><Pencil /><span><b>Editar ejercicio</b><small>Actualiza indicaciones y prescripción</small></span></button>
-              <button type="button" onClick={duplicate}><Copy /><span><b>Duplicar ejercicio</b><small>Crea una copia independiente</small></span></button>
+              <button type="button" disabled={duplicating} onClick={() => void duplicate()}><Copy /><span><b>{duplicating ? 'Duplicando ejercicio…' : 'Duplicar ejercicio'}</b><small>Crea una copia independiente</small></span></button>
               <button type="button" onClick={toggleArchive}>{exercise.status === 'archived' ? <RotateCcw /> : <Archive />}<span><b>{exercise.status === 'archived' ? 'Restaurar ejercicio' : 'Archivar ejercicio'}</b><small>{exercise.status === 'archived' ? 'Vuelve a mostrarlo en la biblioteca' : 'Ocúltalo sin perder su historial'}</small></span></button>
               {linkedPlans.length === 0 ? (
                 <button type="button" className="is-destructive" onClick={() => { setActionsOpen(false); setDeleteOpen(true); }}><Trash2 /><span><b>Eliminar ejercicio</b><small>Esta acción no se puede deshacer</small></span></button>
