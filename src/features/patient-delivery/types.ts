@@ -66,6 +66,37 @@ export type PatientPlanDocument = {
   };
 };
 
+export type PatientPlanDocumentMode = 'simple' | 'session-log' | 'detailed';
+export type PatientPlanFontScale = 'large' | 'extra-large';
+
+export type PatientPlanLogFields = {
+  date: boolean;
+  overallCompletion: boolean;
+  perExerciseCompletion: boolean;
+  painBefore: boolean;
+  painAfter: boolean;
+  difficulty: boolean;
+  notes: boolean;
+};
+
+export type PatientPlanDeliveryOptions = {
+  mode: PatientPlanDocumentMode;
+  fontScale: PatientPlanFontScale;
+  includeExercises: boolean;
+  includeRest: boolean;
+  includeImages: boolean;
+  sessionCount: number;
+  logFields: PatientPlanLogFields;
+};
+
+export type PatientPlanPageEstimate = {
+  pageCount: number;
+  exerciseRowsPerPage: number;
+  sessionsPerFirstPage: number;
+  sessionsPerContinuationPage: number;
+  summary: string;
+};
+
 export type PatientPlanResolvedMedia = {
   exerciseId: string;
   jpegBytes?: Uint8Array;
