@@ -7,8 +7,9 @@
 - Pull request: `#11`
 - Base: `main`
 - Base SHA at branch creation: `be1258820a3c35d437ee9ea8d7774f7eef02d7da`
+- Implementation head before executable validation: `53c5722f361e978677980cbbebc32a4af7b19d7f`
 - PR must remain draft and unmerged until runtime validation is complete.
-- Verify the current head with `git rev-parse HEAD`; do not reuse an older SHA from chat history.
+- If validation creates a correction commit, treat the resulting SHA as authoritative and report both initial and final SHA.
 
 ## User-approved product decisions
 
@@ -221,6 +222,12 @@ npm run typecheck
 npm test
 npm run build
 npm run dev
+```
+
+Initial SHA must be:
+
+```text
+53c5722f361e978677980cbbebc32a4af7b19d7f
 ```
 
 Do not assume the expected test count. Report exact totals.
