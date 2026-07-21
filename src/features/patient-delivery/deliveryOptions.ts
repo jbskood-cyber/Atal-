@@ -6,29 +6,14 @@ import type {
 } from './types';
 
 export const DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS: PatientPlanDeliveryOptions = {
-  mode: 'simple',
+  mode: 'plan-and-log',
   fontScale: 'large',
-  includeExercises: true,
-  includeRest: true,
   includeImages: false,
   sessionCount: 8,
-  logFields: {
-    date: true,
-    overallCompletion: true,
-    perExerciseCompletion: true,
-    painBefore: true,
-    painAfter: true,
-    difficulty: true,
-    notes: true,
-  },
 };
 
-const MODES = new Set(['simple', 'session-log', 'detailed']);
+const MODES = new Set(['plan-and-log', 'plan-only', 'log-only', 'detailed']);
 const FONT_SCALES = new Set(['large', 'extra-large']);
-
-function asBoolean(value: unknown, fallback: boolean) {
-  return typeof value === 'boolean' ? value : fallback;
-}
 
 export function normalizePatientPlanDeliveryOptions(
   input: Partial<PatientPlanDeliveryOptions> | undefined,
@@ -36,75 +21,27 @@ export function normalizePatientPlanDeliveryOptions(
   const source = input ?? {};
   const mode = MODES.has(String(source.mode)) ? source.mode! : DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.mode;
   const fontScale = FONT_SCALES.has(String(source.fontScale)) ? source.fontScale! : DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.fontScale;
-  const includeExercises = asBoolean(source.includeExercises, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeExercises);
-  const includeRest = includeExercises && asBoolean(source.includeRest, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeRest);
-  const includeImages = mode === 'detailed' && asBoolean(source.includeImages, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeImages);
+  const includeImages = mode === 'detailed' && source.includeImages === true;
   const rawSessionCount = typeof source.sessionCount === 'number' && Number.isFinite(source.sessionCount)
     ? source.sessionCount
     : DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.sessionCount;
   const sessionCount = Math.min(99, Math.max(1, Math.round(rawSessionCount)));
-  const incomingFields = source.logFields ?? DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.logFields;
-  const logFields = {
-    date: asBoolean(incomingFields.date, true),
-    overallCompletion: asBoolean(incomingFields.overallCompletion, true),
-    perExerciseCompletion: includeExercises && asBoolean(incomingFields.perExerciseCompletion, true),
-    painBefore: asBoolean(incomingFields.painBefore, true),
-    painAfter: asBoolean(incomingFields.painAfter, true),
-    difficulty: asBoolean(incomingFields.difficulty, true),
-    notes: asBoolean(incomingFields.notes, true),
-  };
 
-  if (!Object.values(logFields).some(Boolean)) logFields.overallCompletion = true;
-
-  return {
-    mode,
-    fontScale,
-    includeExercises,
-    includeRest,
-    includeImages,
-    sessionCount,
-    logFields,
-  };
+  return { mode, fontScale, includeImages, sessionCount };
 }
 
 export function patientPlanFontLabel(fontScale: PatientPlanFontScale) {
   return fontScale === 'extra-large' ? 'letra extra grande' : 'letra grande';
 }
 
-export function simpleExerciseRowsPerPage(fontScale: PatientPlanFontScale) {
-  return fontScale === 'extra-large' ? 3 : 4;
+export function patientPlanExerciseCapacities(fontScale: PatientPlanFontScale) {
+  return fontScale === 'extra-large'
+    ? { first: 3, continuation: 4 }
+    : { first: 4, continuation: 6 };
 }
 
-export function patientSessionRowHeight(options: PatientPlanDeliveryOptions, exerciseCount = 0) {
-  const normalized = normalizePatientPlanDeliveryOptions(options);
-  const checkboxLineHeight = normalized.fontScale === 'extra-large' ? 26 : 22;
-  let height = normalized.fontScale === 'extra-large' ? 134 : 118;
-  if (normalized.logFields.difficulty) height += normalized.fontScale === 'extra-large' ? 28 : 24;
-  if (normalized.logFields.perExerciseCompletion) {
-    const checkboxLines = Math.max(1, Math.ceil(Math.max(1, exerciseCount) / 6));
-    height += 22 + checkboxLines * checkboxLineHeight;
-  }
-  if (normalized.logFields.notes) height += normalized.fontScale === 'extra-large' ? 34 : 28;
-  return height;
-}
-
-export function patientSessionPageCapacities(
-  documentModel: PatientPlanDocument,
-  options: PatientPlanDeliveryOptions,
-) {
-  const normalized = normalizePatientPlanDeliveryOptions(options);
-  const rowHeight = patientSessionRowHeight(normalized, documentModel.exercises.length);
-  const exerciseLegendRows = normalized.includeExercises ? documentModel.exercises.length : 0;
-  const legendHeight = normalized.includeExercises
-    ? 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 44 : 40)
-    : 0;
-  const firstAvailable = Math.max(0, 500 - legendHeight);
-  const continuationAvailable = 620;
-  return {
-    rowHeight,
-    first: Math.max(0, Math.floor(firstAvailable / rowHeight)),
-    continuation: Math.max(1, Math.floor(continuationAvailable / rowHeight)),
-  };
+export function patientLogExerciseCapacity(fontScale: PatientPlanFontScale) {
+  return fontScale === 'extra-large' ? 5 : 6;
 }
 
 export function estimatePatientPlanPages(
@@ -112,37 +49,42 @@ export function estimatePatientPlanPages(
   input: Partial<PatientPlanDeliveryOptions> | undefined,
 ): PatientPlanPageEstimate {
   const options = normalizePatientPlanDeliveryOptions(input);
-  const exerciseRowsPerPage = simpleExerciseRowsPerPage(options.fontScale);
-  let pageCount = 1;
-  let sessionsPerFirstPage = 0;
-  let sessionsPerContinuationPage = 0;
-
-  if (options.mode === 'simple' && options.includeExercises) {
-    pageCount = Math.max(1, Math.ceil(documentModel.exercises.length / exerciseRowsPerPage));
-  }
-
   if (options.mode === 'detailed') {
-    pageCount = 1 + documentModel.exercises.length;
+    const pageCount = 1 + documentModel.exercises.length;
+    return {
+      pageCount,
+      planPageCount: pageCount,
+      logPageCount: 0,
+      logPagesPerSession: 0,
+      summary: `${pageCount} ${pageCount === 1 ? 'página' : 'páginas'} · documento detallado`,
+    };
   }
 
-  if (options.mode === 'session-log') {
-    const capacities = patientSessionPageCapacities(documentModel, options);
-    sessionsPerFirstPage = capacities.first;
-    sessionsPerContinuationPage = capacities.continuation;
-    const remaining = Math.max(0, options.sessionCount - capacities.first);
-    pageCount = 1 + (remaining ? Math.ceil(remaining / capacities.continuation) : 0);
-  }
+  const includesPlan = options.mode === 'plan-and-log' || options.mode === 'plan-only';
+  const includesLog = options.mode === 'plan-and-log' || options.mode === 'log-only';
+  const planCapacity = patientPlanExerciseCapacities(options.fontScale);
+  const remainingPlanExercises = Math.max(0, documentModel.exercises.length - planCapacity.first);
+  const planPageCount = includesPlan
+    ? 1 + Math.ceil(remainingPlanExercises / planCapacity.continuation)
+    : 0;
+  const logCapacity = patientLogExerciseCapacity(options.fontScale);
+  const logPagesPerSession = includesLog
+    ? Math.max(1, Math.ceil(documentModel.exercises.length / logCapacity))
+    : 0;
+  const logPageCount = includesLog ? options.sessionCount * logPagesPerSession : 0;
+  const pageCount = planPageCount + logPageCount;
 
-  const parts = [`${pageCount} ${pageCount === 1 ? 'página' : 'páginas'}`, patientPlanFontLabel(options.fontScale)];
-  if (options.mode === 'session-log') parts.push(`${options.sessionCount} sesiones`);
-  if (options.includeExercises) parts.push(`${documentModel.exercises.length} ejercicios`);
-  else parts.push('sin ejercicios');
+  const contentLabel = options.mode === 'plan-and-log'
+    ? `plan + ${options.sessionCount} sesiones`
+    : options.mode === 'plan-only'
+      ? 'solo plan'
+      : `${options.sessionCount} sesiones`;
 
   return {
     pageCount,
-    exerciseRowsPerPage,
-    sessionsPerFirstPage,
-    sessionsPerContinuationPage,
-    summary: parts.join(' · '),
+    planPageCount,
+    logPageCount,
+    logPagesPerSession,
+    summary: `${pageCount} ${pageCount === 1 ? 'página' : 'páginas'} · ${patientPlanFontLabel(options.fontScale)} · ${contentLabel}`,
   };
 }
