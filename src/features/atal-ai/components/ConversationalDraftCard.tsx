@@ -1,5 +1,5 @@
 import { AlertTriangle, ChevronDown, ClipboardList, Dumbbell, FileDown, FileText, FolderOpen, Pencil, Save, StickyNote, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AtalAIDraft } from '../types';
 import { DraftSectionEditor, type DraftSectionId } from './DraftSectionEditor';
 
@@ -29,12 +29,24 @@ export function ConversationalDraftCard({ draft,patientLabel,applying,applied,co
   const [openSection,setOpenSection]=useState<DraftSectionId|null>(null);
   const [cardOpen,setCardOpen]=useState(true);
   const [editing,setEditing]=useState<DraftSectionId|null>(null);
+  const cardRef=useRef<HTMLElement>(null);
+  const mountedRef=useRef(false);
   const sections=useMemo(()=>sectionsFor(draft,patientLabel),[draft,patientLabel]);
   const total=sections.length?Math.round(sections.reduce((sum,item)=>sum+item.percent,0)/sections.length):0;
   const warnings=draft.missingFields.length+draft.uncertainFields.length+draft.contradictions.length;
   const hasContradictions=draft.contradictions.length>0;
+
+  useEffect(()=>{
+    if(!mountedRef.current){mountedRef.current=true;return;}
+    let secondFrame=0;
+    const firstFrame=window.requestAnimationFrame(()=>{
+      secondFrame=window.requestAnimationFrame(()=>cardRef.current?.scrollIntoView({behavior:'smooth',block:'end'}));
+    });
+    return()=>{window.cancelAnimationFrame(firstFrame);if(secondFrame)window.cancelAnimationFrame(secondFrame)};
+  },[cardOpen,openSection]);
+
   return <>
-    <section className="atal-draft-card" aria-label="Borrador preparado">
+    <section ref={cardRef} className={`atal-draft-card ${cardOpen?'is-expanded':'is-collapsed'}`} aria-label="Borrador preparado">
       <button type="button" className="atal-draft-card-header" aria-expanded={cardOpen} onClick={()=>{setCardOpen((value)=>!value);setOpenSection(null)}}><span><b>{draft.responseMode==='command'?'Acción preparada':'Borrador del plan de tratamiento'}</b></span><Status percent={total} review={warnings>0}/><ChevronDown className={cardOpen?'is-open':''}/></button>
       {conflict && <aside className="atal-draft-conflict" role="alert"><AlertTriangle/><div><b>Esta información cambió después de crear el borrador.</b><p>{conflict}</p><span><button type="button" onClick={onRefreshConflict}>Actualizar borrador</button><button type="button" onClick={onCompare}>Comparar</button><button type="button" onClick={onKeepVersion}>Conservar mi versión</button></span></div></aside>}
       {hasContradictions&&<aside className="atal-draft-conflict" role="alert"><AlertTriangle/><div><b>Hay contradicciones clínicas por resolver.</b><p>{draft.contradictions.join(' ')}</p><span><button type="button" onClick={onReviewAll}>Revisar el borrador</button></span></div></aside>}
@@ -46,4 +58,4 @@ export function ConversationalDraftCard({ draft,patientLabel,applying,applied,co
 }
 
 function Status({percent,review}:{percent:number;review:boolean}) {const tone=percent>=100?'is-complete':percent<=25?'is-low':percent<75?'is-mid':'is-high';return <span className={`atal-draft-status ${tone}${review?' has-review':''}`} aria-label={`${percent}% completo`}>{percent}%</span>;}
-function SectionPreview({section,draft}:{section:DraftSectionId;draft:AtalAIDraft}) {if(section==='patient')return <dl><div><dt>Identidad</dt><dd>{draft.patient.name||'Por completar'}{draft.patient.age!==null?` · ${draft.patient.age} años`:''}</dd></div><div><dt>Motivo</dt><dd>{draft.patient.reasonForVisit||'Por completar'}</dd></div><div><dt>Objetivo funcional</dt><dd>{draft.patient.goals.join(', ')||'Por completar'}</dd></div></dl>;if(section==='record')return <dl><div><dt>Evolución</dt><dd>{draft.patient.evolutionTime||'Por completar'}</dd></div><div><dt>Hallazgos</dt><dd>{draft.patient.clinicalNotes||draft.patient.providedDiagnosis||'Por completar'}</dd></div><div><dt>Precauciones</dt><dd>{draft.patient.precautions.join(', ')||'Sin precauciones indicadas'}</dd></div></dl>;if(section==='plan')return <dl><div><dt>Objetivo general</dt><dd>{draft.plan.goal||'Por completar'}</dd></div><div><dt>Enfoque clínico</dt><dd>{draft.plan.focus||'Por completar'}</dd></div><div><dt>Duración y frecuencia</dt><dd>{duration(draft)} · {frequency(draft)}</dd></div><div><dt>Criterios de progreso</dt><dd>{draft.plan.progressCriteria||'Por completar'}</dd></div></dl>;if(section==='exercises')return <ol>{draft.exercises.map((item)=><li key={item.id}><b>{item.name||'Sin nombre'}</b><span>{item.sets??'—'} series · {item.repetitions||item.duration||'dosis por completar'}</span></li>)}</ol>;if(section==='note')return <p>{draft.command?.content||'Nota por completar'}</p>;return <p>{draft.assistantMessage||draft.command?.content||'Acción preparada para revisión.'}</p>;}
+function SectionPreview({section,draft}:{section:DraftSectionId;draft:AtalAIDraft}) {if(section==='patient')return <dl><div><dt>Identidad</dt><dd>{draft.patient.name||'Por completar'}{draft.patient.age!==null?` · ${draft.patient.age} años`:''}</dd></div><div><dt>Motivo</dt><dd>{draft.patient.reasonForVisit||'Por completar'}</dd></div><div><dt>Objetivo funcional</dt><dd>{draft.patient.goals.join(', ')||'Por completar'}</dd></div></dl>;if(section==='record')return <dl><div><dt>Evolución</dt><dd>{draft.patient.evolutionTime||'Por completar'}</dd></div><div><dt>Hallazgos</dt><dd>{draft.patient.clinicalNotes||draft.patient.providedDiagnosis||'Por completar'}</dd></div><div><dt>Precauciones</dt><dd>{draft.patient.precautions.join(', ')||'Sin precauciones indicadas'}</dd></div></dl>;if(section==='plan')return <dl><div><dt>Objetivo general</dt><dd>{draft.plan.goal||'Por completar'}</dd></div><div><dt>Enfoque clínico</dt><dd>{draft.plan.focus||'Por completar'}</dd></div><div><dt>Duración y frecuencia</dt><dd>{duration(draft)} · {frequency(draft)}</dd></div><div><dt>Criterios de progreso</dt><dd>{draft.plan.progressCriteria||'Por completar'}</dd></div></dl>;if(section==='exercises')return <ol>{draft.exercises.map((item)=><li key={item.id}><b>{item.name||'Sin nombre'}</b><span>{item.sets??'—'} series · {item.repetitions||item.duration||'dosis por completar'}</span></li>)}</ol>;if(section==='note')return <p>{draft.command?.content||'Nota por completar'}</p>;return <p>{draft.assistantMessage||draft.command?.content||'Acción preparada para revisión.'}</p>;
