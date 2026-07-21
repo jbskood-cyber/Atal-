@@ -7,20 +7,28 @@
   box-shadow: none !important;
 }
 
-/* Command center: unused height lives above the real conversation. Auto margins
-   collapse to zero as content grows, so the draft can expand completely and,
-   when collapsed again, returns directly above the composer. */
+/* Command center: the composer already occupies its own grid row. Older visual
+   layers still reserved 148px inside the scroll thread as if the composer were
+   overlaying it. Remove that duplicate clearance, keep unused room above the
+   conversation, and leave the real draft directly above the composer. */
 .atal-command-thread {
   display: flex;
   flex-direction: column;
+  padding-bottom: 16px !important;
+  scroll-padding-bottom: 16px !important;
 }
 
 .atal-command-thread > :first-child {
   margin-top: auto;
 }
 
+.atal-command-thread > div:last-child {
+  min-height: 0 !important;
+  scroll-margin-bottom: 0 !important;
+}
+
 .atal-draft-card {
-  scroll-margin-bottom: 10px;
+  scroll-margin-bottom: 8px !important;
 }
 
 /* Notices enter cleanly, remain manually dismissible, and leave softly. */
@@ -41,18 +49,33 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Composer: refined controls share the official Atal green. */
+/* Composer: sending and processing use the exact approved Atal green. Remove
+   the inherited emerald glow/filter so changing state only swaps the glyph. */
 .atal-command-composer .atal-command-dynamic.is-send,
 .atal-command-composer .atal-command-dynamic.is-processing {
-  color: #fff;
-  background: var(--green);
-  box-shadow: 0 5px 16px color-mix(in srgb, var(--green) 28%, transparent);
+  color: #fff !important;
+  border-color: var(--atal-official-green) !important;
+  background: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+.atal-command-composer .atal-command-dynamic.is-processing:hover,
+.atal-command-composer .atal-command-dynamic.is-processing:active,
+.atal-command-composer .atal-command-dynamic.is-processing:focus-visible {
+  filter: none !important;
+  background: var(--atal-official-green) !important;
+  box-shadow: none !important;
 }
 
 .atal-command-composer .atal-command-dynamic.is-send svg {
   width: 24px;
   height: 24px;
   color: #fff;
+  stroke: currentColor;
   transform: translateY(-1px);
 }
 
@@ -62,6 +85,7 @@
   height: 14px;
   color: #fff;
   fill: #fff;
+  stroke: #fff;
   opacity: 1;
 }
 
@@ -135,8 +159,13 @@ html[data-theme="dark"] .atal-home-v2 .atal-home-row .atal-home-row-icon {
 
 html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-send,
 html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-processing {
-  color: #fff;
-  background: var(--green);
+  color: #fff !important;
+  border-color: var(--atal-official-green) !important;
+  background: var(--atal-official-green) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  animation: none !important;
 }
 
 html[data-theme="dark"] .atal-ai-attachment-menu {
