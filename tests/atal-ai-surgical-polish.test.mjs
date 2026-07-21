@@ -27,12 +27,10 @@ test('keeps home alert icon surfaces neutral while preserving semantic icon colo
 
 test('anchors a collapsed draft above the composer and keeps the expanded draft complete', () => {
   const css = read('src/styles/atal-ai-surgical-polish.css');
-  assert.match(conversation, /<div className="atal-command-spacer" aria-hidden="true"\/>/);
   assert.match(conversation, /<ConversationalDraftCard/);
   assert.match(css, /\.atal-command-thread\s*\{[^}]*display:\s*flex/s);
   assert.match(css, /flex-direction:\s*column/);
-  assert.match(css, /\.atal-command-spacer\s*\{[^}]*flex:\s*1\s+1\s+auto/s);
-  assert.match(css, /\.atal-command-thread\s*>\s*:not\(\.atal-command-spacer\)\s*\{[^}]*flex:\s*0\s+0\s+auto/s);
+  assert.match(css, /\.atal-command-thread\s*>\s*:first-child\s*\{[^}]*margin-top:\s*auto/s);
   assert.doesNotMatch(css, /\.atal-command-thread::before/);
   assert.match(draftCard, /ref=\{cardRef\}/);
   assert.match(draftCard, /scrollIntoView\(\{behavior:'smooth',block:'end'\}\)/);
