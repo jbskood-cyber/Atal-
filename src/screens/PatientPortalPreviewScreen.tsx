@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ArrowLeft, ChevronRight, Clock3, Dumbbell, Eye, Play, RotateCcw, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronRight, Clock3, Dumbbell, Eye, FileDown, Play, RotateCcw, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AtalLogo } from '@/src/components/atal/AtalLogo';
 import { getPatientById } from '@/src/data/localPatients';
@@ -51,7 +51,7 @@ export function PatientPortalPreviewScreen({ patientId }: { patientId: string })
   const storedPlanStatus = stored ? store.plans.find((item) => item.id === stored.planId)?.status ?? 'none' : 'none';
   const storedCanResume = Boolean(stored && (stored.status === 'in_progress' || (stored.status === 'partial' && stored.stage !== 'summary')));
   const canResume = storedCanResume && storedPlanStatus === 'active';
-  const plan = canResume ? stored?.planSnapshot ?? livePlan : livePlan;
+  const plan = livePlan;
   const hasCompletedSession = Boolean(stored?.stage === 'summary' && stored.planId === plan.id);
   const latestSession = store.sessions.find((item) => item.planId === plan.id);
   const completed = canResume && stored
@@ -81,7 +81,10 @@ export function PatientPortalPreviewScreen({ patientId }: { patientId: string })
       <div className="atal-patient-plan-facts"><span><Clock3 /><b>{plan.estimatedDuration}</b><small>duración</small></span><span><Dumbbell /><b>{plan.exercises.length} ejercicios</b><small>rutina actual</small></span><span><RotateCcw /><b>{completed}/{plan.exercises.length}</b><small>progreso</small></span></div>
       <div className="atal-patient-exercise-preview"><header><h3>Ejercicios de hoy</h3><small>Revísalos antes de comenzar.</small></header>{plan.exercises.length ? plan.exercises.map((exercise, index) => <button type="button" key={exercise.id} onClick={() => setPreview(exercise)}><span>{index + 1}</span><div><b>{exercise.name}</b><small>{exercise.region} · {exercise.sets} series · {exercise.repetitions ? `${exercise.repetitions} repeticiones` : `${exercise.seconds} segundos`}</small></div><ChevronRight /></button>) : <div className="atal-plan-empty-note"><AlertTriangle /><span><b>Sin rutina activa</b><small>Tu fisioterapeuta todavía no ha activado ejercicios.</small></span></div>}</div>
       <div className="atal-plan-guidance"><ShieldCheck /><div><b>Indicaciones generales</b><p>{plan.generalInstructions}</p></div></div>
-      {canResume ? <div className="atal-plan-session-actions"><button type="button" className="atal-session-primary" onClick={() => router.push(`/patients/${patientId}/session`)}><Play /> Continuar donde lo dejaste</button><button ref={restartTriggerRef} type="button" onClick={() => setRestartOpen(true)}>Empezar de nuevo</button></div> : <button type="button" className="atal-session-primary atal-start-session" disabled={!plan.exercises.length || plan.status !== 'active'} onClick={startSession}><Play /> {plan.status === 'paused' ? 'Plan pausado' : hasCompletedSession ? 'Iniciar nueva sesión' : 'Iniciar sesión'}</button>}
+      <div className="atal-plan-session-actions">
+        {canResume ? <><button type="button" className="atal-session-primary" onClick={() => router.push(`/patients/${patientId}/session`)}><Play /> Continuar donde lo dejaste</button><button ref={restartTriggerRef} type="button" onClick={() => setRestartOpen(true)}>Empezar de nuevo</button></> : <button type="button" className="atal-session-primary atal-start-session" disabled={!plan.exercises.length || plan.status !== 'active'} onClick={startSession}><Play /> {plan.status === 'paused' ? 'Plan pausado' : hasCompletedSession ? 'Iniciar nueva sesión' : 'Iniciar sesión'}</button>}
+        {plan.status !== 'none' && <button type="button" onClick={() => router.push(`/plans/${plan.id}/delivery`)}><FileDown /> Ver y descargar plan</button>}
+      </div>
       <small className="atal-local-save-copy">Tu progreso se guarda automáticamente y conserva la versión del plan con la que comenzaste.</small>
     </section>
     {preview && <ExercisePreviewDialog exercise={preview} onClose={() => setPreview(null)} />}
