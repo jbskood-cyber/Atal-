@@ -60,3 +60,11 @@ test('patient records expose contact and clinically meaningful metrics',()=>{
   assert.match(metrics,/summarizeClinicalSessions/);
   assert.match(metrics,/sessionNeedsAttention/);
 });
+
+test('clinical record editing validates and protects pending changes',()=>{
+  const record=read('src/features/clinical-record/ClinicalRecordScreen.tsx');
+  assert.match(record,/useUnsavedChangesGuard/);
+  assert.match(record,/El motivo de consulta es obligatorio/);
+  assert.match(record,/El dolor debe estar entre 0 y 10/);
+  assert.match(record,/¿Salir sin guardar\?/);
+});
