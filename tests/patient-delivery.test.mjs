@@ -23,7 +23,7 @@ test('blocks unsafe delivery and labels non-active plans explicitly',()=>{
   assert.match(builder,/plan\.status === 'archived'/);
   assert.match(builder,/requiresConfirmation: true/);
   assert.match(screen,/Entiendo que este plan no está activo/);
-  assert.match(screen,/no lo presentará como tratamiento vigente/);
+  assert.match(screen,/conservará claramente el estado/);
 });
 
 test('generates a dependency-free PDF 1.4 document with A4 pages and xref',()=>{
@@ -32,7 +32,7 @@ test('generates a dependency-free PDF 1.4 document with A4 pages and xref',()=>{
   assert.match(writer,/A4_WIDTH = 595\.28/);
   assert.match(writer,/A4_HEIGHT = 841\.89/);
   assert.match(writer,/0x25, 0x50, 0x44, 0x46/);
-  assert.match(writer,/xref\\n0/);
+  assert.match(writer,/xref\n0/);
   assert.match(writer,/WinAnsiEncoding/);
   assert.match(renderer,/Página \$\{number\} de \$\{total\}/);
   assert.match(renderer,/createPatientPlanPdf/);
