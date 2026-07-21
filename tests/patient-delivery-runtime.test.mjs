@@ -88,7 +88,7 @@ function universalDocument() {
     maxPain: 4,
     therapistNotes: repeated(`indicacion${order}-`, 34, `CLAVEFINAL${order}`),
     doseLabel: repeated(`dosis${order}-`, 28, `DOSISFINAL${order}`),
-    media: { kind: 'none' },
+    media: { type: 'none' },
   });
 
   return {
