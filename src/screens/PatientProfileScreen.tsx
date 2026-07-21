@@ -6,6 +6,7 @@ import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { archiveLocalPatient,getPatientById,restoreLocalPatient,updateLocalPatient,usePatientCatalog } from '@/src/data/localPatients';
 import { addPatientNote,deletePatientNote,updatePatientNote,useAtalStore,type ActivityEvent,type PatientNote,type SessionRecord } from '@/src/data/atalStore';
+import { validatePatientInput } from '@/src/domain/validation';
 
 type Tab='summary'|'history'|'notes'|'metrics';
 export function PatientProfileScreen({patientId}:{patientId:string}){
@@ -13,7 +14,7 @@ export function PatientProfileScreen({patientId}:{patientId:string}){
  useEffect(()=>{if(patient)setForm({name:patient.name,diagnosis:patient.diagnosis,age:patient.age?.toString()??'',birthDate:patient.birthDate,sex:patient.sex,affectedArea:patient.affectedArea});},[patient?.id,patient?.updatedAt]);
  if(!patient)return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><FileText/><h1>Paciente no encontrado</h1><button type="button" onClick={()=>router.push('/patients')}>Volver</button></div></main></AtalShell>;
  const activePlan=state.plans.find((item)=>item.status==='active')??null;
- const savePatient=()=>{updateLocalPatient(patient.id,{name:form.name.trim(),diagnosis:form.diagnosis.trim(),age:form.age?Number(form.age):null,birthDate:form.birthDate,sex:form.sex,affectedArea:form.affectedArea});setEditing(false);setMessage('Datos guardados.');};
+ const savePatient=()=>{const age=form.age?Number(form.age):null;const validation=validatePatientInput({name:form.name,diagnosis:form.diagnosis,age});if(!validation.valid){setMessage(Object.values(validation.errors)[0]);return;}try{updateLocalPatient(patient.id,{name:form.name.trim(),diagnosis:form.diagnosis.trim(),age,birthDate:form.birthDate,sex:form.sex,affectedArea:form.affectedArea});setEditing(false);setMessage('Datos guardados.')}catch(error){setMessage(error instanceof Error?error.message:'No pudimos guardar los datos.')}};
  return <AtalShell onNew={()=>router.push(`/plans/new?patientId=${patient.id}`)}><main className="atal-content atal-flow-page atal-patient-profile">
   <div className="atal-flow-topbar"><button type="button" onClick={()=>router.push('/patients')}><ArrowLeft/></button><span>Expediente del paciente</span><button type="button" onClick={()=>patient.status==='archived'?restoreLocalPatient(patient.id):archiveLocalPatient(patient.id)} aria-label={patient.status==='archived'?'Restaurar paciente':'Archivar paciente'}>{patient.status==='archived'?<RotateCcw/>:<Archive/>}</button></div>
   <section className="atal-profile-hero"><Avatar name={patient.name} size="lg"/><div><h1>{patient.name}</h1><p>{patient.age!==null?`${patient.age} años · `:''}{patient.status==='archived'?'Archivado':patient.status==='attention'?'Requiere atención':'Paciente activo'}</p><small>ID: {patient.id.toUpperCase()}</small></div></section>
@@ -25,7 +26,7 @@ export function PatientProfileScreen({patientId}:{patientId:string}){
    <section className="atal-profile-section"><div className="atal-section-title"><h2>Reportes recientes</h2><button type="button" onClick={()=>router.push(`/activity?patientId=${patient.id}`)}>Ver todo</button></div>{state.sessions.slice(0,3).map((session)=><button type="button" className="atal-report-row" key={session.id} onClick={()=>router.push(`/activity/${session.id}`)}><span><FileText/></span><span><b>{session.status==='completed'?'Sesión completada':'Sesión parcial'}</b><small>{new Date(session.completedAt).toLocaleString('es-MX')}</small></span><ChevronRight/></button>)}{!state.sessions.length&&<p>Sin sesiones registradas.</p>}</section>
    <div className="atal-profile-actions"><button type="button" onClick={()=>router.push(`/patients/${patient.id}/clinical-record`)}><FileText/>Ver expediente</button><button type="button" className="is-primary" onClick={()=>router.push(`/plans/new?patientId=${patient.id}`)}>Crear plan <Plus/></button></div>
   </div>}
-  {tab==='history'&&<History events={state.events}/>} {tab==='notes'&&<Notes patientId={patient.id} notes={state.notes} professional={state.settings.professionalName}/>} {tab==='metrics'&&<Metrics sessions={state.sessions} planId={activePlan?.id}/>}
+  {tab==='history'&&<History events={state.events}/>} {tab==='notes'&&<Notes patientId={patient.id} notes={state.notes} professional={state.settings.professionalName}/>} {tab==='metrics'&&<Metrics sessions={state.sessions} planId={activePlan?.id}/>} 
  </main></AtalShell>;
 }
 function History({events}:{events:ActivityEvent[]}){return <section className="atal-profile-section"><h2>Historial cronológico</h2><div className="atal-history-list">{[...events].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map((event)=><article key={event.id}><CalendarDays/><span><b>{event.title}</b><small>{event.detail}</small><time>{new Date(event.createdAt).toLocaleString('es-MX')}</time></span></article>)}{!events.length&&<p>No hay eventos registrados.</p>}</div></section>;}
