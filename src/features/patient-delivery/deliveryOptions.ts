@@ -73,10 +73,14 @@ export function simpleExerciseRowsPerPage(fontScale: PatientPlanFontScale) {
   return fontScale === 'extra-large' ? 5 : 6;
 }
 
-export function patientSessionRowHeight(options: PatientPlanDeliveryOptions) {
+export function patientSessionRowHeight(options: PatientPlanDeliveryOptions, exerciseCount = 0) {
   const normalized = normalizePatientPlanDeliveryOptions(options);
+  const lineHeight = normalized.fontScale === 'extra-large' ? 24 : 20;
   let height = normalized.fontScale === 'extra-large' ? 104 : 88;
-  if (normalized.logFields.perExerciseCompletion) height += normalized.fontScale === 'extra-large' ? 24 : 20;
+  if (normalized.logFields.perExerciseCompletion) {
+    const checkboxLines = Math.max(1, Math.ceil(Math.max(1, exerciseCount) / 6));
+    height += checkboxLines * lineHeight;
+  }
   if (normalized.logFields.notes) height += normalized.fontScale === 'extra-large' ? 20 : 16;
   return height;
 }
@@ -86,14 +90,14 @@ export function patientSessionPageCapacities(
   options: PatientPlanDeliveryOptions,
 ) {
   const normalized = normalizePatientPlanDeliveryOptions(options);
-  const rowHeight = patientSessionRowHeight(normalized);
+  const rowHeight = patientSessionRowHeight(normalized, documentModel.exercises.length);
   const exerciseLegendRows = normalized.includeExercises ? Math.ceil(documentModel.exercises.length / 2) : 0;
-  const legendHeight = normalized.includeExercises ? Math.min(150, 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 28 : 24)) : 0;
-  const firstAvailable = Math.max(rowHeight, 500 - legendHeight);
+  const legendHeight = normalized.includeExercises ? 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 28 : 24) : 0;
+  const firstAvailable = Math.max(0, 500 - legendHeight);
   const continuationAvailable = 690;
   return {
     rowHeight,
-    first: Math.max(1, Math.floor(firstAvailable / rowHeight)),
+    first: Math.max(0, Math.floor(firstAvailable / rowHeight)),
     continuation: Math.max(1, Math.floor(continuationAvailable / rowHeight)),
   };
 }
