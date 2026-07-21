@@ -23,9 +23,12 @@ import '@/src/styles/atal-residual-polish.css';
 import '@/src/styles/atal-residual-compat.css';
 import '@/src/styles/atal-final-closeout.css';
 import '@/src/styles/atal-context-menu-fix.css';
-import { AppCloseout } from './AppCloseout';
+import { App } from './App';
+import { bootstrapRealWorkspace } from './data/workspaceBootstrap';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><AppCloseout /></React.StrictMode>);
+bootstrapRealWorkspace();
+
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));

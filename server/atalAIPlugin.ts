@@ -3,9 +3,8 @@ import type { Plugin } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { ATAL_AI_SYSTEM_PROMPT, ATAL_AI_TRANSCRIPTION_PROMPT } from '../src/features/atal-ai/api/prompts';
 import { atalAIDraftJsonSchema } from '../src/features/atal-ai/api/schemas';
+import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 import type { AtalAIAnalyzeRequest } from '../src/features/atal-ai/types';
-
-const MAX_BODY_BYTES = 32 * 1024 * 1024;
 
 type AtalAIPayload = AtalAIAnalyzeRequest & {
   preferences?: {
@@ -28,7 +27,7 @@ async function readJson(request: IncomingMessage) {
   for await (const chunk of request) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     size += buffer.length;
-    if (size > MAX_BODY_BYTES) throw new Error('La solicitud supera el límite de 32 MB. Reduce el número o tamaño de los archivos.');
+    if (size > MAX_AI_REQUEST_BODY_BYTES) throw new Error('La solicitud supera el límite seguro de envío. Reduce el número o tamaño de los archivos.');
     chunks.push(buffer);
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as AtalAIPayload;

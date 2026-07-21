@@ -1,4 +1,5 @@
 import { getAtalState } from '@/src/data/atalStore';
+import { assertAIRequestSize } from '../domain/attachmentLimits';
 import { normalizeAtalAIDraft } from './schemas';
 import type { AtalAIAnalyzeRequest, AtalAIAnalyzeResponse } from '../types';
 
@@ -16,6 +17,7 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: Abor
     instructions: settings.aiInstructions.trim(),
   };
   const requestPayload = { ...payload, preferences };
+  assertAIRequestSize(requestPayload);
   const response = await fetch('/api/atal-ai/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
