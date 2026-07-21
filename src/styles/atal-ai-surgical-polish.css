@@ -7,22 +7,20 @@
   box-shadow: none !important;
 }
 
-/* Command center: a flexible spacer occupies only unused room above the real
-   conversation and draft. It collapses to zero when content grows, so the
-   treatment draft remains visible and scrollable without a ghost gap below it. */
+/* Command center: unused height lives above the real conversation. Auto margins
+   collapse to zero as content grows, so the draft can expand completely and,
+   when collapsed again, returns directly above the composer. */
 .atal-command-thread {
   display: flex;
   flex-direction: column;
 }
 
-.atal-command-thread::before {
-  content: "";
-  flex: 1 1 auto;
-  min-height: 0;
+.atal-command-thread > :first-child {
+  margin-top: auto;
 }
 
-.atal-command-thread > * {
-  flex: 0 0 auto;
+.atal-draft-card {
+  scroll-margin-bottom: 10px;
 }
 
 /* Notices enter cleanly, remain manually dismissible, and leave softly. */
