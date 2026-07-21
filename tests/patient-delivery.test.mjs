@@ -40,7 +40,7 @@ test('generates a dependency-free PDF 1.4 document with A4 pages and xref',()=>{
 
 test('resolves media locally and never uploads clinical data',()=>{
   const media=read('src/features/patient-delivery/mediaResolver.ts');
-  const spec=read('docs/superpowers/specs/2026-07-21-atal-patient-delivery-design.md');
+  const spec=read('docs/superpowers/specs/2026-07-20-atal-patient-delivery-design.md');
   assert.match(media,/getExerciseMedia/);
   assert.match(media,/canvas\.toBlob/);
   assert.doesNotMatch(media,/fetch\(|XMLHttpRequest|https?:\/\//);
