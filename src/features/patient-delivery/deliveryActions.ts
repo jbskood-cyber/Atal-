@@ -57,8 +57,9 @@ export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise
     await navigator.share(shareData);
     return { status: 'shared' };
   } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return { status: 'cancelled' };
     downloadPatientPlanPdf(result);
-    return { status: 'downloaded', reason: error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'failed' };
+    return { status: 'downloaded', reason: 'failed' };
   }
 }
 
