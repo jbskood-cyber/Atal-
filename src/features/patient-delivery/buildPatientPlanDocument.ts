@@ -96,6 +96,8 @@ export function buildPatientPlanDocument(
       name: patient.name.trim(),
       diagnosis: patient.diagnosis.trim() || 'Motivo por completar',
       affectedArea: patient.affectedArea.trim() || 'Zona por completar',
+      phone: patient.contact.phone.trim(),
+      responsibleContact: patient.contact.emergencyContact.trim(),
     },
     professional: {
       name: state.settings.professionalName.trim() || 'Fisioterapeuta responsable',
