@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Copy, MoreHorizontal, Pencil, Trash2, Undo2 } from 'lucide-react';
-import { duplicateExercise, useExerciseCatalog } from '@/src/data/localExercises';
+import { duplicateExerciseWithMedia, useExerciseCatalog } from '@/src/data/localExercises';
 import { ExerciseMediaThumbnail } from '@/src/components/atal/ExerciseMediaThumbnail';
 
 type MenuPosition = { top: number; left: number };
@@ -13,10 +13,12 @@ export function SafePlanExerciseList({
   exerciseIds,
   onChange,
   onMessage,
+  onDuplicateCreated,
 }: {
   exerciseIds: string[];
   onChange: (ids: string[]) => void;
   onMessage: (message: string) => void;
+  onDuplicateCreated?: (id: string) => void;
 }) {
   const router = useRouter();
   const catalog = useExerciseCatalog();
@@ -34,11 +36,9 @@ export function SafePlanExerciseList({
 
   useEffect(() => {
     if (!menuId) return;
-
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') closeMenu();
     };
-
     window.addEventListener('pointerdown', closeMenu);
     window.addEventListener('keydown', closeOnEscape);
     window.addEventListener('resize', closeMenu);
@@ -53,12 +53,10 @@ export function SafePlanExerciseList({
 
   useEffect(() => {
     if (!confirmId) return;
-
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setConfirmId(null);
     };
     const previousOverflow = document.body.style.overflow;
-
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', closeOnEscape);
     return () => {
@@ -72,7 +70,6 @@ export function SafePlanExerciseList({
       closeMenu();
       return;
     }
-
     const rect = anchor.getBoundingClientRect();
     const menuWidth = 216;
     const menuHeight = 150;
@@ -89,7 +86,6 @@ export function SafePlanExerciseList({
       Math.max(viewportPadding, preferredTop),
       window.innerHeight - menuHeight - viewportPadding,
     );
-
     setMenuPosition({ top, left });
     setMenuId(id);
   };
@@ -102,15 +98,21 @@ export function SafePlanExerciseList({
     onChange(next);
   };
 
-  const duplicate = () => {
+  const duplicate = async () => {
     if (!menuId) return;
-    const index = exerciseIds.indexOf(menuId);
-    const copy = duplicateExercise(menuId);
-    const next = [...exerciseIds];
-    next.splice(index + 1, 0, copy.id);
-    onChange(next);
+    const sourceId = menuId;
+    const index = exerciseIds.indexOf(sourceId);
     closeMenu();
-    onMessage('Ejercicio duplicado en el plan.');
+    try {
+      const copy = await duplicateExerciseWithMedia(sourceId);
+      const next = [...exerciseIds];
+      next.splice(index + 1, 0, copy.id);
+      onDuplicateCreated?.(copy.id);
+      onChange(next);
+      onMessage('Ejercicio duplicado en el plan.');
+    } catch (error) {
+      onMessage(error instanceof Error ? error.message : 'No pudimos duplicar el ejercicio.');
+    }
   };
 
   const remove = () => {
@@ -143,7 +145,6 @@ export function SafePlanExerciseList({
           const exercise = catalog.find((item) => item.id === id);
           if (!exercise) return null;
           const menuOpen = menuId === id && menuExercise?.id === id;
-
           return (
             <div className="atal-plan-exercise-row" key={id}>
               <ExerciseMediaThumbnail mediaId={exercise.details.media.mediaId} name={exercise.name} />
@@ -152,21 +153,9 @@ export function SafePlanExerciseList({
                 <small>{exercise.details.sets} series · {exercise.details.repetitions ?? exercise.details.time ?? 'Por definir'}</small>
               </span>
               <div className="atal-plan-exercise-controls">
-                <button type="button" disabled={index === 0} onClick={() => move(index, -1)} aria-label={`Subir ${exercise.name}`}>
-                  <ArrowUp />
-                </button>
-                <button type="button" disabled={index === exerciseIds.length - 1} onClick={() => move(index, 1)} aria-label={`Bajar ${exercise.name}`}>
-                  <ArrowDown />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Más opciones para ${exercise.name}`}
-                  aria-expanded={menuOpen}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => toggleMenu(id, event.currentTarget)}
-                >
-                  <MoreHorizontal />
-                </button>
+                <button type="button" disabled={index === 0} onClick={() => move(index, -1)} aria-label={`Subir ${exercise.name}`}><ArrowUp /></button>
+                <button type="button" disabled={index === exerciseIds.length - 1} onClick={() => move(index, 1)} aria-label={`Bajar ${exercise.name}`}><ArrowDown /></button>
+                <button type="button" aria-label={`Más opciones para ${exercise.name}`} aria-expanded={menuOpen} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => toggleMenu(id, event.currentTarget)}><MoreHorizontal /></button>
               </div>
             </div>
           );
@@ -174,54 +163,22 @@ export function SafePlanExerciseList({
       </div>
 
       {menuId && menuExercise && menuPosition && typeof document !== 'undefined' && createPortal(
-        <div
-          className="atal-exercise-context-menu"
-          role="menu"
-          aria-label={`Acciones para ${menuExercise.name}`}
-          style={{ top: menuPosition.top, left: menuPosition.left }}
-          onPointerDown={(event) => event.stopPropagation()}
-        >
-          <button type="button" role="menuitem" onClick={() => { closeMenu(); router.push(`/exercises/${menuExercise.id}`); }}>
-            <Pencil />
-            <span>Ver y editar</span>
-          </button>
-          <button type="button" role="menuitem" onClick={duplicate}>
-            <Copy />
-            <span>Duplicar</span>
-          </button>
-          <button type="button" role="menuitem" className="is-danger" onClick={() => { const id = menuExercise.id; closeMenu(); setConfirmId(id); }}>
-            <Trash2 />
-            <span>Quitar del plan</span>
-          </button>
+        <div className="atal-exercise-context-menu" role="menu" aria-label={`Acciones para ${menuExercise.name}`} style={{ top: menuPosition.top, left: menuPosition.left }} onPointerDown={(event) => event.stopPropagation()}>
+          <button type="button" role="menuitem" onClick={() => { closeMenu(); router.push(`/exercises/${menuExercise.id}`); }}><Pencil /><span>Ver y editar</span></button>
+          <button type="button" role="menuitem" onClick={() => void duplicate()}><Copy /><span>Duplicar</span></button>
+          <button type="button" role="menuitem" className="is-danger" onClick={() => { const id = menuExercise.id; closeMenu(); setConfirmId(id); }}><Trash2 /><span>Quitar del plan</span></button>
         </div>,
         document.body,
       )}
 
-      {removed && (
-        <div className="atal-undo-toast" role="status">
-          <span>Ejercicio quitado del plan.</span>
-          <button type="button" onClick={undo}><Undo2 />Deshacer</button>
-        </div>
-      )}
+      {removed && <div className="atal-undo-toast" role="status"><span>Ejercicio quitado del plan.</span><button type="button" onClick={undo}><Undo2 />Deshacer</button></div>}
 
       {confirmId && typeof document !== 'undefined' && createPortal(
         <div className="atal-exercise-confirm-backdrop" onMouseDown={() => setConfirmId(null)}>
-          <section
-            className="atal-exercise-confirm-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="atal-exercise-confirm-title"
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+          <section className="atal-exercise-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="atal-exercise-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
             <span className="atal-exercise-confirm-icon"><Trash2 /></span>
-            <div className="atal-exercise-confirm-copy">
-              <h2 id="atal-exercise-confirm-title">¿Quitar {confirmExercise?.name ?? 'este ejercicio'}?</h2>
-              <p>Se quitará de este plan, pero seguirá disponible en la biblioteca de ejercicios.</p>
-            </div>
-            <div className="atal-exercise-confirm-actions">
-              <button type="button" autoFocus onClick={() => setConfirmId(null)}>Cancelar</button>
-              <button type="button" className="is-danger" onClick={remove}><Trash2 />Quitar del plan</button>
-            </div>
+            <div className="atal-exercise-confirm-copy"><h2 id="atal-exercise-confirm-title">¿Quitar {confirmExercise?.name ?? 'este ejercicio'}?</h2><p>Se quitará de este plan, pero seguirá disponible en la biblioteca de ejercicios.</p></div>
+            <div className="atal-exercise-confirm-actions"><button type="button" autoFocus onClick={() => setConfirmId(null)}>Cancelar</button><button type="button" className="is-danger" onClick={remove}><Trash2 />Quitar del plan</button></div>
           </section>
         </div>,
         document.body,
