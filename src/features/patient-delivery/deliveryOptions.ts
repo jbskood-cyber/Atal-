@@ -158,6 +158,9 @@ export function measurePatientPlanFirstPageHeader(
   const objectiveLines = visibleLineCount(documentModel.plan.objective, A4_WIDTH - PDF_MARGIN * 2, objectiveSize, 'regular');
   const objectiveBottom = objectiveY - objectiveLines * objectiveLineHeight;
   const exercisesLabelY = Math.min(397, objectiveBottom - 20);
+  if (exercisesLabelY < 82) {
+    throw new Error('El encabezado clínico contiene más texto del que puede mostrarse de forma legible en una página. Acorta únicamente el texto redundante antes de generar el documento.');
+  }
 
   return {
     patientNameY,
