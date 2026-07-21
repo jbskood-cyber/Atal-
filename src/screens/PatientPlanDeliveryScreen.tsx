@@ -77,6 +77,9 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
 
   useEffect(() => {
     setConfirmed(false);
+  }, [planId, plan?.updatedAt]);
+
+  useEffect(() => {
     setPdfResult(null);
     setMessage('');
     setError('');
@@ -183,17 +186,17 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
     <section className="atal-delivery-section">
       <header><small>Paso 1</small><h2>Tipo de documento</h2></header>
       <div className="atal-delivery-mode-grid">
-        <button type="button" className={normalizedOptions.mode === 'simple' ? 'is-active' : ''} onClick={() => chooseMode('simple')}><FileText /><span><b>Plan simple</b><small>Resumen accesible, una hoja como prioridad.</small></span><Check /></button>
-        <button type="button" className={normalizedOptions.mode === 'session-log' ? 'is-active' : ''} onClick={() => chooseMode('session-log')}><Check /><span><b>Registro de sesiones</b><small>Formato rellenable por sesiones de rehabilitación.</small></span><Check /></button>
-        <button type="button" className={normalizedOptions.mode === 'detailed' ? 'is-active' : ''} onClick={() => chooseMode('detailed')}><ShieldCheck /><span><b>Plan detallado</b><small>Material completo con instrucciones e imágenes opcionales.</small></span><Check /></button>
+        <button type="button" aria-pressed={normalizedOptions.mode === 'simple'} className={normalizedOptions.mode === 'simple' ? 'is-active' : ''} onClick={() => chooseMode('simple')}><FileText /><span><b>Plan simple</b><small>Resumen accesible, una hoja como prioridad.</small></span><Check /></button>
+        <button type="button" aria-pressed={normalizedOptions.mode === 'session-log'} className={normalizedOptions.mode === 'session-log' ? 'is-active' : ''} onClick={() => chooseMode('session-log')}><Check /><span><b>Registro de sesiones</b><small>Formato rellenable por sesiones de rehabilitación.</small></span><Check /></button>
+        <button type="button" aria-pressed={normalizedOptions.mode === 'detailed'} className={normalizedOptions.mode === 'detailed' ? 'is-active' : ''} onClick={() => chooseMode('detailed')}><ShieldCheck /><span><b>Plan detallado</b><small>Material completo con instrucciones e imágenes opcionales.</small></span><Check /></button>
       </div>
     </section>
 
     {normalizedOptions.mode !== 'detailed' && <section className="atal-delivery-section">
       <header><small>Paso 2</small><h2>Legibilidad</h2></header>
       <div className="atal-delivery-segment" role="group" aria-label="Tamaño de letra">
-        <button type="button" className={normalizedOptions.fontScale === 'large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'large' })}>Letra grande</button>
-        <button type="button" className={normalizedOptions.fontScale === 'extra-large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'extra-large' })}>Letra extra grande</button>
+        <button type="button" aria-pressed={normalizedOptions.fontScale === 'large'} className={normalizedOptions.fontScale === 'large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'large' })}>Letra grande</button>
+        <button type="button" aria-pressed={normalizedOptions.fontScale === 'extra-large'} className={normalizedOptions.fontScale === 'extra-large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'extra-large' })}>Letra extra grande</button>
       </div>
       <p className="atal-delivery-help">Atal nunca reducirá la letra para forzar el contenido en una sola página.</p>
     </section>}
@@ -210,7 +213,7 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
       <section className="atal-delivery-section">
         <header><small>Paso 3</small><h2>Sesiones a registrar</h2></header>
         <div className="atal-delivery-session-count"><label><span>Cantidad de sesiones</span><input type="number" inputMode="numeric" min={1} max={99} value={normalizedOptions.sessionCount} onChange={(event) => updateOptions({ sessionCount: Number(event.target.value) })} /></label><small>De 1 a 99. No está ligado a semanas ni a fechas predeterminadas.</small></div>
-        <div className="atal-delivery-presets" aria-label="Cantidades rápidas">{SESSION_PRESETS.map((value) => <button type="button" key={value} className={normalizedOptions.sessionCount === value ? 'is-active' : ''} onClick={() => updateOptions({ sessionCount: value })}>{value}</button>)}</div>
+        <div className="atal-delivery-presets" aria-label="Cantidades rápidas">{SESSION_PRESETS.map((value) => <button type="button" key={value} aria-pressed={normalizedOptions.sessionCount === value} className={normalizedOptions.sessionCount === value ? 'is-active' : ''} onClick={() => updateOptions({ sessionCount: value })}>{value}</button>)}</div>
       </section>
       <section className="atal-delivery-section">
         <header><small>Paso 4</small><h2>Datos de cada sesión</h2></header>
