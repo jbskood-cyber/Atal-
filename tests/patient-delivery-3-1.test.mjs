@@ -41,7 +41,7 @@ test('measures wrapped rows and uses the same adaptive page chunks for estimates
 test('renders a premium monochrome plan from the real prescription without fixed repetitions or series',()=>{
   const renderer=read('src/features/patient-delivery/pdfUniversalRenderer.ts');
   assert.match(renderer,/PLAN PERSONAL DE REHABILITACIÓN/);
-  assert.match(renderer,/Ejercicios prescritos/);
+  assert.match(renderer,/EJERCICIOS PRESCRITOS/);
   assert.match(renderer,/compactPatientPlanDose/);
   assert.match(renderer,/exercise\.rest/);
   assert.match(renderer,/exercise\.therapistNotes \|\| exercise\.objective/);
