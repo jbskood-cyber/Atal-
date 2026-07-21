@@ -43,11 +43,12 @@
 - `layoutPatientLogPages(documentModel, fontScale)`
 - `estimatePatientPlanPages(documentModel, options)` using the same chunks as rendering.
 
-- [ ] Measure visible wrapped lines for name, prescription and key instruction.
-- [ ] Calculate row heights with minimum accessible spacing.
-- [ ] Pack rows into first, continuation and final pages while reserving final safety/outcome space.
-- [ ] Keep every row complete and guarantee at least one row per page.
-- [ ] Derive plan and log page counts from the measured chunks.
+- [x] Measure visible wrapped lines for name, prescription, rest and key instruction.
+- [x] Calculate row heights with minimum accessible spacing.
+- [x] Pack rows into first, continuation and final pages while reserving final safety/outcome space.
+- [x] Keep every row complete and guarantee at least one row per page.
+- [x] Derive plan and log page counts from the measured chunks.
+- [x] Preserve mixed repetitions/time and append only useful load or equipment.
 
 ### Task 3: Render adaptive premium PDF pages
 
@@ -56,12 +57,12 @@
 
 **Consumes:** Layout rows and page chunks from Task 2.
 
-- [ ] Draw plan exercise rows using measured heights and line counts.
-- [ ] Draw log rows using measured heights and the universal actual-result field.
-- [ ] Use adaptive chunks for plan continuation and each session.
-- [ ] Add professional responsible and next-review lines to the final plan page.
-- [ ] Add light, adequate and intense perceived-effort choices.
-- [ ] Keep monochrome styling, accessible type and local PDF 1.4 generation.
+- [x] Draw plan exercise rows using measured heights and line counts.
+- [x] Draw log rows using measured heights and the universal actual-result field.
+- [x] Use adaptive chunks for plan continuation and each session.
+- [x] Add professional responsible and next-review lines to the final plan page.
+- [x] Add light, adequate and intense perceived-effort choices.
+- [x] Keep monochrome styling, accessible type and local PDF 1.4 generation.
 
 ### Task 4: Harden recipient routing and compact screen behavior
 
@@ -70,11 +71,11 @@
 - Modify: `src/screens/PatientPlanDeliveryScreen.tsx`
 - Modify: `src/styles/atal-patient-delivery.css`
 
-- [ ] Normalize common phone punctuation and `00` prefix without claiming delivery success.
-- [ ] Prefer patient phone and use responsible contact only as fallback.
-- [ ] Keep Download as the primary preparation action and WhatsApp as a separate redirect.
-- [ ] Keep only document mode, session count, readability and collapsed advanced options visible.
-- [ ] Preserve native Share for attaching the real PDF and Print for the generated PDF.
+- [x] Normalize common phone punctuation, responsible-contact text and `00` prefix without claiming delivery success.
+- [x] Prefer patient phone and use responsible contact only as fallback.
+- [x] Keep Download as the primary preparation action and WhatsApp as a separate redirect.
+- [x] Keep only document mode, session count, readability and collapsed advanced options visible.
+- [x] Preserve native Share for attaching the real PDF and Print for the generated PDF.
 
 ### Task 5: Validate and close
 
