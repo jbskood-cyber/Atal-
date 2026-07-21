@@ -24,10 +24,14 @@ test('keeps home alert icon surfaces neutral while preserving semantic icon colo
   assert.doesNotMatch(css, /\.atal-home-row-icon[^}]*color:/s);
 });
 
-test('anchors short command-center content above the composer without a ghost gap', () => {
+test('keeps the real treatment draft rendered while removing the ghost gap', () => {
   const css = read('src/styles/atal-ai-surgical-polish.css');
-  assert.match(css, /\.atal-command-thread[^}]*display:\s*grid/s);
-  assert.match(css, /align-content:\s*safe end/);
+  assert.match(conversation, /<ConversationalDraftCard/);
+  assert.match(css, /\.atal-command-thread\s*\{[^}]*display:\s*flex/s);
+  assert.match(css, /flex-direction:\s*column/);
+  assert.match(css, /\.atal-command-thread::before\s*\{[^}]*flex:\s*1\s+1\s+auto/s);
+  assert.match(css, /\.atal-command-thread\s*>\s*\*\s*\{[^}]*flex:\s*0\s+0\s+auto/s);
+  assert.doesNotMatch(css, /align-content:\s*safe end/);
 });
 
 test('automatically dismisses notices with an exit state while preserving manual close', () => {
@@ -39,10 +43,14 @@ test('automatically dismisses notices with an exit state while preserving manual
   assert.match(css, /\.atal-command-toast\.is-leaving/);
 });
 
-test('shows an upward arrow when the composer has content', () => {
-  assert.match(composer, /ArrowUp/);
-  assert.match(composer, /is-send/);
-  assert.doesNotMatch(composer, /\bSend\b/);
+test('shows a large white upward arrow using the official Atal green', () => {
+  const css = read('src/styles/atal-ai-surgical-polish.css');
+  assert.match(composer, /atal-command-send-glyph/);
+  assert.match(composer, />↑<\/span>/);
+  assert.doesNotMatch(composer, /ArrowUp/);
+  assert.match(css, /\.atal-command-dynamic\.is-send\s*\{[^}]*background:\s*var\(--green\)/s);
+  assert.match(css, /\.atal-command-send-glyph\s*\{[^}]*color:\s*#fff/s);
+  assert.match(css, /font-size:\s*32px/);
 });
 
 test('uses a compact attachment popover without redundant heading copy', () => {
