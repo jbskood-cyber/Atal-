@@ -51,10 +51,10 @@ function drawHeader(page: LocalPdfPage, documentModel: PatientPlanDocument, page
 }
 
 function drawFooter(page: LocalPdfPage, documentModel: PatientPlanDocument, number: number, total: number, base: number) {
-  page.drawLine({ x1: MARGIN, y1: 53, x2: A4_WIDTH - MARGIN, y2: 53, stroke: LINE, lineWidth: 0.9 });
-  page.drawText(`${documentModel.patient.name} · ${documentModel.plan.title}`, { x: MARGIN, y: 37, size: 10.5, color: MUTED });
-  page.drawText(`Página ${number} de ${total}`, { x: A4_WIDTH - MARGIN - 82, y: 37, size: 10.5, font: 'bold', color: MUTED });
-  drawWrapped(page, 'Detén el ejercicio y contacta a tu fisioterapeuta si aparece dolor fuerte, mareo o síntomas fuera de lo indicado.', MARGIN, 20, A4_WIDTH - MARGIN * 2, Math.max(11, base - 3), 13, { color: MUTED, maxLines: 1 });
+  page.drawLine({ x1: MARGIN, y1: 58, x2: A4_WIDTH - MARGIN, y2: 58, stroke: LINE, lineWidth: 0.9 });
+  page.drawText(`${documentModel.patient.name} · ${documentModel.plan.title}`, { x: MARGIN, y: 42, size: 10.5, color: MUTED });
+  page.drawText(`Página ${number} de ${total}`, { x: A4_WIDTH - MARGIN - 82, y: 42, size: 10.5, font: 'bold', color: MUTED });
+  drawWrapped(page, 'Detén el ejercicio y contacta a tu fisioterapeuta si aparece dolor fuerte, mareo o síntomas fuera de lo indicado.', MARGIN, 25, A4_WIDTH - MARGIN * 2, Math.max(11, base - 3), 12, { color: MUTED, maxLines: 2 });
 }
 
 function drawFact(page: LocalPdfPage, x: number, y: number, width: number, label: string, value: string, base: number) {
@@ -121,14 +121,9 @@ export function renderSimplePatientPlanPdf(
       page.drawText('Indicaciones generales', { x: MARGIN + 14, y: 402, size: base, font: 'bold', color: GREEN_DARK });
       drawWrapped(page, documentModel.plan.generalInstructions, MARGIN + 14, 379, A4_WIDTH - MARGIN * 2 - 28, base, base + 4, { color: INK, maxLines: 3 });
 
-      if (!active) {
-        page.drawRect({ x: MARGIN, y: 302, width: A4_WIDTH - MARGIN * 2, height: 32, fill: WARM });
-        page.drawText(`Este documento corresponde a un plan ${status.toLowerCase()}.`, { x: MARGIN + 13, y: 312, size: Math.max(12, base - 1), font: 'bold', color: WARM_INK });
-      }
-
       if (!options.includeExercises) {
-        page.drawText(`${documentModel.professional.name} · ${documentModel.professional.specialty}`, { x: MARGIN, y: 255, size: base, font: 'bold', color: INK });
-        page.drawText(`${documentModel.professional.clinic} · Generado ${formatDate(documentModel.generatedAt)}`, { x: MARGIN, y: 230, size: Math.max(12, base - 1), color: MUTED });
+        page.drawText(`${documentModel.professional.name} · ${documentModel.professional.specialty}`, { x: MARGIN, y: 275, size: base, font: 'bold', color: INK });
+        page.drawText(`${documentModel.professional.clinic} · Generado ${formatDate(documentModel.generatedAt)}`, { x: MARGIN, y: 248, size: Math.max(12, base - 1), color: MUTED });
       }
     } else {
       page.drawText(documentModel.patient.name, { x: MARGIN, y: 742, size: title - 3, font: 'bold', color: INK });
