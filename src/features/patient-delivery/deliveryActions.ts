@@ -1,4 +1,9 @@
-import type { PatientPlanDocument, PatientPlanPdfResult, SharePatientPlanResult } from './types';
+import type {
+  PatientPlanDocument,
+  PatientPlanPdfResult,
+  PatientWhatsAppTarget,
+  SharePatientPlanResult,
+} from './types';
 
 function safeFilenamePart(value: string) {
   return value
@@ -63,6 +68,97 @@ export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise
   }
 }
 
-export function printPatientPlan() {
-  window.print();
+export function normalizeWhatsAppPhone(value: string) {
+  const candidates = value.match(/(?:\+|00)?\d[\d\s().-]{6,}\d/g) ?? [value];
+  const normalized = candidates
+    .map((candidate) => candidate.replace(/\D/g, '').replace(/^00/, ''))
+    .filter((candidate) => candidate.length >= 8 && candidate.length <= 15)
+    .sort((left, right) => right.length - left.length);
+  return normalized[0] ?? '';
+}
+
+export function resolvePatientWhatsAppTarget(patient: PatientPlanDocument['patient']): PatientWhatsAppTarget | null {
+  const patientPhone = normalizeWhatsAppPhone(patient.phone);
+  if (patientPhone) return { phone: patientPhone, source: 'patient', label: patient.name };
+  const responsiblePhone = normalizeWhatsAppPhone(patient.responsibleContact);
+  if (responsiblePhone) return { phone: responsiblePhone, source: 'responsible', label: 'Responsable del paciente' };
+  return null;
+}
+
+export function patientPlanWhatsAppUrl(documentModel: PatientPlanDocument, target: PatientWhatsAppTarget) {
+  const message = `Hola. Tengo preparado el plan de rehabilitación de ${documentModel.patient.name}. En el siguiente paso adjuntaré el PDF para que puedas guardarlo y revisarlo.`;
+  return `https://wa.me/${target.phone}?text=${encodeURIComponent(message)}`;
+}
+
+export function openPatientPlanWhatsApp(documentModel: PatientPlanDocument) {
+  const target = resolvePatientWhatsAppTarget(documentModel.patient);
+  if (!target) throw new Error('Añade un número válido con código de país para el paciente o su responsable antes de abrir WhatsApp.');
+  const url = patientPlanWhatsAppUrl(documentModel, target);
+  const opened = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!opened) window.location.assign(url);
+  return target;
+}
+
+export function printPatientPlanPdf(result: PatientPlanPdfResult): Promise<'printed' | 'opened'> {
+  const blob = patientPlanPdfBlob(result);
+  const url = URL.createObjectURL(blob);
+
+  return new Promise((resolve, reject) => {
+    const frame = document.createElement('iframe');
+    let finished = false;
+    let fallbackTimer = 0;
+
+    const delayedCleanup = () => {
+      window.setTimeout(() => {
+        frame.remove();
+        URL.revokeObjectURL(url);
+      }, 60_000);
+    };
+
+    const finish = (resultValue: 'printed' | 'opened') => {
+      if (finished) return;
+      finished = true;
+      window.clearTimeout(fallbackTimer);
+      delayedCleanup();
+      resolve(resultValue);
+    };
+
+    const openFallback = () => {
+      if (finished) return;
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        finished = true;
+        window.clearTimeout(fallbackTimer);
+        frame.remove();
+        URL.revokeObjectURL(url);
+        reject(new Error('El navegador bloqueó la ventana de impresión. Descarga el PDF para imprimirlo.'));
+        return;
+      }
+      finish('opened');
+    };
+
+    frame.title = 'Documento PDF para imprimir';
+    frame.style.position = 'fixed';
+    frame.style.right = '0';
+    frame.style.bottom = '0';
+    frame.style.width = '1px';
+    frame.style.height = '1px';
+    frame.style.border = '0';
+    frame.style.opacity = '0';
+    frame.onload = () => {
+      try {
+        const target = frame.contentWindow;
+        if (!target) { openFallback(); return; }
+        target.focus();
+        target.print();
+        finish('printed');
+      } catch {
+        openFallback();
+      }
+    };
+    frame.onerror = openFallback;
+    frame.src = url;
+    document.body.appendChild(frame);
+    fallbackTimer = window.setTimeout(openFallback, 3500);
+  });
 }

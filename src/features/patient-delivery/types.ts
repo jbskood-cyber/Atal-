@@ -39,6 +39,8 @@ export type PatientPlanDocument = {
     name: string;
     diagnosis: string;
     affectedArea: string;
+    phone: string;
+    responsibleContact: string;
   };
   professional: {
     name: string;
@@ -66,6 +68,24 @@ export type PatientPlanDocument = {
   };
 };
 
+export type PatientPlanDocumentMode = 'plan-and-log' | 'plan-only' | 'log-only' | 'detailed';
+export type PatientPlanFontScale = 'large' | 'extra-large';
+
+export type PatientPlanDeliveryOptions = {
+  mode: PatientPlanDocumentMode;
+  fontScale: PatientPlanFontScale;
+  includeImages: boolean;
+  sessionCount: number;
+};
+
+export type PatientPlanPageEstimate = {
+  pageCount: number;
+  planPageCount: number;
+  logPageCount: number;
+  logPagesPerSession: number;
+  summary: string;
+};
+
 export type PatientPlanResolvedMedia = {
   exerciseId: string;
   jpegBytes?: Uint8Array;
@@ -86,3 +106,9 @@ export type SharePatientPlanResult =
   | { status: 'shared' }
   | { status: 'cancelled' }
   | { status: 'downloaded'; reason: 'unsupported' | 'failed' };
+
+export type PatientWhatsAppTarget = {
+  phone: string;
+  source: 'patient' | 'responsible';
+  label: string;
+};

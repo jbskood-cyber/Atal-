@@ -15,9 +15,13 @@ const planStatusLabel: Record<PlanStatus, string> = {
 
 export function formatExerciseDose(exercise: Pick<ExerciseEntity, 'sets' | 'repetitions' | 'time' | 'rest'>) {
   const sets = `${Math.max(1, exercise.sets)} ${exercise.sets === 1 ? 'serie' : 'series'}`;
-  const work = exercise.repetitions && exercise.repetitions > 0
-    ? `${exercise.repetitions} ${exercise.repetitions === 1 ? 'repetición' : 'repeticiones'}`
-    : exercise.time?.trim() || 'duración indicada por el fisioterapeuta';
+  const workParts: string[] = [];
+  if (exercise.repetitions && exercise.repetitions > 0) {
+    workParts.push(`${exercise.repetitions} ${exercise.repetitions === 1 ? 'repetición' : 'repeticiones'}`);
+  }
+  const time = exercise.time?.trim();
+  if (time) workParts.push(time);
+  const work = workParts.length ? workParts.join(' · ') : 'duración indicada por el fisioterapeuta';
   const rest = exercise.rest.trim() ? ` · descanso ${exercise.rest.trim()}` : '';
   return `${sets} × ${work}${rest}`;
 }
@@ -96,6 +100,8 @@ export function buildPatientPlanDocument(
       name: patient.name.trim(),
       diagnosis: patient.diagnosis.trim() || 'Motivo por completar',
       affectedArea: patient.affectedArea.trim() || 'Zona por completar',
+      phone: patient.contact.phone.trim(),
+      responsibleContact: patient.contact.emergencyContact.trim(),
     },
     professional: {
       name: state.settings.professionalName.trim() || 'Fisioterapeuta responsable',
