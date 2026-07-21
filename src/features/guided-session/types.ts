@@ -24,20 +24,6 @@ export type SetRecord = { completed: boolean; repetitions?: number; seconds?: nu
 export type DiscomfortReport = { pain: number; effort: number; fatigue: number; symptoms: Symptom[]; comment: string };
 export type ExerciseRecord = { result?: ExerciseResult; sets: SetRecord[]; discomfort?: DiscomfortReport };
 
-export type GuidedSessionDraft = {
-  version: 2;
-  patientId: string;
-  planId: string;
-  status: SessionStatus;
-  stage: 'prepare' | 'exercise' | 'close' | 'summary';
-  currentExerciseIndex: number;
-  startedAt?: string;
-  completedAt?: string;
-  start: { pain: number; energy: number; comment: string };
-  exercises: Record<string, ExerciseRecord>;
-  end: { pain: number; energy: number; effort: number; symptoms: Symptom[]; comment: string; easiest: string; hardest: string; discomfort: string };
-};
-
 export type GuidedPlan = {
   id: string;
   status: 'draft'|'active'|'paused'|'completed'|'archived'|'none';
@@ -46,4 +32,19 @@ export type GuidedPlan = {
   estimatedDuration: string;
   generalInstructions: string;
   exercises: GuidedExercise[];
+};
+
+export type GuidedSessionDraft = {
+  version: 2;
+  patientId: string;
+  planId: string;
+  planSnapshot?: GuidedPlan;
+  status: SessionStatus;
+  stage: 'prepare' | 'exercise' | 'close' | 'summary';
+  currentExerciseIndex: number;
+  startedAt?: string;
+  completedAt?: string;
+  start: { pain: number; energy: number; comment: string };
+  exercises: Record<string, ExerciseRecord>;
+  end: { pain: number; energy: number; effort: number; symptoms: Symptom[]; comment: string; easiest: string; hardest: string; discomfort: string };
 };
