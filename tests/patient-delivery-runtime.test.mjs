@@ -96,7 +96,7 @@ function universalDocument() {
     generatedAt: '2026-07-21T12:00:00.000Z',
     patient: {
       id: 'patient-1',
-      name: repeated('Nombre', 16, 'PACIENTEFINAL'),
+      name: repeated('Nombre', 8, 'PACIENTEFINAL'),
       diagnosis: 'Dolor persistente de rodilla con limitación funcional',
       affectedArea: 'Rodilla derecha',
       phone: '+52 (444) 123-45-67',
@@ -112,7 +112,7 @@ function universalDocument() {
       title: repeated('Plan', 14, 'PLANFINAL'),
       status: 'active',
       focus: 'Fuerza y tolerancia',
-      objective: repeated('objetivo-terapeutico', 52, 'OBJETIVOPLANFINAL'),
+      objective: repeated('objetivo-terapeutico', 24, 'OBJETIVOPLANFINAL'),
       duration: 'Ocho semanas con ajuste según evolución clínica',
       frequency: 'Tres sesiones semanales y práctica domiciliaria según tolerancia',
       progression: 'Progresiva',
@@ -134,12 +134,16 @@ function pdfContains(pdfBytes, text, pdfHexString) {
   return Buffer.from(pdfBytes).toString('latin1').includes(encoded);
 }
 
-test('measures every wrapped clinical line instead of silently capping long exercise content', () => {
+test('measures every wrapped clinical line instead of silently capping long content', () => {
   const { options } = compileRuntime();
   const documentModel = universalDocument();
+  const header = options.measurePatientPlanFirstPageHeader(documentModel, 'large');
   const row = options.measurePatientPlanRow(documentModel.exercises[0], 'large');
   const logRow = options.measurePatientLogRow(documentModel.exercises[0], 'large');
 
+  assert.ok(header.patientNameLines > 2, `expected more than 2 patient-name lines, received ${header.patientNameLines}`);
+  assert.ok(header.objectiveLines > 3, `expected more than 3 plan-objective lines, received ${header.objectiveLines}`);
+  assert.ok(header.exercisesLabelY >= 82, `expected a footer-safe exercise heading, received y=${header.exercisesLabelY}`);
   assert.ok(row.nameLines > 2, `expected more than 2 name lines, received ${row.nameLines}`);
   assert.ok(row.doseLines > 2, `expected more than 2 dose lines, received ${row.doseLines}`);
   assert.ok(row.restLines > 1, `expected more than 1 rest line, received ${row.restLines}`);
@@ -179,6 +183,16 @@ test('renders long saved clinical content, keeps whole rows and matches the esti
   ]) {
     assert.equal(pdfContains(result.bytes, marker, writer.pdfHexString), true, `missing ${marker} from rendered PDF`);
   }
+});
+
+test('rejects an impossible header instead of clipping it into the footer', () => {
+  const { options } = compileRuntime();
+  const documentModel = universalDocument();
+  documentModel.plan.objective = repeated('objetivo-clinico-extremo', 120, 'OBJETIVOIMPOSIBLEFINAL');
+  assert.throws(
+    () => options.layoutPatientPlanPages(documentModel, 'large'),
+    /encabezado clínico contiene más texto/,
+  );
 });
 
 test('normalizes WhatsApp recipients and preserves patient-first fallback behavior', () => {
