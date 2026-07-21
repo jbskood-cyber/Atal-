@@ -45,7 +45,7 @@ export function resolvePatientPlan(patientId: string): GuidedPlan {
     name: localPlan.title,
     estimatedDuration: localPlan.duration || 'Por definir',
     therapistMessage: localPlan.goal || `Trabajaremos ${localPlan.focus || 'tu recuperación'} de manera progresiva.`,
-    generalInstructions: `${localPlan.frequency || 'Frecuencia por definir'}. Respeta las indicaciones, realiza cada movimiento con calma y detente ante dolor fuerte.`,
+    generalInstructions: localPlan.generalInstructions.trim() || `${localPlan.frequency || 'Frecuencia por definir'}. Respeta las indicaciones, realiza cada movimiento con calma y detente ante dolor fuerte.`,
     exercises: localPlan.exerciseIds.map(resolveGuidedExercise).filter((exercise): exercise is GuidedExercise => Boolean(exercise)),
   };
 }
