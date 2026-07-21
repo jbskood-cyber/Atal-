@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Activity, CalendarDays, ChevronRight, ClipboardCheck, FileText, Filter, Search, TrendingUp } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
@@ -21,12 +21,15 @@ export function ActivityScreen() {
   const params = useSearchParams();
   const router = useRouter();
   const patientFilter = params.get('patientId') ?? '';
-  const [view, setView] = useState<View>(params.get('view') === 'reports' ? 'reports' : 'tracking');
+  const requestedView: View = params.get('view') === 'reports' ? 'reports' : 'tracking';
+  const [view, setView] = useState<View>(requestedView);
   const [query, setQuery] = useState('');
   const [pendingOnly, setPendingOnly] = useState(false);
   const state = useAtalStore((store) => ({ sessions: store.sessions, patients: store.patients, plans: store.plans, events: store.events }));
   const summary = useMemo(() => summarizeClinicalSessions(patientFilter ? state.sessions.filter((session) => session.patientId === patientFilter) : state.sessions), [state.sessions, patientFilter]);
   const normalizedQuery = query.trim().toLowerCase();
+
+  useEffect(() => setView(requestedView), [requestedView]);
 
   const reports = useMemo(() => summary.sessions.filter((session) => {
     const patient = state.patients.find((item) => item.id === session.patientId);
