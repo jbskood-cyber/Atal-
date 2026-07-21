@@ -37,7 +37,7 @@ function drawWrapped(
 
 function exerciseDose(exercise: PatientPlanDocumentExercise, includeRest: boolean) {
   const work = exercise.repetitions && exercise.repetitions > 0
-    ? `${exercise.repetitions} rep.`
+    ? `${exercise.repetitions} repeticiones`
     : exercise.duration || 'tiempo indicado';
   return `${exercise.sets} series × ${work}${includeRest ? ` · descanso ${exercise.rest}` : ''}`;
 }
@@ -50,23 +50,23 @@ function drawHeader(page: LocalPdfPage, documentModel: PatientPlanDocument, subt
 }
 
 function drawFooter(page: LocalPdfPage, documentModel: PatientPlanDocument, number: number, total: number) {
-  page.drawLine({ x1: MARGIN, y1: 49, x2: A4_WIDTH - MARGIN, y2: 49, stroke: LINE, lineWidth: 0.9 });
-  page.drawText(`${documentModel.patient.name} · ${documentModel.plan.title}`, { x: MARGIN, y: 32, size: 10.5, color: MUTED });
-  page.drawText(`Página ${number} de ${total}`, { x: A4_WIDTH - MARGIN - 82, y: 32, size: 10.5, font: 'bold', color: MUTED });
-  page.drawText('Lleva este registro a tu siguiente cita de rehabilitación.', { x: MARGIN, y: 16, size: 10.5, color: MUTED });
+  page.drawLine({ x1: MARGIN, y1: 52, x2: A4_WIDTH - MARGIN, y2: 52, stroke: LINE, lineWidth: 0.9 });
+  page.drawText(`${documentModel.patient.name} · ${documentModel.plan.title}`, { x: MARGIN, y: 35, size: 11, color: MUTED });
+  page.drawText(`Página ${number} de ${total}`, { x: A4_WIDTH - MARGIN - 82, y: 35, size: 11, font: 'bold', color: MUTED });
+  page.drawText('Lleva este registro a tu siguiente cita de rehabilitación.', { x: MARGIN, y: 18, size: 11, color: MUTED });
 }
 
 function drawCheckbox(page: LocalPdfPage, x: number, y: number, label: string, size: number, fontSize: number) {
   page.strokeRect({ x, y: y - size + 2, width: size, height: size, stroke: GREEN_DARK, lineWidth: 1.1 });
-  page.drawText(label, { x: x + size + 6, y: y - size + 4, size: fontSize, color: INK });
+  page.drawText(label, { x: x + size + 7, y: y - size + 3, size: fontSize, color: INK });
 }
 
 function drawBlankField(page: LocalPdfPage, x: number, y: number, label: string, width: number, base: number, suffix = '') {
-  page.drawText(label, { x, y, size: Math.max(12, base - 1), font: 'bold', color: INK });
-  const labelWidth = label.length * Math.max(6, base * 0.5);
-  const lineStart = x + Math.min(width - 20, labelWidth + 8);
-  page.drawLine({ x1: lineStart, y1: y - 2, x2: x + width - (suffix ? 30 : 0), y2: y - 2, stroke: MUTED, lineWidth: 0.8 });
-  if (suffix) page.drawText(suffix, { x: x + width - 27, y, size: Math.max(12, base - 1), color: MUTED });
+  page.drawText(label, { x, y, size: base, font: 'bold', color: INK });
+  const labelWidth = label.length * Math.max(7, base * 0.52);
+  const lineStart = x + Math.min(width - 28, labelWidth + 9);
+  page.drawLine({ x1: lineStart, y1: y - 2, x2: x + width - (suffix ? 33 : 0), y2: y - 2, stroke: MUTED, lineWidth: 0.8 });
+  if (suffix) page.drawText(suffix, { x: x + width - 30, y, size: base, color: MUTED });
 }
 
 function drawExerciseLegend(
@@ -78,20 +78,15 @@ function drawExerciseLegend(
 ) {
   if (!options.includeExercises) return startY;
   page.drawText('Ejercicios del plan', { x: MARGIN, y: startY, size: base + 1, font: 'bold', color: INK });
-  const rowHeight = options.fontScale === 'extra-large' ? 28 : 24;
-  const columnWidth = (A4_WIDTH - MARGIN * 2 - 16) / 2;
+  const rowHeight = options.fontScale === 'extra-large' ? 44 : 40;
   documentModel.exercises.forEach((exercise, index) => {
-    const column = index % 2;
-    const row = Math.floor(index / 2);
-    const x = MARGIN + column * (columnWidth + 16);
-    const y = startY - 27 - row * rowHeight;
-    page.drawRect({ x, y: y - rowHeight + 6, width: 34, height: rowHeight - 5, fill: GREEN_SOFT });
-    page.drawText(String(exercise.order).padStart(2, '0'), { x: x + 8, y: y - 10, size: Math.max(11, base - 2), font: 'bold', color: GREEN_DARK });
-    page.drawText(exercise.name, { x: x + 43, y: y - 5, size: Math.max(12, base - 1), font: 'bold', color: INK });
-    drawWrapped(page, exerciseDose(exercise, options.includeRest), x + 43, y - 20, columnWidth - 47, Math.max(10.5, base - 3), 12, { color: MUTED, maxLines: 1 });
+    const y = startY - 28 - index * rowHeight;
+    page.drawRect({ x: MARGIN, y: y - rowHeight + 8, width: 40, height: rowHeight - 6, fill: GREEN_SOFT });
+    page.drawText(String(exercise.order).padStart(2, '0'), { x: MARGIN + 9, y: y - 12, size: base, font: 'bold', color: GREEN_DARK });
+    page.drawText(exercise.name, { x: MARGIN + 52, y: y - 5, size: base, font: 'bold', color: INK });
+    drawWrapped(page, exerciseDose(exercise, options.includeRest), MARGIN + 52, y - 23, A4_WIDTH - MARGIN * 2 - 56, base, base + 2, { color: MUTED, maxLines: 1 });
   });
-  const rows = Math.ceil(documentModel.exercises.length / 2);
-  return startY - 34 - rows * rowHeight;
+  return startY - 34 - documentModel.exercises.length * rowHeight;
 }
 
 function drawSessionCard(
@@ -106,52 +101,48 @@ function drawSessionCard(
   const x = MARGIN;
   const width = A4_WIDTH - MARGIN * 2;
   const bottom = top - height;
+  const boxSize = options.fontScale === 'extra-large' ? 18 : 16;
   page.strokeRect({ x, y: bottom, width, height, stroke: LINE, lineWidth: 1 });
-  page.drawRect({ x, y: top - 38, width, height: 38, fill: GREEN_SOFT });
-  page.drawText(`SESIÓN ${sessionNumber}`, { x: x + 14, y: top - 26, size: base + 1, font: 'bold', color: GREEN_DARK });
+  page.drawRect({ x, y: top - 42, width, height: 42, fill: GREEN_SOFT });
+  page.drawText(`SESIÓN ${sessionNumber}`, { x: x + 14, y: top - 29, size: base + 1, font: 'bold', color: GREEN_DARK });
 
-  if (options.logFields.date) drawBlankField(page, x + 126, top - 25, 'Fecha:', 176, base);
-  if (options.logFields.overallCompletion) drawCheckbox(page, x + width - 176, top - 17, 'Rutina completada', options.fontScale === 'extra-large' ? 17 : 15, Math.max(12, base - 1));
+  if (options.logFields.date) drawBlankField(page, x + 132, top - 28, 'Fecha:', 180, base);
+  if (options.logFields.overallCompletion) drawCheckbox(page, x + width - 198, top - 18, 'Rutina completada', boxSize, base);
 
-  let y = top - 60;
-  const hasPain = options.logFields.painBefore || options.logFields.painAfter;
-  if (hasPain || options.logFields.difficulty) {
-    let metricX = x + 14;
-    if (options.logFields.painBefore) {
-      drawBlankField(page, metricX, y, 'Dolor antes:', 150, base, '/10');
-      metricX += 166;
-    }
-    if (options.logFields.painAfter) {
-      drawBlankField(page, metricX, y, 'Dolor después:', 158, base, '/10');
-      metricX += 174;
-    }
-    if (options.logFields.difficulty) {
-      page.drawText('Dificultad:', { x: metricX, y, size: Math.max(12, base - 1), font: 'bold', color: INK });
-      const checkboxY = y + 7;
-      drawCheckbox(page, metricX + 72, checkboxY, 'Fácil', 13, 10.5);
-      drawCheckbox(page, metricX + 129, checkboxY, 'Bien', 13, 10.5);
-      drawCheckbox(page, metricX + 182, checkboxY, 'Difícil', 13, 10.5);
-    }
+  let y = top - 68;
+  if (options.logFields.painBefore || options.logFields.painAfter) {
+    if (options.logFields.painBefore) drawBlankField(page, x + 14, y, 'Dolor antes:', 230, base, '/10');
+    if (options.logFields.painAfter) drawBlankField(page, x + 278, y, 'Dolor después:', 230, base, '/10');
     y -= options.fontScale === 'extra-large' ? 34 : 30;
   }
 
+  if (options.logFields.difficulty) {
+    page.drawText('Dificultad percibida:', { x: x + 14, y, size: base, font: 'bold', color: INK });
+    const checkboxY = y + 9;
+    drawCheckbox(page, x + 178, checkboxY, 'Fácil', boxSize, base);
+    drawCheckbox(page, x + 285, checkboxY, 'Bien', boxSize, base);
+    drawCheckbox(page, x + 384, checkboxY, 'Difícil', boxSize, base);
+    y -= options.fontScale === 'extra-large' ? 36 : 32;
+  }
+
   if (options.logFields.perExerciseCompletion) {
-    page.drawText('Ejercicios realizados:', { x: x + 14, y, size: Math.max(12, base - 1), font: 'bold', color: INK });
-    y -= 20;
+    page.drawText('Ejercicios realizados:', { x: x + 14, y, size: base, font: 'bold', color: INK });
+    y -= options.fontScale === 'extra-large' ? 26 : 23;
     documentModel.exercises.forEach((exercise, index) => {
       const column = index % 6;
       const row = Math.floor(index / 6);
-      const checkboxY = y - row * (options.fontScale === 'extra-large' ? 24 : 20);
-      drawCheckbox(page, x + 18 + column * 78, checkboxY, String(exercise.order).padStart(2, '0'), options.fontScale === 'extra-large' ? 17 : 15, Math.max(11, base - 2));
+      const lineHeight = options.fontScale === 'extra-large' ? 26 : 22;
+      const checkboxY = y - row * lineHeight;
+      drawCheckbox(page, x + 18 + column * 82, checkboxY, String(exercise.order).padStart(2, '0'), boxSize, base);
     });
-    y -= Math.max(1, Math.ceil(documentModel.exercises.length / 6)) * (options.fontScale === 'extra-large' ? 24 : 20) + 2;
+    y -= Math.max(1, Math.ceil(documentModel.exercises.length / 6)) * (options.fontScale === 'extra-large' ? 26 : 22) + 2;
   }
 
   if (options.logFields.notes) {
-    page.drawText('Observaciones:', { x: x + 14, y, size: Math.max(12, base - 1), font: 'bold', color: INK });
-    const lineY = Math.max(bottom + 18, y - 17);
-    page.drawLine({ x1: x + 116, y1: lineY, x2: x + width - 16, y2: lineY, stroke: MUTED, lineWidth: 0.7 });
-    if (lineY - 18 > bottom + 10) page.drawLine({ x1: x + 14, y1: lineY - 18, x2: x + width - 16, y2: lineY - 18, stroke: LINE, lineWidth: 0.7 });
+    page.drawText('Observaciones:', { x: x + 14, y, size: base, font: 'bold', color: INK });
+    const firstLine = y - 18;
+    page.drawLine({ x1: x + 14, y1: firstLine, x2: x + width - 16, y2: firstLine, stroke: MUTED, lineWidth: 0.7 });
+    if (firstLine - 22 > bottom + 12) page.drawLine({ x1: x + 14, y1: firstLine - 22, x2: x + width - 16, y2: firstLine - 22, stroke: LINE, lineWidth: 0.7 });
   }
 }
 
@@ -188,7 +179,7 @@ export function renderPatientSessionLogPdf(
       top = drawExerciseLegend(page, documentModel, options, 586, base) - 10;
     } else {
       page.drawText(documentModel.patient.name, { x: MARGIN, y: 741, size: title - 3, font: 'bold', color: INK });
-      page.drawText(`${documentModel.plan.title} · sesiones ${nextSession} en adelante`, { x: MARGIN, y: 714, size: base + 1, font: 'bold', color: GREEN_DARK });
+      page.drawText(`${documentModel.plan.title} · desde la sesión ${nextSession}`, { x: MARGIN, y: 714, size: base + 1, font: 'bold', color: GREEN_DARK });
       top = 686;
     }
 
