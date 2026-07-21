@@ -41,20 +41,28 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Composer: use the official Atal green and an unmistakable white up arrow. */
-.atal-command-composer .atal-command-dynamic.is-send {
+/* Composer: refined controls share the official Atal green. */
+.atal-command-composer .atal-command-dynamic.is-send,
+.atal-command-composer .atal-command-dynamic.is-processing {
   color: #fff;
   background: var(--green);
   box-shadow: 0 5px 16px color-mix(in srgb, var(--green) 28%, transparent);
 }
 
-.atal-command-send-glyph {
-  display: block;
+.atal-command-composer .atal-command-dynamic.is-send svg {
+  width: 24px;
+  height: 24px;
   color: #fff;
-  font-size: 32px;
-  font-weight: 500;
-  line-height: .82;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+}
+
+.atal-command-composer .atal-command-dynamic.is-processing svg {
+  position: static;
+  width: 14px;
+  height: 14px;
+  color: #fff;
+  fill: #fff;
+  opacity: 1;
 }
 
 /* Attachments: compact contextual popover instead of a large bottom sheet. */
@@ -125,7 +133,8 @@ html[data-theme="dark"] .atal-home-v2 .atal-home-row .atal-home-row-icon {
   background: var(--surface) !important;
 }
 
-html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-send {
+html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-send,
+html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-processing {
   color: #fff;
   background: var(--green);
 }
