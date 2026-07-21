@@ -10,13 +10,20 @@ function safeFilenamePart(value: string) {
     .slice(0, 64) || 'paciente';
 }
 
+function bytesToArrayBuffer(bytes: Uint8Array) {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 export function patientPlanFilename(documentModel: PatientPlanDocument) {
   const date = documentModel.generatedAt.slice(0, 10);
   return `atal-plan-${safeFilenamePart(documentModel.patient.name)}-${date}.pdf`;
 }
 
 export function patientPlanPdfBlob(result: PatientPlanPdfResult) {
-  return new Blob([result.bytes], { type: result.mimeType });
+  if (result.mimeType !== 'application/pdf') throw new Error('El documento no tiene un tipo PDF válido.');
+  return new Blob([bytesToArrayBuffer(result.bytes)], { type: 'application/pdf' });
 }
 
 export function downloadPatientPlanPdf(result: PatientPlanPdfResult) {
@@ -34,7 +41,7 @@ export function downloadPatientPlanPdf(result: PatientPlanPdfResult) {
 }
 
 export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise<SharePatientPlanResult> {
-  const file = new File([result.bytes], result.filename, { type: result.mimeType, lastModified: Date.now() });
+  const file = new File([bytesToArrayBuffer(result.bytes)], result.filename, { type: 'application/pdf', lastModified: Date.now() });
   const shareData: ShareData = {
     title: 'Plan de fisioterapia Atal',
     text: 'Plan personalizado generado localmente con Atal.',
