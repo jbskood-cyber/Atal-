@@ -79,9 +79,16 @@ export function patientPlanFontLabel(fontScale: PatientPlanFontScale) {
   return fontScale === 'extra-large' ? 'letra extra grande' : 'letra grande';
 }
 
+function meaningfulEquipment(value: string) {
+  const equipment = value.trim();
+  if (!equipment || /^(sin material especial|sin material|ningun[oa]|no aplica|según indicación)$/i.test(equipment)) return '';
+  return equipment;
+}
+
 export function compactPatientPlanDose(exercise: PatientPlanDocumentExercise) {
-  const dose = exercise.doseLabel.replace(/\s*·\s*descanso.*$/i, '').trim();
-  return dose || exercise.doseLabel;
+  const dose = exercise.doseLabel.replace(/\s*·\s*descanso.*$/i, '').trim() || exercise.doseLabel;
+  const equipment = meaningfulEquipment(exercise.equipment);
+  return equipment ? `${dose} · ${equipment}` : dose;
 }
 
 function visibleLineCount(text: string, width: number, size: number, font: 'regular' | 'bold', maxLines: number) {
@@ -102,7 +109,7 @@ export function measurePatientPlanRow(
   const cue = exercise.therapistNotes || exercise.objective;
   const nameLines = visibleLineCount(exercise.name, PLAN_TEXT_WIDTH, nameSize, 'bold', 2);
   const doseLines = visibleLineCount(compactPatientPlanDose(exercise), PLAN_DOSE_WIDTH, doseSize, 'regular', 2);
-  const restLines = visibleLineCount(`Descanso: ${exercise.rest}`, PLAN_REST_WIDTH, doseSize - 0.5, 'regular', 2);
+  const restLines = visibleLineCount(`Descanso: ${exercise.rest}`, PLAN_REST_WIDTH, doseSize - 0.5, 'regular', 1);
   const cueLines = visibleLineCount(`Clave: ${cue}`, PLAN_TEXT_WIDTH, cueSize, 'regular', 2);
   const middleHeight = Math.max(doseLines, restLines) * doseLineHeight;
   const measured = 12
