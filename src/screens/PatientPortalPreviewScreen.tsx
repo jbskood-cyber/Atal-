@@ -51,7 +51,7 @@ export function PatientPortalPreviewScreen({ patientId }: { patientId: string })
   const storedPlanStatus = stored ? store.plans.find((item) => item.id === stored.planId)?.status ?? 'none' : 'none';
   const storedCanResume = Boolean(stored && (stored.status === 'in_progress' || (stored.status === 'partial' && stored.stage !== 'summary')));
   const canResume = storedCanResume && storedPlanStatus === 'active';
-  const plan = canResume ? stored?.planSnapshot ?? livePlan : livePlan;
+  const plan = livePlan;
   const hasCompletedSession = Boolean(stored?.stage === 'summary' && stored.planId === plan.id);
   const latestSession = store.sessions.find((item) => item.planId === plan.id);
   const completed = canResume && stored
