@@ -1,0 +1,130 @@
+/* Block 4.0 — surgical visual polish only. */
+
+/* Home: keep the semantic icon color, but remove red/green outlined tiles. */
+.atal-home-v2 .atal-home-row .atal-home-row-icon {
+  border-color: var(--surface) !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+}
+
+/* Command center: when the thread is shorter than the viewport, keep it attached
+   to the composer instead of leaving a large empty region between them. */
+.atal-command-thread {
+  display: grid;
+  align-content: safe end;
+}
+
+/* Notices enter cleanly, remain manually dismissible, and leave softly. */
+.atal-command-toast {
+  animation: atal-command-toast-enter 180ms ease-out both;
+  transition: opacity 220ms ease, transform 220ms ease;
+  will-change: opacity, transform;
+}
+
+.atal-command-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(8px) scale(.985);
+  pointer-events: none;
+}
+
+@keyframes atal-command-toast-enter {
+  from { opacity: 0; transform: translateY(6px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Composer: make the send affordance unmistakable. */
+.atal-command-composer .atal-command-dynamic.is-send svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  color: currentColor;
+  opacity: 1;
+  stroke-width: 2.6;
+}
+
+/* Attachments: compact contextual popover instead of a large bottom sheet. */
+.atal-ai-attachment-backdrop {
+  place-items: end start;
+  padding: 12px max(16px, env(safe-area-inset-right)) calc(82px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.atal-ai-attachment-menu {
+  width: min(280px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid var(--command-border, var(--line));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 18px 50px rgba(15, 20, 22, .18);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+
+.atal-ai-attachment-menu > button {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 9px;
+  border: 0;
+  border-bottom: 1px solid var(--command-border, var(--line));
+  border-radius: 10px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+
+.atal-ai-attachment-menu > button:last-child {
+  border-bottom: 0;
+}
+
+.atal-ai-attachment-menu > button:active,
+.atal-ai-attachment-menu > button:hover {
+  background: var(--mint);
+}
+
+.atal-ai-attachment-menu > button > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--green);
+  background: transparent;
+}
+
+.atal-ai-attachment-menu > button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.atal-ai-attachment-menu b {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+html[data-theme="dark"] .atal-home-v2 .atal-home-row .atal-home-row-icon {
+  border-color: var(--surface) !important;
+  background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .atal-ai-attachment-menu {
+  border-color: #2d2d32;
+  color: #f5f5f7;
+  background: rgba(22, 22, 24, .96);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .36);
+}
+
+html[data-theme="dark"] .atal-ai-attachment-menu > button {
+  border-color: #2d2d32;
+  color: #f5f5f7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atal-command-toast {
+    animation: none;
+    transition: none;
+  }
+}
