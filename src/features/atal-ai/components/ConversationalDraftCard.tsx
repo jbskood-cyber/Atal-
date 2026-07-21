@@ -1,5 +1,5 @@
 import { AlertTriangle, ChevronDown, ClipboardList, Dumbbell, FileDown, FileText, FolderOpen, Pencil, Save, StickyNote, UserRound } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AtalAIDraft } from '../types';
 import { DraftSectionEditor, type DraftSectionId } from './DraftSectionEditor';
 
@@ -29,12 +29,24 @@ export function ConversationalDraftCard({ draft,patientLabel,applying,applied,co
   const [openSection,setOpenSection]=useState<DraftSectionId|null>(null);
   const [cardOpen,setCardOpen]=useState(true);
   const [editing,setEditing]=useState<DraftSectionId|null>(null);
+  const cardRef=useRef<HTMLElement>(null);
+  const mountedRef=useRef(false);
   const sections=useMemo(()=>sectionsFor(draft,patientLabel),[draft,patientLabel]);
   const total=sections.length?Math.round(sections.reduce((sum,item)=>sum+item.percent,0)/sections.length):0;
   const warnings=draft.missingFields.length+draft.uncertainFields.length+draft.contradictions.length;
   const hasContradictions=draft.contradictions.length>0;
+
+  useEffect(()=>{
+    if(!mountedRef.current){mountedRef.current=true;return;}
+    let secondFrame=0;
+    const firstFrame=window.requestAnimationFrame(()=>{
+      secondFrame=window.requestAnimationFrame(()=>cardRef.current?.scrollIntoView({behavior:'smooth',block:'end'}));
+    });
+    return()=>{window.cancelAnimationFrame(firstFrame);if(secondFrame)window.cancelAnimationFrame(secondFrame)};
+  },[cardOpen,openSection]);
+
   return <>
-    <section className="atal-draft-card" aria-label="Borrador preparado">
+    <section ref={cardRef} className={`atal-draft-card ${cardOpen?'is-expanded':'is-collapsed'}`} aria-label="Borrador preparado">
       <button type="button" className="atal-draft-card-header" aria-expanded={cardOpen} onClick={()=>{setCardOpen((value)=>!value);setOpenSection(null)}}><span><b>{draft.responseMode==='command'?'Acción preparada':'Borrador del plan de tratamiento'}</b></span><Status percent={total} review={warnings>0}/><ChevronDown className={cardOpen?'is-open':''}/></button>
       {conflict && <aside className="atal-draft-conflict" role="alert"><AlertTriangle/><div><b>Esta información cambió después de crear el borrador.</b><p>{conflict}</p><span><button type="button" onClick={onRefreshConflict}>Actualizar borrador</button><button type="button" onClick={onCompare}>Comparar</button><button type="button" onClick={onKeepVersion}>Conservar mi versión</button></span></div></aside>}
       {hasContradictions&&<aside className="atal-draft-conflict" role="alert"><AlertTriangle/><div><b>Hay contradicciones clínicas por resolver.</b><p>{draft.contradictions.join(' ')}</p><span><button type="button" onClick={onReviewAll}>Revisar el borrador</button></span></div></aside>}

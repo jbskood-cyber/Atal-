@@ -19,6 +19,8 @@ import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalA
 
 const MAX_FILES=8;
 const MAX_FILE_SIZE=8*1024*1024;
+const NOTICE_VISIBLE_MS=4200;
+const NOTICE_EXIT_MS=220;
 const allowedTypes=new Set(['image/jpeg','image/png','image/webp','application/pdf']);
 const uid=(prefix:string)=>`${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
 const fileData=(file:File)=>new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error('No pudimos leer el archivo.'));reader.readAsDataURL(file)});
@@ -36,6 +38,7 @@ export function AtalAIConversationScreen() {
   const [historyOpen,setHistoryOpen]=useState(false);
   const [confirm,setConfirm]=useState<'discard'|'restart'|'command'|null>(null);
   const [notice,setNotice]=useState(initial.current.messages.length?'Conversación recuperada.':'');
+  const [noticeLeaving,setNoticeLeaving]=useState(false);
   const [retryPayload,setRetryPayload]=useState<{request:AtalAIAnalyzeRequest;messageId?:string}|null>(null);
   const [transcribing,setTranscribing]=useState(false);
   const [applying,setApplying]=useState(false);
@@ -52,6 +55,16 @@ export function AtalAIConversationScreen() {
   useEffect(()=>{if(draft)saveAIDraft(draft)},[draft]);
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:'smooth',block:'end'})},[conversation.messages.length,conversation.status,draft?.updatedAt]);
   useEffect(()=>{const viewport=window.visualViewport;if(!viewport)return;const sync=()=>{document.documentElement.style.setProperty('--atal-visual-height',`${viewport.height}px`);document.documentElement.classList.toggle('atal-keyboard-open',window.innerHeight-viewport.height>120)};sync();viewport.addEventListener('resize',sync);return()=>{viewport.removeEventListener('resize',sync);document.documentElement.style.removeProperty('--atal-visual-height');document.documentElement.classList.remove('atal-keyboard-open')}},[]);
+  useEffect(()=>{
+    if(!notice){setNoticeLeaving(false);return;}
+    setNoticeLeaving(false);
+    let clearTimer:number|undefined;
+    const exitTimer=window.setTimeout(()=>{
+      setNoticeLeaving(true);
+      clearTimer=window.setTimeout(()=>{setNotice('');setNoticeLeaving(false)},NOTICE_EXIT_MS);
+    },NOTICE_VISIBLE_MS);
+    return()=>{window.clearTimeout(exitTimer);if(clearTimer!==undefined)window.clearTimeout(clearTimer)};
+  },[notice]);
 
   const patchConversation=useCallback((patch:Partial<AIConversation>)=>setConversation((current)=>({...current,...patch,updatedAt:new Date().toISOString()})),[]);
   const append=useCallback((message:AIMessage)=>setConversation((current)=>({...current,messages:[...current.messages,message],updatedAt:new Date().toISOString()})),[]);
@@ -123,7 +136,7 @@ export function AtalAIConversationScreen() {
       <div ref={endRef}/>
     </section>
     <section className="atal-command-compose-zone">
-      {notice&&<p className="atal-command-toast"><Sparkles/>{notice}<button type="button" aria-label="Cerrar aviso" onClick={()=>setNotice('')}><X/></button></p>}
+      {notice&&<p className={`atal-command-toast${noticeLeaving?' is-leaving':''}`}><Sparkles/>{notice}<button type="button" aria-label="Cerrar aviso" onClick={()=>setNotice('')}><X/></button></p>}
       <AttachmentPreview items={attachments} onRemove={(id)=>setAttachments((current)=>current.filter((item)=>item.id!==id))} onReplace={()=>setAttachmentOpen(true)}/>
       {audioOpen&&<AudioRecorder onReady={addAudio} onState={(status,message)=>{patchConversation({status:status==='recording'||status==='paused'?'recording':'composing'});if(message)setNotice(message)}}/>}
       {attachments.some((item)=>item.kind==='audio')&&<button type="button" className="atal-command-transcribe" disabled={transcribing} onClick={()=>void transcribe()}>{transcribing?<LoaderCircle className="is-spinning"/>:<FileText/>}{transcribing?'Transcribiendo…':'Transcribir audio'}</button>}
@@ -134,8 +147,8 @@ export function AtalAIConversationScreen() {
     <AttachmentMenu open={attachmentOpen} onClose={()=>{setAttachmentOpen(false);composerRef.current?.focus()}} onFiles={(files)=>void addFiles(files)}/>
     <AIContextBar open={contextOpen} context={conversation.workContext} patients={store.patients} plans={store.plans} exercises={store.exercises} onChange={(workContext)=>{patchConversation({workContext});setDraft((current)=>current?{...current,intent:workContext.intent,selectedPatientId:workContext.selectedPatientId,selectedPlanId:workContext.selectedPlanId,selectedExerciseId:workContext.selectedExerciseId,baseVersions:currentVersions(),updatedAt:new Date().toISOString()}:current)}} onClose={()=>setContextOpen(false)}/>
     {historyOpen&&<HistoryDialog currentId={conversation.id} onClose={()=>setHistoryOpen(false)} onSelect={(next)=>{setConversation(next);setDraft(getAIDraft(next.draftId));setHistoryOpen(false)}}/>}
-    {confirm&&<ConfirmDialog kind={confirm} draft={draft} onCancel={()=>setConfirm(null)} onConfirm={()=>confirm==='discard'?discard():confirm==='restart'?restart():void performApply()}/>}
-    {compareOpen&&draft&&<CompareDialog draft={draft} onClose={()=>setCompareOpen(false)}/>}
+    {confirm&&<ConfirmDialog kind={confirm} draft={draft} onCancel={()=>setConfirm(null)} onConfirm={()=>confirm==='discard'?discard():confirm==='restart'?restart():void performApply()}/>} 
+    {compareOpen&&draft&&<CompareDialog draft={draft} onClose={()=>setCompareOpen(false)}/>} 
   </main>;
 }
 
