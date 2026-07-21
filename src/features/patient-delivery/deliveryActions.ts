@@ -1,4 +1,9 @@
-import type { PatientPlanDocument, PatientPlanPdfResult, SharePatientPlanResult } from './types';
+import type {
+  PatientPlanDocument,
+  PatientPlanPdfResult,
+  PatientWhatsAppTarget,
+  SharePatientPlanResult,
+} from './types';
 
 function safeFilenamePart(value: string) {
   return value
@@ -61,6 +66,33 @@ export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise
     downloadPatientPlanPdf(result);
     return { status: 'downloaded', reason: 'failed' };
   }
+}
+
+export function normalizeWhatsAppPhone(value: string) {
+  const digits = value.replace(/\D/g, '').replace(/^00/, '');
+  return digits.length >= 8 && digits.length <= 15 ? digits : '';
+}
+
+export function resolvePatientWhatsAppTarget(patient: PatientPlanDocument['patient']): PatientWhatsAppTarget | null {
+  const patientPhone = normalizeWhatsAppPhone(patient.phone);
+  if (patientPhone) return { phone: patientPhone, source: 'patient', label: patient.name };
+  const responsiblePhone = normalizeWhatsAppPhone(patient.responsibleContact);
+  if (responsiblePhone) return { phone: responsiblePhone, source: 'responsible', label: 'Responsable del paciente' };
+  return null;
+}
+
+export function patientPlanWhatsAppUrl(documentModel: PatientPlanDocument, target: PatientWhatsAppTarget) {
+  const message = `Hola. Tengo preparado el plan de rehabilitación de ${documentModel.patient.name}. En el siguiente paso adjuntaré el PDF para que puedas guardarlo y revisarlo.`;
+  return `https://wa.me/${target.phone}?text=${encodeURIComponent(message)}`;
+}
+
+export function openPatientPlanWhatsApp(documentModel: PatientPlanDocument) {
+  const target = resolvePatientWhatsAppTarget(documentModel.patient);
+  if (!target) throw new Error('Añade un número válido del paciente o de su responsable antes de abrir WhatsApp.');
+  const url = patientPlanWhatsAppUrl(documentModel, target);
+  const opened = window.open(url, '_blank', 'noopener,noreferrer');
+  if (!opened) window.location.assign(url);
+  return target;
 }
 
 export function printPatientPlanPdf(result: PatientPlanPdfResult): Promise<'printed' | 'opened'> {
