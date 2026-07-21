@@ -1,4 +1,4 @@
-# Block 3.1 — Accessible Patient Delivery QA
+# Block 3.1 — Universal Premium Patient Delivery QA
 
 ## Technical validation
 
@@ -12,76 +12,104 @@ npm run build
 npm run dev
 ```
 
-Expected before merge:
+Do not assume a test count. Record the exact passed and failed totals produced by the branch.
+
+Required before merge:
 
 - dependency installation succeeds;
 - TypeScript reports zero errors;
-- 30 tests pass and zero fail;
+- every test passes;
 - production build succeeds;
-- development console has no errors.
+- development server starts without console errors.
 
-## Delivery-screen validation
+## Universal PDF cases
 
-Check 360, 390, 412 and 430 px in light and dark mode.
+Validate the same renderer with at least these cases:
 
-- The long embedded plan preview is absent.
-- Patient, plan, duration, frequency and exercise count are visible without excessive scrolling.
-- Simple, Session log and Detailed are clear and keyboard accessible.
-- Large and Extra-large options are easy to understand.
-- Session count accepts 1–99 and presets do not restrict custom values.
-- General completion and per-exercise completion can both be enabled.
-- Disabling exercises also disables per-exercise completion and rest.
-- At least one session field always remains enabled.
-- The page estimate updates after every configuration change.
-- The approved dock, green `#7EB695`, icon language and dark mode remain unchanged.
+1. strength plan with 2–4 sets, laterality, elastic band and external load;
+2. older-adult plan with extra-large type, repetitions, timed holds, minutes and tolerance-based activity;
+3. mixed long plan with long patient and exercise names, isometrics, distance, load and `according to tolerance` dosing.
 
-## Simple-plan PDF
+For each case confirm:
 
-Test with zero optional exercise display, three exercises, four exercises and eight exercises.
+- saved `doseLabel` appears without being rewritten to a fixed `3 × 10`;
+- rest and key instruction remain readable;
+- long text wraps without overlap;
+- the plan paginates without reducing type;
+- the record table is `Exercise | Prescribed | Actual result | Discomfort`;
+- no fixed `Series 1`, `Series 2`, `Series 3` columns appear;
+- an exercise row is never split;
+- long sessions use a clearly labelled continuation page;
+- PDF signature starts with `%PDF-1.4` and opens in a real viewer.
 
-- A common three-exercise plan fits on one A4 page in Large mode.
-- Extra-large mode preserves its font size and paginates when required.
-- Body content is at least 14 pt.
-- Exercises show only name, series, repetitions or duration, and optional rest.
-- Disabling exercises produces a professional one-page plan summary.
-- Safety text remains readable and inside page bounds.
-- Non-active plans keep their real status.
+## Modes
 
-## Rehabilitation-session log
+Validate:
 
-Generate logs with 1, 8, 20 and 99 sessions.
+- Plan + registro;
+- Solo plan;
+- Solo registro;
+- Plan detallado under advanced options;
+- detailed images disabled and enabled.
 
-- The document is organized by numbered rehabilitation sessions, never weeks.
-- Date fields are blank and patient-entered.
-- General routine completion is independently selectable.
-- Per-exercise checkboxes include every plan exercise and match the legend numbers.
-- Pain before and after use 0–10 writing fields.
-- Difficulty provides Easy, Good and Difficult checkboxes.
-- Observation lines are large enough for handwriting.
-- A session card never splits across pages.
-- Continuation pages repeat patient, plan and page number.
-- Page count matches the estimate shown in the app.
+## Screen
 
-## Detailed-plan regression
+At 360, 390, 412 and 430 px, in light and dark themes, confirm:
 
-- Detailed mode preserves the Block 3 clinical document.
-- Images are loaded only when `Include available images` is enabled.
-- Missing or unsupported media uses safe placeholders.
-- No clinical data or media is uploaded.
+- no four-step flow;
+- no wall of tracking switches;
+- three primary document choices are understandable;
+- session stepper clamps from 1 to 99;
+- large and extra-large type selection works;
+- advanced detailed option stays compact;
+- estimate updates when mode, sessions or type changes;
+- no horizontal overflow;
+- approved dock, green `#7EB695`, theme and global metrics remain intact.
 
-## Delivery actions
+## WhatsApp
 
-- Download produces a real `%PDF-1.4` `application/pdf` file.
-- Native share receives the configured PDF.
-- Cancelling share does not download unexpectedly.
-- Unsupported share falls back to local download.
-- Print operates on the generated PDF, not the configuration screen.
-- If iframe printing is unavailable, the PDF opens in a viewer for printing.
+Test contacts with:
 
-## Scope protection
+- patient phone only;
+- responsible-contact phone only;
+- both numbers;
+- no valid number;
+- formatting with spaces, `+`, parentheses and `00` international prefix.
 
-- No dependency added.
-- No workflow added.
-- No backend, public link or cloud PDF service added.
-- `src/main.tsx` and approved CSS import order unchanged.
-- Existing approved styles are not edited; only the isolated delivery stylesheet changes.
+Confirm:
+
+- patient number has priority;
+- responsible contact is the fallback;
+- invalid numbers disable the action;
+- the action opens `wa.me` with a prepared message;
+- the message says the physiotherapist will attach the PDF;
+- no PDF is uploaded, attached or sent automatically;
+- native Share can still pass the actual generated PDF file to installed apps.
+
+## Clinical and privacy regression
+
+Confirm:
+
+- active plans deliver directly;
+- draft, paused and completed plans require confirmation and preserve status;
+- archived patient or plan is blocked;
+- empty plans and missing exercises are blocked;
+- PDF uses only the saved plan;
+- Network shows zero clinical uploads and zero external PDF conversion requests.
+
+## Final evidence
+
+Return:
+
+- initial and final SHA;
+- `npm ci`, typecheck, test and build output;
+- exact test totals;
+- page counts for the three universal cases;
+- screenshots of the simplified screen in light and dark mode;
+- downloaded sample PDFs;
+- WhatsApp recipient/fallback results;
+- console and Network results;
+- corrections made;
+- any remaining blocker.
+
+Do not mark Block 3.1 complete and do not merge PR #11 while any required check fails.
