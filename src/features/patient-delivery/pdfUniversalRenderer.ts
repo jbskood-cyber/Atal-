@@ -4,6 +4,7 @@ import {
   estimatePatientPlanPages,
   layoutPatientLogPages,
   layoutPatientPlanPages,
+  measurePatientPlanFirstPageHeader,
   normalizePatientPlanDeliveryOptions,
   type PatientLogLayoutPage,
   type PatientLogMeasuredRow,
@@ -115,13 +116,13 @@ function drawPlanExerciseRow(
     lineHeight: doseLineHeight,
     maxLines: row.doseLines,
   });
-  drawWrapped(page, `Descanso: ${exercise.rest}`, A4_WIDTH - MARGIN - 155, doseY, 155, {
+  const rest = drawWrapped(page, `Descanso: ${exercise.rest}`, A4_WIDTH - MARGIN - 155, doseY, 155, {
     size: doseSize - 0.5,
     lineHeight: doseLineHeight,
     color: MUTED,
     maxLines: row.restLines,
   });
-  drawWrapped(page, `Clave: ${cue}`, x, dose.bottom - 2, A4_WIDTH - MARGIN - x, {
+  drawWrapped(page, `Clave: ${cue}`, x, Math.min(dose.bottom, rest.bottom) - 2, A4_WIDTH - MARGIN - x, {
     size: cueSize,
     lineHeight: cueLineHeight,
     color: MUTED,
@@ -166,59 +167,69 @@ function drawPlanFirstPage(
   totalPages: number,
 ) {
   const extraLarge = options.fontScale === 'extra-large';
+  const header = measurePatientPlanFirstPageHeader(documentModel, options.fontScale);
   drawDocumentHeader(page, 'PLAN PERSONAL DE REHABILITACIÓN', pageNumber, totalPages);
   const status = patientPlanStatusLabel(documentModel.plan.status);
   page.drawText('PACIENTE', { x: MARGIN, y: 744, size: 9.5, font: 'bold', color: MUTED });
-  drawWrapped(page, documentModel.patient.name, MARGIN, 714, 395, {
+  drawWrapped(page, documentModel.patient.name, MARGIN, header.patientNameY, 395, {
     size: extraLarge ? 27 : 24,
     lineHeight: extraLarge ? 31 : 28,
     font: 'bold',
-    maxLines: 2,
+    maxLines: header.patientNameLines,
   });
   page.drawText(`PLAN ${status.toUpperCase()}`, { x: A4_WIDTH - MARGIN - 104, y: 716, size: 9.5, font: 'bold', color: MUTED });
-  drawWrapped(page, documentModel.plan.title, MARGIN, 653, A4_WIDTH - MARGIN * 2, {
+  drawWrapped(page, documentModel.plan.title, MARGIN, header.planTitleY, A4_WIDTH - MARGIN * 2, {
     size: extraLarge ? 18 : 16,
     lineHeight: extraLarge ? 22 : 20,
     font: 'bold',
     color: CHARCOAL,
-    maxLines: 2,
+    maxLines: header.planTitleLines,
   });
-  drawWrapped(page, `${documentModel.patient.diagnosis} · ${documentModel.patient.affectedArea}`, MARGIN, 607, A4_WIDTH - MARGIN * 2, {
+  drawWrapped(page, `${documentModel.patient.diagnosis} · ${documentModel.patient.affectedArea}`, MARGIN, header.diagnosisY, A4_WIDTH - MARGIN * 2, {
     size: extraLarge ? 12.5 : 11.3,
     lineHeight: extraLarge ? 16 : 14,
     color: MUTED,
-    maxLines: 2,
+    maxLines: header.diagnosisLines,
   });
-  page.drawLine({ x1: MARGIN, y1: 573, x2: A4_WIDTH - MARGIN, y2: 573, stroke: SOFT_RULE, lineWidth: 0.6 });
+  page.drawLine({ x1: MARGIN, y1: header.separatorY, x2: A4_WIDTH - MARGIN, y2: header.separatorY, stroke: SOFT_RULE, lineWidth: 0.6 });
 
-  page.drawText('FRECUENCIA INDICADA', { x: MARGIN, y: 548, size: 9.2, font: 'bold', color: MUTED });
-  page.drawText('DURACIÓN DEL PLAN', { x: 332, y: 548, size: 9.2, font: 'bold', color: MUTED });
-  drawWrapped(page, documentModel.plan.frequency, MARGIN, 526, 235, {
+  page.drawText('FRECUENCIA INDICADA', { x: MARGIN, y: header.frequencyLabelY, size: 9.2, font: 'bold', color: MUTED });
+  page.drawText('DURACIÓN DEL PLAN', { x: 332, y: header.frequencyLabelY, size: 9.2, font: 'bold', color: MUTED });
+  drawWrapped(page, documentModel.plan.frequency, MARGIN, header.frequencyY, 235, {
     size: extraLarge ? 15 : 13.5,
     lineHeight: extraLarge ? 18 : 16,
     font: 'bold',
-    maxLines: 2,
+    maxLines: header.frequencyLines,
   });
-  drawWrapped(page, documentModel.plan.duration, 332, 526, 220, {
+  drawWrapped(page, documentModel.plan.duration, 332, header.durationY, 220, {
     size: extraLarge ? 15 : 13.5,
     lineHeight: extraLarge ? 18 : 16,
     font: 'bold',
-    maxLines: 2,
+    maxLines: header.durationLines,
   });
 
-  page.drawText('OBJETIVO TERAPÉUTICO', { x: MARGIN, y: 481, size: 9.2, font: 'bold', color: MUTED });
-  drawWrapped(page, documentModel.plan.objective, MARGIN, 458, A4_WIDTH - MARGIN * 2, {
+  page.drawText('OBJETIVO TERAPÉUTICO', { x: MARGIN, y: header.objectiveLabelY, size: 9.2, font: 'bold', color: MUTED });
+  drawWrapped(page, documentModel.plan.objective, MARGIN, header.objectiveY, A4_WIDTH - MARGIN * 2, {
     size: extraLarge ? 14.5 : 12.8,
     lineHeight: extraLarge ? 18 : 16,
-    maxLines: 3,
+    maxLines: header.objectiveLines,
   });
-  page.drawText('EJERCICIOS PRESCRITOS', { x: MARGIN, y: 397, size: 9.3, font: 'bold', color: MUTED });
+  page.drawText('EJERCICIOS PRESCRITOS', { x: MARGIN, y: header.exercisesLabelY, size: 9.3, font: 'bold', color: MUTED });
 
-  let top = 380;
+  let top = header.rowsTop;
   layoutPage.rows.forEach((row) => {
     drawPlanExerciseRow(page, row, top, extraLarge);
     top -= row.height;
   });
+  if (!layoutPage.rows.length) {
+    page.drawText('Los ejercicios continúan en la página siguiente.', {
+      x: MARGIN,
+      y: Math.max(62, header.rowsTop - 8),
+      size: 9.5,
+      font: 'bold',
+      color: MUTED,
+    });
+  }
   if (layoutPage.final) drawFinalPlanDetails(page, documentModel, top, extraLarge);
   drawFooter(page, documentModel);
 }
@@ -272,13 +283,14 @@ function drawLogExerciseRow(
   page.strokeRect({ x: tableX, y: bottom, width: tableWidth, height: row.height, stroke: SOFT_RULE, lineWidth: 0.6 });
   columns.slice(1, -1).forEach((x) => page.drawLine({ x1: x, y1: bottom, x2: x, y2: top, stroke: SOFT_RULE, lineWidth: 0.5 }));
   page.drawText(String(exercise.order).padStart(2, '0'), { x: tableX + 7, y: bottom + row.height / 2 - 4, size: extraLarge ? 10.5 : 9.5, font: 'bold', color: MUTED });
-  drawWrapped(page, exercise.name, tableX + 31, bottom + row.height / 2 + 8, 154 - 39, {
+  const textTop = top - 14;
+  drawWrapped(page, exercise.name, tableX + 31, textTop, 154 - 39, {
     size: extraLarge ? 11 : 9.8,
     lineHeight: extraLarge ? 13.5 : 12,
     font: 'bold',
     maxLines: row.nameLines,
   });
-  drawWrapped(page, compactPatientPlanDose(exercise), columns[1] + 8, bottom + row.height / 2 + 8, 127 - 16, {
+  drawWrapped(page, compactPatientPlanDose(exercise), columns[1] + 8, textTop, 127 - 16, {
     size: extraLarge ? 10 : 9,
     lineHeight: extraLarge ? 12.5 : 11,
     maxLines: row.doseLines,
