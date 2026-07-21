@@ -84,4 +84,5 @@ export type PatientPlanPdfResult = {
 
 export type SharePatientPlanResult =
   | { status: 'shared' }
-  | { status: 'downloaded'; reason: 'unsupported' | 'cancelled' | 'failed' };
+  | { status: 'cancelled' }
+  | { status: 'downloaded'; reason: 'unsupported' | 'failed' };
