@@ -27,10 +27,11 @@ export function getPatientPlanDeliveryEligibility(
   patientId: string,
   planId: string,
 ): PatientPlanDeliveryEligibility {
-  const patient = state.patients.find((item) => item.id === patientId);
   const plan = state.plans.find((item) => item.id === planId);
+  if (!plan) return { allowed: false, requiresConfirmation: false, state: 'blocked', reason: 'Plan no encontrado.', missingExerciseIds: [] };
+  if (plan.patientId !== patientId) return { allowed: false, requiresConfirmation: false, state: 'blocked', reason: 'El plan no pertenece a este paciente.', missingExerciseIds: [] };
+  const patient = state.patients.find((item) => item.id === patientId);
   if (!patient) return { allowed: false, requiresConfirmation: false, state: 'blocked', reason: 'Paciente no encontrado.', missingExerciseIds: [] };
-  if (!plan || plan.patientId !== patientId) return { allowed: false, requiresConfirmation: false, state: 'blocked', reason: 'El plan no pertenece a este paciente.', missingExerciseIds: [] };
 
   const missingExerciseIds = plan.exerciseIds.filter((id) => !state.exercises.some((exercise) => exercise.id === id));
   if (patient.status === 'archived') return { allowed: false, requiresConfirmation: false, state: 'blocked', reason: 'Restaura al paciente antes de entregar un plan.', missingExerciseIds };
@@ -54,10 +55,10 @@ export function buildPatientPlanDocument(
   planId: string,
   generatedAt = new Date().toISOString(),
 ): PatientPlanDocument {
-  const patient = state.patients.find((item) => item.id === patientId);
   const plan = state.plans.find((item) => item.id === planId);
-  if (!patient) throw new Error('Paciente no encontrado.');
   if (!plan || plan.patientId !== patientId) throw new Error('Plan no encontrado para este paciente.');
+  const patient = state.patients.find((item) => item.id === patientId);
+  if (!patient) throw new Error('Paciente no encontrado.');
 
   const eligibility = getPatientPlanDeliveryEligibility(state, patientId, planId);
   if (!eligibility.allowed) throw new Error(eligibility.reason);
