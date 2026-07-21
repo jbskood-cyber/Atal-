@@ -1,147 +1,97 @@
-# Atal Patient Delivery 3.1 Design
+# Atal Patient Delivery 3.1 — Universal Premium Design
 
 ## Goal
 
-Transform patient delivery into an accessible, compact and configurable experience for older adults and everyday rehabilitation follow-up, while preserving the detailed plan as an optional format.
+Produce one repeatable patient-delivery system that works for different patients, exercise counts and prescriptions without forcing clinical data into a rigid template.
 
-## Product Principles
+## Product principle
 
-- The physiotherapist chooses the number of rehabilitation sessions to record; the document is never tied to calendar weeks.
-- Readability is more important than forcing content onto one page.
-- The simple plan should prefer one A4 page, but must paginate rather than shrink below the accessible font floor.
-- Exercise details are optional.
-- Both a general completion checkbox and per-exercise checkboxes are available and independently configurable.
-- All PDFs remain local, private, dependency-free and compatible with the existing download, print and native-share flow.
+> The template adapts to the plan; the plan is never distorted to fit the template.
 
-## Document Modes
+## Primary document
 
-### Simple plan
+The default mode is **Plan + registro**:
 
-Default format. It contains patient, plan, objective, duration, frequency, general guidance, professional and safety note. Exercises are optional and, when included, show only name, sets, repetitions or duration, and optionally rest.
+1. one or more premium monochrome plan pages;
+2. numbered rehabilitation-session records selected by the physiotherapist.
 
-Target typography:
-- body: 14 pt;
-- important values: 16–18 pt;
-- patient and plan titles: 22–26 pt;
-- safety copy: at least 11 pt.
+Alternative modes are **Solo plan**, **Solo registro**, and the preserved **Plan detallado** under advanced options.
 
-The renderer should fit common plans on one A4 page. When the selected content does not fit, it adds continuation pages without reducing the accessible font size.
+## Universal plan page
 
-### Rehabilitation session log
+Every exercise uses saved clinical data and shows:
 
-A printable form organized by numbered rehabilitation sessions rather than weeks. The physiotherapist selects any session count from 1 to 99, aided by quick presets but never restricted to them.
+- order and name;
+- real prescription (`doseLabel`), regardless of whether it uses repetitions, seconds, minutes, distance, laterality, load or tolerance;
+- rest;
+- one key instruction, preferring the therapist note and falling back to the exercise objective.
 
-Configurable fields:
-- session number;
-- open date field;
-- general routine completion checkbox;
-- individual checkbox for each included exercise;
-- pain before;
-- pain after;
-- perceived difficulty: easy, adequate, difficult;
-- observations.
+The page composer uses deterministic large-type capacities:
 
-The form uses large handwriting spaces and automatically paginates. Every continuation page repeats patient, plan and page numbering.
+- large: 4 exercises on the first page and 6 on continuation pages;
+- extra-large: 3 exercises on the first page and 4 on continuation pages.
 
-### Detailed plan
+Content paginates instead of reducing the accessible font size.
 
-Preserves the current multi-page document with images, position, instructions, precautions, equipment, pain threshold and therapist notes. It remains available for cases requiring full teaching material, but is no longer the default.
+## Universal session record
 
-## Delivery Screen
+Each session uses the same four-column table:
 
-Remove the long embedded document preview. The screen becomes a compact document configurator containing:
+| Exercise | Prescribed | Actual result | Discomfort |
+|---|---|---|---|
 
-1. patient and saved-plan summary;
-2. document-mode selector: Simple, Session log, Detailed;
-3. accessibility control: Large or Extra large;
-4. mode-specific options;
-5. estimated output summary: pages, sessions, exercises and font size;
-6. Download, Share and Print actions.
+`Actual result` accepts human-readable entries such as:
 
-### Simple options
+- `10 / 10 / 8`;
+- `30 s / 25 s / 20 s`;
+- `12 min`;
+- `D: 10 / I: 8`;
+- `8 rep with 6 kg`;
+- `not performed`.
 
-- Include exercises;
-- include rest;
-- font size.
+The PDF does not create fixed columns for series. That keeps the template universal and implementation reliable.
 
-### Session-log options
+A session may continue on another page when the plan contains more rows than the accessible capacity. Exercise rows are never split.
 
-- number of sessions, 1–99;
-- include exercises;
-- include rest in the exercise legend;
-- general completion checkbox;
-- per-exercise checkboxes;
-- date;
-- pain before;
-- pain after;
-- difficulty;
-- observations;
-- font size.
+## Delivery screen
 
-At least one tracking field must remain active. Per-exercise checkboxes are automatically disabled when exercises are excluded.
+The screen follows the existing Atal metrics and removes the previous four-step wall of controls. It exposes only:
 
-### Detailed options
+- document mode;
+- session count when a log is included;
+- large or extra-large type;
+- compact advanced detailed-plan option;
+- recipient and document estimate;
+- download, WhatsApp, native share and print actions.
 
-- include images;
-- font size does not alter the proven detailed clinical layout, but the screen clearly labels it as a multi-page teaching document.
+## WhatsApp behavior
 
-## Canonical Data and PDF Architecture
+Atal resolves the patient phone first and the responsible-contact phone as fallback.
 
-The existing `PatientPlanDocument` remains the clinical source of truth. A new `PatientPlanDeliveryOptions` object controls presentation only and never mutates clinical data.
+The WhatsApp action:
 
-Focused units:
-- `types.ts`: delivery modes and option contracts;
-- `deliveryOptions.ts`: defaults, normalization and page estimation;
-- `pdfRenderer.ts`: route to simple, log or detailed renderers;
-- `pdfSimpleRenderer.ts`: accessible compact plan;
-- `pdfSessionLogRenderer.ts`: flexible numbered-session form;
-- existing detailed renderer remains isolated;
-- `PatientPlanDeliveryScreen.tsx`: compact configurator without full preview;
-- `deliveryActions.ts`: print the generated PDF, not the web screen.
+- opens `wa.me` with the resolved recipient and a prepared message;
+- does not upload, attach or send the PDF;
+- leaves the final attachment and send decision to the physiotherapist.
 
-## Page Estimation
+Native Share remains the action that can hand the generated PDF file to installed apps.
 
-Estimation is deterministic and conservative:
-- Simple: one page for the summary plus the accessible exercise-row capacity; continuation pages when needed.
-- Session log: calculate first-page and continuation capacities from font scale, enabled fields, exercise legend and per-exercise checkbox row height.
-- Detailed: one cover plus at least one page per exercise, matching the existing renderer.
+## Privacy and safety
 
-The estimate displayed in the UI must use the same capacity functions used by rendering.
-
-## Accessibility
-
-- No body copy below 14 pt in Simple and Session log.
-- Extra-large mode raises body and row sizes without clipping.
-- High contrast; avoid faint grey for essential instructions.
-- Form checkboxes and writing lines must be large enough for pen use.
-- Never truncate session rows or split one session across pages.
-- Preserve Spanish accents.
-
-## Safety and Privacy
-
-- Plan eligibility rules remain unchanged.
-- Non-active plans require explicit confirmation and retain their real status in every format.
+- PDF generation stays local and dependency-free.
+- No clinical data or media is uploaded.
+- No public link is created.
+- Non-active plans require confirmation and keep their real status.
 - Archived patients, archived plans, empty plans and missing exercises remain blocked.
-- No public URL, backend call, upload or third-party conversion.
-- The PDF always uses the saved plan, never an unsaved editor draft.
+- Detailed multimedia remains opt-in and local.
 
-## Visual Constraints
+## Visual language
 
-- Preserve the approved Atal system, dock, themes and green `#7EB695`.
-- No gradients.
-- Replace only the isolated patient-delivery stylesheet.
-- Do not modify `src/main.tsx` or the approved final CSS import order.
+The PDF is premium and monochrome:
 
-## Acceptance Criteria
+- white paper;
+- black and neutral gray text;
+- fine rules;
+- no gradients, shadows, rounded app cards or large color bars.
 
-- Simple is the default mode and omits exercises only when selected by the physiotherapist.
-- A common three-exercise plan fits on one A4 page with body text at least 14 pt.
-- Session count accepts any integer from 1 to 99 and is unrelated to weeks.
-- General and per-exercise completion controls can both be enabled.
-- Large session rows provide date, pain, difficulty and notes spaces according to selected fields.
-- Long logs paginate without shrinking fonts or splitting rows.
-- Detailed mode remains available and clinically equivalent to Block 3.
-- The delivery screen contains no long full-document preview.
-- Printing uses the generated PDF.
-- Download and native sharing continue to use a real `application/pdf` file.
-- Typecheck, tests, build and mobile validation pass.
+The application screen preserves the approved Atal UI, green `#7EB695`, themes and dock.
