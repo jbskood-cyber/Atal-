@@ -1,49 +1,92 @@
-# Atal Patient Delivery 3.1 — Universal Premium Implementation
+# Atal Patient Delivery 3.1 Implementation Plan
 
-## Goal
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Replace the long configurator and rigid session form with one universal premium document system and a compact delivery screen.
+**Goal:** Deliver a universal premium plan-and-session PDF, a compact Atal-native delivery screen, and a safe WhatsApp redirect that never sends or attaches files automatically.
 
-## Constraints
+**Architecture:** Keep `PatientPlanDocument` as the immutable saved-plan snapshot. Use one pure layout module to measure wrapped text and produce deterministic plan/log page chunks shared by the estimator and PDF renderer. Route universal modes to the monochrome renderer and retain the existing detailed renderer behind advanced options.
+
+**Tech Stack:** React 19, TypeScript 5.9, Vite, local PDF 1.4 writer, Node test runner.
+
+## Global Constraints
 
 - Work only on `feature/atal-patient-delivery-3-1` and PR #11.
-- Do not modify or merge `main` before final evidence.
-- Preserve `src/main.tsx`, approved CSS order, dock, themes, `#7EB695` and no-gradient rule.
-- Add no dependency, backend, public link, clinical upload or WhatsApp API.
-- Keep detailed delivery as an advanced local option.
+- Do not merge or modify `main` before final evidence.
+- Do not add dependencies, workflows, backend, public links, cloud storage or WhatsApp API.
+- Preserve `src/main.tsx`, approved CSS order, dock, themes, `#7EB695` and the no-gradient rule.
+- PDF generation and multimedia processing remain local.
+- WhatsApp only opens the saved recipient; the physiotherapist chooses what to attach and when to send.
+- Never reduce accessible type to hide overflow.
 
-## Implemented architecture
+---
 
-- [x] Canonical saved `PatientPlanDocument` remains the clinical source of truth.
-- [x] Patient phone and responsible contact are copied into the delivery model.
-- [x] Delivery modes are `plan-and-log`, `plan-only`, `log-only` and `detailed`.
-- [x] Default mode is Plan + registro with 8 flexible sessions.
-- [x] One deterministic page estimator is shared by UI and PDF rendering.
-- [x] A universal monochrome renderer composes plan pages and session records.
-- [x] Prescriptions use the saved `doseLabel`; no fixed repetition or series assumption exists.
-- [x] Session rows use `Exercise | Prescribed | Actual result | Discomfort`.
-- [x] Long plans and sessions paginate without shrinking type or splitting rows.
-- [x] The detailed Block 3 renderer remains available with opt-in local images.
-- [x] The screen exposes only document mode, session count, readability, recipient and actions.
-- [x] WhatsApp resolves patient phone first and responsible contact as fallback.
-- [x] WhatsApp opens the chat and prepared message without attaching or sending the PDF.
-- [x] Native Share remains capable of handing the real PDF file to installed apps.
-- [x] Download and print continue to operate on the generated PDF.
-- [x] Tests and QA documentation describe the definitive behavior.
+### Task 1: Lock universal layout behavior with tests
 
-## Validation still required
+**Files:**
+- Modify: `tests/patient-delivery-3-1.test.mjs`
 
-- [ ] `npm ci`
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run build`
-- [ ] browser validation at 360, 390, 412 and 430 px
-- [ ] light and dark theme screenshots
-- [ ] three varied universal PDF cases
-- [ ] real viewer, print and native-share checks
-- [ ] patient/responsible WhatsApp fallback checks
-- [ ] console and Network privacy checks
+**Produces:** Static regression checks for measured rows, adaptive page chunks, professional footer, intense effort, simplified UI and non-automatic WhatsApp behavior.
 
-## Merge rule
+- [x] Add assertions for measured plan/log row helpers and page chunk builders.
+- [x] Add assertions that the renderer consumes layout rows instead of fixed count slicing.
+- [x] Add assertions for professional information and `Intenso` effort.
+- [x] Preserve checks for universal result fields and absence of fixed series columns.
 
-PR #11 remains a draft. It may be marked ready and merged only after every validation item passes with evidence and the final head SHA is unchanged during review.
+### Task 2: Measure and paginate universal content
+
+**Files:**
+- Modify: `src/features/patient-delivery/deliveryOptions.ts`
+
+**Produces:**
+- `compactPatientPlanDose(exercise)`
+- `layoutPatientPlanPages(documentModel, fontScale)`
+- `layoutPatientLogPages(documentModel, fontScale)`
+- `estimatePatientPlanPages(documentModel, options)` using the same chunks as rendering.
+
+- [ ] Measure visible wrapped lines for name, prescription and key instruction.
+- [ ] Calculate row heights with minimum accessible spacing.
+- [ ] Pack rows into first, continuation and final pages while reserving final safety/outcome space.
+- [ ] Keep every row complete and guarantee at least one row per page.
+- [ ] Derive plan and log page counts from the measured chunks.
+
+### Task 3: Render adaptive premium PDF pages
+
+**Files:**
+- Modify: `src/features/patient-delivery/pdfUniversalRenderer.ts`
+
+**Consumes:** Layout rows and page chunks from Task 2.
+
+- [ ] Draw plan exercise rows using measured heights and line counts.
+- [ ] Draw log rows using measured heights and the universal actual-result field.
+- [ ] Use adaptive chunks for plan continuation and each session.
+- [ ] Add professional responsible and next-review lines to the final plan page.
+- [ ] Add light, adequate and intense perceived-effort choices.
+- [ ] Keep monochrome styling, accessible type and local PDF 1.4 generation.
+
+### Task 4: Harden recipient routing and compact screen behavior
+
+**Files:**
+- Modify: `src/features/patient-delivery/deliveryActions.ts`
+- Modify: `src/screens/PatientPlanDeliveryScreen.tsx`
+- Modify: `src/styles/atal-patient-delivery.css`
+
+- [ ] Normalize common phone punctuation and `00` prefix without claiming delivery success.
+- [ ] Prefer patient phone and use responsible contact only as fallback.
+- [ ] Keep Download as the primary preparation action and WhatsApp as a separate redirect.
+- [ ] Keep only document mode, session count, readability and collapsed advanced options visible.
+- [ ] Preserve native Share for attaching the real PDF and Print for the generated PDF.
+
+### Task 5: Validate and close
+
+**Files:**
+- Modify: `docs/qa/2026-07-21-block-3-1-patient-delivery.md`
+- Modify: `docs/handoffs/2026-07-21-atal-block-3-1-universal-delivery.md`
+
+- [ ] Run `npm ci`.
+- [ ] Run `npm run typecheck`.
+- [ ] Run `npm test` and report exact totals.
+- [ ] Run `npm run build`.
+- [ ] Validate 360, 390, 412 and 430 px in light and dark mode.
+- [ ] Open three varied PDFs in a real viewer and compare estimated/actual page counts.
+- [ ] Validate patient/responsible WhatsApp routing, Native Share, print, console and Network privacy.
+- [ ] Keep PR #11 draft until every item passes; merge only with the validated expected-head SHA.
