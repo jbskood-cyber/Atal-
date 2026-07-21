@@ -99,7 +99,7 @@ export function patientSessionPageCapacities(
     ? 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 44 : 40)
     : 0;
   const firstAvailable = Math.max(0, 500 - legendHeight);
-  const continuationAvailable = 690;
+  const continuationAvailable = 620;
   return {
     rowHeight,
     first: Math.max(0, Math.floor(firstAvailable / rowHeight)),
