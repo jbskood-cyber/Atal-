@@ -22,7 +22,6 @@ const PLAN_TEXT_X = PDF_MARGIN + 57;
 const PLAN_TEXT_WIDTH = A4_WIDTH - PDF_MARGIN - PLAN_TEXT_X;
 const PLAN_DOSE_WIDTH = 285;
 const PLAN_REST_WIDTH = 155;
-const PLAN_FIRST_TOP = 380;
 const PLAN_CONTINUATION_TOP = 634;
 const PLAN_NON_FINAL_BOTTOM = 58;
 const PLAN_FINAL_BOTTOM = 108;
@@ -60,6 +59,26 @@ export type PatientLogLayoutPage = {
   final: boolean;
 };
 
+export type PatientPlanFirstPageHeaderLayout = {
+  patientNameY: number;
+  patientNameLines: number;
+  planTitleY: number;
+  planTitleLines: number;
+  diagnosisY: number;
+  diagnosisLines: number;
+  separatorY: number;
+  frequencyLabelY: number;
+  frequencyY: number;
+  frequencyLines: number;
+  durationY: number;
+  durationLines: number;
+  objectiveLabelY: number;
+  objectiveY: number;
+  objectiveLines: number;
+  exercisesLabelY: number;
+  rowsTop: number;
+};
+
 export function normalizePatientPlanDeliveryOptions(
   input: Partial<PatientPlanDeliveryOptions> | undefined,
 ): PatientPlanDeliveryOptions {
@@ -91,8 +110,74 @@ export function compactPatientPlanDose(exercise: PatientPlanDocumentExercise) {
   return equipment ? `${dose} · ${equipment}` : dose;
 }
 
-function visibleLineCount(text: string, width: number, size: number, font: 'regular' | 'bold', maxLines: number) {
-  return Math.max(1, Math.min(maxLines, wrapPdfText(text, width, size, font).length));
+function visibleLineCount(text: string, width: number, size: number, font: 'regular' | 'bold') {
+  return Math.max(1, wrapPdfText(text, width, size, font).length);
+}
+
+export function measurePatientPlanFirstPageHeader(
+  documentModel: PatientPlanDocument,
+  fontScale: PatientPlanFontScale,
+): PatientPlanFirstPageHeaderLayout {
+  const extraLarge = fontScale === 'extra-large';
+  const patientNameY = 714;
+  const patientNameSize = extraLarge ? 27 : 24;
+  const patientNameLineHeight = extraLarge ? 31 : 28;
+  const patientNameLines = visibleLineCount(documentModel.patient.name, 395, patientNameSize, 'bold');
+  const patientNameBottom = patientNameY - patientNameLines * patientNameLineHeight;
+
+  const planTitleSize = extraLarge ? 18 : 16;
+  const planTitleLineHeight = extraLarge ? 22 : 20;
+  const planTitleY = Math.min(653, patientNameBottom - 18);
+  const planTitleLines = visibleLineCount(documentModel.plan.title, A4_WIDTH - PDF_MARGIN * 2, planTitleSize, 'bold');
+  const planTitleBottom = planTitleY - planTitleLines * planTitleLineHeight;
+
+  const diagnosisSize = extraLarge ? 12.5 : 11.3;
+  const diagnosisLineHeight = extraLarge ? 16 : 14;
+  const diagnosisText = `${documentModel.patient.diagnosis} · ${documentModel.patient.affectedArea}`;
+  const diagnosisY = Math.min(607, planTitleBottom - 14);
+  const diagnosisLines = visibleLineCount(diagnosisText, A4_WIDTH - PDF_MARGIN * 2, diagnosisSize, 'regular');
+  const diagnosisBottom = diagnosisY - diagnosisLines * diagnosisLineHeight;
+
+  const separatorY = Math.min(573, diagnosisBottom - 18);
+  const frequencyLabelY = separatorY - 25;
+  const frequencyY = frequencyLabelY - 22;
+  const durationY = frequencyY;
+  const valueSize = extraLarge ? 15 : 13.5;
+  const valueLineHeight = extraLarge ? 18 : 16;
+  const frequencyLines = visibleLineCount(documentModel.plan.frequency, 235, valueSize, 'bold');
+  const durationLines = visibleLineCount(documentModel.plan.duration, 220, valueSize, 'bold');
+  const valueBottom = Math.min(
+    frequencyY - frequencyLines * valueLineHeight,
+    durationY - durationLines * valueLineHeight,
+  );
+
+  const objectiveLabelY = Math.min(481, valueBottom - 22);
+  const objectiveY = objectiveLabelY - 23;
+  const objectiveSize = extraLarge ? 14.5 : 12.8;
+  const objectiveLineHeight = extraLarge ? 18 : 16;
+  const objectiveLines = visibleLineCount(documentModel.plan.objective, A4_WIDTH - PDF_MARGIN * 2, objectiveSize, 'regular');
+  const objectiveBottom = objectiveY - objectiveLines * objectiveLineHeight;
+  const exercisesLabelY = Math.min(397, objectiveBottom - 20);
+
+  return {
+    patientNameY,
+    patientNameLines,
+    planTitleY,
+    planTitleLines,
+    diagnosisY,
+    diagnosisLines,
+    separatorY,
+    frequencyLabelY,
+    frequencyY,
+    frequencyLines,
+    durationY,
+    durationLines,
+    objectiveLabelY,
+    objectiveY,
+    objectiveLines,
+    exercisesLabelY,
+    rowsTop: exercisesLabelY - 17,
+  };
 }
 
 export function measurePatientPlanRow(
@@ -107,10 +192,10 @@ export function measurePatientPlanRow(
   const cueSize = extraLarge ? 11.5 : 10.3;
   const cueLineHeight = extraLarge ? 13.5 : 12.5;
   const cue = exercise.therapistNotes || exercise.objective;
-  const nameLines = visibleLineCount(exercise.name, PLAN_TEXT_WIDTH, nameSize, 'bold', 2);
-  const doseLines = visibleLineCount(compactPatientPlanDose(exercise), PLAN_DOSE_WIDTH, doseSize, 'regular', 2);
-  const restLines = visibleLineCount(`Descanso: ${exercise.rest}`, PLAN_REST_WIDTH, doseSize - 0.5, 'regular', 1);
-  const cueLines = visibleLineCount(`Clave: ${cue}`, PLAN_TEXT_WIDTH, cueSize, 'regular', 2);
+  const nameLines = visibleLineCount(exercise.name, PLAN_TEXT_WIDTH, nameSize, 'bold');
+  const doseLines = visibleLineCount(compactPatientPlanDose(exercise), PLAN_DOSE_WIDTH, doseSize, 'regular');
+  const restLines = visibleLineCount(`Descanso: ${exercise.rest}`, PLAN_REST_WIDTH, doseSize - 0.5, 'regular');
+  const cueLines = visibleLineCount(`Clave: ${cue}`, PLAN_TEXT_WIDTH, cueSize, 'regular');
   const middleHeight = Math.max(doseLines, restLines) * doseLineHeight;
   const measured = 12
     + nameLines * nameLineHeight
@@ -139,8 +224,8 @@ export function measurePatientLogRow(
   const nameLineHeight = extraLarge ? 13.5 : 12;
   const doseSize = extraLarge ? 10 : 9;
   const doseLineHeight = extraLarge ? 12.5 : 11;
-  const nameLines = visibleLineCount(exercise.name, LOG_NAME_WIDTH, nameSize, 'bold', 2);
-  const doseLines = visibleLineCount(compactPatientPlanDose(exercise), LOG_DOSE_WIDTH, doseSize, 'regular', 3);
+  const nameLines = visibleLineCount(exercise.name, LOG_NAME_WIDTH, nameSize, 'bold');
+  const doseLines = visibleLineCount(compactPatientPlanDose(exercise), LOG_DOSE_WIDTH, doseSize, 'regular');
   const measured = 18 + Math.max(nameLines * nameLineHeight, doseLines * doseLineHeight) + 14;
 
   return {
@@ -158,6 +243,11 @@ function packMeasuredRows<T extends { height: number }>(
   nonFinalBottom: number,
   finalBottom: number,
 ) {
+  const maximumAvailable = continuationTop - nonFinalBottom;
+  if (rows.some((row) => row.height > maximumAvailable)) {
+    throw new Error('Un ejercicio contiene más información de la que cabe completa en una página. Reduce únicamente el texto redundante antes de generar el documento.');
+  }
+
   const pages: Array<{ rows: T[]; continuation: boolean; final: boolean }> = [];
   let start = 0;
 
@@ -194,7 +284,22 @@ export function layoutPatientPlanPages(
   fontScale: PatientPlanFontScale,
 ): PatientPlanLayoutPage[] {
   const rows = documentModel.exercises.map((exercise) => measurePatientPlanRow(exercise, fontScale));
-  return packMeasuredRows(rows, PLAN_FIRST_TOP, PLAN_CONTINUATION_TOP, PLAN_NON_FINAL_BOTTOM, PLAN_FINAL_BOTTOM);
+  const header = measurePatientPlanFirstPageHeader(documentModel, fontScale);
+  const firstRowHeight = rows[0]?.height ?? 0;
+  const firstPageCanFitARow = !rows.length || firstRowHeight <= header.rowsTop - PLAN_NON_FINAL_BOTTOM;
+
+  if (!firstPageCanFitARow) {
+    const continuationPages = packMeasuredRows(
+      rows,
+      PLAN_CONTINUATION_TOP,
+      PLAN_CONTINUATION_TOP,
+      PLAN_NON_FINAL_BOTTOM,
+      PLAN_FINAL_BOTTOM,
+    ).map((page) => ({ ...page, continuation: true }));
+    return [{ rows: [], continuation: false, final: false }, ...continuationPages];
+  }
+
+  return packMeasuredRows(rows, header.rowsTop, PLAN_CONTINUATION_TOP, PLAN_NON_FINAL_BOTTOM, PLAN_FINAL_BOTTOM);
 }
 
 export function layoutPatientLogPages(
