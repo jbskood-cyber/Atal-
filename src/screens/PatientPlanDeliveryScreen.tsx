@@ -125,7 +125,9 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
       const shared = await sharePatientPlanPdf(result);
       setMessage(shared.status === 'shared'
         ? 'El archivo se entregó al menú nativo de compartir.'
-        : 'Este dispositivo no completó el envío; conservamos el documento mediante una descarga local.');
+        : shared.status === 'cancelled'
+          ? 'Compartir cancelado. El documento permanece únicamente en este dispositivo.'
+          : 'El envío nativo no estuvo disponible; conservamos el documento mediante una descarga local.');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No pudimos compartir el PDF.');
     } finally { setBusy(null); }
