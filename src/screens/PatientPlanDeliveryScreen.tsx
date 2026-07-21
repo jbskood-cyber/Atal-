@@ -5,9 +5,13 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  ChevronDown,
   Download,
   FileText,
   LoaderCircle,
+  MessageCircle,
+  Minus,
+  Plus,
   Printer,
   Share2,
   ShieldCheck,
@@ -27,7 +31,9 @@ import {
 } from '@/src/features/patient-delivery/deliveryOptions';
 import {
   downloadPatientPlanPdf,
+  openPatientPlanWhatsApp,
   printPatientPlanPdf,
+  resolvePatientWhatsAppTarget,
   sharePatientPlanPdf,
 } from '@/src/features/patient-delivery/deliveryActions';
 import { resolvePatientPlanMedia } from '@/src/features/patient-delivery/mediaResolver';
@@ -35,18 +41,12 @@ import { createPatientPlanPdf } from '@/src/features/patient-delivery/pdfRouter'
 import type {
   PatientPlanDeliveryOptions,
   PatientPlanDocumentMode,
-  PatientPlanLogFields,
   PatientPlanPdfResult,
 } from '@/src/features/patient-delivery/types';
 import '@/src/styles/atal-patient-delivery.css';
 
-const SESSION_PRESETS = [4, 6, 8, 10, 12, 20];
-
 function copyDefaultOptions(): PatientPlanDeliveryOptions {
-  return {
-    ...DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS,
-    logFields: { ...DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.logFields },
-  };
+  return { ...DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS };
 }
 
 export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
@@ -68,6 +68,10 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
   const estimate = useMemo(
     () => documentModel ? estimatePatientPlanPages(documentModel, normalizedOptions) : null,
     [documentModel, normalizedOptions],
+  );
+  const recipient = useMemo(
+    () => documentModel ? resolvePatientWhatsAppTarget(documentModel.patient) : null,
+    [documentModel],
   );
   const optionsKey = JSON.stringify(normalizedOptions);
   const [pdfResult, setPdfResult] = useState<PatientPlanPdfResult | null>(null);
@@ -91,23 +95,16 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
 
   const actionsEnabled = !eligibility.requiresConfirmation || confirmed;
   const status = patientPlanStatusLabel(documentModel.plan.status);
+  const includesLog = normalizedOptions.mode === 'plan-and-log' || normalizedOptions.mode === 'log-only';
 
   const updateOptions = (patch: Partial<PatientPlanDeliveryOptions>) => {
     setOptions((current) => normalizePatientPlanDeliveryOptions({ ...current, ...patch }));
-  };
-
-  const updateLogField = (field: keyof PatientPlanLogFields, value: boolean) => {
-    setOptions((current) => normalizePatientPlanDeliveryOptions({
-      ...current,
-      logFields: { ...current.logFields, [field]: value },
-    }));
   };
 
   const chooseMode = (mode: PatientPlanDocumentMode) => {
     setOptions((current) => normalizePatientPlanDeliveryOptions({
       ...current,
       mode,
-      includeExercises: mode === 'detailed' ? true : current.includeExercises,
       includeImages: mode === 'detailed' ? current.includeImages : false,
     }));
   };
@@ -142,10 +139,10 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
       const result = await preparePdf();
       const shared = await sharePatientPlanPdf(result);
       setMessage(shared.status === 'shared'
-        ? 'El archivo se entregó al menú nativo de compartir.'
+        ? 'El PDF se entregó al menú nativo de compartir.'
         : shared.status === 'cancelled'
           ? 'Compartir cancelado. El documento permanece únicamente en este dispositivo.'
-          : 'El envío nativo no estuvo disponible; guardamos el documento mediante una descarga local.');
+          : 'El envío nativo no estuvo disponible; guardamos el PDF mediante una descarga local.');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No pudimos compartir el PDF.');
     } finally { setBusy(null); }
@@ -163,12 +160,23 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
     } finally { setBusy(null); }
   };
 
+  const openWhatsApp = () => {
+    if (!actionsEnabled) return;
+    setMessage(''); setError('');
+    try {
+      const target = openPatientPlanWhatsApp(documentModel);
+      setMessage(`WhatsApp abierto para ${target.source === 'patient' ? 'el paciente' : 'el responsable'}. El fisioterapeuta decide qué archivo adjuntar y cuándo enviarlo.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos abrir WhatsApp.');
+    }
+  };
+
   return <AtalShell><main className="atal-content atal-flow-page atal-delivery-page">
     <div className="atal-flow-topbar"><button type="button" onClick={() => router.back()}><ArrowLeft /></button><span>Entrega al paciente</span><i /></div>
 
     <section className="atal-delivery-heading">
       <span><FileText /></span>
-      <div><small>Documento clínico local</small><h1>Preparar entrega</h1><p>Configura únicamente lo que el paciente necesita recibir o registrar.</p></div>
+      <div><small>Documento clínico local</small><h1>Preparar entrega</h1><p>Elige lo esencial. Atal adapta el documento automáticamente.</p></div>
     </section>
 
     <section className="atal-delivery-plan-summary">
@@ -181,68 +189,54 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
       <div><b>{eligibility.state === 'ready' ? 'Generación privada y local' : `Plan ${status.toLowerCase()}`}</b><p>{eligibility.reason} Los datos no se suben a un servidor.</p></div>
     </section>
 
-    {eligibility.requiresConfirmation && <label className="atal-delivery-confirm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /><span><b>Entiendo que este plan no está activo</b><small>El PDF mostrará claramente el estado “{status}” y no lo presentará como tratamiento vigente.</small></span><Check /></label>}
+    {eligibility.requiresConfirmation && <label className="atal-delivery-confirm"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} /><span><b>Entiendo que este plan no está activo</b><small>El PDF conservará claramente el estado “{status}”.</small></span><Check /></label>}
 
-    <section className="atal-delivery-section">
-      <header><small>Paso 1</small><h2>Tipo de documento</h2></header>
-      <div className="atal-delivery-mode-grid">
-        <button type="button" aria-pressed={normalizedOptions.mode === 'simple'} className={normalizedOptions.mode === 'simple' ? 'is-active' : ''} onClick={() => chooseMode('simple')}><FileText /><span><b>Plan simple</b><small>Resumen accesible, una hoja como prioridad.</small></span><Check /></button>
-        <button type="button" aria-pressed={normalizedOptions.mode === 'session-log'} className={normalizedOptions.mode === 'session-log' ? 'is-active' : ''} onClick={() => chooseMode('session-log')}><Check /><span><b>Registro de sesiones</b><small>Formato rellenable por sesiones de rehabilitación.</small></span><Check /></button>
-        <button type="button" aria-pressed={normalizedOptions.mode === 'detailed'} className={normalizedOptions.mode === 'detailed' ? 'is-active' : ''} onClick={() => chooseMode('detailed')}><ShieldCheck /><span><b>Plan detallado</b><small>Material completo con instrucciones e imágenes opcionales.</small></span><Check /></button>
+    <section className="atal-delivery-card">
+      <header><div><small>Documento</small><h2>¿Qué recibirá el paciente?</h2></div></header>
+      <div className="atal-delivery-mode-grid is-compact">
+        <ModeButton active={normalizedOptions.mode === 'plan-and-log'} title="Plan + registro" detail="Plan principal y hojas para registrar sesiones." onClick={() => chooseMode('plan-and-log')} />
+        <ModeButton active={normalizedOptions.mode === 'plan-only'} title="Solo plan" detail="Ejercicios, dosis, descansos e indicaciones." onClick={() => chooseMode('plan-only')} />
+        <ModeButton active={normalizedOptions.mode === 'log-only'} title="Solo registro" detail="Hojas universales para anotar resultados reales." onClick={() => chooseMode('log-only')} />
       </div>
+
+      {includesLog && <div className="atal-delivery-inline-setting">
+        <div><b>Sesiones a registrar</b><small>Una sesión puede continuar en otra hoja si el plan es extenso.</small></div>
+        <div className="atal-delivery-stepper">
+          <button type="button" aria-label="Restar una sesión" onClick={() => updateOptions({ sessionCount: normalizedOptions.sessionCount - 1 })}><Minus /></button>
+          <input aria-label="Sesiones a registrar" type="number" inputMode="numeric" min={1} max={99} value={normalizedOptions.sessionCount} onChange={(event) => updateOptions({ sessionCount: Number(event.target.value) })} />
+          <button type="button" aria-label="Añadir una sesión" onClick={() => updateOptions({ sessionCount: normalizedOptions.sessionCount + 1 })}><Plus /></button>
+        </div>
+      </div>}
+
+      {normalizedOptions.mode !== 'detailed' && <div className="atal-delivery-inline-setting is-stacked">
+        <div><b>Legibilidad</b><small>La fuente nunca se reduce para forzar el contenido.</small></div>
+        <div className="atal-delivery-segment" role="group" aria-label="Tamaño de letra">
+          <button type="button" aria-pressed={normalizedOptions.fontScale === 'large'} className={normalizedOptions.fontScale === 'large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'large' })}>Letra grande</button>
+          <button type="button" aria-pressed={normalizedOptions.fontScale === 'extra-large'} className={normalizedOptions.fontScale === 'extra-large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'extra-large' })}>Letra extra grande</button>
+        </div>
+      </div>}
+
+      <details className="atal-delivery-advanced" open={normalizedOptions.mode === 'detailed'}>
+        <summary><span><b>Opciones avanzadas</b><small>Material educativo detallado e imágenes.</small></span><ChevronDown /></summary>
+        <button type="button" className={`atal-delivery-detailed-choice${normalizedOptions.mode === 'detailed' ? ' is-active' : ''}`} onClick={() => chooseMode('detailed')}><ShieldCheck /><span><b>Plan detallado</b><small>Conserva posición, instrucciones, precauciones, material y notas.</small></span><Check /></button>
+        {normalizedOptions.mode === 'detailed' && <label className="atal-delivery-image-choice"><input type="checkbox" checked={normalizedOptions.includeImages} onChange={(event) => updateOptions({ includeImages: event.target.checked })} /><span><b>Incluir imágenes disponibles</b><small>Se procesan localmente; los formatos incompatibles usan placeholders seguros.</small></span></label>}
+      </details>
     </section>
 
-    {normalizedOptions.mode !== 'detailed' && <section className="atal-delivery-section">
-      <header><small>Paso 2</small><h2>Legibilidad</h2></header>
-      <div className="atal-delivery-segment" role="group" aria-label="Tamaño de letra">
-        <button type="button" aria-pressed={normalizedOptions.fontScale === 'large'} className={normalizedOptions.fontScale === 'large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'large' })}>Letra grande</button>
-        <button type="button" aria-pressed={normalizedOptions.fontScale === 'extra-large'} className={normalizedOptions.fontScale === 'extra-large' ? 'is-active' : ''} onClick={() => updateOptions({ fontScale: 'extra-large' })}>Letra extra grande</button>
-      </div>
-      <p className="atal-delivery-help">Atal nunca reducirá la letra para forzar el contenido en una sola página.</p>
-    </section>}
+    <section className="atal-delivery-recipient">
+      <MessageCircle />
+      <div><small>WhatsApp</small><b>{recipient ? `Destinatario: ${recipient.label}` : 'Sin número disponible'}</b><p>{recipient ? 'Atal abrirá el chat con un mensaje preparado. El PDF no se adjunta ni se envía automáticamente.' : 'Añade un teléfono válido al paciente o a su responsable para habilitar el acceso directo.'}</p></div>
+    </section>
 
-    {normalizedOptions.mode === 'simple' && <section className="atal-delivery-section">
-      <header><small>Paso 3</small><h2>Contenido</h2></header>
-      <div className="atal-delivery-toggle-list">
-        <Toggle checked={normalizedOptions.includeExercises} title="Incluir ejercicios" detail="Nombre, series y repeticiones o tiempo." onChange={(value) => updateOptions({ includeExercises: value })} />
-        <Toggle disabled={!normalizedOptions.includeExercises} checked={normalizedOptions.includeRest} title="Incluir descansos" detail="Añade el descanso indicado junto a cada ejercicio." onChange={(value) => updateOptions({ includeRest: value })} />
-      </div>
-    </section>}
-
-    {normalizedOptions.mode === 'session-log' && <>
-      <section className="atal-delivery-section">
-        <header><small>Paso 3</small><h2>Sesiones a registrar</h2></header>
-        <div className="atal-delivery-session-count"><label><span>Cantidad de sesiones</span><input type="number" inputMode="numeric" min={1} max={99} value={normalizedOptions.sessionCount} onChange={(event) => updateOptions({ sessionCount: Number(event.target.value) })} /></label><small>De 1 a 99. No está ligado a semanas ni a fechas predeterminadas.</small></div>
-        <div className="atal-delivery-presets" aria-label="Cantidades rápidas">{SESSION_PRESETS.map((value) => <button type="button" key={value} aria-pressed={normalizedOptions.sessionCount === value} className={normalizedOptions.sessionCount === value ? 'is-active' : ''} onClick={() => updateOptions({ sessionCount: value })}>{value}</button>)}</div>
-      </section>
-      <section className="atal-delivery-section">
-        <header><small>Paso 4</small><h2>Datos de cada sesión</h2></header>
-        <div className="atal-delivery-toggle-list">
-          <Toggle checked={normalizedOptions.includeExercises} title="Mostrar ejercicios del plan" detail="Incluye una leyenda compacta con la dosis." onChange={(value) => updateOptions({ includeExercises: value })} />
-          <Toggle disabled={!normalizedOptions.includeExercises} checked={normalizedOptions.includeRest} title="Mostrar descansos" detail="Añade el descanso en la leyenda de ejercicios." onChange={(value) => updateOptions({ includeRest: value })} />
-          <Toggle checked={normalizedOptions.logFields.date} title="Fecha abierta" detail="El paciente escribe cuándo realizó la sesión." onChange={(value) => updateLogField('date', value)} />
-          <Toggle checked={normalizedOptions.logFields.overallCompletion} title="Casilla general de rutina completada" detail="Permite marcar la sesión completa de una sola vez." onChange={(value) => updateLogField('overallCompletion', value)} />
-          <Toggle disabled={!normalizedOptions.includeExercises} checked={normalizedOptions.logFields.perExerciseCompletion} title="Casillas por ejercicio" detail="Permite indicar exactamente cuáles ejercicios se realizaron." onChange={(value) => updateLogField('perExerciseCompletion', value)} />
-          <Toggle checked={normalizedOptions.logFields.painBefore} title="Dolor antes" detail="Escala de 0 a 10." onChange={(value) => updateLogField('painBefore', value)} />
-          <Toggle checked={normalizedOptions.logFields.painAfter} title="Dolor después" detail="Escala de 0 a 10." onChange={(value) => updateLogField('painAfter', value)} />
-          <Toggle checked={normalizedOptions.logFields.difficulty} title="Dificultad percibida" detail="Fácil, bien o difícil." onChange={(value) => updateLogField('difficulty', value)} />
-          <Toggle checked={normalizedOptions.logFields.notes} title="Observaciones" detail="Espacio amplio para molestias o comentarios." onChange={(value) => updateLogField('notes', value)} />
-        </div>
-      </section>
-    </>}
-
-    {normalizedOptions.mode === 'detailed' && <section className="atal-delivery-section">
-      <header><small>Paso 2</small><h2>Contenido detallado</h2></header>
-      <p className="atal-delivery-help">Este formato conserva instrucciones, posición inicial, precauciones, material y notas clínicas. Puede ocupar varias páginas.</p>
-      <div className="atal-delivery-toggle-list"><Toggle checked={normalizedOptions.includeImages} title="Incluir imágenes disponibles" detail="Las imágenes se procesan localmente. Video y formatos incompatibles usan un placeholder seguro." onChange={(value) => updateOptions({ includeImages: value })} /></div>
-    </section>}
-
-    {estimate && <section className="atal-delivery-estimate"><FileText /><div><small>Documento estimado</small><b>{estimate.summary}</b><p>{normalizedOptions.mode === 'simple' && estimate.pageCount === 1 ? 'Optimizado para una sola hoja sin reducir la letra.' : normalizedOptions.mode === 'session-log' ? 'Las sesiones se paginan automáticamente y cada registro permanece completo.' : 'Documento educativo completo, una sección amplia por ejercicio.'}</p></div></section>}
+    {estimate && <section className="atal-delivery-estimate"><FileText /><div><small>Documento estimado</small><b>{estimate.summary}</b><p>La plantilla se adapta al plan; el plan nunca se comprime para caber.</p></div></section>}
 
     <section className="atal-delivery-actions" aria-label="Acciones del documento">
-      <button type="button" className="is-primary" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void download()}>{busy === 'download' ? <LoaderCircle className="is-spinning" /> : <Download />}<span><b>Descargar PDF</b><small>Archivo real para guardar</small></span></button>
-      <button type="button" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void share()}>{busy === 'share' ? <LoaderCircle className="is-spinning" /> : <Share2 />}<span><b>Compartir</b><small>Menú nativo del dispositivo</small></span></button>
-      <button type="button" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void print()}>{busy === 'print' ? <LoaderCircle className="is-spinning" /> : <Printer />}<span><b>Imprimir</b><small>Imprime el PDF generado</small></span></button>
+      <button type="button" className="is-primary" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void download()}>{busy === 'download' ? <LoaderCircle className="is-spinning" /> : <Download />}<span><b>Descargar PDF</b><small>Documento premium listo para adjuntar</small></span></button>
+      <button type="button" disabled={!actionsEnabled || !recipient || Boolean(busy)} onClick={openWhatsApp}><MessageCircle /><span><b>Abrir WhatsApp</b><small>{recipient ? 'Tú decides qué adjuntar y enviar' : 'Falta un número válido'}</small></span></button>
+      <div className="atal-delivery-secondary-actions">
+        <button type="button" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void share()}>{busy === 'share' ? <LoaderCircle className="is-spinning" /> : <Share2 />}<span><b>Compartir</b><small>Adjunta el PDF desde el menú nativo</small></span></button>
+        <button type="button" disabled={!actionsEnabled || Boolean(busy)} onClick={() => void print()}>{busy === 'print' ? <LoaderCircle className="is-spinning" /> : <Printer />}<span><b>Imprimir</b><small>Abre el PDF para imprimir</small></span></button>
+      </div>
     </section>
 
     {pdfResult?.omittedMedia.length ? <p className="atal-delivery-feedback"><AlertTriangle /> {pdfResult.omittedMedia.length} {pdfResult.omittedMedia.length === 1 ? 'imagen no pudo incluirse' : 'imágenes no pudieron incluirse'}; el documento se generó con placeholders seguros.</p> : null}
@@ -251,6 +245,6 @@ export function PatientPlanDeliveryScreen({ planId }: { planId: string }) {
   </main></AtalShell>;
 }
 
-function Toggle({ checked, disabled, title, detail, onChange }: { checked: boolean; disabled?: boolean; title: string; detail: string; onChange: (value: boolean) => void }) {
-  return <label className={`atal-delivery-toggle${disabled ? ' is-disabled' : ''}`}><input type="checkbox" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} /><span><b>{title}</b><small>{detail}</small></span><i aria-hidden="true" /></label>;
+function ModeButton({ active, title, detail, onClick }: { active: boolean; title: string; detail: string; onClick: () => void }) {
+  return <button type="button" aria-pressed={active} className={active ? 'is-active' : ''} onClick={onClick}><span><b>{title}</b><small>{detail}</small></span><Check /></button>;
 }
