@@ -39,7 +39,9 @@ export function normalizePatientPlanDeliveryOptions(
   const includeExercises = asBoolean(source.includeExercises, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeExercises);
   const includeRest = includeExercises && asBoolean(source.includeRest, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeRest);
   const includeImages = mode === 'detailed' && asBoolean(source.includeImages, DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.includeImages);
-  const rawSessionCount = Number.isFinite(source.sessionCount) ? Number(source.sessionCount) : DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.sessionCount;
+  const rawSessionCount = typeof source.sessionCount === 'number' && Number.isFinite(source.sessionCount)
+    ? source.sessionCount
+    : DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.sessionCount;
   const sessionCount = Math.min(99, Math.max(1, Math.round(rawSessionCount)));
   const incomingFields = source.logFields ?? DEFAULT_PATIENT_PLAN_DELIVERY_OPTIONS.logFields;
   const logFields = {
@@ -70,18 +72,19 @@ export function patientPlanFontLabel(fontScale: PatientPlanFontScale) {
 }
 
 export function simpleExerciseRowsPerPage(fontScale: PatientPlanFontScale) {
-  return fontScale === 'extra-large' ? 5 : 6;
+  return fontScale === 'extra-large' ? 3 : 4;
 }
 
 export function patientSessionRowHeight(options: PatientPlanDeliveryOptions, exerciseCount = 0) {
   const normalized = normalizePatientPlanDeliveryOptions(options);
-  const lineHeight = normalized.fontScale === 'extra-large' ? 24 : 20;
-  let height = normalized.fontScale === 'extra-large' ? 104 : 88;
+  const checkboxLineHeight = normalized.fontScale === 'extra-large' ? 26 : 22;
+  let height = normalized.fontScale === 'extra-large' ? 134 : 118;
+  if (normalized.logFields.difficulty) height += normalized.fontScale === 'extra-large' ? 28 : 24;
   if (normalized.logFields.perExerciseCompletion) {
     const checkboxLines = Math.max(1, Math.ceil(Math.max(1, exerciseCount) / 6));
-    height += checkboxLines * lineHeight;
+    height += 22 + checkboxLines * checkboxLineHeight;
   }
-  if (normalized.logFields.notes) height += normalized.fontScale === 'extra-large' ? 20 : 16;
+  if (normalized.logFields.notes) height += normalized.fontScale === 'extra-large' ? 34 : 28;
   return height;
 }
 
@@ -91,8 +94,10 @@ export function patientSessionPageCapacities(
 ) {
   const normalized = normalizePatientPlanDeliveryOptions(options);
   const rowHeight = patientSessionRowHeight(normalized, documentModel.exercises.length);
-  const exerciseLegendRows = normalized.includeExercises ? Math.ceil(documentModel.exercises.length / 2) : 0;
-  const legendHeight = normalized.includeExercises ? 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 28 : 24) : 0;
+  const exerciseLegendRows = normalized.includeExercises ? documentModel.exercises.length : 0;
+  const legendHeight = normalized.includeExercises
+    ? 34 + exerciseLegendRows * (normalized.fontScale === 'extra-large' ? 44 : 40)
+    : 0;
   const firstAvailable = Math.max(0, 500 - legendHeight);
   const continuationAvailable = 690;
   return {
