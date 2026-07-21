@@ -14,10 +14,13 @@ test('defaults to one universal plan plus session log and keeps flexible session
   assert.doesNotMatch(options,/week|semana/i);
 });
 
-test('estimates plan pages and one universal log page group per rehabilitation session',()=>{
+test('measures wrapped rows and uses the same adaptive page chunks for estimates',()=>{
   const options=read('src/features/patient-delivery/deliveryOptions.ts');
-  assert.match(options,/patientPlanExerciseCapacities/);
-  assert.match(options,/patientLogExerciseCapacity/);
+  assert.match(options,/measurePatientPlanRow/);
+  assert.match(options,/measurePatientLogRow/);
+  assert.match(options,/layoutPatientPlanPages/);
+  assert.match(options,/layoutPatientLogPages/);
+  assert.match(options,/wrapPdfText/);
   assert.match(options,/planPageCount/);
   assert.match(options,/logPagesPerSession/);
   assert.match(options,/options\.sessionCount \* logPagesPerSession/);
@@ -28,7 +31,7 @@ test('renders a premium monochrome plan from the real prescription without fixed
   const renderer=read('src/features/patient-delivery/pdfUniversalRenderer.ts');
   assert.match(renderer,/PLAN PERSONAL DE REHABILITACIÓN/);
   assert.match(renderer,/Ejercicios prescritos/);
-  assert.match(renderer,/exercise\.doseLabel/);
+  assert.match(renderer,/compactPatientPlanDose/);
   assert.match(renderer,/exercise\.rest/);
   assert.match(renderer,/exercise\.therapistNotes \|\| exercise\.objective/);
   assert.match(renderer,/fontScale === 'extra-large'/);
@@ -49,13 +52,25 @@ test('uses one universal result field for repetitions time distance load lateral
   assert.doesNotMatch(renderer,/Serie 1|Serie 2|Serie 3/);
 });
 
-test('keeps every exercise row complete and continues long sessions on another clearly labelled page',()=>{
+test('keeps measured exercise rows complete and continues long sessions clearly',()=>{
   const renderer=read('src/features/patient-delivery/pdfUniversalRenderer.ts');
-  assert.match(renderer,/logPagesPerSession/);
+  assert.match(renderer,/layoutPatientPlanPages/);
+  assert.match(renderer,/layoutPatientLogPages/);
+  assert.match(renderer,/layoutPage\.rows/);
   assert.match(renderer,/SESIÓN \$\{sessionNumber\}/);
   assert.match(renderer,/CONTINUACIÓN/);
-  assert.match(renderer,/slice\(start, start \+ logCapacity\)/);
   assert.match(renderer,/sessionNumber <= options\.sessionCount/);
+  assert.doesNotMatch(renderer,/slice\(start, start \+ logCapacity\)/);
+});
+
+test('includes professional finish and complete perceived-effort choices',()=>{
+  const renderer=read('src/features/patient-delivery/pdfUniversalRenderer.ts');
+  assert.match(renderer,/Profesional responsable/);
+  assert.match(renderer,/Próxima revisión/);
+  assert.match(renderer,/documentModel\.professional\.name/);
+  assert.match(renderer,/Suave/);
+  assert.match(renderer,/Adecuado/);
+  assert.match(renderer,/Intenso/);
 });
 
 test('routes plan plus log plan only log only and the preserved detailed document',()=>{
