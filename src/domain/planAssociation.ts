@@ -10,13 +10,17 @@ export function resolveAssociatedPlanId(state: AtalState, patientId: string, pre
   return newest(plans.filter((plan) => plan.status !== 'archived'))?.id ?? '';
 }
 
-export function syncClinicalRecordPlanAssociation(state: AtalState, patientId: string, preferredPlanId = '') {
+export function syncClinicalRecordPlanAssociation(
+  state: AtalState,
+  patientId: string,
+  preferredPlanId = '',
+  updatedAt = new Date().toISOString(),
+) {
   const planId = resolveAssociatedPlanId(state, patientId, preferredPlanId);
-  const timestamp = new Date().toISOString();
   for (const record of state.clinicalRecords.filter((item) => item.patientId === patientId)) {
     if (record.planId === planId) continue;
     record.planId = planId;
-    record.updatedAt = timestamp;
+    record.updatedAt = updatedAt;
   }
   return planId;
 }
