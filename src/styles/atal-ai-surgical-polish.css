@@ -7,11 +7,22 @@
   box-shadow: none !important;
 }
 
-/* Command center: when the thread is shorter than the viewport, keep it attached
-   to the composer instead of leaving a large empty region between them. */
+/* Command center: a flexible spacer occupies only unused room above the real
+   conversation and draft. It collapses to zero when content grows, so the
+   treatment draft remains visible and scrollable without a ghost gap below it. */
 .atal-command-thread {
-  display: grid;
-  align-content: safe end;
+  display: flex;
+  flex-direction: column;
+}
+
+.atal-command-thread::before {
+  content: "";
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.atal-command-thread > * {
+  flex: 0 0 auto;
 }
 
 /* Notices enter cleanly, remain manually dismissible, and leave softly. */
@@ -32,14 +43,20 @@
   to { opacity: 1; transform: none; }
 }
 
-/* Composer: make the send affordance unmistakable. */
-.atal-command-composer .atal-command-dynamic.is-send svg {
+/* Composer: use the official Atal green and an unmistakable white up arrow. */
+.atal-command-composer .atal-command-dynamic.is-send {
+  color: #fff;
+  background: var(--green);
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--green) 28%, transparent);
+}
+
+.atal-command-send-glyph {
   display: block;
-  width: 22px;
-  height: 22px;
-  color: currentColor;
-  opacity: 1;
-  stroke-width: 2.6;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: .82;
+  transform: translateY(-2px);
 }
 
 /* Attachments: compact contextual popover instead of a large bottom sheet. */
@@ -108,6 +125,11 @@
 html[data-theme="dark"] .atal-home-v2 .atal-home-row .atal-home-row-icon {
   border-color: var(--surface) !important;
   background: var(--surface) !important;
+}
+
+html[data-theme="dark"] .atal-command-composer .atal-command-dynamic.is-send {
+  color: #fff;
+  background: var(--green);
 }
 
 html[data-theme="dark"] .atal-ai-attachment-menu {
