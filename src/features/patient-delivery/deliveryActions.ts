@@ -69,8 +69,12 @@ export async function sharePatientPlanPdf(result: PatientPlanPdfResult): Promise
 }
 
 export function normalizeWhatsAppPhone(value: string) {
-  const digits = value.replace(/\D/g, '').replace(/^00/, '');
-  return digits.length >= 8 && digits.length <= 15 ? digits : '';
+  const candidates = value.match(/(?:\+|00)?\d[\d\s().-]{6,}\d/g) ?? [value];
+  const normalized = candidates
+    .map((candidate) => candidate.replace(/\D/g, '').replace(/^00/, ''))
+    .filter((candidate) => candidate.length >= 8 && candidate.length <= 15)
+    .sort((left, right) => right.length - left.length);
+  return normalized[0] ?? '';
 }
 
 export function resolvePatientWhatsAppTarget(patient: PatientPlanDocument['patient']): PatientWhatsAppTarget | null {
@@ -88,7 +92,7 @@ export function patientPlanWhatsAppUrl(documentModel: PatientPlanDocument, targe
 
 export function openPatientPlanWhatsApp(documentModel: PatientPlanDocument) {
   const target = resolvePatientWhatsAppTarget(documentModel.patient);
-  if (!target) throw new Error('Añade un número válido del paciente o de su responsable antes de abrir WhatsApp.');
+  if (!target) throw new Error('Añade un número válido con código de país para el paciente o su responsable antes de abrir WhatsApp.');
   const url = patientPlanWhatsAppUrl(documentModel, target);
   const opened = window.open(url, '_blank', 'noopener,noreferrer');
   if (!opened) window.location.assign(url);
