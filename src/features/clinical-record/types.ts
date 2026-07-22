@@ -26,7 +26,7 @@ export type PainLevelParseResult =
   | { ok: true; value: number | null }
   | { ok: false; message: string };
 
-const PAIN_LEVEL_ERROR = 'El dolor debe ser un número entre 0 y 10.';
+const PAIN_LEVEL_ERROR = 'El dolor debe estar entre 0 y 10.';
 
 export function parsePainLevelInput(input: string): PainLevelParseResult {
   const normalized = input.trim().replace(',', '.');
