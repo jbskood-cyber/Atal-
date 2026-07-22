@@ -55,7 +55,7 @@ export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
   const save = () => {
     if (!current.reasonForVisit.trim()) { setMessage('El motivo de consulta es obligatorio.'); return; }
     const parsedPain = parsePainLevelInput(painInput);
-    if (!parsedPain.ok) { setMessage(parsedPain.message); return; }
+    if (!parsedPain.ok) { setMessage('El dolor debe estar entre 0 y 10.'); return; }
     const candidate: ClinicalRecord = { ...current, painLevel: parsedPain.value };
     try {
       let saved: ClinicalRecord;
