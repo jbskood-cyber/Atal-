@@ -21,16 +21,31 @@ This directory is the canonical implementation contract for Block 4.1. A chat pr
 6. `06-test-and-acceptance-matrix.md`
 7. `07-autonomous-execution-protocol.md`
 
+## Contract self-review decisions
+
+The package was reviewed for placeholders, internal consistency, scope and type-name drift before opening the draft PR.
+
+Two details are authoritative during implementation:
+
+1. The final `UndoPatch`, `UndoReceipt` and `ToolDefinition` shapes are the definitions in `02-core-architecture.md`, consistent with `04-transactions-audit-and-undo.md`.
+2. When creating `tests/tsconfig.core.json` in Task 1, add `"rootDir": ".."` under `compilerOptions`. This preserves emitted paths such as `.tmp/core-tests/src/features/atal-ai/core/stableValue.js`, which are used by `tests/helpers/core-modules.mjs`. This sentence corrects the Task 1 JSON example if that property is absent there.
+
+No `TBD`, `TODO`, unspecified external dependency or store migration is authorized by this contract.
+
 ## Precedence
 
 When two instructions appear to conflict, apply this order:
 
 1. Protection of existing user data and clinical invariants.
-2. This canonical contract.
-3. Issue #13 acceptance criteria.
-4. Draft PR checklist and checkpoint comments.
-5. Execution-chat instructions.
-6. Implementation convenience.
+2. The explicit contract self-review decisions in this README.
+3. The final type/transaction contracts in documents 02 and 04.
+4. Product and tool policy in documents 01 and 03.
+5. Test and acceptance requirements in document 06.
+6. Task sequencing and code examples in document 05.
+7. Issue #13 acceptance criteria.
+8. Draft PR checklist and checkpoint comments.
+9. Execution-chat instructions.
+10. Implementation convenience.
 
 The worker must stop rather than guess when a conflict remains after applying this order.
 
