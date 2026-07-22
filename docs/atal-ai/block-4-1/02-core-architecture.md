@@ -59,6 +59,7 @@ src/features/atal-ai/core/
 ├── undoEngine.ts
 ├── executionEngine.ts
 ├── legacyAdapters.ts
+├── atalStorePort.ts
 └── tools/
     ├── queryTools.ts
     ├── patientTools.ts
@@ -76,10 +77,11 @@ Each file has one responsibility:
 - `entityResolver.ts`: resolve and validate entity relationships from a snapshot plus context. It never mutates state.
 - `riskPolicy.ts`: map registry-owned risk to a gate result. It never trusts model-provided risk.
 - `stateInvariants.ts`: validate the complete candidate `AtalState`; throw typed invariant failures before persistence.
-- `transactionEngine.ts`: one `mutateAtalStore` boundary, executor invocation, invariant validation, audit append and result construction.
+- `transactionEngine.ts`: one store-port mutation boundary, executor invocation, invariant validation, audit append and result construction.
 - `undoEngine.ts`: validate receipt expiry/current versions and restore previous values in one transaction.
 - `executionEngine.ts`: orchestrate validation, resolution, policy and execution; this is the only public core entry point.
 - `legacyAdapters.ts`: translate current `AICommand`, `AtalAIDraft`, `AIWorkContext` and private contact data into typed invocations/results.
+- `atalStorePort.ts`: the only production adapter from the core transaction boundary to `getAtalState` and `mutateAtalStore`.
 - `tools/*.ts`: focused deterministic definitions and executors grouped by product domain.
 
 Do not add a React context, global event bus or second tool registry.
@@ -153,12 +155,28 @@ export type AffectedEntity = {
   afterUpdatedAt?: string;
 };
 
-export type UndoPatch = {
-  collection: 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'settings';
-  entityId: string;
-  before: unknown;
-  expectedAfterUpdatedAt?: string;
-};
+export type UndoPatch =
+  | {
+      operation: 'restore';
+      collection: 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'settings';
+      entityId: string;
+      before: unknown;
+      expectedAfterUpdatedAt?: string;
+    }
+  | {
+      operation: 'remove-created';
+      collection:
+        | 'patients'
+        | 'plans'
+        | 'exercises'
+        | 'clinicalRecords'
+        | 'clinicalRecordVersions'
+        | 'notes'
+        | 'events'
+        | 'notifications';
+      entityId: string;
+      expectedAfterUpdatedAt?: string;
+    };
 
 export type UndoReceipt = {
   id: string;
@@ -166,7 +184,10 @@ export type UndoReceipt = {
   tool: string;
   issuedAt: string;
   expiresAt: string;
+  consumedAt?: string;
   patches: UndoPatch[];
+  generatedEventIds: string[];
+  generatedNotificationIds: string[];
 };
 
 export type ClientEffect =
@@ -206,12 +227,16 @@ export type ToolDefinition<TInput, TData = unknown> = {
   version: 1;
   risk: ToolRisk;
   mutates: boolean;
+  supportsUndo: boolean;
+  undoTtlMs?: number;
   requiredEntities: EntityType[];
   validateInput(input: unknown): TInput;
   preconditions(environment: ToolExecutionEnvironment, input: TInput): void;
   execute(environment: ToolExecutionEnvironment, input: TInput): ToolSuccess<TData>;
 };
 ```
+
+Registry construction must reject incompatible definitions, including a mutating `read` tool, a read tool with undo enabled, or an undo TTL on a tool that does not support undo.
 
 Tool executors receive the candidate cloned state only when `mutates === true`. They must not call `getAtalState`, `mutateAtalStore`, React setters, router APIs, browser downloads or Gemini.
 
@@ -252,7 +277,7 @@ A confirmation proof is valid only when its fingerprint equals the current stabl
 
 ## 8. Transaction boundary
 
-For a mutating tool, `transactionEngine` performs exactly one call to `mutateAtalStore`:
+For a mutating tool, `transactionEngine` performs exactly one call through the production store port, which delegates to `mutateAtalStore`:
 
 1. generate transaction ID;
 2. enter the store clone supplied by `mutateAtalStore`;
