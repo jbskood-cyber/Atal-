@@ -142,3 +142,34 @@ test('legacy applyDraft compatibility source no longer mutates the store directl
   assert.doesNotMatch(source, /mutateAtalStore/);
   assert.match(source, /executeLegacyAIAction/);
 });
+
+test('legacy command registry delegates without store mutations or browser effects', () => {
+  const source = readFileSync(new URL('../src/features/atal-ai/data/commandRegistry.ts', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /mutateAtalStore|updatePlanStatus|updateSettings|createObjectURL|document\.createElement/);
+  assert.match(source, /executeLegacyAIAction/);
+  assert.match(source, /executeUndo/);
+});
+
+test('conversation UI handles the core result union without classifying risk', () => {
+  const source = readFileSync(new URL('../src/features/atal-ai/AtalAIConversationScreen.tsx', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /getAICommandClass|commandClass|ToolRisk/);
+  for (const status of ['clarification', 'confirmation-required', 'blocked', 'error', 'success']) {
+    assert.match(source, new RegExp(`status===['"]${status}['"]`), status);
+  }
+  assert.match(source, /executeLegacyAIAction/);
+});
+
+test('conversation owns confirmed client download and exact confirmation fingerprint', () => {
+  const source = readFileSync(new URL('../src/features/atal-ai/AtalAIConversationScreen.tsx', import.meta.url), 'utf8');
+  assert.match(source, /clientEffect/);
+  assert.match(source, /createObjectURL/);
+  assert.match(source, /pendingConfirmation\.decision\.fingerprint/);
+  assert.match(source, /mode:pendingConfirmation\.decision\.mode/);
+  assert.match(source, /savedResult/);
+});
+
+test('saved results use the core undo receipt compatibility shape', () => {
+  const source = readFileSync(new URL('../src/features/atal-ai/types.ts', import.meta.url), 'utf8');
+  assert.match(source, /UndoReceipt/);
+  assert.match(source, /AIUndoToken\s*=\s*UndoReceipt\s*\|\s*LegacyAIUndoToken/);
+});

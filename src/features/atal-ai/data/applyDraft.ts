@@ -25,5 +25,5 @@ export function applyAtalAIDraft(
     throw new Error(message);
   }
   const data = (result.data ?? {}) as { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?: string };
-  return { ...data, summary: result.summary, undo: result.undo as unknown as AIUndoToken | undefined };
+  return { ...data, summary: result.summary, undo: result.undo as AIUndoToken | undefined };
 }
