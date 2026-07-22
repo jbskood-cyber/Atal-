@@ -23,7 +23,11 @@ function verifyExpected(item: EntityWithVersion | undefined, patch: UndoPatch): 
   }
 }
 
-function removeCreated(state: AtalState, patch: Extract<UndoPatch, { operation: 'remove-created' }>): void {
+function removeCreated(
+  state: AtalState,
+  patch: Extract<UndoPatch, { operation: 'remove-created' }>,
+  scheduled: Set<string>,
+): void {
   const items = collection(state, patch.collection);
   const current = items.find((item) => item.id === patch.entityId);
   verifyExpected(current, patch);
@@ -31,8 +35,8 @@ function removeCreated(state: AtalState, patch: Extract<UndoPatch, { operation: 
   if (patch.collection === 'exercises' && state.plans.some((plan) => plan.exerciseIds.includes(patch.entityId))) {
     throw coreError('CORE_UNDO_STALE', 'El ejercicio ya está relacionado con otro plan.');
   }
-  if (patch.collection === 'plans' && (state.sessions.some((session) => session.planId === patch.entityId)
-      || state.clinicalRecords.some((record) => record.planId === patch.entityId))) {
+  if (patch.collection === 'plans' && (state.sessions.some((session) => session.planId === patch.entityId && !scheduled.has(`sessions:${session.id}`))
+      || state.clinicalRecords.some((record) => record.planId === patch.entityId && !scheduled.has(`clinicalRecords:${record.id}`)))) {
     throw coreError('CORE_UNDO_STALE', 'El plan ya tiene relaciones posteriores.');
   }
   if (patch.collection === 'patients' && (state.plans.some((plan) => plan.patientId === patch.entityId)
@@ -101,7 +105,8 @@ export function executeUndo(
     const removals = receipt.patches
       .filter((patch): patch is Extract<UndoPatch, { operation: 'remove-created' }> => patch.operation === 'remove-created')
       .sort((left, right) => REMOVE_ORDER[left.collection] - REMOVE_ORDER[right.collection]);
-    for (const patch of removals) removeCreated(candidate, patch);
+    const scheduled = new Set(removals.map((patch) => `${patch.collection}:${patch.entityId}`));
+    for (const patch of removals) removeCreated(candidate, patch, scheduled);
 
     validateAtalStateInvariants(candidate);
     const audit: ActivityEvent = {

@@ -46,7 +46,11 @@ test('duplicates multimedia into an independent record',()=>{
 });
 
 test('prevents unsafe Atal IA mutations and oversized requests',()=>{
-  const apply=read('src/features/atal-ai/data/applyDraft.ts');
+  const apply=[
+    read('src/features/atal-ai/data/applyDraft.ts'),
+    read('src/features/atal-ai/core/tools/planTools.ts'),
+    read('src/features/atal-ai/core/tools/exerciseTools.ts'),
+  ].join('\n');
   const card=read('src/features/atal-ai/components/ConversationalDraftCard.tsx');
   const client=read('src/features/atal-ai/api/geminiClient.ts');
   const server=read('server/atalAIPlugin.ts');

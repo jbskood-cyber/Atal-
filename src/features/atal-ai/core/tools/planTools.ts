@@ -1,5 +1,7 @@
 import type { PlanEntity } from '@/src/data/atalStore';
 import { coreError, type EntityRef, type ToolDefinition, type ToolRisk } from '../contracts';
+import { materializeExercises, validateDraftInput, type DraftToolInput } from './exerciseTools';
+import { checkVersion, durationText, frequencyText } from './patientTools';
 
 type PlanInput = { plan: EntityRef; replaceCurrent?: true };
 
@@ -58,6 +60,68 @@ function transitionTool(
 }
 
 export const planTools: ToolDefinition[] = [
+  {
+    name: 'plan.create_for_patient', version: 1, risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000,
+    requiredEntities: ['patient'], validateInput: (input) => validateDraftInput(input, 'create_plan_for_existing_patient'),
+    preconditions(environment, input) {
+      const { draft, force } = input as DraftToolInput;
+      const patient = environment.state.patients.find((item) => item.id === environment.resolved.patient?.id);
+      if (!patient) throw coreError('CORE_PRECONDITION_FAILED', 'El paciente ya no existe.');
+      checkVersion(draft.baseVersions.patientUpdatedAt, patient.updatedAt, force, 'paciente');
+      if (!draft.plan.title.trim()) throw coreError('CORE_INPUT_INVALID', 'Añade un título al plan.');
+      if (draft.plan.status === 'active' && environment.state.plans.some((item) => item.patientId === patient.id && item.status === 'active')) {
+        throw coreError('CORE_PRECONDITION_FAILED', 'Este paciente ya tiene un plan activo.');
+      }
+    },
+    execute(environment, input) {
+      const { draft } = input as DraftToolInput;
+      const patient = environment.state.patients.find((item) => item.id === environment.resolved.patient?.id)!;
+      const exercises = materializeExercises(environment, draft.exercises);
+      if (draft.plan.status === 'active' && !exercises.exerciseIds.length) throw coreError('CORE_PRECONDITION_FAILED', 'Un plan activo requiere ejercicios.');
+      const plan = {
+        id: `${environment.transactionId}-plan`, patientId: patient.id, title: draft.plan.title.trim(), focus: draft.plan.focus,
+        duration: durationText(draft), frequency: frequencyText(draft), goal: draft.plan.goal,
+        exerciseIds: exercises.exerciseIds, status: draft.plan.status, progression: draft.plan.phases.join('\n'),
+        reportCriteria: draft.plan.progressCriteria || 'Reportar dolor elevado, síntomas o imposibilidad para completar.',
+        generalInstructions: draft.plan.generalInstructions, createdAt: environment.context.now, updatedAt: environment.context.now,
+      };
+      environment.state.plans.push(plan);
+      const affected = [...exercises.affected, { type: 'plan' as const, id: plan.id }];
+      const record = environment.state.clinicalRecords.find((item) => item.patientId === patient.id);
+      if (record && record.planId !== plan.id) {
+        const before = structuredClone(record);
+        environment.state.clinicalRecordVersions.push({ id: `${environment.transactionId}-record-version`, recordId: before.id, patientId: patient.id, version: before.version, snapshot: before, createdAt: environment.context.now });
+        record.planId = plan.id; record.version += 1; record.updatedAt = environment.context.now;
+        affected.push({ type: 'clinical-record', id: record.id });
+      }
+      const summary = [...exercises.summary, `Plan creado como ${plan.status === 'active' ? 'activo' : 'borrador'}.`];
+      return { status: 'success', message: summary.join(' '), summary, data: { patientId: patient.id, planId: plan.id, exerciseId: exercises.firstCreatedId }, href: `/plans/${plan.id}`, affected };
+    },
+  },
+  {
+    name: 'plan.update', version: 1, risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000,
+    requiredEntities: ['patient', 'plan'], validateInput: (input) => validateDraftInput(input, 'update_existing_plan'),
+    preconditions(environment, input) {
+      const { draft, force } = input as DraftToolInput;
+      const plan = currentPlan(environment);
+      if (plan.patientId !== environment.resolved.patient?.id) throw coreError('CORE_PRECONDITION_FAILED', 'El plan no pertenece al paciente.');
+      checkVersion(draft.baseVersions.planUpdatedAt, plan.updatedAt, force, 'plan');
+    },
+    execute(environment, input) {
+      const { draft } = input as DraftToolInput;
+      const plan = currentPlan(environment);
+      const exercises = materializeExercises(environment, draft.exercises);
+      const exerciseIds = exercises.exerciseIds;
+      plan.title = draft.plan.title.trim() || plan.title; plan.focus = draft.plan.focus.trim() || plan.focus;
+      plan.goal = draft.plan.goal.trim() || plan.goal; plan.duration = draft.plan.duration.value !== null || draft.plan.duration.customText ? durationText(draft) : plan.duration;
+      plan.frequency = draft.plan.frequency.value !== null || draft.plan.frequency.customText ? frequencyText(draft) : plan.frequency;
+      plan.progression = draft.plan.phases.length ? draft.plan.phases.join('\n') : plan.progression;
+      plan.reportCriteria = draft.plan.progressCriteria.trim() || plan.reportCriteria; plan.generalInstructions = draft.plan.generalInstructions.trim() || plan.generalInstructions;
+      plan.exerciseIds = [...new Set([...plan.exerciseIds,...exerciseIds])]; plan.updatedAt = environment.context.now;
+      const summary = [...exercises.summary, `Plan actualizado: ${plan.title}.`];
+      return { status: 'success', message: summary.join(' '), summary, data: { patientId: plan.patientId, planId: plan.id, exerciseId: exercises.firstCreatedId }, href: `/plans/${plan.id}`, affected: [...exercises.affected, { type: 'plan', id: plan.id }] };
+    },
+  },
   transitionTool('plan.activate', 'sensitive-write', ['draft', 'paused'], 'active'),
   transitionTool('plan.pause', 'reversible-write', ['active'], 'paused'),
   transitionTool('plan.complete', 'sensitive-write', ['active', 'paused'], 'completed'),

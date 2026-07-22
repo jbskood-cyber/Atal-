@@ -19,10 +19,12 @@ import { patientTools } from './tools/patientTools';
 import { planTools } from './tools/planTools';
 import { queryTools } from './tools/queryTools';
 import { settingsTools } from './tools/settingsTools';
+import { exerciseTools } from './tools/exerciseTools';
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
   ...patientTools,
+  ...exerciseTools,
   ...planTools,
   ...settingsTools,
   ...exportTools,
