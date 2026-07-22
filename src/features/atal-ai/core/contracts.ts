@@ -160,6 +160,7 @@ export type ToolDefinition<TInput = unknown, TData = unknown> = {
   name: string;
   version: 1;
   description?: string;
+  blockedReason?: string;
   risk: ToolRisk;
   mutates: boolean;
   supportsUndo: boolean;

@@ -47,6 +47,9 @@ export function decideExecutionPolicy(
   now: string,
 ): PolicyDecision {
   const fingerprint = fingerprintInvocation(invocation);
+  if (definition.blockedReason) {
+    return { mode: 'blocked', fingerprint, reason: definition.blockedReason };
+  }
   const required = REQUIRED_MODE[definition.risk];
 
   if (required === 'none') {
