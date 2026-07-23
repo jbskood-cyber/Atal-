@@ -39,7 +39,7 @@ The last product and test change passed:
 - `e2e` run #69 / ID `29987327798`;
 - evidence artifact `playwright-evidence`, ID `8555571401`, retained until 2026-08-06.
 
-Commits after that validation only maintain this evidence document and do not change product, test, dependency or lockfile content.
+Later commits only maintain this evidence document and do not change product, test, dependency or lockfile content.
 
 `atal:store:v2`, store version `2` and the canonical `package-lock.json` remain preserved.
 
