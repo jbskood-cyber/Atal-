@@ -13,6 +13,7 @@
   },
   "include": [
     "../src/features/atal-ai/core/**/*.ts",
+    "../src/features/atal-ai/contextual/**/*.ts",
     "../src/features/atal-ai/types.ts",
     "../src/data/atalStore.ts",
     "../src/data/atal-demo.ts",

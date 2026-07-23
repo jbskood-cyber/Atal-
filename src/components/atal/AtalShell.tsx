@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { AtalLogo, AtalMark } from './AtalLogo';
 import { markAllNotificationsRead,markNotificationRead,useAtalStore } from '@/src/data/atalStore';
+import { ContextualAIProvider, useContextualAI } from '@/src/features/atal-ai/contextual/ContextualAIProvider';
+import { ContextualAIWorkspace } from '@/src/features/atal-ai/contextual/ContextualAIWorkspace';
 
 const primary = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -41,22 +43,32 @@ const PersistentShellContext = createContext(false);
 
 export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
   const isPersistent = useContext(PersistentShellContext);
-  return isPersistent ? <>{children}</> : <AtalShellFrame onNew={onNew}>{children}</AtalShellFrame>;
+  return isPersistent ? <>{children}</> : <ContextualAIProvider><AtalShellFrame onNew={onNew}>{children}</AtalShellFrame></ContextualAIProvider>;
 }
 
 export function AtalPersistentShell({ children }: { children: ReactNode }) {
-  return <PersistentShellContext.Provider value><AtalShellFrame>{children}</AtalShellFrame></PersistentShellContext.Provider>;
+  return <PersistentShellContext.Provider value><ContextualAIProvider><AtalShellFrame>{children}</AtalShellFrame></ContextualAIProvider></PersistentShellContext.Provider>;
 }
 
 function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
   const pathname = usePathname() ?? '/';
   const router = useRouter();
+  const contextualAI = useContextualAI();
+  const workspaceOpen = contextualAI.session.mode === 'open';
+  const setLauncherSuppressed = contextualAI.setLauncherSuppressed;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const shellOverlayOpen = menuOpen || searchOpen || notificationsOpen || newOpen;
   const settings=useAtalStore((state)=>state.settings);const unread=useAtalStore((state)=>state.notifications.filter((item)=>!item.read).length);
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
+
+  useEffect(() => {
+    setLauncherSuppressed(shellOverlayOpen);
+  }, [shellOverlayOpen, setLauncherSuppressed]);
+
+  useEffect(() => () => setLauncherSuppressed(false), [setLauncherSuppressed]);
 
   useEffect(() => {
     ['/', '/patients', '/patients/new', '/patients/p01', '/plans', '/plans/new', '/plans/pl01', '/exercises', '/exercises/new', '/exercises/e01', '/activity', '/activity/p01', '/assistant', '/settings', '/exports'].forEach((href) => router.prefetch(href));
@@ -70,17 +82,33 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   }, [pathname]);
 
   useEffect(() => {
+    if (!workspaceOpen) return;
+    setMenuOpen(false);
+    setSearchOpen(false);
+    setNotificationsOpen(false);
+    setNewOpen(false);
+  }, [workspaceOpen]);
+
+  useEffect(() => {
     const close = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { setMenuOpen(false); setSearchOpen(false); setNotificationsOpen(false); setNewOpen(false); }
+      if (event.key === 'Escape') {
+        if (workspaceOpen) contextualAI.minimize();
+        else { setMenuOpen(false); setSearchOpen(false); setNotificationsOpen(false); setNewOpen(false); }
+      }
     };
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
-  }, []);
+  }, [workspaceOpen, contextualAI]);
 
   const openNew = onNew ?? (() => setNewOpen(true));
 
-  return (
-    <div className={`atal-app${settings.compact?' atal-app--compact':''}`}>
+  return <>
+    <div
+      className={`atal-app${settings.compact?' atal-app--compact':''}${workspaceOpen?' is-contextual-ai-background':''}`}
+      data-contextual-ai-background
+      inert={workspaceOpen ? true : undefined}
+      aria-hidden={workspaceOpen || undefined}
+    >
       <aside className="atal-sidebar">
         <AtalLogo />
         <nav className="atal-sidebar__nav" aria-label="Navegación principal">
@@ -125,7 +153,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         </section>
       </>}
 
-      <div className={`atal-mobile-dock${menuOpen?' is-hidden':''}`}>
+      {!workspaceOpen && <div className={`atal-mobile-dock${menuOpen?' is-hidden':''}`}>
         <div className="atal-nav-slot">
           <nav aria-label="Navegación principal" className="atal-primary-nav">
             {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
@@ -133,13 +161,14 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
           </nav>
         </div>
         <Link href="/assistant" aria-label="Atal IA" className={isActive('/assistant') ? 'atal-ai-button is-active' : 'atal-ai-button'}><AtalMark /><span className="sr-only">Atal IA</span></Link>
-      </div>
+      </div>}
 
       {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
       {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} onNavigate={(href) => { setNotificationsOpen(false); router.push(href); }} />}
       {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
     </div>
-  );
+    <ContextualAIWorkspace />
+  </>;
 }
 
 function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {

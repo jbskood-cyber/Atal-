@@ -173,6 +173,9 @@ export type AIConversation = {
   attachmentMetadata: AIAttachmentMeta[];
   privateContact: PrivateContactDraft;
   workContext:AIWorkContext;
+  contextKey?: string;
+  contextSurface?: 'patient' | 'clinical-record' | 'plan' | 'exercise' | 'report';
+  contextEntityLabel?: string;
   savedResult?: { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?:string; summary:string[]; undo?: AIUndoToken };
   error?: string;
 };
