@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test:core:compile": "rm -rf .tmp/core-tests && tsc -p tests/tsconfig.core.json",
     "test": "npm run test:core:compile && node --test tests/*.test.mjs",
+    "audit:ai-capabilities": "npm run test:core:compile && node scripts/atal-ai/generate-capability-report.mjs",
     "quality": "npm run typecheck && npm test && npm run build",
     "clean": "rm -rf dist"
   },
