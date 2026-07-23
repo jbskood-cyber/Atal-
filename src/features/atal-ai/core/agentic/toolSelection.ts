@@ -1,4 +1,4 @@
-const MAX_ACTIVE_TOOLS = 16;
+const MAX_ACTIVE_TOOLS = 20;
 
 const READ_BASE = ['app.read', 'patient.search', 'navigation.open'];
 const PATIENT_TOOLS = ['patient.create', 'patient.update', 'patient.lifecycle', 'patient_note.add', 'patient_note.update', 'clinical_record.upsert'];
@@ -13,7 +13,9 @@ function includesAny(value: string, terms: string[]): boolean {
 }
 
 function append(target: string[], values: string[]): void {
-  for (const value of values) if (!target.includes(value) && target.length < MAX_ACTIVE_TOOLS) target.push(value);
+  for (const value of values) {
+    if (!target.includes(value) && target.length < MAX_ACTIVE_TOOLS) target.push(value);
+  }
 }
 
 export type ToolSelectionInput = {
