@@ -3,10 +3,10 @@ import { FunctionCallingConfigMode, GoogleGenAI } from '@google/genai';
 import { ATAL_AGENT_SYSTEM_PROMPT } from '../src/features/atal-ai/api/agentPrompt';
 import { agentToolCatalogByName, type AgentToolCatalogEntry } from '../src/features/atal-ai/api/agentToolCatalog';
 import type { AgentFunctionCall, AgentHistoryContent, AgentTurnRequest } from '../src/features/atal-ai/core/agentic/contracts';
+import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 
 const MAX_HISTORY_CONTENTS = 32;
-const MAX_ALLOWED_TOOLS = 16;
 
 function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.statusCode = status;
@@ -44,7 +44,7 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   if (!payload || typeof payload !== 'object') throw new Error('La solicitud del agente no es válida.');
   if (typeof payload.conversationId !== 'string' || !payload.conversationId.trim()) throw new Error('Falta la conversación del agente.');
   if (typeof payload.text !== 'string' || payload.text.length > 30_000) throw new Error('El mensaje no es válido.');
-  if (!Array.isArray(payload.allowedTools) || payload.allowedTools.length < 1 || payload.allowedTools.length > MAX_ALLOWED_TOOLS) throw new Error('La selección de herramientas no es válida.');
+  if (!Array.isArray(payload.allowedTools) || payload.allowedTools.length < 1 || payload.allowedTools.length > AGENT_MAX_ACTIVE_TOOLS) throw new Error('La selección de herramientas no es válida.');
   if (!Array.isArray(payload.history) || payload.history.length > MAX_HISTORY_CONTENTS) throw new Error('El historial de la tarea supera el límite seguro.');
   if (!Array.isArray(payload.attachments) || payload.attachments.length > 8) throw new Error('La solicitud contiene demasiados archivos.');
   const allowedTools = [...new Set(payload.allowedTools)];
