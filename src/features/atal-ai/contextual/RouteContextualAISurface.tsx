@@ -14,7 +14,6 @@ export function RouteContextualAISurface() {
   const pathname = usePathname() ?? '';
   const state = useAtalStore((store) => store);
   let context: ContextualAIContext | null = null;
-  let raised = false;
 
   const planMatch = pathname.match(/^\/plans\/([^/]+)$/);
   if (planMatch) {
@@ -36,7 +35,6 @@ export function RouteContextualAISurface() {
           contextLabel: 'en este plan',
           entityLabel: `${plan.title}${patient ? ` · ${patient.name}` : ''}`,
         };
-        raised = true;
       }
     }
   }
@@ -89,5 +87,5 @@ export function RouteContextualAISurface() {
     }
   }
 
-  return context ? <ContextualAISurface context={context} raised={raised} /> : null;
+  return context ? <ContextualAISurface context={context} /> : null;
 }
