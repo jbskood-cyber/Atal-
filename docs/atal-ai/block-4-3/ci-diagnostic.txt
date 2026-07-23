@@ -2,86 +2,84 @@
 > ai-studio-applet@0.1.0 typecheck
 > tsc --noEmit
 
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
 src/features/atal-ai/data/aiArtifactRepository.ts(56,52): error TS1501: This regular expression flag is only available when targeting 'es2018' or later.
 TYPECHECK_EXIT=2
 
 > ai-studio-applet@0.1.0 test:core:compile
 > rm -rf .tmp/core-tests && tsc -p tests/tsconfig.core.json
 
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
-CORE_COMPILE_EXIT=2
+CORE_COMPILE_EXIT=0
 TAP version 13
 # Subtest: registry exposes universal read action and client-effect tools
 ok 1 - registry exposes universal read action and client-effect tools
   ---
-  duration_ms: 18.570888
+  duration_ms: 28.431375
   type: 'test'
   ...
 # Subtest: explicit reversible patient contact update executes immediately, audits and undoes
 ok 2 - explicit reversible patient contact update executes immediately, audits and undoes
   ---
-  duration_ms: 5.276502
+  duration_ms: 6.890992
   type: 'test'
   ...
 # Subtest: file-derived reversible action pauses at compact review instead of mutating
 ok 3 - file-derived reversible action pauses at compact review instead of mutating
   ---
-  duration_ms: 0.933234
+  duration_ms: 1.185083
   type: 'test'
   ...
 # Subtest: patient lifecycle remains sensitive and requires explicit confirmation
 ok 4 - patient lifecycle remains sensitive and requires explicit confirmation
   ---
-  duration_ms: 0.891889
+  duration_ms: 1.209868
   type: 'test'
   ...
 # Subtest: note update and clinical record upsert persist with validated undo
 ok 5 - note update and clinical record upsert persist with validated undo
   ---
-  duration_ms: 2.096449
+  duration_ms: 2.714096
   type: 'test'
   ...
 # Subtest: plan duplicate and membership operations preserve canonical order and undo
 ok 6 - plan duplicate and membership operations preserve canonical order and undo
   ---
-  duration_ms: 2.60579
+  duration_ms: 3.581344
   type: 'test'
   ...
 # Subtest: exercise lifecycle and report review are canonical and reversible
 ok 7 - exercise lifecycle and report review are canonical and reversible
   ---
-  duration_ms: 2.256644
+  duration_ms: 3.527043
   type: 'test'
   ...
 # Subtest: approved client effects do not mutate canonical store
 ok 8 - approved client effects do not mutate canonical store
   ---
-  duration_ms: 0.992407
+  duration_ms: 1.311648
   type: 'test'
   ...
 # Subtest: universal read model exposes complete patient context without mutation
 ok 9 - universal read model exposes complete patient context without mutation
   ---
-  duration_ms: 23.02659
+  duration_ms: 28.710316
   type: 'test'
   ...
 # Subtest: universal read model filters plans and exercises deterministically
 ok 10 - universal read model filters plans and exercises deterministically
   ---
-  duration_ms: 0.757317
+  duration_ms: 0.965322
   type: 'test'
   ...
 # Subtest: session preparation and delivery use canonical patient plan and exercises
 ok 11 - session preparation and delivery use canonical patient plan and exercises
   ---
-  duration_ms: 1.216484
+  duration_ms: 1.44134
   type: 'test'
   ...
 # Subtest: universal read input remains bounded and rejects unsupported resources
 ok 12 - universal read input remains bounded and rejects unsupported resources
   ---
-  duration_ms: 0.290308
+  duration_ms: 0.450451
   type: 'test'
   ...
 1..12
@@ -92,5 +90,5 @@ ok 12 - universal read input remains bounded and rejects unsupported resources
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 80.89922
+# duration_ms 112.741673
 FOCUSED_TEST_EXIT=0
