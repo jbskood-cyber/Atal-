@@ -1,89 +1,65 @@
-# Block 4.2 — Execution evidence
+# Block 4.2 execution evidence
 
-This file records implementation evidence for the canonical contextual Atal AI workspace.
+## Canonical branch
 
-## 4.2A — Baseline and architecture inspection
-
-- Base branch: `main`
+- Branch: `feature/atal-ai-contextual-workspace-block-4-2`
+- Pull request: #16
+- Base: `main`
 - Base SHA: `bce942ff85f573bba678d84cdb53904ab532a52d`
-- Working branch: `feature/atal-ai-contextual-workspace-block-4-2`
-- PR: #16, open, draft, unmerged
-- Initial documentation HEAD: `970d325d522481054fc018f44ccab7828e1bca72`
-- Initial baseline: quality #27 PASS; e2e #4 PASS.
-- All canonical documents were read in README order before product edits.
-- Architecture inspected: persistent shell and bottom dock, patient/profile, clinical record, plan, exercise, report, global Atal IA, AI persistence, Block 4.1 execution core, confirmation, transaction, audit, undo and deterministic Playwright fixtures.
-- Execution environment note: the local runtime had no outbound GitHub access. The authenticated GitHub branch remained the isolated source workspace and GitHub Actions remained the execution source of truth, as allowed by the autonomous protocol.
 
-## 4.2B — Context model and shared state machine
+## Delivered surfaces
 
-TDD evidence:
+The shared contextual Atal AI workspace is available on:
 
-1. `tests/contextual-ai-state.test.mjs` was committed before the implementation module.
-2. quality #29 failed because `stateMachine` did not exist, proving RED for the intended reason.
-3. The contextual contracts and state machine were implemented.
-4. quality #31 passed.
-5. Action/suggestion and conversation-adapter tests were committed before their implementation modules.
+- patient;
+- clinical record;
+- plan;
+- exercise;
+- clinical report.
 
-Implemented contracts:
+The implementation reuses the Block 4.1 deterministic registry, risk, confirmation, transaction, audit and undo paths. It does not add a second assistant engine or mutation route.
 
-- explicit patient, clinical-record, plan, exercise and report context;
-- closed, open and minimized states;
-- route, page scroll, trigger focus, active pane, expanded draft section and internal scroll preservation;
-- stale target/pending proposal invalidation;
-- stable contextual conversation identity without a second persistence key;
-- deterministic surface-specific actions and suggestions from stored data only.
+## User visual-review corrections
 
-## 4.2C–F — Shared contextual workspace
+### Shared viewport anchor
 
-The completed implementation includes:
+The first AI Studio smoke approved Reporte clínico as the placement reference and approved the structured draft design. It also exposed two placement defects:
 
-- compact Liquid Glass contextual orb;
-- up to two exterior context actions;
-- shared workspace controller;
-- complete bottom-navigation suppression while open;
-- underlying page inertness and scroll lock;
-- exact restoration after minimize/close;
-- persisted contextual conversation continuity;
-- internal actions and deterministic suggestions;
-- operational conversation and structured draft pane;
-- Gemini request through the existing API client;
-- Block 4.1 execution path through `executeLegacyAIAction`;
-- confirmation proofs, audit, transaction and structured undo through the existing core;
-- patient, clinical-record, plan, exercise and report context adapters;
-- microphone-or-send composer behavior;
-- responsive Claro and Graphite layouts.
+- patient and clinical record launchers were mounted inside scrolling content;
+- plan used a special raised offset over exercise cards.
 
-## User visual-smoke correction
+The launcher now mounts through a global portal for every supported surface. Patient, clinical record, plan and exercise share the same lower viewport anchor as Reporte clínico. The structured draft design was not modified.
 
-The first Google AI Studio visual review approved the report workspace placement and structured draft, but exposed two cross-surface placement defects:
+### Native shell overlays
 
-1. Patient and clinical-record launchers were mounted inside long scrolling screens, so the user could need to reach the bottom before accessing Atal IA.
-2. Plan used a special raised offset that placed the orb and quick actions over exercise cards instead of matching the approved report anchor.
+A second AI Studio smoke exposed that the contextual launcher remained visible above the `Más` native sheet. The shell and contextual provider now share explicit launcher-suppression state. Opening `Más`, Search, Notifications or Create removes the orb and exterior recommendations from rendering; closing the overlay restores them.
 
-Systematic diagnosis confirmed the launcher was fixed relative to transformed/scrolling screen containers on patient/record, while plan explicitly used the obsolete `raised` variant.
+### End-of-page recommendations
 
-TDD correction evidence:
+Exterior recommendation chips now disappear when the user reaches the final 96 px of a scrollable page so that final clinical content and actions remain unobstructed. The Atal orb remains available. Scrolling upward restores the recommendations.
 
-- regression test commit `b6fc36ec5ed9e9a068512b94016953e72066fa35` added a viewport-geometry comparison against Reporte clínico;
-- quality #81 passed while e2e #58 failed, proving the visual defect without a product regression;
-- `ContextualAISurface` now mounts through a global React portal;
-- plan, exercise and report use one standard launcher anchor;
-- the obsolete raised CSS path was removed;
-- patient, clinical record, plan and exercise are compared against the report bottom gap without automatic scrolling;
-- successful evidence includes named screenshots for report reference, patient, clinical record, plan and exercise.
+## Deterministic regressions
 
-## Final verification
+Playwright covers:
 
-The implementation is complete on the branch tip recorded by PR #16. Final verification must always be read from the exact current branch HEAD and its corresponding GitHub Actions runs, rather than from an earlier evidence snapshot.
+- exact context binding and navigation suppression for every surface;
+- shared geometry against the approved report anchor at initial scroll position;
+- launcher suppression while the `Más` dialog is open and restoration after closing;
+- recommendation removal at the end of a long report while preserving the orb;
+- recommendation restoration after scrolling upward;
+- global lists and settings remaining free of contextual launchers;
+- all previously delivered conversation, draft, confirmation, undo, persistence, responsive and accessibility behavior.
 
-The latest verified checkpoint at the time of this document update passed both `quality` and deterministic Playwright with 28 expected tests, 0 unexpected, 0 flaky and 0 skipped. The PR conversation records the immutable final HEAD, workflow IDs and artifact ID used for approval.
+## Final validation
 
-## Protected invariants
+The final product-change HEAD was validated by GitHub Actions:
 
-- `atal:store:v2` unchanged.
-- store version remains `2`.
-- existing AI conversation and draft persistence reused.
-- no second clinical store or mutation path.
-- no backend, deployment, secrets, auth, payments or unrelated redesign.
-- structured draft design approved by the user and left unchanged.
-- PR remains draft and unmerged pending final visual approval and explicit merge authorization.
+- `quality` run #92 / ID `29987327813`: PASS;
+- `e2e` run #69 / ID `29987327798`: PASS;
+- Playwright evidence artifact: `playwright-evidence`, ID `8555571401`, retained until 2026-08-06;
+- `atal:store:v2` and store version `2` remain preserved;
+- `package-lock.json` remains unchanged from the canonical base.
+
+## Approval boundary
+
+The PR remains open, draft and unmerged. Final readiness and merge still require explicit user authorization after the corrected Google AI Studio visual review.
