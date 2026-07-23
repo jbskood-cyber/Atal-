@@ -2,317 +2,95 @@
 > ai-studio-applet@0.1.0 typecheck
 > tsc --noEmit
 
-src/features/atal-ai/core/tools/clientEffectTools.ts(43,117): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(43,170): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(56,90): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(56,143): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,128): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,158): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,186): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(103,116): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(124,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(124,141): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(126,123): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(126,144): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,98): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,194): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,234): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(191,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(195,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(197,13): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPatientTools.ts(197,42): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,53): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,75): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,97): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,14): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,39): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,88): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(206,34): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,65): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,103): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,53): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,96): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(212,32): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(212,75): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(213,26): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(213,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(214,24): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(222,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,41): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,66): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,94): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,50): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPatientTools.ts(226,67): error TS2322: Type 'unknown[]' is not assignable to type 'string[]'.
   Type 'unknown' is not assignable to type 'string'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,92): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,51): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,91): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(228,32): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(231,25): error TS2322: Type '"plan"' is not assignable to type '"patient" | "clinical-record"'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(232,42): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(234,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(243,23): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(243,70): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(244,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(259,24): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(261,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(261,139): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(275,71): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(279,71): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(280,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(290,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(291,73): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(301,27): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(301,72): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(302,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(302,85): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(303,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(303,72): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(304,34): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(304,82): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(305,28): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(305,76): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(306,26): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(306,67): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(316,31): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(153,11): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(153,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(154,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(161,80): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(161,100): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,46): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,98): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,17): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,44): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,79): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(164,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(176,27): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(187,115): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,11): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(207,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,78): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,103): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(211,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(211,104): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(217,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(217,94): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(218,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(218,93): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(219,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(219,65): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(221,114): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(229,42): error TS2698: Spread types may only be created from object types.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(229,139): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(240,31): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(251,122): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(267,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(268,57): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(268,128): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalSessionSettingsTools.ts(36,37): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalSessionSettingsTools.ts(61,49): error TS18046: 'input' is of type 'unknown'.
 TYPECHECK_EXIT=2
 
 > ai-studio-applet@0.1.0 test:core:compile
 > rm -rf .tmp/core-tests && tsc -p tests/tsconfig.core.json
 
-src/features/atal-ai/core/tools/clientEffectTools.ts(43,117): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(43,170): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(56,90): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(56,143): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,128): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,158): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(81,186): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(103,116): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(124,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(124,141): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(126,123): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(126,144): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,98): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,194): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/clientEffectTools.ts(154,234): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(191,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(195,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(197,13): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPatientTools.ts(197,42): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,53): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,75): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(204,97): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,14): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,39): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(205,88): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(206,34): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,65): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(210,103): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,53): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(211,96): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(212,32): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(212,75): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(213,26): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(213,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(214,24): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(222,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,41): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,66): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(225,94): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,50): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPatientTools.ts(226,67): error TS2322: Type 'unknown[]' is not assignable to type 'string[]'.
   Type 'unknown' is not assignable to type 'string'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(226,92): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,51): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(227,91): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(228,32): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(231,25): error TS2322: Type '"plan"' is not assignable to type '"patient" | "clinical-record"'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(232,42): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(234,47): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(243,23): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(243,70): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(244,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(259,24): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(261,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(261,139): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(275,71): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(279,71): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(280,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(290,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(291,73): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(301,27): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(301,72): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(302,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(302,85): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(303,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(303,72): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(304,34): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(304,82): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(305,28): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(305,76): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(306,26): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(306,67): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPatientTools.ts(316,31): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(153,11): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(153,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(154,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(161,80): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(161,100): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,19): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,46): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,69): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(162,98): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,17): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,44): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(163,79): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(164,30): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(176,27): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(187,115): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,11): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(207,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,22): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,78): error TS18046: 'input' is of type 'unknown'.
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(208,103): error TS7006: Parameter 'id' implicitly has an 'any' type.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(211,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(211,104): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(217,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(217,94): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(218,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(218,93): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(219,11): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(219,65): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(221,114): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(229,42): error TS2698: Spread types may only be created from object types.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(229,139): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(240,31): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(251,122): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(267,25): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(268,57): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(268,128): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalSessionSettingsTools.ts(36,37): error TS18046: 'input' is of type 'unknown'.
-src/features/atal-ai/core/tools/universalSessionSettingsTools.ts(61,49): error TS18046: 'input' is of type 'unknown'.
 CORE_COMPILE_EXIT=2
 TAP version 13
 # Subtest: registry exposes universal read action and client-effect tools
 ok 1 - registry exposes universal read action and client-effect tools
   ---
-  duration_ms: 26.466168
+  duration_ms: 25.214611
   type: 'test'
   ...
 # Subtest: explicit reversible patient contact update executes immediately, audits and undoes
 ok 2 - explicit reversible patient contact update executes immediately, audits and undoes
   ---
-  duration_ms: 7.148869
+  duration_ms: 6.569226
   type: 'test'
   ...
 # Subtest: file-derived reversible action pauses at compact review instead of mutating
 ok 3 - file-derived reversible action pauses at compact review instead of mutating
   ---
-  duration_ms: 1.347987
+  duration_ms: 1.171607
   type: 'test'
   ...
 # Subtest: patient lifecycle remains sensitive and requires explicit confirmation
 ok 4 - patient lifecycle remains sensitive and requires explicit confirmation
   ---
-  duration_ms: 1.233514
+  duration_ms: 1.206692
   type: 'test'
   ...
 # Subtest: note update and clinical record upsert persist with validated undo
 ok 5 - note update and clinical record upsert persist with validated undo
   ---
-  duration_ms: 3.913086
+  duration_ms: 2.870414
   type: 'test'
   ...
 # Subtest: plan duplicate and membership operations preserve canonical order and undo
 ok 6 - plan duplicate and membership operations preserve canonical order and undo
   ---
-  duration_ms: 3.847834
+  duration_ms: 3.499672
   type: 'test'
   ...
 # Subtest: exercise lifecycle and report review are canonical and reversible
 ok 7 - exercise lifecycle and report review are canonical and reversible
   ---
-  duration_ms: 3.046498
+  duration_ms: 2.724793
   type: 'test'
   ...
 # Subtest: approved client effects do not mutate canonical store
 ok 8 - approved client effects do not mutate canonical store
   ---
-  duration_ms: 1.34943
+  duration_ms: 1.322377
   type: 'test'
   ...
 # Subtest: universal read model exposes complete patient context without mutation
 ok 9 - universal read model exposes complete patient context without mutation
   ---
-  duration_ms: 30.053741
+  duration_ms: 29.092878
   type: 'test'
   ...
 # Subtest: universal read model filters plans and exercises deterministically
 ok 10 - universal read model filters plans and exercises deterministically
   ---
-  duration_ms: 1.059779
+  duration_ms: 0.927503
   type: 'test'
   ...
 # Subtest: session preparation and delivery use canonical patient plan and exercises
 ok 11 - session preparation and delivery use canonical patient plan and exercises
   ---
-  duration_ms: 1.497786
+  duration_ms: 1.408328
   type: 'test'
   ...
 # Subtest: universal read input remains bounded and rejects unsupported resources
 ok 12 - universal read input remains bounded and rejects unsupported resources
   ---
-  duration_ms: 0.398835
+  duration_ms: 0.380988
   type: 'test'
   ...
 1..12
@@ -323,5 +101,5 @@ ok 12 - universal read input remains bounded and rejects unsupported resources
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 112.543511
+# duration_ms 110.655659
 FOCUSED_TEST_EXIT=0
