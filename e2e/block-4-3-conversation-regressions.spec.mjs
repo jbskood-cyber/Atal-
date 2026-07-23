@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createDraftResponse, createState, mockAnalyze, seedBrowser } from './fixtures.mjs';
+import { createDraftResponse, createState, mockAnalyze } from './fixtures.mjs';
 
 const patientPath = '/patients/patient-e2e';
 
@@ -169,7 +169,15 @@ test.describe('Block 4.3 conversational regressions', () => {
 
   test('explicit handoff creates a new global session without copying the contextual transcript', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await seedBrowser(page, { state: createState() });
+    await page.goto('/');
+    await page.evaluate((state) => {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('atal:store:v2', JSON.stringify(state));
+      localStorage.setItem('atal:ai-conversations:v1', '[]');
+      localStorage.setItem('atal:ai-drafts:v1', '[]');
+      localStorage.setItem('atal:theme', 'light');
+    }, createState());
     await page.goto(patientPath);
     await page.getByRole('button', { name: 'Abrir Atal IA en este paciente' }).click();
     const workspace = page.getByRole('dialog', { name: 'Asistente en este paciente' });
