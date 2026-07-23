@@ -11,6 +11,7 @@ import {
 const patientPath = '/patients/patient-e2e';
 
 async function openPatient(page, options = {}) {
+  await page.setViewportSize({ width: 390, height: 844 });
   await seedBrowser(page, { state: createState(), ...options });
   await page.goto(patientPath);
   await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
@@ -67,6 +68,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
   });
 
   test('contextual patient summary is read-only and remains inside the current route', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await seedBrowser(page, { state: createState() });
     await mockAnalyze(page, createDraftResponse({
       intent: 'summarize_patient',
@@ -85,6 +87,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
   });
 
   test('contextual reversible note prepares first then confirms audits and undoes', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await seedBrowser(page, { state: createState() });
     await mockAnalyze(page, createDraftResponse({
       intent: 'add_patient_note',
