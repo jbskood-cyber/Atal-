@@ -81,12 +81,12 @@ function invocationFor(call: AgentFunctionCall, fileDerived: boolean): ToolInvoc
   };
 }
 
-function terminalState(task: AgentTaskState, result: ToolExecutionResult, invocation: ToolInvocation, callId: string): AgentTaskState {
+function terminalState(task: AgentTaskState, result: ToolExecutionResult, invocation: ToolInvocation, call: AgentFunctionCall): AgentTaskState {
   if (result.status === 'confirmation-required') {
-    return { ...task, status: 'needs-confirmation', pendingInvocation: result.invocation, pendingCallId: callId, finalText: result.decision.reason };
+    return { ...task, status: 'needs-confirmation', pendingInvocation: result.invocation, pendingCall: call, finalText: result.decision.reason };
   }
   if (result.status === 'clarification') {
-    return { ...task, status: 'needs-clarification', pendingInvocation: invocation, pendingCallId: callId, finalText: result.clarification.message };
+    return { ...task, status: 'needs-clarification', pendingInvocation: invocation, pendingCall: call, finalText: result.clarification.message };
   }
   if (result.status === 'blocked') return { ...task, status: 'blocked', finalText: result.message };
   if (result.status === 'error') return { ...task, status: 'failed', finalText: result.message, error: result.code };
@@ -146,7 +146,7 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       lastResults.push(step);
 
       if (isTerminalResult(result)) {
-        task = terminalState(task, result, invocation, call.id);
+        task = terminalState(task, result, invocation, call);
         break;
       }
       responseParts.push(...functionResponseContent(call, result).parts);
@@ -173,7 +173,7 @@ export function appendConfirmedResult(
 ): AgentTaskState {
   const next = structuredClone(task);
   next.pendingInvocation = undefined;
-  next.pendingCallId = undefined;
+  next.pendingCall = undefined;
   next.completed.push({ callId: call.id, invocation, result });
   next.history.push(functionResponseContent(call, result));
   next.status = result.status === 'success' ? 'running'
