@@ -1,10 +1,12 @@
-import type { AIWorkContext, AIAttachmentPayload } from '../types';
+import type { AIMessage, AIWorkContext, AIAttachmentPayload } from '../types';
 import type { ConfirmationProof } from '../core/contracts';
 import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
-import type { AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
+import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
+
+const MAX_VISIBLE_HISTORY_MESSAGES = 16;
 
 export type AtalAgentControllerInput = {
   conversationId: string;
@@ -13,6 +15,7 @@ export type AtalAgentControllerInput = {
   route: string;
   workContext: AIWorkContext;
   attachments: AIAttachmentPayload[];
+  messages: AIMessage[];
   task?: AgentTaskState;
   signal?: AbortSignal;
 };
@@ -35,6 +38,23 @@ function executionContext(input: AtalAgentControllerInput) {
   };
 }
 
+function visibleConversationHistory(input: AtalAgentControllerInput): AgentHistoryContent[] {
+  let messages = input.messages.filter((item) => item.role === 'user' || item.role === 'assistant');
+  const activeTask = input.task && ['running', 'needs-confirmation', 'needs-clarification'].includes(input.task.status)
+    ? input.task
+    : undefined;
+  if (activeTask) {
+    const lastUserIndex = messages.findLastIndex((item) => item.role === 'user');
+    if (lastUserIndex >= 0 && messages[lastUserIndex]?.text.trim() === activeTask.goal.trim()) {
+      messages = messages.filter((_item, index) => index !== lastUserIndex);
+    }
+  }
+  return messages.slice(-MAX_VISIBLE_HISTORY_MESSAGES).map((item) => ({
+    role: item.role === 'user' ? 'user' : 'model',
+    parts: [{ text: item.text }],
+  }));
+}
+
 function requestShape(input: AtalAgentControllerInput) {
   return {
     conversationId: input.conversationId,
@@ -44,6 +64,7 @@ function requestShape(input: AtalAgentControllerInput) {
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
     selectedSessionId: sessionFromRoute(input.route),
+    conversationHistory: visibleConversationHistory(input),
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
   };
 }
