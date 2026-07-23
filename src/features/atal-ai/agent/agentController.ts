@@ -52,6 +52,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
   const allowedTools = selectAgentTools({
     text: input.text,
     route: input.route,
+    intent: input.workContext.intent,
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
   });
