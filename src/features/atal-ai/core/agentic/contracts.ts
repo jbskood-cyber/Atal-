@@ -67,7 +67,7 @@ export type AgentTaskState = {
   completed: AgentStepResult[];
   seenCallSignatures: string[];
   pendingInvocation?: ToolInvocation;
-  pendingCallId?: string;
+  pendingCall?: AgentFunctionCall;
   finalText: string;
   error?: string;
   createdAt: string;
