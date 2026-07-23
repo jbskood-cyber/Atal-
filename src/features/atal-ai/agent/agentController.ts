@@ -3,7 +3,7 @@ import type { ConfirmationProof } from '../core/contracts';
 import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
 import type { AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
-import { selectAgentTools } from '../core/agentic/toolSelection';
+import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
 
 export type AtalAgentControllerInput = {
@@ -38,7 +38,7 @@ function executionContext(input: AtalAgentControllerInput) {
 function requestShape(input: AtalAgentControllerInput) {
   return {
     conversationId: input.conversationId,
-    text: input.text,
+    text: input.text.trim() || input.task?.goal || '',
     route: input.route,
     selectedPatientId: input.workContext.selectedPatientId,
     selectedPlanId: input.workContext.selectedPlanId,
@@ -56,11 +56,14 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
   });
   const task = input.task?.status === 'running'
-    ? { ...input.task, allowedTools: [...new Set([...input.task.allowedTools, ...allowedTools])] }
+    ? {
+        ...input.task,
+        allowedTools: [...new Set([...input.task.allowedTools, ...allowedTools])].slice(0, AGENT_MAX_ACTIVE_TOOLS),
+      }
     : createAgentTask(input.conversationId, input.text, allowedTools);
   return runAgentLoop({
     task,
-    request: requestShape(input),
+    request: requestShape({ ...input, task }),
     context: executionContext(input),
     requestModel: requestAtalAgentTurn,
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
@@ -79,7 +82,7 @@ export async function confirmAndContinueAtalAgent(
   if (task.status !== 'running') return { task, lastResults: [{ callId: pendingCall.id, invocation: pendingInvocation, result }] };
   const continued = await runAgentLoop({
     task,
-    request: requestShape(input),
+    request: requestShape({ ...input, task }),
     context: executionContext(input),
     requestModel: requestAtalAgentTurn,
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
