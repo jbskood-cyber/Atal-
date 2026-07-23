@@ -143,7 +143,7 @@ function validateExerciseUpdate(input: unknown): ExerciseUpdateInput {
   return { exercise: ref(value.exercise, 'exercise'), patch };
 }
 
-export const universalPlanExerciseTools: ToolDefinition[] = [
+export const universalPlanExerciseTools: ToolDefinition<any>[] = [
   {
     name: 'plan.create_simple', version: 1, description: 'Crea un plan canónico para un paciente existente usando campos directos.',
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['patient'],

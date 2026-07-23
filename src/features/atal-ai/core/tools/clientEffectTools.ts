@@ -33,7 +33,7 @@ function routeFor(value: Record<string, unknown>): string {
   return route;
 }
 
-export const clientEffectTools: ToolDefinition[] = [
+export const clientEffectTools: ToolDefinition<any>[] = [
   {
     name: 'navigation.open', version: 1, description: 'Abre una pantalla interna segura de Atal.',
     risk: 'read', mutates: false, supportsUndo: false, requiredEntities: [],

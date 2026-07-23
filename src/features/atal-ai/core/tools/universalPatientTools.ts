@@ -182,7 +182,7 @@ function validateRecordUpsert(input: unknown): RecordUpsertInput {
   return { patient: ref(value.patient, 'patient'), patch };
 }
 
-export const universalPatientTools: ToolDefinition[] = [
+export const universalPatientTools: ToolDefinition<any>[] = [
   {
     name: 'patient.create', version: 1, description: 'Crea un paciente con expediente inicial y, opcionalmente, un plan.',
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: [],
@@ -216,7 +216,7 @@ export const universalPatientTools: ToolDefinition[] = [
       };
       environment.state.patients.push(patient);
       environment.state.clinicalRecords.push(record);
-      const affected = [{ type: 'patient' as const, id: patientId }, { type: 'clinical-record' as const, id: recordId }];
+      const affected: Array<{ type: 'patient' | 'clinical-record' | 'plan'; id: string }> = [{ type: 'patient', id: patientId }, { type: 'clinical-record', id: recordId }];
       const summary = ['Paciente creado.', 'Expediente inicial creado.'];
       let planId: string | undefined;
       if (input.plan) {

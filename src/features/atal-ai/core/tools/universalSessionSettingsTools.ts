@@ -18,7 +18,7 @@ function text(value: unknown, max = 10_000): string | undefined {
   return normalized;
 }
 
-export const universalSessionSettingsTools: ToolDefinition[] = [
+export const universalSessionSettingsTools: ToolDefinition<any>[] = [
   {
     name: 'report.review', version: 1, description: 'Guarda la revisión u observación clínica del fisioterapeuta sobre una sesión.',
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['session'],
