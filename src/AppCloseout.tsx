@@ -6,7 +6,7 @@ import { PatientsScreen } from '@/src/screens/PatientsScreen';
 import { NewPatientScreen } from '@/src/screens/NewPatientScreen';
 import { PatientProfileScreen } from '@/src/screens/PatientProfileScreen';
 import { PatientPortalPreviewScreen } from '@/src/screens/PatientPortalPreviewScreen';
-import { PatientPlanDeliveryScreen } from '@/src/screens/PatientPlanDeliveryScreen';
+import { AgenticPatientPlanDeliveryScreen } from '@/src/screens/AgenticPatientPlanDeliveryScreen';
 import { GuidedSessionFlow } from '@/src/features/guided-session/GuidedSessionFlow';
 import { PlansScreen } from '@/src/screens/PlansScreen';
 import { PlanBuilderCloseoutScreen } from '@/src/screens/PlanBuilderCloseoutScreen';
@@ -54,7 +54,7 @@ function PlanDetailRoute() {
 
 function PatientPlanDeliveryRoute() {
   const { id = 'pl01' } = useParams();
-  return <PatientPlanDeliveryScreen planId={id} />;
+  return <AgenticPatientPlanDeliveryScreen planId={id} />;
 }
 
 function ExerciseDetailRoute() {
