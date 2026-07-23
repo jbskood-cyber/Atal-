@@ -150,7 +150,7 @@ export const universalPlanExerciseTools: ToolDefinition<any>[] = [
     validateInput: validatePlanCreate,
     preconditions(environment, input) {
       const exerciseIds = new Set(environment.state.exercises.map((item) => item.id));
-      if (input.exerciseIds.some((id) => !exerciseIds.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'El plan incluye un ejercicio inexistente.');
+      if (input.exerciseIds.some((id: string) => !exerciseIds.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'El plan incluye un ejercicio inexistente.');
       if (input.status === 'active' && environment.state.plans.some((item) => item.patientId === environment.resolved.patient?.id && item.status === 'active')) {
         throw coreError('CORE_PRECONDITION_FAILED', 'El paciente ya tiene un plan activo. Usa reemplazar plan activo.');
       }
@@ -205,7 +205,7 @@ export const universalPlanExerciseTools: ToolDefinition<any>[] = [
       const existing = new Set(environment.state.exercises.map((item) => item.id));
       if (input.exerciseIds.some((id) => !existing.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'Uno de los ejercicios no existe.');
       if (input.operation === 'reorder') {
-        const same = input.exerciseIds.length === plan.exerciseIds.length && input.exerciseIds.every((id) => plan.exerciseIds.includes(id));
+        const same = input.exerciseIds.length === plan.exerciseIds.length && input.exerciseIds.every((id: string) => plan.exerciseIds.includes(id));
         if (!same) throw coreError('CORE_PRECONDITION_FAILED', 'El nuevo orden debe contener exactamente los ejercicios actuales.');
       }
       if (input.operation === 'remove' && plan.status === 'active' && plan.exerciseIds.filter((id) => !input.exerciseIds.includes(id)).length === 0) {

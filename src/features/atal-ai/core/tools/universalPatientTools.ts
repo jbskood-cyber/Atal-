@@ -194,7 +194,7 @@ export const universalPatientTools: ToolDefinition<any>[] = [
       }
       if (input.plan) {
         const exerciseIds = new Set(environment.state.exercises.map((item) => item.id));
-        if (input.plan.exerciseIds.some((id) => !exerciseIds.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'El plan incluye un ejercicio inexistente.');
+        if (input.plan.exerciseIds.some((id: string) => !exerciseIds.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'El plan incluye un ejercicio inexistente.');
       }
     },
     execute(environment, input) {
@@ -223,7 +223,7 @@ export const universalPatientTools: ToolDefinition<any>[] = [
         planId = `${environment.transactionId}-plan`;
         environment.state.plans.push({
           id: planId, patientId, title: input.plan.title, focus: input.plan.focus, duration: input.plan.duration,
-          frequency: input.plan.frequency, goal: input.plan.goal, exerciseIds: [...new Set(input.plan.exerciseIds)],
+          frequency: input.plan.frequency, goal: input.plan.goal, exerciseIds: [...new Set<string>(input.plan.exerciseIds as string[])],
           status: input.plan.status, progression: input.plan.progression, reportCriteria: input.plan.reportCriteria,
           generalInstructions: input.plan.generalInstructions, createdAt: environment.context.now, updatedAt: environment.context.now,
         });

@@ -38,17 +38,20 @@ function callSignature(call: AgentFunctionCall): string {
   return stableSerialize({ tool: call.tool, input: call.input, references: call.references });
 }
 
+function resultMessage(result: ToolExecutionResult): string {
+  if (result.status === 'success') return result.message;
+  if (result.status === 'clarification') return result.clarification.message;
+  if (result.status === 'confirmation-required') return result.decision.reason;
+  return result.message;
+}
+
 function modelOutput(result: ToolExecutionResult): Record<string, unknown> {
   const serialized = JSON.stringify(result);
   if (serialized.length <= MAX_RESULT_CHARS) return { output: result };
   return {
     output: {
       status: result.status,
-      message: result.status === 'success'
-        ? result.message
-        : result.status === 'clarification'
-          ? result.clarification.message
-          : result.message,
+      message: resultMessage(result),
       truncated: true,
     },
   };
@@ -176,9 +179,7 @@ export function appendConfirmedResult(
   next.status = result.status === 'success' ? 'running'
     : result.status === 'clarification' ? 'needs-clarification'
       : result.status === 'blocked' ? 'blocked' : 'failed';
-  next.finalText = result.status === 'success' ? ''
-    : result.status === 'clarification' ? result.clarification.message
-      : result.message;
+  next.finalText = result.status === 'success' ? '' : resultMessage(result);
   next.updatedAt = now();
   return next;
 }
