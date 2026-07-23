@@ -17,6 +17,8 @@ async function seedAt(page, width, height, theme = 'light') {
   await seedBrowser(page, { state: createState(), theme });
   await page.goto(patientPath);
   await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Abrir Atal IA en este paciente' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Actualizar contacto con Atal IA' })).toBeVisible();
 }
 
 async function expectNoPageOverflow(page) {
@@ -74,6 +76,18 @@ test.describe('Block 4.2 responsive, theme and keyboard evidence', () => {
     await expect(page.getByRole('dialog', { name: 'Asistente en este paciente' })).toHaveCount(0);
     await expect(page.locator('.atal-mobile-dock')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Abrir Atal IA en este paciente' })).toBeFocused();
+  });
+
+  test('Escape closes the voice layer before the contextual workspace', async ({ page }) => {
+    await seedAt(page, 390, 844, 'light');
+    const workspace = await openWorkspace(page);
+    await workspace.getByRole('button', { name: 'Grabar audio' }).click();
+    const voiceDialog = page.getByRole('dialog', { name: 'Nota de voz contextual' });
+    await expect(voiceDialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(voiceDialog).toHaveCount(0);
+    await expect(workspace).toBeVisible();
+    await expect(page.locator('.atal-mobile-dock')).toHaveCount(0);
   });
 
   test('reduced motion disables the active-session pulse', async ({ page }) => {
