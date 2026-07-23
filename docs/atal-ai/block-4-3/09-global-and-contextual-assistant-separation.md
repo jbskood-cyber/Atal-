@@ -164,6 +164,12 @@ Validated implementation HEAD:
 7938bbdda5160facf3f37f7e0923d0d109cf4b75
 ```
 
+Final contract and evidence HEAD:
+
+```text
+3c20d5dfb0c441045a882a8edd009d71ee4947b6
+```
+
 Evidence:
 
 - clean dependency installation: passed;
@@ -172,11 +178,9 @@ Evidence:
 - production build: passed;
 - generated capability matrix verification: passed;
 - Playwright: 39 passed, 0 failed, 0 flaky, 0 skipped;
-- quality workflow: `30048137022` passed;
-- E2E workflow: `30048137001` passed;
-- Playwright evidence artifact: `8579979778`.
-
-The contract-only documentation HEAD is validated independently by the canonical quality and E2E workflows.
+- final quality workflow: `30048728040` passed;
+- final E2E workflow: `30048728013` passed;
+- final Playwright evidence artifact: `8580187389`.
 
 A fresh real-device Google AI Studio walkthrough remains mandatory because deterministic coverage cannot prove Gemini response quality or the final visual experience on the product owner's device.
 
