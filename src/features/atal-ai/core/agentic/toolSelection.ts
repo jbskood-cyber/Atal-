@@ -9,7 +9,7 @@ const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
 
 const MUTATION_TERMS = [
-  'crea', 'crear', 'añade', 'anade', 'agrega', 'actualiza', 'actualización', 'actualizacion',
+  'crea', 'crear', 'registra', 'registrar', 'añade', 'anade', 'agrega', 'actualiza', 'actualización', 'actualizacion',
   'cambia', 'modifica', 'guarda', 'aplica', 'archiva', 'restaura', 'activa', 'pausa',
   'completa', 'duplica', 'ordena', 'coloca', 'inicia', 'reanuda', 'termina', 'genera',
   'descarga', 'imprime', 'comparte', 'exporta', 'elimina', 'borra', 'abre',
