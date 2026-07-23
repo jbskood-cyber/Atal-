@@ -5,6 +5,7 @@ import { ATAL_AI_SYSTEM_PROMPT, ATAL_AI_TRANSCRIPTION_PROMPT } from '../src/feat
 import { atalAIDraftJsonSchema } from '../src/features/atal-ai/api/schemas';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 import type { AtalAIAnalyzeRequest } from '../src/features/atal-ai/types';
+import { atalAIAgentHandler } from './atalAIAgent';
 
 type AtalAIPayload = AtalAIAnalyzeRequest & {
   preferences?: {
@@ -95,7 +96,7 @@ async function analyze(payload: AtalAIPayload) {
 }
 
 export function atalAIPlugin(): Plugin {
-  const handler = async (request: IncomingMessage, response: ServerResponse) => {
+  const legacyHandler = async (request: IncomingMessage, response: ServerResponse) => {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'Método no permitido.' });
     try {
       sendJson(response, 200, await analyze(await readJson(request)));
@@ -106,10 +107,12 @@ export function atalAIPlugin(): Plugin {
   return {
     name: 'atal-ai-secure-endpoint',
     configureServer(server) {
-      server.middlewares.use('/api/atal-ai/analyze', handler);
+      server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
     configurePreviewServer(server) {
-      server.middlewares.use('/api/atal-ai/analyze', handler);
+      server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
   };
 }
