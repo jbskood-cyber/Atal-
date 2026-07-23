@@ -55,12 +55,20 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const router = useRouter();
   const contextualAI = useContextualAI();
   const workspaceOpen = contextualAI.session.mode === 'open';
+  const setLauncherSuppressed = contextualAI.setLauncherSuppressed;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const shellOverlayOpen = menuOpen || searchOpen || notificationsOpen || newOpen;
   const settings=useAtalStore((state)=>state.settings);const unread=useAtalStore((state)=>state.notifications.filter((item)=>!item.read).length);
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
+
+  useEffect(() => {
+    setLauncherSuppressed(shellOverlayOpen);
+  }, [shellOverlayOpen, setLauncherSuppressed]);
+
+  useEffect(() => () => setLauncherSuppressed(false), [setLauncherSuppressed]);
 
   useEffect(() => {
     ['/', '/patients', '/patients/new', '/patients/p01', '/plans', '/plans/new', '/plans/pl01', '/exercises', '/exercises/new', '/exercises/e01', '/activity', '/activity/p01', '/assistant', '/settings', '/exports'].forEach((href) => router.prefetch(href));
