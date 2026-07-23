@@ -26,6 +26,7 @@ import '@/src/styles/atal-context-menu-fix.css';
 import '@/src/styles/atal-ai-surgical-polish.css';
 import '@/src/styles/atal-contextual-ai.css';
 import '@/src/styles/atal-contextual-ai-operational.css';
+import '@/src/styles/atal-ai-agentic-chat.css';
 import { App } from './App';
 import { bootstrapRealWorkspace } from './data/workspaceBootstrap';
 
