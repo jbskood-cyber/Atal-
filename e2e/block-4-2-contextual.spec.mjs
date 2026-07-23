@@ -1,12 +1,15 @@
 import { expect, test } from '@playwright/test';
 import {
   commandFixture,
+  CONVERSATIONS_KEY,
   createDraftResponse,
   createState,
   DRAFTS_KEY,
   mockAnalyze,
   readStore,
   seedBrowser,
+  STORE_KEY,
+  THEME_KEY,
 } from './fixtures.mjs';
 
 const patientPath = '/patients/patient-e2e';
@@ -16,6 +19,26 @@ async function openPatient(page, options = {}) {
   await seedBrowser(page, { state: createState(), ...options });
   await page.goto(patientPath);
   await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
+}
+
+async function seedPersistentBrowser(page) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.evaluate(({ state, keys }) => {
+    localStorage.clear();
+    localStorage.setItem(keys.store, JSON.stringify(state));
+    localStorage.setItem(keys.conversations, '[]');
+    localStorage.setItem(keys.drafts, '[]');
+    localStorage.setItem(keys.theme, 'light');
+  }, {
+    state: createState(),
+    keys: {
+      store: STORE_KEY,
+      conversations: CONVERSATIONS_KEY,
+      drafts: DRAFTS_KEY,
+      theme: THEME_KEY,
+    },
+  });
 }
 
 async function openWorkspace(page) {
@@ -100,8 +123,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
   });
 
   test('prepared contextual draft persists through minimize and reload without mutation', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await seedBrowser(page, { state: createState() });
+    await seedPersistentBrowser(page);
     await mockAnalyze(page, createDraftResponse({
       intent: 'add_patient_note',
       responseMode: 'command',
@@ -109,6 +131,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
       command: commandFixture('add_patient_note', { patientId: 'patient-e2e', content: 'Nota persistente E2E.' }),
     }));
     await page.goto(patientPath);
+    await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
     let workspace = await prepareNoteDraft(page);
     const draftsBefore = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]').length, DRAFTS_KEY);
     expect(draftsBefore).toBeGreaterThan(0);
@@ -119,6 +142,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
     await page.getByRole('button', { name: 'Cerrar asistente' }).click();
     await page.reload();
+    await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
     workspace = await openWorkspace(page);
     await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
     expect((await readStore(page)).notes).toHaveLength(0);
