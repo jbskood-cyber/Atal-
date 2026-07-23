@@ -8,6 +8,20 @@ const SESSION_TOOLS = ['session.start_or_resume', 'session.update_draft', 'sessi
 const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.appearance'];
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
 
+const MUTATION_TERMS = [
+  'crea', 'crear', 'añade', 'anade', 'agrega', 'actualiza', 'actualización', 'actualizacion',
+  'cambia', 'modifica', 'guarda', 'aplica', 'archiva', 'restaura', 'activa', 'pausa',
+  'completa', 'duplica', 'ordena', 'coloca', 'inicia', 'reanuda', 'termina', 'genera',
+  'descarga', 'imprime', 'comparte', 'exporta', 'elimina', 'borra', 'abre',
+];
+
+const DEFER_MUTATION_TERMS = [
+  'no apliques', 'no aplicar', 'sin aplicar', 'no guardes', 'no guardar', 'sin guardar',
+  'no hagas cambios', 'no cambies nada', 'todavía no', 'todavia no', 'aún no', 'aun no',
+  'solo prepara', 'sólo prepara', 'prepara una propuesta', 'prepara un borrador',
+  'la revisaré antes', 'la revisare antes', 'para mi revisión', 'para mi revision',
+];
+
 function includesAny(value: string, terms: string[]): boolean {
   return terms.some((term) => value.includes(term));
 }
@@ -28,29 +42,25 @@ export type ToolSelectionInput = {
 
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const value = `${input.text} ${input.route} ${input.intent ?? ''}`.toLocaleLowerCase('es-MX');
+  const requestText = input.text.toLocaleLowerCase('es-MX');
   const selected = [...READ_BASE];
+  const mutationRequested = includesAny(requestText, MUTATION_TERMS);
+  const mutationDeferred = includesAny(requestText, DEFER_MUTATION_TERMS);
+  const allowMutations = mutationRequested && !mutationDeferred;
 
   const patient = includesAny(value, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
-  const exercise = includesAny(value, ['ejercicio', 'exercise', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'imagen', 'secuencia', '/exercises']);
+  const exercise = includesAny(value, ['ejercicio', 'exercise', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'secuencia', '/exercises']);
   const session = includesAny(value, ['sesión', 'sesion', 'session', 'dolor', 'energía', 'energia', 'esfuerzo', 'síntoma', 'sintoma', 'reporte', 'actividad', '/activity']);
   const settings = includesAny(value, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
   const delivery = includesAny(value, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
 
-  if (patient || input.hasImageOrPdf) append(selected, PATIENT_TOOLS);
-  if (plan) append(selected, PLAN_TOOLS);
-  if (exercise || input.hasImageOrPdf) append(selected, EXERCISE_TOOLS);
-  if (session || input.hasAudio) append(selected, SESSION_TOOLS);
-  if (settings) append(selected, SETTINGS_TOOLS);
-  if (delivery) append(selected, DELIVERY_TOOLS);
-
-  if (selected.length === READ_BASE.length) {
-    if (input.route.startsWith('/plans')) append(selected, PLAN_TOOLS);
-    else if (input.route.startsWith('/exercises')) append(selected, EXERCISE_TOOLS);
-    else if (input.route.startsWith('/activity')) append(selected, SESSION_TOOLS);
-    else if (input.route.startsWith('/settings')) append(selected, SETTINGS_TOOLS);
-    else append(selected, PATIENT_TOOLS);
-  }
+  if (allowMutations && patient) append(selected, PATIENT_TOOLS);
+  if (allowMutations && plan) append(selected, PLAN_TOOLS);
+  if (allowMutations && exercise) append(selected, EXERCISE_TOOLS);
+  if (allowMutations && session) append(selected, SESSION_TOOLS);
+  if (allowMutations && settings) append(selected, SETTINGS_TOOLS);
+  if (allowMutations && delivery) append(selected, DELIVERY_TOOLS);
 
   return selected.slice(0, MAX_ACTIVE_TOOLS);
 }
