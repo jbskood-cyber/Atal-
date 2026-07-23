@@ -156,7 +156,31 @@ The implementation cannot be declared complete unless automated tests prove all 
 11. Mobile rendering remains readable at approximately 390 × 844 px.
 12. `main` remains untouched until explicit merge authorization.
 
-## 9. Prohibited regressions
+## 9. Deterministic evidence
+
+Validated implementation HEAD:
+
+```text
+7938bbdda5160facf3f37f7e0923d0d109cf4b75
+```
+
+Evidence:
+
+- clean dependency installation: passed;
+- TypeScript typecheck: passed;
+- complete Node suite: 156 passed, 0 failed;
+- production build: passed;
+- generated capability matrix verification: passed;
+- Playwright: 39 passed, 0 failed, 0 flaky, 0 skipped;
+- quality workflow: `30048137022` passed;
+- E2E workflow: `30048137001` passed;
+- Playwright evidence artifact: `8579979778`.
+
+The contract-only documentation HEAD is validated independently by the canonical quality and E2E workflows.
+
+A fresh real-device Google AI Studio walkthrough remains mandatory because deterministic coverage cannot prove Gemini response quality or the final visual experience on the product owner's device.
+
+## 10. Prohibited regressions
 
 The following are product failures:
 
