@@ -1,1 +1,1 @@
-export { AtalAIGeneralScreen as AssistantScreen } from '@/src/features/atal-ai/AtalAIGeneralScreen';
+export { AtalAIGeneralEntry as AssistantScreen } from '@/src/features/atal-ai/AtalAIGeneralEntry';
