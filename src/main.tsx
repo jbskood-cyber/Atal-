@@ -24,6 +24,7 @@ import '@/src/styles/atal-residual-compat.css';
 import '@/src/styles/atal-final-closeout.css';
 import '@/src/styles/atal-context-menu-fix.css';
 import '@/src/styles/atal-ai-surgical-polish.css';
+import '@/src/styles/atal-contextual-ai.css';
 import { App } from './App';
 import { bootstrapRealWorkspace } from './data/workspaceBootstrap';
 
