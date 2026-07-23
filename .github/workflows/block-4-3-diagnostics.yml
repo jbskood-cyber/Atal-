@@ -11,34 +11,42 @@ on:
       - 'package.json'
       - '.github/workflows/block-4-3-diagnostics.yml'
 
+permissions:
+  contents: write
+
 jobs:
   diagnostics:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: feature/atal-ai-agentic-audit-block-4-3
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Capture typecheck
+      - name: Capture typecheck and focused tests
         shell: bash
         run: |
+          mkdir -p docs/atal-ai/block-4-3
           set +e
-          npm run typecheck > block-4-3-diagnostics.txt 2>&1
-          echo "TYPECHECK_EXIT=$?" >> block-4-3-diagnostics.txt
+          npm run typecheck > docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "TYPECHECK_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
+          npm run test:core:compile >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "CORE_COMPILE_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
+          node --test tests/atal-ai-universal-read-tools.test.mjs tests/atal-ai-universal-actions.test.mjs >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "FOCUSED_TEST_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
           exit 0
-      - name: Capture core compile and tests
+      - name: Publish diagnostic output
         shell: bash
         run: |
-          set +e
-          npm run test:core:compile >> block-4-3-diagnostics.txt 2>&1
-          echo "CORE_COMPILE_EXIT=$?" >> block-4-3-diagnostics.txt
-          node --test tests/atal-ai-universal-read-tools.test.mjs tests/atal-ai-universal-actions.test.mjs >> block-4-3-diagnostics.txt 2>&1
-          echo "FOCUSED_TEST_EXIT=$?" >> block-4-3-diagnostics.txt
-          exit 0
-      - uses: actions/upload-artifact@v4
-        with:
-          name: block-4-3-diagnostics
-          path: block-4-3-diagnostics.txt
-          retention-days: 2
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/atal-ai/block-4-3/ci-diagnostic.txt
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: publish Block 4.3 diagnostic output"
+          git push origin HEAD:feature/atal-ai-agentic-audit-block-4-3
