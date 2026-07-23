@@ -22,6 +22,7 @@ import { contextualActionsFor } from './actions';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
 import { ContextualModal } from './ContextualModal';
+import { queueGlobalAIHandoff } from './globalHandoff';
 import { RouteContextualAISurface } from './RouteContextualAISurface';
 import { contextualSuggestionsFor } from './suggestions';
 import { useContextualConversation } from './useContextualConversation';
@@ -65,6 +66,10 @@ export function ContextualAIWorkspace() {
 
   const processing = model.conversation.status === 'processing';
   const hasText = Boolean(model.conversation.composerText.trim());
+  const openGlobalAssistant = () => {
+    queueGlobalAIHandoff(context, model.conversation!, model.draft);
+    window.location.assign('/assistant');
+  };
 
   return <>
     <RouteContextualAISurface />
@@ -138,7 +143,7 @@ export function ContextualAIWorkspace() {
 
       <footer className="atal-contextual-compose-zone">
         {model.notice && <p className="atal-contextual-notice" role="status"><Sparkles />{model.notice}<button type="button" aria-label="Cerrar aviso" onClick={model.clearNotice}><X /></button></p>}
-        {menuOpen && <div className="atal-contextual-plus-menu"><button type="button" onClick={() => { window.location.assign('/assistant'); }}>Abrir Atal IA completa<Maximize2 /></button><button type="button" onClick={() => model.setText('')}>Limpiar mensaje<X /></button></div>}
+        {menuOpen && <div className="atal-contextual-plus-menu"><button type="button" onClick={openGlobalAssistant}>Abrir Atal IA completa<Maximize2 /></button><button type="button" onClick={() => model.setText('')}>Limpiar mensaje<X /></button></div>}
         <div className="atal-contextual-composer">
           <button type="button" aria-label="Más opciones de Atal IA" onClick={() => setMenuOpen((value) => !value)}><Plus /></button>
           <textarea
