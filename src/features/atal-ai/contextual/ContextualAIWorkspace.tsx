@@ -105,7 +105,6 @@ export function ContextualAIWorkspace() {
           {model.conversation.messages.map((message) => <article key={message.id} className={`is-${message.role}`}><span>{message.role === 'assistant' ? <AtalMark /> : <UserRound />}</span><div><header><b>{message.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(message.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header><p>{message.text}</p></div></article>)}
           {processing && <div className="atal-contextual-processing" role="status"><LoaderCircle className="is-spinning" /><span><b>Comprobando información…</b><small>Atal IA está trabajando sobre el contexto fijado</small></span></div>}
           {model.conversation.error && <div className="atal-contextual-error" role="alert"><AlertTriangle /><span><b>No pudimos completar la solicitud</b><small>{model.conversation.error}</small></span></div>}
-          {model.conversation.savedResult && <section className="atal-contextual-result"><CheckCircle2 /><div><b>Cambios aplicados</b><ul>{model.conversation.savedResult.summary.map((item) => <li key={item}>{item}</li>)}</ul>{model.conversation.savedResult.undo && <button type="button" onClick={model.undo}>Deshacer cambio</button>}</div></section>}
           <div ref={endRef} />
         </section>
 
@@ -125,6 +124,8 @@ export function ContextualAIWorkspace() {
           /> : <div className="atal-contextual-empty"><Sparkles /><b>Borrador contextual</b><p>Las propuestas estructuradas aparecerán aquí antes de aplicar cualquier cambio.</p></div>}
         </section>
       </div>
+
+      {model.conversation.savedResult && <section className="atal-contextual-result atal-contextual-result--persistent" aria-live="polite"><CheckCircle2 /><div><b>Cambios aplicados</b><ul>{model.conversation.savedResult.summary.map((item) => <li key={item}>{item}</li>)}</ul>{model.conversation.savedResult.undo && <button type="button" onClick={() => { model.undo(); controller.updateView({ activePane: 'conversation' }); }}>Deshacer cambio</button>}</div></section>}
 
       <footer className="atal-contextual-compose-zone">
         {model.notice && <p className="atal-contextual-notice" role="status"><Sparkles />{model.notice}<button type="button" aria-label="Cerrar aviso" onClick={model.clearNotice}><X /></button></p>}
