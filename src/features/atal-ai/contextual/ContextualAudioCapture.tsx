@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { requestAtalAI } from '../api/geminiClient';
 import { AudioRecorder } from '../components/AudioRecorder';
 import type { AIAttachmentPayload } from '../types';
+import { ContextualModal } from './ContextualModal';
 
 const uid = () => `contextual-audio-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
@@ -48,7 +49,9 @@ export function ContextualAudioCapture({ onTranscript }: { onTranscript: (text: 
       const transcript = result.transcript?.trim() ?? '';
       if (!transcript) throw new Error('La transcripción llegó vacía.');
       onTranscript(transcript);
-      close();
+      setOpen(false);
+      setFile(null);
+      setMessage('');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No pudimos transcribir el audio.');
     } finally {
@@ -58,7 +61,7 @@ export function ContextualAudioCapture({ onTranscript }: { onTranscript: (text: 
 
   return <>
     <button type="button" className="is-mic" aria-label="Grabar audio" onClick={() => setOpen(true)}><Mic /></button>
-    {open && <div className="atal-contextual-audio-layer" role="dialog" aria-modal="true" aria-label="Nota de voz contextual">
+    {open && <ContextualModal className="atal-contextual-audio-layer" label="Nota de voz contextual" onCancel={close}>
       <section>
         <header><div><Mic /><span><b>Nota de voz</b><small>Graba y revisa la transcripción antes de enviarla</small></span></div><button type="button" aria-label="Cerrar nota de voz" onClick={close}><X /></button></header>
         <AudioRecorder
@@ -68,6 +71,6 @@ export function ContextualAudioCapture({ onTranscript }: { onTranscript: (text: 
         {message && <p role="status">{message}</p>}
         {file && <button type="button" className="atal-contextual-transcribe" disabled={transcribing} onClick={() => void transcribe()}>{transcribing ? <LoaderCircle className="is-spinning" /> : <Mic />}Transcribir audio</button>}
       </section>
-    </div>}
+    </ContextualModal>}
   </>;
 }
