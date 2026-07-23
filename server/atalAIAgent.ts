@@ -135,13 +135,12 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
   const contents = [initialUserContent(payload), ...payload.history];
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL ?? 'gemini-3.5-flash',
+    model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
     contents: contents as never,
     config: {
       systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
       tools: [{ functionDeclarations: declarations as never }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-      temperature: 0.25,
       maxOutputTokens: 2_048,
     },
   });
