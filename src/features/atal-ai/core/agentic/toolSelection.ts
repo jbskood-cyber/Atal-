@@ -3,7 +3,7 @@ const MAX_ACTIVE_TOOLS = 16;
 const READ_BASE = ['app.read', 'patient.search', 'navigation.open'];
 const PATIENT_TOOLS = ['patient.create', 'patient.update', 'patient.lifecycle', 'patient_note.add', 'patient_note.update', 'clinical_record.upsert'];
 const PLAN_TOOLS = ['plan.create_simple', 'plan.update_fields', 'plan.duplicate', 'plan.membership', 'plan.activate', 'plan.pause', 'plan.complete', 'plan.archive', 'plan.restore', 'plan.replace_active'];
-const EXERCISE_TOOLS = ['exercise.create_simple', 'exercise.update_fields', 'exercise.duplicate', 'exercise.lifecycle'];
+const EXERCISE_TOOLS = ['exercise.create_simple', 'exercise.update_fields', 'exercise.duplicate', 'exercise.lifecycle', 'exercise.media'];
 const SESSION_TOOLS = ['session.start_or_resume', 'session.update_draft', 'session.complete', 'report.review'];
 const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.appearance'];
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
@@ -29,7 +29,7 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
 
   const patient = includesAny(value, ['paciente', 'expediente', 'diagnóstico', 'diagnostico', 'nota', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
-  const exercise = includesAny(value, ['ejercicio', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', '/exercises']);
+  const exercise = includesAny(value, ['ejercicio', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'imagen', 'secuencia', '/exercises']);
   const session = includesAny(value, ['sesión', 'sesion', 'dolor', 'energía', 'energia', 'esfuerzo', 'síntoma', 'sintoma', 'reporte', 'actividad', '/activity']);
   const settings = includesAny(value, ['ajuste', 'preferencia', 'perfil profesional', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
   const delivery = includesAny(value, ['entrega', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'respaldo', '/exports', '/delivery']);
