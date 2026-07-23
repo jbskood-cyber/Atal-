@@ -24,9 +24,26 @@ const surfaces = [
   },
 ];
 
+const closedLauncherSurfaces = [
+  { path: '/patients/patient-e2e', label: 'en este paciente' },
+  { path: '/patients/patient-e2e/clinical-record', label: 'en este expediente' },
+  { path: '/plans/plan-active-e2e', label: 'en este plan' },
+  { path: '/exercises/exercise-e2e', label: 'en este ejercicio' },
+];
+
 async function seedMobile(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedBrowser(page, { state: createState() });
+}
+
+async function launcherBottomGap(page) {
+  const launcher = page.locator('.atal-contextual-launcher');
+  await expect(launcher).toBeVisible();
+  const box = await launcher.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(844);
+  return 844 - (box.y + box.height);
 }
 
 test.describe('Block 4.2 required contextual surfaces', () => {
@@ -45,6 +62,20 @@ test.describe('Block 4.2 required contextual surfaces', () => {
       await expect(page.getByRole('button', { name: `Abrir Atal IA ${surface.label}` })).toHaveCount(0);
     });
   }
+
+  test('patient record plan and exercise use the report launcher anchor without requiring scroll', async ({ page }) => {
+    await seedMobile(page);
+    await page.goto('/activity/session-e2e');
+    const reportGap = await launcherBottomGap(page);
+
+    for (const surface of closedLauncherSurfaces) {
+      await page.goto(surface.path);
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+      await expect(page.getByRole('button', { name: `Abrir Atal IA ${surface.label}` })).toBeVisible();
+      const gap = await launcherBottomGap(page);
+      expect(Math.abs(gap - reportGap), `${surface.label} must use the report launcher anchor`).toBeLessThanOrEqual(4);
+    }
+  });
 
   test('general lists and settings do not show a contextual orb', async ({ page }) => {
     await seedMobile(page);
