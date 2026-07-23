@@ -24,11 +24,11 @@ function createId(prefix: string): string {
   return `${prefix}-${suffix}`;
 }
 
-type ArrayCollection = 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'clinicalRecordVersions' | 'notes';
+type ArrayCollection = 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'clinicalRecordVersions' | 'notes' | 'sessions';
 
 function createUndoPatches(before: AtalState, after: AtalState): UndoPatch[] {
   const patches: UndoPatch[] = [];
-  const collections: ArrayCollection[] = ['patients', 'plans', 'exercises', 'clinicalRecords', 'clinicalRecordVersions', 'notes'];
+  const collections: ArrayCollection[] = ['patients', 'plans', 'exercises', 'clinicalRecords', 'clinicalRecordVersions', 'notes', 'sessions'];
 
   for (const collection of collections) {
     const beforeItems = before[collection] as Array<{ id: string; updatedAt?: string }>;
@@ -40,12 +40,12 @@ function createUndoPatches(before: AtalState, after: AtalState): UndoPatch[] {
       const current = afterById.get(item.id);
       if (!current) throw coreError('CORE_INVARIANT_FAILED', `La transacción eliminó una entidad existente de ${collection}.`);
       if (stableSerialize(item) !== stableSerialize(current)) {
-        if (!['patients', 'plans', 'exercises', 'clinicalRecords'].includes(collection)) {
+        if (!['patients', 'plans', 'exercises', 'clinicalRecords', 'notes', 'sessions'].includes(collection)) {
           throw coreError('CORE_INVARIANT_FAILED', `La transacción modificó una colección no restaurable: ${collection}.`);
         }
         patches.push({
           operation: 'restore',
-          collection: collection as 'patients' | 'plans' | 'exercises' | 'clinicalRecords',
+          collection: collection as 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'notes' | 'sessions',
           entityId: item.id,
           before: structuredClone(item),
           expectedAfterUpdatedAt: current.updatedAt,

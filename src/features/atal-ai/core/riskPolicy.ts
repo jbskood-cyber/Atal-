@@ -52,6 +52,13 @@ export function decideExecutionPolicy(
   }
   const required = REQUIRED_MODE[definition.risk];
 
+  if (definition.risk === 'reversible-write' && invocation.authorization === 'explicit-user-request') {
+    return { mode: 'none', fingerprint, reason: 'La instrucción explícita autoriza esta acción reversible.' };
+  }
+  if (definition.risk === 'reversible-write' && invocation.authorization === 'file-derived') {
+    return { mode: 'review', fingerprint, reason: 'Los datos clínicos extraídos de un archivo requieren una revisión compacta.' };
+  }
+
   if (required === 'none') {
     return { mode: 'none', fingerprint, reason: 'La consulta no modifica datos.' };
   }
