@@ -164,13 +164,7 @@ Validated implementation HEAD:
 7938bbdda5160facf3f37f7e0923d0d109cf4b75
 ```
 
-Final frozen HEAD:
-
-```text
-88a042f1a93e75ac3d2876dbc0235236e8ec012f
-```
-
-Evidence on the final frozen HEAD:
+Evidence from the final validation sequence:
 
 - clean dependency installation: passed;
 - TypeScript typecheck: passed;
@@ -178,8 +172,10 @@ Evidence on the final frozen HEAD:
 - production build: passed;
 - generated capability matrix verification: passed;
 - Playwright: 39 passed, 0 failed, 0 flaky, 0 skipped;
-- final quality workflow: `30049056985` passed;
-- final E2E workflow: `30049057034` passed.
+- quality workflow: passed;
+- E2E workflow: passed.
+
+Exact workflow and artifact identifiers are maintained in PR #18 so this contract does not require a self-referential commit hash.
 
 A fresh real-device Google AI Studio walkthrough remains mandatory because deterministic coverage cannot prove Gemini response quality or the final visual experience on the product owner's device.
 
