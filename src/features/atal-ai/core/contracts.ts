@@ -122,7 +122,8 @@ export type ClientEffect =
   | { type: 'navigate'; href: string }
   | { type: 'theme'; mode: 'light' | 'dark' | 'system' }
   | { type: 'session-draft'; operation: 'start' | 'update' | 'complete'; patientId: string; planId: string; draft: Record<string, unknown> }
-  | { type: 'delivery'; action: 'open' | 'download' | 'share' | 'print'; planId: string; options?: Record<string, unknown> };
+  | { type: 'delivery'; action: 'open' | 'download' | 'share' | 'print'; planId: string; options?: Record<string, unknown> }
+  | { type: 'exercise-media'; exerciseId: string; mediaType: 'image' | 'sequence'; artifactIds: string[] };
 
 export type ToolSuccess<TData = unknown> = {
   status: 'success';
