@@ -36,6 +36,7 @@ export type AgentTurnRequest = {
   selectedExerciseId: string;
   selectedSessionId: string;
   allowedTools: string[];
+  conversationHistory: AgentHistoryContent[];
   history: AgentHistoryContent[];
   attachments: AgentAttachmentRef[];
 };
