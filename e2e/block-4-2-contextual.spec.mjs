@@ -41,6 +41,13 @@ async function seedPersistentBrowser(page) {
   });
 }
 
+async function readAIStorage(page) {
+  return page.evaluate(({ conversationsKey, draftsKey }) => ({
+    conversations: JSON.parse(localStorage.getItem(conversationsKey) ?? '[]'),
+    drafts: JSON.parse(localStorage.getItem(draftsKey) ?? '[]'),
+  }), { conversationsKey: CONVERSATIONS_KEY, draftsKey: DRAFTS_KEY });
+}
+
 async function openWorkspace(page) {
   await page.getByRole('button', { name: 'Abrir Atal IA en este paciente' }).click();
   return page.getByRole('dialog', { name: 'Asistente en este paciente' });
@@ -133,8 +140,10 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await page.goto(patientPath);
     await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
     let workspace = await prepareNoteDraft(page);
-    const draftsBefore = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]').length, DRAFTS_KEY);
-    expect(draftsBefore).toBeGreaterThan(0);
+    const beforeReload = await readAIStorage(page);
+    expect(beforeReload.conversations).toHaveLength(1);
+    expect(beforeReload.drafts).toHaveLength(1);
+    expect(beforeReload.conversations[0].draftId).toBe(beforeReload.drafts[0].id);
     expect((await readStore(page)).notes).toHaveLength(0);
 
     await page.getByRole('button', { name: 'Minimizar asistente' }).click();
@@ -143,6 +152,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await page.getByRole('button', { name: 'Cerrar asistente' }).click();
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
+    expect(await readAIStorage(page)).toEqual(beforeReload);
     workspace = await openWorkspace(page);
     await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
     expect((await readStore(page)).notes).toHaveLength(0);
