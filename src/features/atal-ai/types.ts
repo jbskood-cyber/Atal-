@@ -177,18 +177,21 @@ export type AIConversation = {
   error?: string;
 };
 
-export type AIUndoToken = {
+export type LegacyAIUndoToken = {
   entity: 'plan' | 'record' | 'settings';
   entityId: string;
   previous: unknown;
   expiresAt: string;
 };
 
+export type AIUndoToken = UndoReceipt | LegacyAIUndoToken;
+
 export type AICommandResult = {
   message: string;
   href?: string;
   summary?: string[];
   undo?: AIUndoToken;
+  clientEffect?: ClientEffect;
 };
 
 export type AtalAIAnalyzeRequest = {
@@ -209,3 +212,4 @@ export type AtalAIAnalyzeRequest = {
 };
 
 export type AtalAIAnalyzeResponse = { draft?: AtalAIDraft; transcript?: string };
+import type { ClientEffect, UndoReceipt } from './core/contracts';

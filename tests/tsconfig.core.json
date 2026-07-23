@@ -1,0 +1,23 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "../.tmp/core-tests",
+    "rootDir": "..",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2022",
+    "declaration": false,
+    "sourceMap": false,
+    "incremental": false
+  },
+  "include": [
+    "../src/features/atal-ai/core/**/*.ts",
+    "../src/features/atal-ai/types.ts",
+    "../src/data/atalStore.ts",
+    "../src/data/atal-demo.ts",
+    "../src/domain/planAssociation.ts",
+    "../src/features/clinical-record/types.ts",
+    "../src/features/guided-session/types.ts"
+  ]
+}

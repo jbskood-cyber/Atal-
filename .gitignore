@@ -2,6 +2,10 @@ node_modules/
 .next/
 dist/
 coverage/
+.tmp/
+playwright-report/
+test-results/
+.playwright/
 .DS_Store
 *.log
 .env*

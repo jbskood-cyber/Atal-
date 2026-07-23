@@ -57,6 +57,14 @@ export type ActivityEvent = {
   nextValue?: unknown;
   conversationId?: string;
   draftId?: string;
+  transactionId?: string;
+  toolName?: string;
+  toolVersion?: number;
+  riskLevel?: import('@/src/features/atal-ai/core/contracts').ToolRisk;
+  confirmationId?: string;
+  affectedEntities?: Array<{ type: import('@/src/features/atal-ai/core/contracts').EntityType; id: string }>;
+  outcome?: 'success' | 'undone';
+  undoReceiptId?: string;
 };
 export type AppNotification = { id: string; title: string; detail: string; severity: 'urgent'|'attention'|'stable'; href: string; read: boolean; createdAt: string };
 export type AppSettings = {
