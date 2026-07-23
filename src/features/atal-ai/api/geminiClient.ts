@@ -1,6 +1,7 @@
 import { getAtalState } from '@/src/data/atalStore';
 import { assertAIRequestSize } from '../domain/attachmentLimits';
 import { normalizeAtalAIDraft } from './schemas';
+import type { AgentModelTurn, AgentTurnRequest } from '../core/agentic/contracts';
 import type { AtalAIAnalyzeRequest, AtalAIAnalyzeResponse } from '../types';
 
 type AtalAIPreferences = {
@@ -37,4 +38,21 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: Abor
     if(draft.command) draft.command={...draft.command,patientId:draft.command.patientId||payload.workContext.selectedPatientId,planId:draft.command.planId||payload.workContext.selectedPlanId,exerciseId:draft.command.exerciseId||payload.workContext.selectedExerciseId};
   }
   return { draft };
+}
+
+export async function requestAtalAgentTurn(payload: AgentTurnRequest, signal?: AbortSignal): Promise<AgentModelTurn> {
+  assertAIRequestSize(payload);
+  const response = await fetch('/api/atal-ai/agent-turn', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    signal,
+  });
+  const result = await response.json().catch(() => ({})) as Partial<AgentModelTurn> & { error?: unknown };
+  if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Atal IA no pudo continuar la tarea.');
+  return {
+    text: typeof result.text === 'string' ? result.text : '',
+    calls: Array.isArray(result.calls) ? result.calls : [],
+    modelContent: result.modelContent,
+  };
 }
