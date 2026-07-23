@@ -1,0 +1,70 @@
+name: record-block-4-3-live-smoke
+
+on:
+  push:
+    branches:
+      - feature/atal-ai-agentic-audit-block-4-3
+    paths:
+      - '.github/workflows/record-block-4-3-live-smoke.yml'
+      - 'tests/atal-ai-live-smoke.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/atal-ai-agentic-audit-block-4-3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run and record live smoke
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: |
+          mkdir -p docs/atal-ai/block-4-3
+          set +e
+          OUTPUT=$(npm run test:ai-live 2>&1)
+          EXIT=$?
+          if echo "$OUTPUT" | grep -q 'ATAL_AI_LIVE_SMOKE=PASS'; then
+            STATUS='PASS'
+            DETAIL='Gemini returned the expected atal_read function call using the configured model.'
+          elif echo "$OUTPUT" | grep -q 'ATAL_AI_LIVE_SMOKE=SKIPPED_NO_KEY'; then
+            STATUS='SKIPPED_NO_KEY'
+            DETAIL='GitHub Actions does not have GEMINI_API_KEY; live validation remains assigned to Google AI Studio.'
+          else
+            STATUS='FAIL'
+            DETAIL='The live Gemini function-calling smoke failed. Review the workflow logs before readiness approval.'
+          fi
+          cat > docs/atal-ai/block-4-3/live-smoke-status.md <<EOF
+          # Block 4.3 — Live Gemini smoke status
+
+          - Status: **$STATUS**
+          - Detail: $DETAIL
+          - Workflow exit code: **$EXIT**
+          - Recorded at: **$(date -u +%Y-%m-%dT%H:%M:%SZ)**
+
+          No API key or clinical data is recorded in this file.
+          EOF
+          if [ "$STATUS" = 'FAIL' ]; then
+            echo "$OUTPUT"
+            exit 1
+          fi
+      - name: Publish status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/atal-ai/block-4-3/live-smoke-status.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "test: record Block 4.3 live Gemini smoke status"
+          git push origin HEAD:feature/atal-ai-agentic-audit-block-4-3
