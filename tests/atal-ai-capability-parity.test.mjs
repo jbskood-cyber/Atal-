@@ -14,7 +14,7 @@ test('capability audit validation rejects duplicate ids and missing evidence', (
     canonicalPersistence: ['patients', 'clinicalRecords'],
     currentTests: ['tests/foundation.test.mjs'],
     readTools: [],
-    actionTools: ['patient.create_with_record_and_plan'],
+    actionTools: ['patient.create'],
     coverage: 'covered',
     risk: 'reversible-write',
     confirmation: 'explicit-request',
@@ -29,14 +29,13 @@ test('capability audit validation rejects duplicate ids and missing evidence', (
     () => catalog.validateCapabilityAudit([base, { ...base }]),
     /Duplicate capability id: patient\.create/,
   );
-
   assert.throws(
     () => catalog.validateCapabilityAudit([{ ...base, currentTests: [] }]),
     /Capability patient\.create has no test evidence/,
   );
 });
 
-test('capability audit summary counts every coverage class', () => {
+test('capability audit summary separates total and approved parity', () => {
   const rows = ['covered', 'partial', 'missing', 'excluded'].map((coverage, index) => ({
     id: `capability.${index}`,
     domain: 'patients',
@@ -59,11 +58,13 @@ test('capability audit summary counts every coverage class', () => {
 
   assert.deepEqual(catalog.summarizeCapabilityAudit(rows), {
     total: 4,
+    approvedTotal: 3,
     covered: 1,
     partial: 1,
     missing: 1,
     excluded: 1,
     parityPercent: 25,
+    approvedParityPercent: 33,
   });
 });
 
@@ -72,7 +73,6 @@ const manual = loadCore('src/features/atal-ai/core/audit/manualCapabilityInvento
 test('manual capability inventory covers all product domains and protected flows', () => {
   const ids = new Set(manual.manualCapabilityInventory.map((item) => item.id));
   const domains = new Set(manual.manualCapabilityInventory.map((item) => item.domain));
-
   assert.equal(domains.size, 9);
   for (const id of [
     'patient.create',
@@ -87,24 +87,23 @@ test('manual capability inventory covers all product domains and protected flows
     'settings.update-ai-preferences',
     'navigation.open-contextual-assistant',
   ]) assert.equal(ids.has(id), true, `Missing manual capability ${id}`);
-
-  assert.ok(manual.manualCapabilityInventory.length >= 50);
+  assert.equal(manual.manualCapabilityInventory.length, 62);
 });
 
 const audit = loadCore('src/features/atal-ai/core/audit/buildCapabilityAudit.js');
 
-test('current audit recognizes covered core tools and real missing parity', () => {
+test('final audit maps universal tools to all approved capability groups', () => {
   const rows = audit.buildCapabilityAudit();
   const byId = new Map(rows.map((row) => [row.id, row]));
-
-  assert.equal(byId.get('patient-note.create').coverage, 'covered');
-  assert.deepEqual(byId.get('patient-note.create').actionTools, ['patient_note.add']);
-  assert.equal(byId.get('plan.replace-active').coverage, 'covered');
-  assert.equal(byId.get('exercise.update-media').coverage, 'missing');
-  assert.equal(byId.get('session.complete').coverage, 'missing');
-  assert.equal(byId.get('delivery.generate-pdf').coverage, 'missing');
-  assert.equal(byId.get('clinical-record.update').coverage, 'covered');
-  assert.equal(byId.get('report.review').coverage, 'missing');
+  assert.deepEqual(byId.get('patient.update-contact').actionTools, ['patient.update']);
+  assert.deepEqual(byId.get('clinical-record.read-history').readTools, ['app.read']);
+  assert.deepEqual(byId.get('plan.reorder-exercises').actionTools, ['plan.membership']);
+  assert.deepEqual(byId.get('exercise.update-media').actionTools, ['exercise.media']);
+  assert.deepEqual(byId.get('session.complete').actionTools, ['session.complete']);
+  assert.deepEqual(byId.get('delivery.generate-pdf').actionTools, ['delivery.action']);
+  assert.deepEqual(byId.get('report.review').actionTools, ['report.review']);
+  assert.deepEqual(byId.get('navigation.open-screen').readTools, ['navigation.open']);
+  assert.equal(byId.get('patient-note.delete').coverage, 'excluded');
 });
 
 test('every declared AI tool exists in the current registry', () => {
@@ -117,21 +116,23 @@ test('every declared AI tool exists in the current registry', () => {
   }
 });
 
-test('capability audit has deterministic order and complete classification', () => {
+test('every approved capability is covered and exclusions remain explicit', () => {
   const rows = audit.buildCapabilityAudit();
-  const ids = rows.map((row) => row.id);
-  assert.equal(new Set(ids).size, ids.length);
-  assert.ok(rows.every((row) => ['covered', 'partial', 'missing', 'excluded'].includes(row.coverage)));
-  assert.ok(rows.some((row) => row.coverage === 'covered'));
-  assert.ok(rows.some((row) => row.coverage === 'partial'));
-  assert.ok(rows.some((row) => row.coverage === 'missing'));
-  assert.ok(rows.some((row) => row.coverage === 'excluded'));
+  const summary = catalog.summarizeCapabilityAudit(rows);
+  assert.equal(summary.total, 62);
+  assert.equal(summary.approvedTotal, 57);
+  assert.equal(summary.covered, 57);
+  assert.equal(summary.partial, 0);
+  assert.equal(summary.missing, 0);
+  assert.equal(summary.excluded, 5);
+  assert.equal(summary.approvedParityPercent, 100);
+  assert.equal(summary.parityPercent, 92);
+  assert.ok(rows.every((row) => row.coverage === 'covered' || row.coverage === 'excluded'));
 });
 
-test('every non-covered capability has an implementation or exclusion disposition', () => {
+test('every non-covered capability has an exclusion disposition', () => {
   for (const row of audit.buildCapabilityAudit()) {
     if (row.coverage === 'covered') assert.equal(row.disposition, 'keep');
-    else if (row.coverage === 'excluded') assert.equal(row.disposition, 'exclude');
-    else assert.equal(row.disposition, 'build');
+    else assert.equal(row.disposition, 'exclude');
   }
 });
