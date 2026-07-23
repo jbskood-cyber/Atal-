@@ -1,1 +1,1 @@
-export { AtalAIConversationScreen as AssistantScreen } from '@/src/features/atal-ai/AtalAIConversationScreen';
+export { AtalAIAgentScreen as AssistantScreen } from '@/src/features/atal-ai/AtalAIAgentScreen';
