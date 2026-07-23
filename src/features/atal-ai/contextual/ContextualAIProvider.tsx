@@ -20,6 +20,7 @@ import type { ContextualAIContext, ContextualWorkspaceSession, ContextualWorkspa
 type ContextualAIController = {
   session: ContextualWorkspaceSession;
   queuedAction: ContextualAIAction | null;
+  launcherSuppressed: boolean;
   open: (context: ContextualAIContext, action?: ContextualAIAction, trigger?: HTMLElement | null) => void;
   minimize: () => void;
   close: () => void;
@@ -27,6 +28,7 @@ type ContextualAIController = {
   updateView: (patch: ContextualWorkspaceViewPatch) => void;
   bindProposal: (fingerprint: string) => void;
   consumeQueuedAction: () => ContextualAIAction | null;
+  setLauncherSuppressed: (suppressed: boolean) => void;
 };
 
 const ContextualAIContextValue = createContext<ContextualAIController | null>(null);
@@ -40,6 +42,7 @@ export function ContextualAIProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [session, setSession] = useState<ContextualWorkspaceSession>(() => createContextualWorkspaceSession());
   const [queuedAction, setQueuedAction] = useState<ContextualAIAction | null>(null);
+  const [launcherSuppressed, setLauncherSuppressedState] = useState(false);
 
   const restorePage = useCallback((target: ContextualWorkspaceSession) => {
     if (typeof window === 'undefined') return;
@@ -86,6 +89,7 @@ export function ContextualAIProvider({ children }: { children: ReactNode }) {
   const restore = useCallback(() => setSession((current) => restoreContextualWorkspace(current)), []);
   const updateView = useCallback((patch: ContextualWorkspaceViewPatch) => setSession((current) => updateContextualWorkspaceView(current, patch)), []);
   const bindProposal = useCallback((fingerprint: string) => setSession((current) => bindPendingProposal(current, fingerprint)), []);
+  const setLauncherSuppressed = useCallback((suppressed: boolean) => setLauncherSuppressedState(suppressed), []);
   const consumeQueuedAction = useCallback(() => {
     const value = queuedAction;
     setQueuedAction(null);
@@ -131,6 +135,7 @@ export function ContextualAIProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ContextualAIController>(() => ({
     session,
     queuedAction,
+    launcherSuppressed,
     open,
     minimize,
     close,
@@ -138,7 +143,8 @@ export function ContextualAIProvider({ children }: { children: ReactNode }) {
     updateView,
     bindProposal,
     consumeQueuedAction,
-  }), [session, queuedAction, open, minimize, close, restore, updateView, bindProposal, consumeQueuedAction]);
+    setLauncherSuppressed,
+  }), [session, queuedAction, launcherSuppressed, open, minimize, close, restore, updateView, bindProposal, consumeQueuedAction, setLauncherSuppressed]);
 
   return <ContextualAIContextValue.Provider value={value}>{children}</ContextualAIContextValue.Provider>;
 }
