@@ -3,6 +3,7 @@ import {
   commandFixture,
   createDraftResponse,
   createState,
+  DRAFTS_KEY,
   mockAnalyze,
   readStore,
   seedBrowser,
@@ -22,6 +23,14 @@ async function openWorkspace(page) {
   return page.getByRole('dialog', { name: 'Asistente en este paciente' });
 }
 
+async function prepareNoteDraft(page) {
+  const workspace = await openWorkspace(page);
+  await workspace.getByRole('button', { name: 'Crear nota' }).click();
+  await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
+  await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+  return workspace;
+}
+
 test.describe('Block 4.2 contextual patient workspace', () => {
   test('closed state shows bottom navigation orb and compact patient actions', async ({ page }) => {
     await openPatient(page);
@@ -31,16 +40,19 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(page.getByRole('button', { name: 'Abrir Atal IA en este paciente' })).toBeVisible();
   });
 
-  test('opening keeps route and hides the complete navigation orb and exterior actions', async ({ page }) => {
+  test('opening keeps route and history while hiding navigation orb and exterior actions', async ({ page }) => {
     await openPatient(page);
     const before = new URL(page.url()).pathname;
+    const historyLength = await page.evaluate(() => history.length);
     await openWorkspace(page);
     expect(new URL(page.url()).pathname).toBe(before);
+    expect(await page.evaluate(() => history.length)).toBe(historyLength);
     await expect(page.locator('.atal-mobile-dock')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Abrir Atal IA en este paciente' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Actualizar contacto con Atal IA' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Ver progreso con Atal IA' })).toHaveCount(0);
     await expect(page.locator('[data-contextual-ai-background]')).toHaveAttribute('inert', '');
+    await expect(page.locator('body')).toHaveCSS('position', 'fixed');
   });
 
   test('minimize restores route focus navigation and page position', async ({ page }) => {
@@ -87,7 +99,32 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     expect(await readStore(page)).toEqual(before);
   });
 
-  test('contextual reversible note prepares first then confirms audits and undoes', async ({ page }) => {
+  test('prepared contextual draft persists through minimize and reload without mutation', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await seedBrowser(page, { state: createState() });
+    await mockAnalyze(page, createDraftResponse({
+      intent: 'add_patient_note',
+      responseMode: 'command',
+      assistantMessage: 'Añadir una nota clínica demostrativa.',
+      command: commandFixture('add_patient_note', { patientId: 'patient-e2e', content: 'Nota persistente E2E.' }),
+    }));
+    await page.goto(patientPath);
+    let workspace = await prepareNoteDraft(page);
+    const draftsBefore = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]').length, DRAFTS_KEY);
+    expect(draftsBefore).toBeGreaterThan(0);
+    expect((await readStore(page)).notes).toHaveLength(0);
+
+    await page.getByRole('button', { name: 'Minimizar asistente' }).click();
+    workspace = await openWorkspace(page);
+    await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await page.getByRole('button', { name: 'Cerrar asistente' }).click();
+    await page.reload();
+    workspace = await openWorkspace(page);
+    await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    expect((await readStore(page)).notes).toHaveLength(0);
+  });
+
+  test('contextual reversible note prepares then confirms audits and undoes', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await seedBrowser(page, { state: createState() });
     await mockAnalyze(page, createDraftResponse({
@@ -100,15 +137,19 @@ test.describe('Block 4.2 contextual patient workspace', () => {
       }),
     }));
     await page.goto(patientPath);
-    const workspace = await openWorkspace(page);
-    await workspace.getByRole('button', { name: 'Crear nota' }).click();
-    await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
-    await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    const workspace = await prepareNoteDraft(page);
     expect((await readStore(page)).notes).toHaveLength(0);
 
     await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
     let dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
     await expect(dialog).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(workspace).toBeVisible();
+    expect((await readStore(page)).notes).toHaveLength(0);
+
+    await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
+    dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
     expect((await readStore(page)).notes).toHaveLength(0);
 
