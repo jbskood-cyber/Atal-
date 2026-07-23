@@ -1,94 +1,127 @@
-# Block 4.3 — Current-state agentic audit
+# Block 4.3 — Final agentic architecture audit
 
 ## Canonical state
 
 - Base SHA: `6d9fd28bad4ae6f8cddcb4d0e11d3b36cd0d96ea`
-- Store: `atal:store:v2`, version `2`
-- Current orchestration: one-shot structured draft or command generation
-- Current execution: deterministic Block 4.1 registry, policy, transaction, audit and undo engine
+- Protected clinical store: `atal:store:v2`, version `2`
+- Deterministic authority: Block 4.1 registry, policy, transaction, audit and undo engine
 - Contextual surface: Block 4.2 global assistant workspace
+- Primary assistant route: `/assistant`
+- Model boundary: Gemini function calling through the server-side `/api/atal-ai/agent-turn` endpoint
+- Voice approach: recorded audio and editable transcription; Gemini Live is deliberately excluded
 
 ## Measured parity
 
 The machine-validated inventory contains **62** manual capabilities:
 
-- fully covered: **19**;
-- partial: **12**;
-- missing: **26**;
+- approved in-scope capabilities: **57**;
+- approved capabilities covered: **57**;
+- partial: **0**;
+- missing: **0**;
 - deliberately excluded: **5**;
-- current strict full-parity percentage: **31%**.
+- total matrix coverage including exclusions: **92%**;
+- approved agentic parity: **100%**.
 
-Partial capabilities do not count as complete. A similarly named intent or command is not evidence of equivalent persistence, context, safety, audit, undo or client behavior.
+The five exclusions remain visibly blocked for product, clinical-retention or external-integration reasons. They are not hidden implementation gaps.
 
-## What works today
+## Universal minimum-context reads
 
-The existing deterministic core already covers these important groups:
+`app.read` provides typed, bounded views for:
 
-- patient search through `patient.search`;
-- combined patient, initial record and plan creation through `patient.create_with_record_and_plan`;
-- adding patient notes through `patient_note.add`;
-- updating the current clinical record through `patient_record.update`;
-- plan creation and updates through `plan.create_for_patient` and `plan.update`;
-- plan lifecycle through `plan.activate`, `plan.pause`, `plan.complete`, `plan.archive`, `plan.restore` and `plan.replace_active`;
-- exercise creation and update through `exercise.create` and `exercise.update`;
-- preparing a session summary through `report.prepare_session_summary`;
-- local patient, progress and plan exports through `data.export_local`;
-- approved privacy and Atal IA preference changes through `settings.update`;
-- opening Atal IA with current route context through the Block 4.2 contextual workspace.
+- complete patient context, contact, notes, plans and sessions;
+- clinical records and version history;
+- plan lists, plan detail and ordered exercises;
+- exercise search and detail;
+- guided-session preparation;
+- sessions, complete reports and activity/audit history;
+- settings and professional profile;
+- delivery state.
 
-These operations use the canonical local store and the Block 4.1 execution boundary rather than allowing Gemini to mutate state directly.
+The full clinical store is never automatically inserted into the Gemini prompt. Gemini requests only the exact read resource needed for the current turn.
 
-## What is only partial
+## Universal deterministic actions
 
-The following capabilities have an existing path but are not equivalent to their manual outcome:
+Atal IA can reach the canonical outcomes for:
 
-- patient detail omits complete contact, notes, record versions and session history;
-- demographic updates cover only the fields represented by the legacy draft;
-- clinical record reads are incomplete;
-- record creation exists only inside combined patient creation;
-- plan detail exposes only a limited active-plan summary;
-- plan update lacks explicit membership removal and ordering semantics;
-- adding plan exercises is implicit rather than a dedicated membership operation;
-- activity and report reads return abbreviated summaries;
-- professional profile and appearance are not fully represented by the settings tool;
-- conversation persistence does not yet persist bounded multi-step checkpoints or durable attachment artifacts.
+- patient creation, demographics, contacts and archive/restore;
+- note creation and editing;
+- clinical-record creation, update and versioning;
+- plan creation, editing, duplication, lifecycle, atomic replacement, membership and ordering;
+- exercise creation, editing, duplication, lifecycle and reviewed local media;
+- guided-session preparation, progress, symptoms, completion and partial save;
+- report review;
+- professional profile, privacy, AI preferences and appearance;
+- internal navigation;
+- delivery preview, local PDF generation, download, share and print;
+- local exports.
 
-## What is missing
+Gemini never mutates storage directly. Each action is validated and executed by Atal application code.
 
-### Universal read model
+## Hybrid autonomy
 
-Typed reads are missing for complete patient state, contacts, complete records and versions, plan lists and details, exercise lists and details, active session preparation, complete reports, audit history, settings and delivery state.
+The policy layer implements the approved behavior:
 
-### Canonical actions
+- read operations execute immediately;
+- an explicit, unambiguous reversible request is sufficient authorization;
+- file-derived clinical changes stop at one compact review;
+- sensitive writes require a short explicit confirmation;
+- destructive or unavailable external actions remain blocked;
+- several safe steps execute before the first sensitive boundary;
+- completed work is preserved when the task pauses;
+- validated reversible transactions expose Deshacer.
 
-Missing actions include patient contact and lifecycle updates, note editing, plan duplication and membership ordering, exercise duplication/archive/media, guided-session state and completion, report review, professional profile/theme updates and approved delivery client effects.
+Risk classification remains owned by registered Atal tool definitions, never by the model.
 
-### Agent orchestration
+## Bounded conversation orchestration
 
-The current server produces one JSON draft or one fixed command. It does not yet run a bounded function-calling loop, select dynamic tool subsets, execute several safe steps, pause only at a sensitive boundary, resume from checkpoints, prevent duplicate calls or produce a final answer grounded in all tool results.
+The agent loop includes:
 
-### Durable multimodal artifacts
+- dynamic context-relevant tool selection capped at 20 active tools;
+- a maximum of eight model/tool rounds per task;
+- allowlist enforcement;
+- argument validation and deterministic entity resolution;
+- duplicate-call detection;
+- persisted task history, completed steps and pending call;
+- resumable confirmation after navigation or reload;
+- cancellation and maximum-step termination;
+- final responses grounded in actual tool results.
 
-The current interface can submit images, PDFs and audio, but conversation persistence stores metadata with `available: false`; attachment data and derived proposals are not durable after reload. Recorded audio is batch-transcribed, which is the approved cost-conscious direction, but the audio artifact and transcript lifecycle require stronger persistence.
+Atal IA now behaves as an operational assistant rather than a fixed one-shot intent router.
 
-### Client effects
+## Durable multimodal behavior
 
-Navigation, delivery PDF generation, printing and sharing are not represented as approved deterministic client effects in the core contract.
+- Audio is recorded, persisted locally, transcribed in batch and returned as editable text.
+- Images, PDFs and audio blobs are stored in IndexedDB rather than indefinitely in conversation localStorage.
+- Artifact identity, transcript, proposal status and linked result survive reload.
+- File-derived clinical facts require compact review before persistence.
+- Exercise images use the existing canonical exercise-media repository.
+- Text, reviewed audio and reviewed files enter the same deterministic agent workflow.
+
+## Client effects
+
+Approved device-side effects are represented by typed application contracts:
+
+- internal navigation;
+- theme changes;
+- guided-session draft operations;
+- local exercise media persistence;
+- local delivery actions;
+- local downloads.
+
+Client effects are executed by application code after the policy boundary. They are not arbitrary model instructions.
 
 ## Deliberate exclusions
 
-The current block deliberately excludes:
+Block 4.3 deliberately excludes:
 
 - permanent patient-note deletion;
 - permanent plan deletion;
 - permanent exercise deletion;
 - automatic WhatsApp or other external messaging;
-- external feedback sharing as part of the clinical agent parity target.
-
-These exclusions do not reduce the completion target: Block 4.3 reaches full approved parity when every non-excluded capability is covered.
+- external feedback sharing as part of the clinical agent target.
 
 ## Product conclusion
 
-Atal IA is currently a **documentation assistant with deterministic actions and partial agentic behavior**. It is not yet a universal agentic assistant.
+Within the approved local MVP scope, Atal IA is now implemented as a **universal bounded agentic assistant** with complete manual-to-AI capability parity.
 
-The architecture is a strong foundation because state mutation, risk, audit and undo remain deterministic. The next work must expand typed read/action parity and add bounded function-calling orchestration without weakening that boundary.
+It remains intentionally local-first. Authentication, cloud clinical synchronization, multi-user operation, payments and autonomous diagnosis were not silently introduced by this block.
