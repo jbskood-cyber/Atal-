@@ -20,13 +20,23 @@ import { planTools } from './tools/planTools';
 import { queryTools } from './tools/queryTools';
 import { settingsTools } from './tools/settingsTools';
 import { exerciseTools } from './tools/exerciseTools';
+import { universalReadTools } from './tools/universalReadTools';
+import { universalPatientTools } from './tools/universalPatientTools';
+import { universalPlanExerciseTools } from './tools/universalPlanExerciseTools';
+import { universalSessionSettingsTools } from './tools/universalSessionSettingsTools';
+import { clientEffectTools } from './tools/clientEffectTools';
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
+  ...universalReadTools,
   ...patientTools,
+  ...universalPatientTools,
   ...exerciseTools,
   ...planTools,
+  ...universalPlanExerciseTools,
   ...settingsTools,
+  ...universalSessionSettingsTools,
+  ...clientEffectTools,
   ...exportTools,
   ...blockedTools,
 ]);

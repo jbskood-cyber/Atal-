@@ -45,6 +45,19 @@ async function sendMessage(page, text) {
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 }
 
+function agentModelContent(id, bridge) {
+  return { role: 'model', parts: [{ functionCall: { id, name: bridge, args: {} } }] };
+}
+
+async function mockAgent(page, turns) {
+  let index = 0;
+  await page.route('**/api/atal-ai/agent-turn', async (route) => {
+    const turn = turns[Math.min(index, turns.length - 1)];
+    index += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(turn) });
+  });
+}
+
 async function expectNoHorizontalOverflow(page) {
   const dimensions = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -91,49 +104,61 @@ test.describe('Block 4.1 critical E2E validation', () => {
   test('Atal AI patient summary is read-only for the clinical store', async ({ page }) => {
     const conversation = createConversation({ intent: 'summarize_patient' });
     await seed(page, { conversations: [conversation] });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'summarize_patient',
-      responseMode: 'query',
-      command: commandFixture('summarize_patient', { patientId: 'patient-e2e' }),
-    }));
+    await mockAgent(page, [
+      {
+        text: '',
+        modelContent: agentModelContent('read-patient', 'atal_read'),
+        calls: [{
+          id: 'read-patient',
+          bridge: 'atal_read',
+          tool: 'app.read',
+          input: { resource: 'patient_profile', patient: { type: 'patient', id: 'patient-e2e' }, limit: 10 },
+          references: [{ type: 'patient', id: 'patient-e2e' }],
+        }],
+      },
+      {
+        text: 'Plan activo: Plan activo E2E. La última sesión terminó con dolor 3/10.',
+        modelContent: { role: 'model', parts: [{ text: 'Resumen preparado.' }] },
+        calls: [],
+      },
+    ]);
     await page.goto('/assistant');
 
     const before = await readStore(page);
     await sendMessage(page, 'Resume al paciente seleccionado.');
 
-    await expect(page.getByText(/Plan activo: Plan activo E2E\./)).toBeVisible();
+    await expect(page.getByText(/Plan activo: Plan activo E2E./)).toBeVisible();
     const after = await readStore(page);
     expect(after).toEqual(before);
   });
 
-  test('reversible AI note requires confirmation, audits safely and undoes exactly', async ({ page }) => {
+  test('explicit reversible AI note executes immediately, audits safely and undoes exactly', async ({ page }) => {
     const conversation = createConversation({ intent: 'add_patient_note' });
     await seed(page, { conversations: [conversation] });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'add_patient_note',
-      responseMode: 'command',
-      assistantMessage: 'Añadir una nota clínica demostrativa.',
-      command: commandFixture('add_patient_note', {
-        patientId: 'patient-e2e',
-        content: 'Nota clínica E2E reversible.',
-      }),
-    }));
+    await mockAgent(page, [
+      {
+        text: '',
+        modelContent: agentModelContent('add-note', 'atal_action'),
+        calls: [{
+          id: 'add-note',
+          bridge: 'atal_action',
+          tool: 'patient_note.add',
+          input: { patient: { type: 'patient', id: 'patient-e2e' }, content: 'Nota clínica E2E reversible.' },
+          references: [{ type: 'patient', id: 'patient-e2e' }],
+        }],
+      },
+      {
+        text: 'Listo. Añadí la nota clínica al expediente.',
+        modelContent: { role: 'model', parts: [{ text: 'Listo.' }] },
+        calls: [],
+      },
+    ]);
     await page.goto('/assistant');
 
     await sendMessage(page, 'Añade una nota clínica demostrativa.');
-    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await expect(page.getByText('Listo. Añadí la nota clínica al expediente.')).toBeVisible();
 
     let state = await readStore(page);
-    expect(state.notes).toHaveLength(0);
-    expect(state.events.filter((event) => event.outcome === 'success')).toHaveLength(0);
-
-    await page.getByRole('button', { name: 'Aplicar cambios' }).click();
-    const dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Confirmar y aplicar' }).click();
-    await expect(page.getByText('Cambios aplicados', { exact: true })).toBeVisible();
-
-    state = await readStore(page);
     expect(state.notes).toHaveLength(1);
     expect(state.notes[0].content).toBe('Nota clínica E2E reversible.');
     const audit = state.events.find((event) => event.toolName === 'patient_note.add' && event.outcome === 'success');
@@ -149,8 +174,8 @@ test.describe('Block 4.1 critical E2E validation', () => {
     expect(auditText).not.toContain('Contacto privado E2E');
     expect(auditText).not.toMatch(/base64|data:image|hidden reasoning|razonamiento/i);
 
-    await page.getByRole('button', { name: 'Deshacer cambio' }).click();
-    await expect(page.getByText('Cambio deshecho correctamente.')).toBeVisible();
+    await page.getByRole('button', { name: 'Deshacer último cambio' }).click();
+    await expect(page.getByText('Último cambio deshecho.')).toBeVisible();
 
     state = await readStore(page);
     expect(state.notes).toHaveLength(0);
@@ -160,41 +185,46 @@ test.describe('Block 4.1 critical E2E validation', () => {
   test('sensitive plan activation cancels without mutation and confirms only the target plan', async ({ page }) => {
     const state = createState();
     state.plans = state.plans.map((plan) => plan.id === 'plan-active-e2e' ? { ...plan, status: 'paused' } : plan);
-    const conversation = createConversation({
-      intent: 'update_plan_status',
-      selectedPlanId: 'plan-draft-e2e',
-    });
+    const conversation = createConversation({ intent: 'update_plan_status', selectedPlanId: 'plan-draft-e2e' });
     await seed(page, { state, conversations: [conversation] });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'update_plan_status',
-      responseMode: 'command',
-      selectedPlanId: 'plan-draft-e2e',
-      assistantMessage: 'Activar el plan candidato.',
-      command: commandFixture('activate_plan', { planId: 'plan-draft-e2e' }),
-    }));
+    const activationCall = (id) => ({
+      text: '',
+      modelContent: agentModelContent(id, 'atal_action'),
+      calls: [{
+        id,
+        bridge: 'atal_action',
+        tool: 'plan.activate',
+        input: { plan: { type: 'plan', id: 'plan-draft-e2e' } },
+        references: [{ type: 'plan', id: 'plan-draft-e2e' }],
+      }],
+    });
+    await mockAgent(page, [
+      activationCall('activate-cancel'),
+      activationCall('activate-confirm'),
+      {
+        text: 'Listo. Activé únicamente el plan candidato.',
+        modelContent: { role: 'model', parts: [{ text: 'Listo.' }] },
+        calls: [],
+      },
+    ]);
     await page.goto('/assistant');
 
     await sendMessage(page, 'Activa el plan candidato.');
-    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await expect(page.getByText('Confirmación necesaria')).toBeVisible();
 
     let stored = await readStore(page);
     expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('draft');
     expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(false);
 
-    await page.getByRole('button', { name: 'Aplicar cambios' }).click();
-    let dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Cancelar' }).click();
-
+    await page.getByRole('button', { name: 'Cancelar' }).click();
     stored = await readStore(page);
     expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('draft');
     expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(false);
 
-    await page.getByRole('button', { name: 'Aplicar cambios' }).click();
-    dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', { name: 'Confirmar y aplicar' }).click();
-    await expect(page.getByText('Cambios aplicados', { exact: true })).toBeVisible();
+    await sendMessage(page, 'Activa el plan candidato.');
+    await expect(page.getByText('Confirmación necesaria')).toBeVisible();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByText('Listo. Activé únicamente el plan candidato.')).toBeVisible();
 
     stored = await readStore(page);
     expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('active');
@@ -202,82 +232,75 @@ test.describe('Block 4.1 critical E2E validation', () => {
     expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(true);
   });
 
-  test('normalized duplicate patient proposal surfaces an exact-choice clarification with zero mutation', async ({ page }) => {
+  test('normalized duplicate patient request produces one actionable clarification with zero mutation', async ({ page }) => {
     const state = createState();
     state.patients[0] = { ...state.patients[0], name: 'Jose QA' };
-    const conversation = createConversation({
-      intent: 'create_patient_plan',
-      patientMode: 'new',
-      selectedPatientId: '',
-    });
+    const conversation = createConversation({ intent: 'create_patient_plan', patientMode: 'new', selectedPatientId: '' });
     await seed(page, { state, conversations: [conversation] });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'create_patient_plan',
-      responseMode: 'draft',
-      selectedPatientId: '',
-      patient: {
-        name: 'José QA',
-        reasonForVisit: 'Prueba de identidad normalizada',
-        goals: ['Recuperar movilidad'],
-      },
-      plan: {
-        title: 'Plan de prueba',
-        goal: 'Recuperar movilidad',
-        focus: 'Movilidad',
-        duration: { value: 4, unit: 'weeks', customText: '' },
-        frequency: { value: 3, period: 'week', customText: '' },
-        progressCriteria: 'Mejorar sin dolor alto',
-      },
-    }));
+    await mockAgent(page, [{
+      text: '',
+      modelContent: agentModelContent('duplicate-patient', 'atal_action'),
+      calls: [{
+        id: 'duplicate-patient',
+        bridge: 'atal_action',
+        tool: 'patient.create',
+        input: {
+          patient: { name: 'José QA', diagnosis: 'Prueba de identidad normalizada', affectedArea: 'Hombro' },
+          record: { reasonForVisit: 'Prueba de identidad normalizada', goals: ['Recuperar movilidad'] },
+          plan: { title: 'Plan de prueba', focus: 'Movilidad', duration: '4 semanas', frequency: '3 veces por semana', goal: 'Recuperar movilidad', exerciseIds: [], status: 'draft' },
+        },
+        references: [],
+      }],
+    }]);
     await page.goto('/assistant');
 
     const before = await readStore(page);
-    await sendMessage(page, 'Crea a José QA con un plan.');
+    await sendMessage(page, 'Registra al paciente José QA con un plan.');
 
-    await expect(page.getByText('Encontré a Jose QA')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Usar paciente existente' })).toBeVisible();
+    await expect(page.getByText(/Ya existe el paciente “Jose QA”/)).toBeVisible();
+    const persisted = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);
+    expect(persisted[0].agentTask.status).toBe('needs-clarification');
     const after = await readStore(page);
     expect(after).toEqual(before);
   });
 
-  test('stale patient draft is blocked after a newer manual version appears', async ({ page }) => {
-    const conversation = createConversation({ intent: 'update_patient_record' });
-    await seed(page, { conversations: [conversation] });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'update_patient_record',
-      responseMode: 'draft',
-      patient: {
-        name: 'Paciente E2E',
-        reasonForVisit: 'Actualizar expediente',
-        providedDiagnosis: 'Diagnóstico propuesto por IA',
-        evolutionTime: 'Tres semanas',
-        goals: ['Mejorar función'],
-      },
-    }));
+  test('pending sensitive action is blocked after a newer manual state appears', async ({ page }) => {
+    const state = createState();
+    state.plans = state.plans.map((plan) => plan.id === 'plan-active-e2e' ? { ...plan, status: 'paused' } : plan);
+    const conversation = createConversation({ intent: 'update_plan_status', selectedPlanId: 'plan-draft-e2e' });
+    await seed(page, { state, conversations: [conversation] });
+    await mockAgent(page, [{
+      text: '',
+      modelContent: agentModelContent('stale-activation', 'atal_action'),
+      calls: [{
+        id: 'stale-activation',
+        bridge: 'atal_action',
+        tool: 'plan.activate',
+        input: { plan: { type: 'plan', id: 'plan-draft-e2e' } },
+        references: [{ type: 'plan', id: 'plan-draft-e2e' }],
+      }],
+    }]);
     await page.goto('/assistant');
 
-    await sendMessage(page, 'Actualiza el diagnóstico del expediente.');
-    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
-    await expect.poll(async () => (await readDrafts(page)).length).toBe(1);
+    await sendMessage(page, 'Activa el plan candidato.');
+    await expect(page.getByText('Confirmación necesaria')).toBeVisible();
 
     await page.evaluate((key) => {
-      const state = JSON.parse(localStorage.getItem(key));
-      const patient = state.patients.find((item) => item.id === 'patient-e2e');
-      const record = state.clinicalRecords.find((item) => item.patientId === 'patient-e2e');
-      patient.diagnosis = 'Cambio manual más reciente';
-      patient.updatedAt = '2026-07-22T13:00:00.000Z';
-      record.providedDiagnosis = 'Cambio manual más reciente';
-      record.updatedAt = '2026-07-22T13:00:00.000Z';
-      localStorage.setItem(key, JSON.stringify(state));
+      const value = JSON.parse(localStorage.getItem(key));
+      const plan = value.plans.find((item) => item.id === 'plan-draft-e2e');
+      plan.status = 'archived';
+      plan.updatedAt = '2026-07-22T13:00:00.000Z';
+      localStorage.setItem(key, JSON.stringify(value));
     }, STORE_KEY);
 
     await page.reload();
-    await expect(page.getByRole('alert')).toContainText('Esta información cambió después de crear el borrador.');
-    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeDisabled();
+    await expect(page.getByText('Confirmación necesaria')).toBeVisible();
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByText(/El plan no puede pasar de archived a active./)).toBeVisible();
 
     const stored = await readStore(page);
-    expect(stored.patients.find((patient) => patient.id === 'patient-e2e').diagnosis).toBe('Cambio manual más reciente');
-    expect(stored.clinicalRecords.find((record) => record.patientId === 'patient-e2e').providedDiagnosis).toBe('Cambio manual más reciente');
+    expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('archived');
+    expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(false);
   });
 
   test('390px smoke preserves essential routes, themes and fatal-error-free rendering', async ({ page }) => {

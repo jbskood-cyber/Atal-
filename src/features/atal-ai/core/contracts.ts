@@ -48,6 +48,7 @@ export type ToolInvocation<TInput = unknown> = {
   input: TInput;
   references: EntityRef[];
   proposalId: string;
+  authorization?: 'explicit-user-request' | 'file-derived';
 };
 
 export type ClarificationRequest = {
@@ -83,7 +84,7 @@ export type AffectedEntity = {
 export type UndoPatch =
   | {
       operation: 'restore';
-      collection: 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'settings';
+      collection: 'patients' | 'plans' | 'exercises' | 'clinicalRecords' | 'notes' | 'sessions' | 'settings';
       entityId: string;
       before: unknown;
       expectedAfterUpdatedAt?: string;
@@ -97,6 +98,7 @@ export type UndoPatch =
         | 'clinicalRecords'
         | 'clinicalRecordVersions'
         | 'notes'
+        | 'sessions'
         | 'events'
         | 'notifications';
       entityId: string;
@@ -116,7 +118,12 @@ export type UndoReceipt = {
 };
 
 export type ClientEffect =
-  | { type: 'download'; filename: string; mimeType: string; content: string };
+  | { type: 'download'; filename: string; mimeType: string; content: string }
+  | { type: 'navigate'; href: string }
+  | { type: 'theme'; mode: 'light' | 'dark' | 'system' }
+  | { type: 'session-draft'; operation: 'start' | 'update' | 'complete'; patientId: string; planId: string; draft: Record<string, unknown> }
+  | { type: 'delivery'; action: 'open' | 'download' | 'share' | 'print'; planId: string; options?: Record<string, unknown> }
+  | { type: 'exercise-media'; exerciseId: string; mediaType: 'image' | 'sequence'; artifactIds: string[] };
 
 export type ToolSuccess<TData = unknown> = {
   status: 'success';

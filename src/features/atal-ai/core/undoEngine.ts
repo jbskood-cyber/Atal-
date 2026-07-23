@@ -65,18 +65,21 @@ const REMOVE_ORDER: Record<Exclude<UndoPatch['collection'], 'settings'>, number>
   events: 1,
   clinicalRecordVersions: 1,
   notes: 1,
-  plans: 2,
-  clinicalRecords: 3,
-  exercises: 4,
-  patients: 5,
+  sessions: 2,
+  plans: 3,
+  clinicalRecords: 4,
+  exercises: 5,
+  patients: 6,
 };
 
 const RESTORE_ORDER: Record<Extract<UndoPatch, { operation: 'restore' }>['collection'], number> = {
   settings: 1,
-  exercises: 2,
-  plans: 3,
-  clinicalRecords: 4,
-  patients: 5,
+  notes: 2,
+  sessions: 2,
+  exercises: 3,
+  plans: 4,
+  clinicalRecords: 5,
+  patients: 6,
 };
 
 export function executeUndo(

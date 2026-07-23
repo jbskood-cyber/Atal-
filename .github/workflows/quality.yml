@@ -20,3 +20,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run quality
+      - name: Verify generated capability matrix
+        run: |
+          npm run audit:ai-capabilities
+          git diff --exit-code -- docs/atal-ai/block-4-3/03-capability-parity-matrix.md
+      - name: Live Gemini function-calling smoke
+        run: npm run test:ai-live
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
