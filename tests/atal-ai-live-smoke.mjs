@@ -7,9 +7,10 @@ if (!apiKey) {
   process.exit(0);
 }
 
+const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 const ai = new GoogleGenAI({ apiKey });
 const response = await ai.models.generateContent({
-  model: process.env.GEMINI_MODEL ?? 'gemini-3.5-flash',
+  model,
   contents: [{
     role: 'user',
     parts: [{ text: 'Consulta los ajustes actuales de Atal usando la herramienta disponible. No inventes el resultado.' }],
@@ -36,7 +37,6 @@ const response = await ai.models.generateContent({
       }],
     }],
     toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_read'] } },
-    temperature: 0,
     maxOutputTokens: 256,
   },
 });
@@ -47,4 +47,4 @@ assert.equal(call.name, 'atal_read');
 assert.equal(call.args?.tool, 'app.read');
 assert.equal(call.args?.input?.resource, 'settings');
 assert.deepEqual(call.args?.references, []);
-console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${process.env.GEMINI_MODEL ?? 'gemini-3.5-flash'}`);
+console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model}`);
