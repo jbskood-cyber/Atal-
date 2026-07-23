@@ -8,7 +8,14 @@ import {
 
 async function openAssistant(page) {
   await page.setViewportSize({ width: 390, height: 844 });
-  await seedBrowser(page, { state: createState() });
+  await page.goto('/');
+  await page.evaluate((state) => {
+    localStorage.clear();
+    localStorage.setItem('atal:store:v2', JSON.stringify(state));
+    localStorage.setItem('atal:ai-conversations:v1', '[]');
+    localStorage.setItem('atal:ai-drafts:v1', '[]');
+    localStorage.setItem('atal:theme', 'light');
+  }, createState());
   await page.goto('/assistant');
   await expect(page.getByRole('heading', { name: '¿Qué necesitas resolver?' })).toBeVisible();
 }

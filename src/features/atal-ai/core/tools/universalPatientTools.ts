@@ -189,8 +189,9 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     validateInput: validatePatientCreate,
     preconditions(environment, input) {
       const normalized = normalizeEntityLabel(input.name);
-      if (environment.state.patients.some((item) => normalizeEntityLabel(item.name) === normalized)) {
-        throw coreError('CORE_ENTITY_AMBIGUOUS', 'Ya existe un paciente con ese nombre.');
+      const existing = environment.state.patients.find((item) => normalizeEntityLabel(item.name) === normalized);
+      if (existing) {
+        throw coreError('CORE_ENTITY_AMBIGUOUS', `Ya existe el paciente “${existing.name}”. Usa ese expediente o indica un nombre distinto para crear otro.`);
       }
       if (input.plan) {
         const exerciseIds = new Set(environment.state.exercises.map((item) => item.id));
