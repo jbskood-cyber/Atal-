@@ -180,6 +180,29 @@ export function useContextualConversation({
     }
   }, [append, conversation, draft, onProposalFingerprint, patchConversation]);
 
+  const handleReadOnlyOutcome = useCallback((coreResult: ReturnType<typeof executeLegacyAIAction>) => {
+    if (coreResult.status !== 'success') {
+      handleCoreOutcome(coreResult);
+      return;
+    }
+    if (coreResult.clientEffect) executeClientEffect(coreResult.clientEffect);
+    const text = coreResult.summary.join(' ').trim() || coreResult.message;
+    setConversation((current) => current ? {
+      ...current,
+      status: draft ? 'ready_for_review' : 'empty',
+      savedResult: undefined,
+      error: undefined,
+      messages: [...current.messages, {
+        id: uid('message'),
+        role: 'assistant',
+        text,
+        createdAt: new Date().toISOString(),
+        attachments: [],
+      }],
+      updatedAt: new Date().toISOString(),
+    } : current);
+  }, [draft, handleCoreOutcome]);
+
   const process = useCallback(async (request: AtalAIAnalyzeRequest, userMessage: AIMessage) => {
     if (!conversation) return;
     abortRef.current?.abort();
@@ -211,7 +234,7 @@ export function useContextualConversation({
           workContext: conversation.workContext,
           metadata: { conversationId: conversation.id, draftId: next.id },
         });
-        handleCoreOutcome(coreResult, next);
+        handleReadOnlyOutcome(coreResult);
       } else {
         setDraft(next);
         saveAIDraft(next);
@@ -243,7 +266,7 @@ export function useContextualConversation({
     } finally {
       abortRef.current = null;
     }
-  }, [conversation, currentVersions, draft, handleCoreOutcome, onDraftReady, patchConversation]);
+  }, [conversation, currentVersions, draft, handleReadOnlyOutcome, onDraftReady, patchConversation]);
 
   const setText = useCallback((composerText: string) => {
     patchConversation({ composerText, status: composerText ? 'composing' : draft ? 'ready_for_review' : 'empty' });
