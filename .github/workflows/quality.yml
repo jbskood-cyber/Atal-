@@ -24,10 +24,10 @@ jobs:
       - run: python scripts/atal-ai/apply-isolation-repair.py
       - run: npm ci
       - run: npm run quality
-      - name: Commit validated repair
+      - name: Commit validated product repair
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add src/features/atal-ai/AtalAIGeneralScreen.tsx e2e/block-4-1-critical.spec.mjs e2e/block-4-3-conversation-regressions.spec.mjs
           git commit -m "fix: preserve global and contextual assistant boundaries"
           git push origin HEAD:feature/atal-ai-agentic-audit-block-4-3
