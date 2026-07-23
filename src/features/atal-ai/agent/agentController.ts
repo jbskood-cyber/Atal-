@@ -5,6 +5,7 @@ import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/ag
 import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
+import { readAIConversations } from '../data/aiRepository';
 
 const MAX_VISIBLE_HISTORY_MESSAGES = 16;
 
@@ -15,7 +16,7 @@ export type AtalAgentControllerInput = {
   route: string;
   workContext: AIWorkContext;
   attachments: AIAttachmentPayload[];
-  messages: AIMessage[];
+  messages?: AIMessage[];
   task?: AgentTaskState;
   signal?: AbortSignal;
 };
@@ -38,8 +39,13 @@ function executionContext(input: AtalAgentControllerInput) {
   };
 }
 
+function durableMessages(input: AtalAgentControllerInput): AIMessage[] {
+  if (input.messages) return input.messages;
+  return readAIConversations().find((item) => item.id === input.conversationId)?.messages ?? [];
+}
+
 function visibleConversationHistory(input: AtalAgentControllerInput): AgentHistoryContent[] {
-  let messages = input.messages.filter((item) => item.role === 'user' || item.role === 'assistant');
+  let messages = durableMessages(input).filter((item) => item.role === 'user' || item.role === 'assistant');
   const activeTask = input.task && ['running', 'needs-confirmation', 'needs-clarification'].includes(input.task.status)
     ? input.task
     : undefined;
