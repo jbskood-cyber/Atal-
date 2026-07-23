@@ -20,9 +20,11 @@ import { planTools } from './tools/planTools';
 import { queryTools } from './tools/queryTools';
 import { settingsTools } from './tools/settingsTools';
 import { exerciseTools } from './tools/exerciseTools';
+import { universalReadTools } from './tools/universalReadTools';
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
+  ...universalReadTools,
   ...patientTools,
   ...exerciseTools,
   ...planTools,
