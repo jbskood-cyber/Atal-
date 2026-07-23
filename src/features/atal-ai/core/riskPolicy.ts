@@ -56,7 +56,16 @@ export function decideExecutionPolicy(
     return { mode: 'none', fingerprint, reason: 'La instrucción explícita autoriza esta acción reversible.' };
   }
   if (definition.risk === 'reversible-write' && invocation.authorization === 'file-derived') {
-    return { mode: 'review', fingerprint, reason: 'Los datos clínicos extraídos de un archivo requieren una revisión compacta.' };
+    if (proof && proofIsValid(proof, fingerprint, 'review', now)) {
+      return { mode: 'none', fingerprint, reason: 'La revisión compacta fue confirmada para esta propuesta.' };
+    }
+    return {
+      mode: 'review',
+      fingerprint,
+      reason: proof
+        ? 'La revisión ya no corresponde a esta propuesta o expiró.'
+        : 'Los datos clínicos extraídos de un archivo requieren una revisión compacta.',
+    };
   }
 
   if (required === 'none') {
