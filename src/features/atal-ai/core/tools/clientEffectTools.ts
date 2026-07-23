@@ -25,6 +25,13 @@ function bounded(value: unknown, min: number, max: number, fallback: number): nu
   return parsed;
 }
 
+function stringList(value: unknown, max = 12): string[] {
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) throw coreError('CORE_INPUT_INVALID', 'La lista de archivos no es válida.');
+  const values = [...new Set(value.map((item) => item.trim()).filter(Boolean))];
+  if (!values.length || values.length > max) throw coreError('CORE_INPUT_INVALID', `Selecciona entre 1 y ${max} archivos.`);
+  return values;
+}
+
 function routeFor(value: Record<string, unknown>): string {
   const route = text(value.route, 500) ?? '';
   if (!route.startsWith('/')) throw coreError('CORE_INPUT_INVALID', 'La ruta solicitada no es válida.');
@@ -125,6 +132,27 @@ export const clientEffectTools: ToolDefinition<any>[] = [
         href: `/activity`,
         clientEffect: { type: 'session-draft', operation: 'complete', patientId: patient.id, planId: plan.id, draft: { ...input.patch, status: input.status } },
         affected: [{ type: 'patient', id: patient.id }, { type: 'plan', id: plan.id }],
+      };
+    },
+  },
+  {
+    name: 'exercise.media', version: 1, description: 'Vincula imágenes persistidas de Atal IA a un ejercicio tras una revisión compacta.',
+    risk: 'reversible-write', mutates: false, supportsUndo: false, requiredEntities: ['exercise'],
+    validateInput(input) {
+      const value = objectInput(input, 'La multimedia del ejercicio no es válida.');
+      const mediaType = value.mediaType === 'sequence' ? 'sequence' as const : 'image' as const;
+      const artifactIds = stringList(value.artifactIds, mediaType === 'sequence' ? 12 : 1);
+      if (mediaType === 'image' && artifactIds.length !== 1) throw coreError('CORE_INPUT_INVALID', 'Una imagen de ejercicio requiere un solo archivo.');
+      return { exercise: ref(value.exercise, 'exercise'), mediaType, artifactIds };
+    },
+    preconditions() {},
+    execute(environment, input) {
+      const exercise = environment.resolved.exercise!;
+      return {
+        status: 'success', message: 'Multimedia del ejercicio preparada.', summary: ['Recurso visual listo para guardar localmente.'],
+        href: `/exercises/${exercise.id}`,
+        clientEffect: { type: 'exercise-media', exerciseId: exercise.id, mediaType: input.mediaType, artifactIds: input.artifactIds },
+        affected: [{ type: 'exercise', id: exercise.id }],
       };
     },
   },
