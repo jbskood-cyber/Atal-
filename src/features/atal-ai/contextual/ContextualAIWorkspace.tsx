@@ -19,6 +19,7 @@ import { AtalMark } from '@/src/components/atal/AtalLogo';
 import { useAtalStore } from '@/src/data/atalStore';
 import { ConversationalDraftCard } from '../components/ConversationalDraftCard';
 import { contextualActionsFor } from './actions';
+import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
 import { RouteContextualAISurface } from './RouteContextualAISurface';
 import { contextualSuggestionsFor } from './suggestions';
@@ -145,13 +146,9 @@ export function ContextualAIWorkspace() {
             placeholder="Escribe un mensaje…"
             aria-label="Mensaje para Atal IA contextual"
           />
-          <button
-            type="button"
-            className="is-send"
-            disabled={!processing && !hasText}
-            aria-label={processing ? 'Cancelar procesamiento' : 'Enviar mensaje'}
-            onClick={processing ? model.cancelProcessing : model.send}
-          >{processing ? <X /> : <Send />}</button>
+          {processing ? <button type="button" className="is-send" aria-label="Cancelar procesamiento" onClick={model.cancelProcessing}><X /></button>
+            : hasText ? <button type="button" className="is-send" aria-label="Enviar mensaje" onClick={model.send}><Send /></button>
+              : <ContextualAudioCapture onTranscript={model.setText} />}
         </div>
         <small>Atal IA propone. Tú revisas y confirmas.</small>
       </footer>
