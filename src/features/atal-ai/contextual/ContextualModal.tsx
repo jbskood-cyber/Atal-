@@ -31,6 +31,12 @@ export function ContextualModal({
     className={`atal-contextual-modal ${className}`.trim()}
     aria-label={label}
     aria-labelledby={labelledBy}
+    onKeyDown={(event) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      onCancel();
+    }}
     onCancel={(event) => { event.preventDefault(); onCancel(); }}
   >{children}</dialog>;
 }
