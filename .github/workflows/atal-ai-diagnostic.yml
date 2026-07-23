@@ -14,10 +14,32 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Apply exact type fixes in diagnostic checkout
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/features/atal-ai/AtalAIGeneralScreen.tsx')
+          text = path.read_text()
+          text = text.replace(
+              "planId: data.planId ?? draft.command?.planId ?? conversation.workContext.selectedPlanId || undefined,",
+              "planId: (data.planId ?? draft.command?.planId ?? conversation.workContext.selectedPlanId) || undefined,",
+          )
+          text = text.replace(
+              "patientId: data.patientId ?? draft.command?.patientId ?? conversation.workContext.selectedPatientId || undefined,",
+              "patientId: (data.patientId ?? draft.command?.patientId ?? conversation.workContext.selectedPatientId) || undefined,",
+          )
+          text = text.replace(
+              "patchConversation({ savedResult: { ...conversation.savedResult, undo: undefined } });",
+              "patchConversation({ savedResult: { ...conversation.savedResult, summary: conversation.savedResult?.summary ?? [], undo: undefined } });",
+          )
+          path.write_text(text)
+          PY
       - name: Capture typecheck diagnostics
         run: npm run typecheck > atal-ai-typecheck.log 2>&1 || true
       - uses: actions/upload-artifact@v4
         with:
           name: atal-ai-typecheck-diagnostics
-          path: atal-ai-typecheck.log
+          path: |
+            atal-ai-typecheck.log
+            src/features/atal-ai/AtalAIGeneralScreen.tsx
           if-no-files-found: error
