@@ -1,0 +1,105 @@
+/* Block 4.3 conversational surface.
+   The agentic message markup is intentionally simpler than the legacy
+   command-center avatar grid, so it needs its own layout contract. */
+
+.atal-command-thread {
+  min-width: 0;
+  width: 100%;
+}
+
+.atal-command-thread > .atal-command-message.is-user,
+.atal-command-thread > .atal-command-message.is-assistant {
+  display: flex;
+  width: min(100%, 720px);
+  min-width: 0;
+  grid-template-columns: none;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0 auto 20px;
+}
+
+.atal-command-thread > .atal-command-message.is-user {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.atal-command-thread > .atal-command-message.is-assistant {
+  justify-content: flex-start;
+}
+
+.atal-command-message.is-user > div,
+.atal-command-message.is-assistant > div {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.atal-command-message.is-assistant:not(.is-processing) > div {
+  width: 100%;
+  max-width: 100%;
+  padding: 2px 2px 2px 0;
+  color: var(--ink);
+}
+
+.atal-command-message.is-user > div {
+  width: fit-content;
+  max-width: min(88%, 620px);
+  padding: 12px 15px;
+  border: 1px solid var(--command-border);
+  border-radius: 20px 8px 20px 20px;
+  background: #e9efec;
+}
+
+.atal-command-message.is-user > small {
+  flex-basis: 100%;
+  margin-top: 6px;
+  color: var(--command-muted);
+  text-align: right;
+  font-size: 10px;
+}
+
+.atal-command-message.is-assistant.is-processing {
+  display: flex;
+  width: min(100%, 720px);
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto 18px;
+  color: var(--command-muted);
+}
+
+.atal-command-message.is-assistant.is-processing > svg {
+  width: 20px;
+  flex: 0 0 auto;
+  color: #16a36a;
+}
+
+.atal-command-message.is-assistant.is-processing > div {
+  width: auto;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .atal-command-thread {
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+
+  .atal-command-message.is-user > div,
+  .atal-command-message.is-assistant > div {
+    font-size: 15px;
+  }
+
+  .atal-command-message.is-user > div {
+    max-width: 90%;
+  }
+}
+
+[data-theme='dark'] .atal-command-message.is-user > div,
+.dark .atal-command-message.is-user > div {
+  background: color-mix(in srgb, var(--command-surface) 82%, #16a36a 18%);
+}
