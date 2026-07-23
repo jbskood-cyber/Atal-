@@ -34,6 +34,56 @@ test('tool selection stays bounded and includes contextual patient and plan tool
   assert.equal(tools.includes('exercise.create_simple'), true);
 });
 
+test('ordinary conversation stays read-only instead of defaulting to patient mutations', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: 'Hola, explícame con calma qué puedes hacer por mí.',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.equal(tools.includes('app.read'), true);
+  assert.equal(tools.includes('patient.update'), false);
+  assert.equal(tools.includes('patient.create'), false);
+  assert.equal(tools.includes('clinical_record.upsert'), false);
+});
+
+test('a descriptive image question does not expose clinical mutation tools', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: '¿Qué es esto?',
+    route: '/assistant',
+    hasImageOrPdf: true,
+    hasAudio: false,
+  });
+  assert.equal(tools.includes('patient.update'), false);
+  assert.equal(tools.includes('clinical_record.upsert'), false);
+  assert.equal(tools.includes('exercise.create_simple'), false);
+  assert.equal(tools.includes('exercise.media'), false);
+});
+
+test('explicit no-apply wording keeps a contact update as a proposal without mutation tools', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: 'Ayúdame a preparar una actualización de los datos de contacto. No apliques cambios todavía.',
+    route: '/assistant',
+    intent: 'update_patient_record',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.equal(tools.includes('app.read'), true);
+  assert.equal(tools.includes('patient.update'), false);
+  assert.equal(tools.includes('clinical_record.upsert'), false);
+});
+
+test('an explicit contact mutation still exposes the canonical patient update tool', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: 'Actualiza el teléfono del paciente a 4441234567 y guárdalo.',
+    route: '/assistant',
+    intent: 'update_patient_record',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.equal(tools.includes('patient.update'), true);
+});
+
 test('bounded loop executes safe multi-step work and returns grounded final text', async () => {
   const { createAgentTask, runAgentLoop } = loopModule();
   const allowedTools = ['patient_note.add', 'app.read'];
