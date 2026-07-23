@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import { Activity, ContactRound, FilePlus2, Sparkles } from 'lucide-react';
 import { AtalMark } from '@/src/components/atal/AtalLogo';
 import { useAtalStore } from '@/src/data/atalStore';
@@ -20,16 +21,15 @@ function triggerId(context: ContextualAIContext) {
   return `atal-contextual-trigger-${context.surface}-${id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 }
 
-export function ContextualAISurface({ context, raised = false }: { context: ContextualAIContext; raised?: boolean }) {
+export function ContextualAISurface({ context }: { context: ContextualAIContext }) {
   const store = useAtalStore((state) => state);
   const controller = useContextualAI();
   const actions = contextualActionsFor(context, store, 'exterior');
   const activeContext = controller.session.context && contextualAIContextKey(controller.session.context) === contextualAIContextKey(context);
-  if (controller.session.mode === 'open') return null;
+  if (controller.session.mode === 'open' || typeof document === 'undefined') return null;
 
   const launch = (action: ContextualAIAction | undefined, element: HTMLElement) => controller.open(context, action, element);
-
-  return <aside className={`atal-contextual-launcher${raised ? ' is-raised' : ''}`} aria-label={`Atal IA ${context.contextLabel}`}>
+  const launcher = <aside className="atal-contextual-launcher" aria-label={`Atal IA ${context.contextLabel}`}>
     <div className="atal-contextual-exterior-actions">
       {actions.map((action) => <button
         key={action.id}
@@ -49,4 +49,6 @@ export function ContextualAISurface({ context, raised = false }: { context: Cont
       <span className="atal-contextual-orb-status" aria-hidden="true" />
     </button>
   </aside>;
+
+  return createPortal(launcher, document.body);
 }
