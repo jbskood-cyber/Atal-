@@ -1,0 +1,23 @@
+name: atal-ai-diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Capture quality diagnostics
+        run: npm run quality > atal-ai-quality.log 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: atal-ai-quality-diagnostics
+          path: atal-ai-quality.log
+          if-no-files-found: error
