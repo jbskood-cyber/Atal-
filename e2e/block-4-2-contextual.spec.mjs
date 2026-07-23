@@ -154,6 +154,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
     expect(await readAIStorage(page)).toEqual(beforeReload);
     workspace = await openWorkspace(page);
+    await workspace.getByRole('button', { name: 'Borrador' }).click();
     await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
     expect((await readStore(page)).notes).toHaveLength(0);
   });
