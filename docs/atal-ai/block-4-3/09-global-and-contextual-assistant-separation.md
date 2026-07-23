@@ -164,7 +164,7 @@ Validated implementation HEAD:
 7938bbdda5160facf3f37f7e0923d0d109cf4b75
 ```
 
-Final contract and evidence HEAD:
+Validated contract HEAD before this evidence-only freeze commit:
 
 ```text
 3c20d5dfb0c441045a882a8edd009d71ee4947b6
@@ -178,9 +178,8 @@ Evidence:
 - production build: passed;
 - generated capability matrix verification: passed;
 - Playwright: 39 passed, 0 failed, 0 flaky, 0 skipped;
-- final quality workflow: `30048728040` passed;
-- final E2E workflow: `30048728013` passed;
-- final Playwright evidence artifact: `8580187389`.
+- quality workflow: `30048894581` passed;
+- E2E workflow: `30048894597` passed.
 
 A fresh real-device Google AI Studio walkthrough remains mandatory because deterministic coverage cannot prove Gemini response quality or the final visual experience on the product owner's device.
 
