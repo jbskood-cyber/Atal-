@@ -52,11 +52,13 @@ export type CapabilityAuditRow = ManualCapability & Omit<CapabilityAICoverage, '
 
 export type CapabilityAuditSummary = {
   total: number;
+  approvedTotal: number;
   covered: number;
   partial: number;
   missing: number;
   excluded: number;
   parityPercent: number;
+  approvedParityPercent: number;
 };
 
 export function validateCapabilityAudit(rows: CapabilityAuditRow[]): CapabilityAuditRow[] {
@@ -87,10 +89,13 @@ export function summarizeCapabilityAudit(rows: CapabilityAuditRow[]): Capability
   const counts = { covered: 0, partial: 0, missing: 0, excluded: 0 };
   for (const row of rows) counts[row.coverage] += 1;
   const total = rows.length;
+  const approvedTotal = total - counts.excluded;
 
   return {
     total,
+    approvedTotal,
     ...counts,
     parityPercent: total ? Math.round((counts.covered / total) * 100) : 0,
+    approvedParityPercent: approvedTotal ? Math.round((counts.covered / approvedTotal) * 100) : 0,
   };
 }
