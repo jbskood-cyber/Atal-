@@ -255,7 +255,7 @@ test.describe('Block 4.1 critical E2E validation', () => {
     await page.goto('/assistant');
 
     const before = await readStore(page);
-    await sendMessage(page, 'Crea a José QA con un plan.');
+    await sendMessage(page, 'Registra al paciente José QA con un plan.');
 
     await expect(page.getByText(/Ya existe el paciente “Jose QA”/)).toBeVisible();
     const persisted = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);

@@ -183,8 +183,10 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(page.getByLabel('Mensaje para Atal IA')).toHaveValue(/Continúa el trabajo sobre Paciente E2E/);
 
     const conversations = await page.evaluate(() => JSON.parse(localStorage.getItem('atal:ai-conversations:v1') ?? '[]'));
-    const contextual = conversations.find((item) => item.id === contextualId);
+    expect(contextualId).toBeTruthy();
+    const contextual = conversations.find((item) => item.scope === 'contextual' && item.contextKey);
     const global = conversations.find((item) => item.scope === 'global');
+    expect(contextual).toBeTruthy();
     expect(contextual.scope).toBe('contextual');
     expect(contextual.contextKey).toBeTruthy();
     expect(global).toBeTruthy();

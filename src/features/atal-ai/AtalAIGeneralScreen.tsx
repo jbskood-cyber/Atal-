@@ -187,6 +187,10 @@ export function AtalAIGeneralScreen() {
   }, [draft]);
 
   useEffect(() => {
+    if (conversation.agentTask?.status === 'needs-confirmation') setDialog('agent-confirmation');
+  }, [conversation.id, conversation.agentTask?.status]);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [conversation.messages.length, conversation.status, draft?.updatedAt]);
 
@@ -702,10 +706,37 @@ export function AtalAIGeneralScreen() {
     try {
       executeUndo(receipt as UndoReceipt, legacyExecutionContext(conversation.workContext, { conversationId: conversation.id, draftId: conversation.draftId }));
       patchConversation({ savedResult: { ...conversation.savedResult, summary: conversation.savedResult?.summary ?? [], undo: undefined } });
+      setNotice('Último cambio deshecho.');
       append(createMessage('assistant', 'Cambio deshecho correctamente.'));
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'No fue posible deshacer.');
     }
+  };
+
+  const cancelDialog = () => {
+    if (dialog === 'agent-confirmation' && conversation.agentTask?.status === 'needs-confirmation') {
+      const task = {
+        ...conversation.agentTask,
+        status: 'cancelled' as const,
+        pendingInvocation: undefined,
+        pendingCall: undefined,
+        finalText: 'Acción cancelada. Los pasos ya completados se conservaron.',
+        updatedAt: new Date().toISOString(),
+      };
+      setConversation((current) => {
+        const next = {
+          ...current,
+          agentTask: task,
+          status: statusAfterConversation(draft),
+          messages: [...current.messages, createMessage('assistant', task.finalText)],
+          updatedAt: new Date().toISOString(),
+        };
+        saveAIConversation(next);
+        return next;
+      });
+    }
+    setDialog(null);
+    setLegacyConfirmation(null);
   };
 
   const matchingPatient = !collisionDismissed && draft?.patient.name.trim() && conversation.workContext.patientMode === 'new'
@@ -754,7 +785,7 @@ export function AtalAIGeneralScreen() {
     />
 
     <section className="atal-command-thread" aria-live="polite">
-      {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><p>Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.</p></div></article>}
+      {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><h1>¿Qué necesitas resolver?</h1><p>Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.</p></div></article>}
       {conversation.messages.map((item) => <article key={item.id} className={`atal-command-message is-${item.role}`}>
         <span>{item.role === 'assistant' ? <AtalMark /> : <UserRound />}</span>
         <div><header><b>{item.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(item.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header><p>{item.text}</p>{item.attachments.length > 0 && <div className="atal-command-message-files">{item.attachments.map((file) => <small key={file.id}><Paperclip />{file.name}</small>)}</div>}</div>
@@ -786,7 +817,7 @@ export function AtalAIGeneralScreen() {
         onCompare={() => setCompareOpen(true)}
         onKeepVersion={() => setForceApply(true)}
       /></>}
-      {conversation.savedResult && <section className="atal-command-result"><CheckCircle2 /><div><b>Cambios aplicados</b><ul>{conversation.savedResult.summary.map((item) => <li key={item}>{item}</li>)}</ul><span>{conversation.savedResult.patientId && <button type="button" onClick={() => navigate(`/patients/${conversation.savedResult?.patientId}`)}>Ver paciente<ChevronRight /></button>}{conversation.savedResult.planId && <button type="button" onClick={() => navigate(`/plans/${conversation.savedResult?.planId}`)}>Ver plan<ChevronRight /></button>}</span>{conversation.savedResult.undo && <button type="button" className="atal-command-undo" onClick={undo}>Deshacer cambio</button>}</div></section>}
+      {conversation.savedResult && <section className="atal-command-result"><CheckCircle2 /><div><b>Cambios aplicados</b><ul>{conversation.savedResult.summary.map((item) => <li key={item}>{item}</li>)}</ul><span>{conversation.savedResult.patientId && <button type="button" onClick={() => navigate(`/patients/${conversation.savedResult?.patientId}`)}>Ver paciente<ChevronRight /></button>}{conversation.savedResult.planId && <button type="button" onClick={() => navigate(`/plans/${conversation.savedResult?.planId}`)}>Ver plan<ChevronRight /></button>}</span>{conversation.savedResult.undo && <button type="button" className="atal-command-undo" aria-label="Deshacer último cambio" onClick={undo}>Deshacer cambio</button>}</div></section>}
       <div ref={endRef} />
     </section>
 
@@ -813,10 +844,8 @@ export function AtalAIGeneralScreen() {
       kind={dialog}
       draft={draft}
       agentText={conversation.agentTask?.finalText}
-      onCancel={() => {
-        setDialog(null);
-        setLegacyConfirmation(null);
-      }}
+      agentLabel={conversation.agentTask?.pendingInvocation?.authorization === 'file-derived' ? 'Revisa antes de guardar' : 'Confirmación necesaria'}
+      onCancel={cancelDialog}
       onConfirm={() => {
         if (dialog === 'discard') void discard();
         else if (dialog === 'restart') restart();
@@ -840,13 +869,13 @@ function HistoryDialog({ currentId, onClose, onSelect }: { currentId: string; on
   return <div className="atal-command-dialog" role="dialog" aria-modal="true" aria-label="Conversaciones generales" onMouseDown={onClose}><section className="atal-history-sheet" onMouseDown={(event) => event.stopPropagation()}><header><div><small>Atal IA general</small><h2>Conversaciones</h2></div><button ref={closeRef} type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header><div>{items.map((item) => <button type="button" key={item.id} className={item.id === currentId ? 'is-selected' : ''} onClick={() => onSelect(item)}><span><b>{item.messages.at(-1)?.text.slice(0, 70) || 'Conversación nueva'}</b><small>{new Date(item.updatedAt).toLocaleString('es-MX')}</small></span><ChevronRight /></button>)}{!items.length && <p>No hay conversaciones generales guardadas.</p>}</div></section></div>;
 }
 
-function ConfirmDialog({ kind, draft, agentText, onCancel, onConfirm }: { kind: 'discard' | 'restart' | 'legacy-confirmation' | 'agent-confirmation'; draft: AtalAIDraft | null; agentText?: string; onCancel: () => void; onConfirm: () => void }) {
+function ConfirmDialog({ kind, draft, agentText, agentLabel, onCancel, onConfirm }: { kind: 'discard' | 'restart' | 'legacy-confirmation' | 'agent-confirmation'; draft: AtalAIDraft | null; agentText?: string; agentLabel?: string; onCancel: () => void; onConfirm: () => void }) {
   const copy = kind === 'discard'
     ? ['¿Descartar esta conversación general?', 'Se eliminarán esta conversación y sus ediciones. Los datos ya aplicados no cambiarán.', 'Descartar']
     : kind === 'restart'
       ? ['¿Empezar una conversación general nueva?', 'La conversación actual seguirá guardada para que puedas retomarla.', 'Empezar de nuevo']
       : kind === 'agent-confirmation'
-        ? ['¿Continuar con la acción sensible?', agentText || 'Atal IA completó los pasos seguros y necesita autorización para continuar.', 'Confirmar y continuar']
+        ? ['¿Continuar con la acción sensible?', agentText || 'Atal IA completó los pasos seguros y necesita autorización para continuar.', 'Continuar']
         : ['¿Aplicar este borrador?', draft?.assistantMessage || 'La acción modificará datos reales de Atal y quedará registrada en el historial.', 'Confirmar y aplicar'];
   const cancelRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -855,7 +884,7 @@ function ConfirmDialog({ kind, draft, agentText, onCancel, onConfirm }: { kind: 
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
   }, [onCancel]);
-  return <div className="atal-command-dialog" role="dialog" aria-modal="true" aria-labelledby="atal-confirm-title" onMouseDown={onCancel}><section className="atal-confirm-sheet" onMouseDown={(event) => event.stopPropagation()}><AlertTriangle /><h2 id="atal-confirm-title">{copy[0]}</h2><p>{copy[1]}</p><button type="button" className="is-primary" onClick={onConfirm}>{copy[2]}</button><button ref={cancelRef} type="button" onClick={onCancel}>Cancelar</button></section></div>;
+  return <div className="atal-command-dialog" role="dialog" aria-modal="true" aria-labelledby="atal-confirm-title" onMouseDown={onCancel}><section className="atal-confirm-sheet" onMouseDown={(event) => event.stopPropagation()}><AlertTriangle />{kind === 'agent-confirmation' && <small>{agentLabel || 'Confirmación necesaria'}</small>}<h2 id="atal-confirm-title">{copy[0]}</h2><p>{copy[1]}</p><button type="button" className="is-primary" onClick={onConfirm}>{copy[2]}</button><button ref={cancelRef} type="button" onClick={onCancel}>Cancelar</button></section></div>;
 }
 
 function CompareDialog({ draft, onClose }: { draft: AtalAIDraft; onClose: () => void }) {
