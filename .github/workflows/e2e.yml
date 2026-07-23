@@ -23,7 +23,7 @@ jobs:
         run: npm install --no-save --no-package-lock @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
-      - name: Run critical Block 4.1 E2E suite
+      - name: Run deterministic Atal AI E2E suite
         run: npx playwright test
       - name: Upload Playwright evidence
         if: ${{ !cancelled() }}
