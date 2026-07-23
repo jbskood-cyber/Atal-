@@ -1,0 +1,44 @@
+name: block-4-3-diagnostics
+
+on:
+  push:
+    branches:
+      - feature/atal-ai-agentic-audit-block-4-3
+    paths:
+      - 'src/features/atal-ai/**'
+      - 'server/**'
+      - 'tests/**'
+      - 'package.json'
+      - '.github/workflows/block-4-3-diagnostics.yml'
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Capture typecheck
+        shell: bash
+        run: |
+          set +e
+          npm run typecheck > block-4-3-diagnostics.txt 2>&1
+          echo "TYPECHECK_EXIT=$?" >> block-4-3-diagnostics.txt
+          exit 0
+      - name: Capture core compile and tests
+        shell: bash
+        run: |
+          set +e
+          npm run test:core:compile >> block-4-3-diagnostics.txt 2>&1
+          echo "CORE_COMPILE_EXIT=$?" >> block-4-3-diagnostics.txt
+          node --test tests/atal-ai-universal-read-tools.test.mjs tests/atal-ai-universal-actions.test.mjs >> block-4-3-diagnostics.txt 2>&1
+          echo "FOCUSED_TEST_EXIT=$?" >> block-4-3-diagnostics.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: block-4-3-diagnostics
+          path: block-4-3-diagnostics.txt
+          retention-days: 2
