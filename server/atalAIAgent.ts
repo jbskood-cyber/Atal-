@@ -7,6 +7,7 @@ import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/too
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 
 const MAX_HISTORY_CONTENTS = 32;
+const MAX_CONVERSATION_CONTENTS = 24;
 
 function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.statusCode = status;
@@ -45,11 +46,13 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   if (typeof payload.conversationId !== 'string' || !payload.conversationId.trim()) throw new Error('Falta la conversación del agente.');
   if (typeof payload.text !== 'string' || payload.text.length > 30_000) throw new Error('El mensaje no es válido.');
   if (!Array.isArray(payload.allowedTools) || payload.allowedTools.length < 1 || payload.allowedTools.length > AGENT_MAX_ACTIVE_TOOLS) throw new Error('La selección de herramientas no es válida.');
+  const conversationHistory = Array.isArray(payload.conversationHistory) ? payload.conversationHistory : [];
+  if (conversationHistory.length > MAX_CONVERSATION_CONTENTS) throw new Error('La conversación supera el límite seguro.');
   if (!Array.isArray(payload.history) || payload.history.length > MAX_HISTORY_CONTENTS) throw new Error('El historial de la tarea supera el límite seguro.');
   if (!Array.isArray(payload.attachments) || payload.attachments.length > 8) throw new Error('La solicitud contiene demasiados archivos.');
   const allowedTools = [...new Set(payload.allowedTools)];
   for (const tool of allowedTools) if (!agentToolCatalogByName.has(tool)) throw new Error(`Herramienta no autorizada: ${tool}`);
-  return { ...payload, allowedTools };
+  return { ...payload, allowedTools, conversationHistory };
 }
 
 function bridgeDescription(kind: AgentToolCatalogEntry['kind'], entries: AgentToolCatalogEntry[]): string {
@@ -132,7 +135,7 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
     ...(readEntries.length ? [bridgeDeclaration('read', readEntries)] : []),
     ...(actionEntries.length ? [bridgeDeclaration('action', actionEntries)] : []),
   ];
-  const contents = [initialUserContent(payload), ...payload.history];
+  const contents = [...payload.conversationHistory, initialUserContent(payload), ...payload.history];
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
     model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
