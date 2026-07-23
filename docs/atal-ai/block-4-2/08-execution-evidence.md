@@ -9,57 +9,40 @@
 
 ## Delivered surfaces
 
-The shared contextual Atal AI workspace is available on:
-
-- patient;
-- clinical record;
-- plan;
-- exercise;
-- clinical report.
-
-The implementation reuses the Block 4.1 deterministic registry, risk, confirmation, transaction, audit and undo paths. It does not add a second assistant engine or mutation route.
+The shared contextual Atal AI workspace is available on patient, clinical record, plan, exercise and clinical report screens. It reuses the Block 4.1 deterministic registry, risk, confirmation, transaction, audit and undo paths.
 
 ## User visual-review corrections
 
 ### Shared viewport anchor
 
-The first AI Studio smoke approved Reporte clínico as the placement reference and approved the structured draft design. It also exposed two placement defects:
-
-- patient and clinical record launchers were mounted inside scrolling content;
-- plan used a special raised offset over exercise cards.
-
-The launcher now mounts through a global portal for every supported surface. Patient, clinical record, plan and exercise share the same lower viewport anchor as Reporte clínico. The structured draft design was not modified.
+Reporte clínico is the approved placement reference. All supported surfaces mount the launcher through the same global portal and lower viewport anchor. Patient and clinical record no longer require scrolling to reach Atal IA, and Plan no longer uses a raised offset over exercise cards.
 
 ### Native shell overlays
 
-A second AI Studio smoke exposed that the contextual launcher remained visible above the `Más` native sheet. The shell and contextual provider now share explicit launcher-suppression state. Opening `Más`, Search, Notifications or Create removes the orb and exterior recommendations from rendering; closing the overlay restores them.
+The contextual launcher is removed from rendering while `Más`, Search, Notifications or Create is open. Closing the shell overlay restores the orb and exterior actions.
 
 ### End-of-page recommendations
 
-Exterior recommendation chips now disappear when the user reaches the final 96 px of a scrollable page so that final clinical content and actions remain unobstructed. The Atal orb remains available. Scrolling upward restores the recommendations.
+Exterior recommendation chips disappear within the final 96 px of a scrollable page so they do not cover final clinical content or actions. The Atal orb remains available. Scrolling upward restores the chips.
+
+The structured draft design approved by the user was not modified.
 
 ## Deterministic regressions
 
-Playwright covers:
-
-- exact context binding and navigation suppression for every surface;
-- shared geometry against the approved report anchor at initial scroll position;
-- launcher suppression while the `Más` dialog is open and restoration after closing;
-- recommendation removal at the end of a long report while preserving the orb;
-- recommendation restoration after scrolling upward;
-- global lists and settings remaining free of contextual launchers;
-- all previously delivered conversation, draft, confirmation, undo, persistence, responsive and accessibility behavior.
+Playwright covers exact context binding, navigation suppression, shared geometry, shell-overlay suppression and restoration, end-of-page recommendation removal while preserving the orb, recommendation restoration after scrolling upward, and all earlier conversation, draft, confirmation, undo, persistence, responsive and accessibility behavior.
 
 ## Final validation
 
-The final product-change HEAD was validated by GitHub Actions:
+Product-change HEAD `1d0fd838ccf39d92275c56709715e2a3aecd8559` passed:
 
-- `quality` run #92 / ID `29987327813`: PASS;
-- `e2e` run #69 / ID `29987327798`: PASS;
-- Playwright evidence artifact: `playwright-evidence`, ID `8555571401`, retained until 2026-08-06;
-- `atal:store:v2` and store version `2` remain preserved;
-- `package-lock.json` remains unchanged from the canonical base.
+- `quality` run #92 / ID `29987327813`;
+- `e2e` run #69 / ID `29987327798`;
+- evidence artifact `playwright-evidence`, ID `8555571401`, retained until 2026-08-06.
+
+The subsequent branch commit only updates this evidence document and does not change product, test, dependency or lockfile content.
+
+`atal:store:v2`, store version `2` and the canonical `package-lock.json` remain preserved.
 
 ## Approval boundary
 
-The PR remains open, draft and unmerged. Final readiness and merge still require explicit user authorization after the corrected Google AI Studio visual review.
+The PR remains open, draft and unmerged. Final readiness and merge require explicit user authorization after the corrected Google AI Studio visual review.
