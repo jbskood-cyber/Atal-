@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const handoffModule = () => loadCore('src/features/atal-ai/contextual/globalHandoff.js');
+const adapterModule = () => loadCore('src/features/atal-ai/contextual/conversationAdapter.js');
 
 const context = {
   surface: 'patient',
@@ -38,7 +39,7 @@ const conversation = {
 test('explicit handoff carries a concise prompt and references but no contextual transcript', () => {
   const handoff = handoffModule().buildGlobalAIHandoff(context, conversation, null, '2026-07-23T18:10:00.000Z');
   assert.equal(handoff.sourceConversationId, 'contextual-conversation-1');
-  assert.equal(handoff.sourceContextKey, 'patient:patient-1');
+  assert.equal(handoff.sourceContextKey, adapterModule().contextualConversationKey(context));
   assert.equal(handoff.workContext.selectedPatientId, 'patient-1');
   assert.match(handoff.prompt, /Texto privado de esta pantalla/);
   assert.equal('messages' in handoff, false);
