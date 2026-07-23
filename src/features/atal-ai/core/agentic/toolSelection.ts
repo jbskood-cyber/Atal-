@@ -21,20 +21,21 @@ function append(target: string[], values: string[]): void {
 export type ToolSelectionInput = {
   text: string;
   route: string;
+  intent?: string;
   hasImageOrPdf: boolean;
   hasAudio: boolean;
 };
 
 export function selectAgentTools(input: ToolSelectionInput): string[] {
-  const value = `${input.text} ${input.route}`.toLocaleLowerCase('es-MX');
+  const value = `${input.text} ${input.route} ${input.intent ?? ''}`.toLocaleLowerCase('es-MX');
   const selected = [...READ_BASE];
 
-  const patient = includesAny(value, ['paciente', 'expediente', 'diagnóstico', 'diagnostico', 'nota', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
+  const patient = includesAny(value, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
-  const exercise = includesAny(value, ['ejercicio', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'imagen', 'secuencia', '/exercises']);
-  const session = includesAny(value, ['sesión', 'sesion', 'dolor', 'energía', 'energia', 'esfuerzo', 'síntoma', 'sintoma', 'reporte', 'actividad', '/activity']);
-  const settings = includesAny(value, ['ajuste', 'preferencia', 'perfil profesional', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
-  const delivery = includesAny(value, ['entrega', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'respaldo', '/exports', '/delivery']);
+  const exercise = includesAny(value, ['ejercicio', 'exercise', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'imagen', 'secuencia', '/exercises']);
+  const session = includesAny(value, ['sesión', 'sesion', 'session', 'dolor', 'energía', 'energia', 'esfuerzo', 'síntoma', 'sintoma', 'reporte', 'actividad', '/activity']);
+  const settings = includesAny(value, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
+  const delivery = includesAny(value, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
 
   if (patient || input.hasImageOrPdf) append(selected, PATIENT_TOOLS);
   if (plan) append(selected, PLAN_TOOLS);
