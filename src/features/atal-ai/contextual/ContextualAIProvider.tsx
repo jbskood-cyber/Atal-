@@ -87,13 +87,10 @@ export function ContextualAIProvider({ children }: { children: ReactNode }) {
   const updateView = useCallback((patch: ContextualWorkspaceViewPatch) => setSession((current) => updateContextualWorkspaceView(current, patch)), []);
   const bindProposal = useCallback((fingerprint: string) => setSession((current) => bindPendingProposal(current, fingerprint)), []);
   const consumeQueuedAction = useCallback(() => {
-    let value: ContextualAIAction | null = null;
-    setQueuedAction((current) => {
-      value = current;
-      return null;
-    });
+    const value = queuedAction;
+    setQueuedAction(null);
     return value;
-  }, []);
+  }, [queuedAction]);
 
   useEffect(() => {
     if (session.mode !== 'open') return;
