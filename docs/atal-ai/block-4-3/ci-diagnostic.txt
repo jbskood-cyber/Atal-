@@ -2,91 +2,85 @@
 > ai-studio-applet@0.1.0 typecheck
 > tsc --noEmit
 
-src/features/atal-ai/core/agentic/agentLoop.ts(86,91): error TS2561: Object literal may only specify known properties, but 'pendingCallId' does not exist in type 'AgentTaskState'. Did you mean to write 'pendingCall'?
-src/features/atal-ai/core/agentic/agentLoop.ts(89,85): error TS2561: Object literal may only specify known properties, but 'pendingCallId' does not exist in type 'AgentTaskState'. Did you mean to write 'pendingCall'?
-src/features/atal-ai/core/agentic/agentLoop.ts(176,8): error TS2551: Property 'pendingCallId' does not exist on type 'AgentTaskState'. Did you mean 'pendingCall'?
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
 TYPECHECK_EXIT=2
 
 > ai-studio-applet@0.1.0 test:core:compile
 > rm -rf .tmp/core-tests && tsc -p tests/tsconfig.core.json
 
-src/features/atal-ai/core/agentic/agentLoop.ts(86,91): error TS2561: Object literal may only specify known properties, but 'pendingCallId' does not exist in type 'AgentTaskState'. Did you mean to write 'pendingCall'?
-src/features/atal-ai/core/agentic/agentLoop.ts(89,85): error TS2561: Object literal may only specify known properties, but 'pendingCallId' does not exist in type 'AgentTaskState'. Did you mean to write 'pendingCall'?
-src/features/atal-ai/core/agentic/agentLoop.ts(176,8): error TS2551: Property 'pendingCallId' does not exist on type 'AgentTaskState'. Did you mean 'pendingCall'?
 src/features/atal-ai/core/tools/universalPlanExerciseTools.ts(206,35): error TS7006: Parameter 'id' implicitly has an 'any' type.
 CORE_COMPILE_EXIT=2
 TAP version 13
 # Subtest: registry exposes universal read action and client-effect tools
 ok 1 - registry exposes universal read action and client-effect tools
   ---
-  duration_ms: 24.244973
+  duration_ms: 20.127619
   type: 'test'
   ...
 # Subtest: explicit reversible patient contact update executes immediately, audits and undoes
 ok 2 - explicit reversible patient contact update executes immediately, audits and undoes
   ---
-  duration_ms: 6.564253
+  duration_ms: 5.164613
   type: 'test'
   ...
 # Subtest: file-derived reversible action pauses at compact review instead of mutating
 ok 3 - file-derived reversible action pauses at compact review instead of mutating
   ---
-  duration_ms: 1.160959
+  duration_ms: 0.886996
   type: 'test'
   ...
 # Subtest: patient lifecycle remains sensitive and requires explicit confirmation
 ok 4 - patient lifecycle remains sensitive and requires explicit confirmation
   ---
-  duration_ms: 1.104264
+  duration_ms: 0.848849
   type: 'test'
   ...
 # Subtest: note update and clinical record upsert persist with validated undo
 ok 5 - note update and clinical record upsert persist with validated undo
   ---
-  duration_ms: 2.695383
+  duration_ms: 2.081003
   type: 'test'
   ...
 # Subtest: plan duplicate and membership operations preserve canonical order and undo
 ok 6 - plan duplicate and membership operations preserve canonical order and undo
   ---
-  duration_ms: 3.310578
+  duration_ms: 2.59507
   type: 'test'
   ...
 # Subtest: exercise lifecycle and report review are canonical and reversible
 ok 7 - exercise lifecycle and report review are canonical and reversible
   ---
-  duration_ms: 2.755902
+  duration_ms: 2.136726
   type: 'test'
   ...
 # Subtest: approved client effects do not mutate canonical store
 ok 8 - approved client effects do not mutate canonical store
   ---
-  duration_ms: 1.231593
+  duration_ms: 0.97144
   type: 'test'
   ...
 # Subtest: universal read model exposes complete patient context without mutation
 ok 9 - universal read model exposes complete patient context without mutation
   ---
-  duration_ms: 29.126271
+  duration_ms: 22.829427
   type: 'test'
   ...
 # Subtest: universal read model filters plans and exercises deterministically
 ok 10 - universal read model filters plans and exercises deterministically
   ---
-  duration_ms: 0.910185
+  duration_ms: 0.717987
   type: 'test'
   ...
 # Subtest: session preparation and delivery use canonical patient plan and exercises
 ok 11 - session preparation and delivery use canonical patient plan and exercises
   ---
-  duration_ms: 1.33687
+  duration_ms: 1.094461
   type: 'test'
   ...
 # Subtest: universal read input remains bounded and rejects unsupported resources
 ok 12 - universal read input remains bounded and rejects unsupported resources
   ---
-  duration_ms: 0.387947
+  duration_ms: 0.280252
   type: 'test'
   ...
 1..12
@@ -97,5 +91,5 @@ ok 12 - universal read input remains bounded and rejects unsupported resources
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 102.316406
+# duration_ms 81.995264
 FOCUSED_TEST_EXIT=0
