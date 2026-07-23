@@ -76,14 +76,14 @@ TDD correction evidence:
 
 Exact final HEAD:
 
-`6ebad2036629af0f5724800a6cdd7635a2e90bfb`
+`0e9d7a3d4f1dbc833ae2c966923ce4de1d53859e`
 
 Final GitHub Actions evidence:
 
-- quality #85 / run ID `29985544527`: PASS;
-- e2e #62 / run ID `29985544552`: PASS;
+- quality #86 / run ID `29985710998`: PASS;
+- e2e #63 / run ID `29985710985`: PASS;
 - Playwright: 28 expected, 28 passed, 0 unexpected, 0 flaky, 0 skipped;
-- evidence artifact: `playwright-evidence`, ID `8554866070`, retained through 2026-08-06;
+- evidence artifact: `playwright-evidence`, ID `8554933453`, retained through 2026-08-06;
 - screenshot evidence confirms patient, clinical record, plan and exercise share the report launcher anchor at initial viewport scroll position.
 
 ## Protected invariants
