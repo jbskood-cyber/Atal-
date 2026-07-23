@@ -1,3 +1,4 @@
+import { saveAIConversation } from '../data/aiRepository';
 import type { AIConversation, AtalAIDraft, AIWorkContext } from '../types';
 import { contextualConversationKey, workContextForContext } from './conversationAdapter';
 import type { ContextualAIContext } from './types';
@@ -39,6 +40,14 @@ export function buildGlobalAIHandoff(
 }
 
 export function queueGlobalAIHandoff(context: ContextualAIContext, conversation: AIConversation, draft: AtalAIDraft | null): void {
+  saveAIConversation({
+    ...conversation,
+    scope: 'contextual',
+    contextKey: contextualConversationKey(context),
+    contextSurface: context.surface,
+    contextEntityLabel: context.entityLabel,
+    updatedAt: new Date().toISOString(),
+  });
   sessionStorage.setItem(GLOBAL_HANDOFF_KEY, JSON.stringify(buildGlobalAIHandoff(context, conversation, draft)));
 }
 
