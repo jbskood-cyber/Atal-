@@ -66,12 +66,13 @@ async function analyze(payload: AtalAIPayload) {
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
   const ai = new GoogleGenAI({ apiKey });
   const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+  const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 
   if (payload.mode === 'transcribe') {
     const audio = attachments.find((attachment) => attachment.kind === 'audio' && attachment.data);
     if (!audio) throw new Error('No encontramos un audio válido para transcribir.');
     const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL ?? 'gemini-3.5-flash',
+      model,
       contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.type, data: cleanDataUrl(audio.data) } }, { text: ATAL_AI_TRANSCRIPTION_PROMPT }] }],
     });
     return { transcript: response.text?.trim() ?? '' };
@@ -82,7 +83,7 @@ async function analyze(payload: AtalAIPayload) {
     { text: promptFor(payload) },
   ];
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL ?? 'gemini-3.5-flash',
+    model,
     contents: [{ role: 'user', parts }],
     config: {
       systemInstruction: ATAL_AI_SYSTEM_PROMPT,
