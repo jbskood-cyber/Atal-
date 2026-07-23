@@ -9,6 +9,7 @@ import { archiveLocalPatient, restoreLocalPatient, updateLocalPatient, usePatien
 import { addPatientNote, deletePatientNote, updatePatientNote, useAtalStore, type ActivityEvent, type PatientNote, type SessionRecord } from '@/src/data/atalStore';
 import { summarizeClinicalSessions } from '@/src/domain/clinicalMetrics';
 import { validatePatientInput } from '@/src/domain/validation';
+import { ContextualAISurface } from '@/src/features/atal-ai/contextual/ContextualAISurface';
 
 type Tab = 'summary' | 'history' | 'notes' | 'metrics';
 
@@ -21,6 +22,7 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
     sessions: store.sessions.filter((item) => item.patientId === patientId),
     notes: store.notes.filter((item) => item.patientId === patientId),
     events: store.events.filter((item) => item.patientId === patientId),
+    record: store.clinicalRecords.find((item) => item.patientId === patientId) ?? null,
     settings: store.settings,
   }));
   const [tab, setTab] = useState<Tab>('summary');
@@ -89,6 +91,19 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
     {tab === 'history' && <History events={state.events} />}
     {tab === 'notes' && <Notes patientId={patient.id} notes={state.notes} professional={state.settings.professionalName} />}
     {tab === 'metrics' && <Metrics sessions={state.sessions} planId={activePlan?.id} />}
+    <ContextualAISurface context={{
+      surface: 'patient',
+      route: `/patients/${patient.id}`,
+      patientId: patient.id,
+      clinicalRecordId: state.record?.id ?? '',
+      clinicalRecordVersion: state.record?.version ?? null,
+      planId: activePlan?.id ?? '',
+      exerciseId: '',
+      sessionId: '',
+      reportId: '',
+      contextLabel: 'en este paciente',
+      entityLabel: patient.name,
+    }} />
   </main></AtalShell>;
 }
 
