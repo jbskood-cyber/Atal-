@@ -25,10 +25,10 @@ const surfaces = [
 ];
 
 const closedLauncherSurfaces = [
-  { path: '/patients/patient-e2e', label: 'en este paciente' },
-  { path: '/patients/patient-e2e/clinical-record', label: 'en este expediente' },
-  { path: '/plans/plan-active-e2e', label: 'en este plan' },
-  { path: '/exercises/exercise-e2e', label: 'en este ejercicio' },
+  { path: '/patients/patient-e2e', label: 'en este paciente', evidenceName: 'launcher-patient' },
+  { path: '/patients/patient-e2e/clinical-record', label: 'en este expediente', evidenceName: 'launcher-clinical-record' },
+  { path: '/plans/plan-active-e2e', label: 'en este plan', evidenceName: 'launcher-plan' },
+  { path: '/exercises/exercise-e2e', label: 'en este ejercicio', evidenceName: 'launcher-exercise' },
 ];
 
 async function seedMobile(page) {
@@ -63,10 +63,11 @@ test.describe('Block 4.2 required contextual surfaces', () => {
     });
   }
 
-  test('patient record plan and exercise use the report launcher anchor without requiring scroll', async ({ page }) => {
+  test('patient record plan and exercise use the report launcher anchor without requiring scroll', async ({ page }, testInfo) => {
     await seedMobile(page);
     await page.goto('/activity/session-e2e');
     const reportGap = await launcherBottomGap(page);
+    await testInfo.attach('launcher-report-reference', { body: await page.screenshot(), contentType: 'image/png' });
 
     for (const surface of closedLauncherSurfaces) {
       await page.goto(surface.path);
@@ -74,6 +75,7 @@ test.describe('Block 4.2 required contextual surfaces', () => {
       await expect(page.getByRole('button', { name: `Abrir Atal IA ${surface.label}` })).toBeVisible();
       const gap = await launcherBottomGap(page);
       expect(Math.abs(gap - reportGap), `${surface.label} must use the report launcher anchor`).toBeLessThanOrEqual(4);
+      await testInfo.attach(surface.evidenceName, { body: await page.screenshot(), contentType: 'image/png' });
     }
   });
 
