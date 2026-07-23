@@ -34,6 +34,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   { name: 'exercise.update_fields', kind: 'action', contract: 'exercise reference and patch with direct exercise fields.' },
   { name: 'exercise.duplicate', kind: 'action', contract: 'exercise reference and optional name.' },
   { name: 'exercise.lifecycle', kind: 'action', contract: 'exercise reference and archived boolean.' },
+  { name: 'exercise.media', kind: 'action', contract: 'exercise reference, mediaType image/sequence and artifactIds from the attached local files.' },
 
   { name: 'session.start_or_resume', kind: 'action', contract: 'patient and plan references, optional startPain, startEnergy and comment.' },
   { name: 'session.update_draft', kind: 'action', contract: 'patient and plan references and patch object with session progress.' },
