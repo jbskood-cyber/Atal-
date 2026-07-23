@@ -33,13 +33,13 @@ Playwright covers exact context binding, navigation suppression, shared geometry
 
 ## Final validation
 
-Product-change HEAD `1d0fd838ccf39d92275c56709715e2a3aecd8559` passed:
+The last product and test change passed:
 
 - `quality` run #92 / ID `29987327813`;
 - `e2e` run #69 / ID `29987327798`;
 - evidence artifact `playwright-evidence`, ID `8555571401`, retained until 2026-08-06.
 
-The subsequent branch commit only updates this evidence document and does not change product, test, dependency or lockfile content.
+Commits after that validation only maintain this evidence document and do not change product, test, dependency or lockfile content.
 
 `atal:store:v2`, store version `2` and the canonical `package-lock.json` remain preserved.
 
