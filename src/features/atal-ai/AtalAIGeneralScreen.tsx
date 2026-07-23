@@ -624,8 +624,8 @@ export function AtalAIGeneralScreen() {
             ...data,
             summary: coreResult.summary,
             undo: coreResult.undo,
-            planId: data.planId ?? draft.command?.planId ?? conversation.workContext.selectedPlanId || undefined,
-            patientId: data.patientId ?? draft.command?.patientId ?? conversation.workContext.selectedPatientId || undefined,
+            planId: (data.planId ?? draft.command?.planId ?? conversation.workContext.selectedPlanId) || undefined,
+            patientId: (data.patientId ?? draft.command?.patientId ?? conversation.workContext.selectedPatientId) || undefined,
           },
         });
         append(createMessage('assistant', `Cambios aplicados. ${coreResult.summary.join(' ')}`));
@@ -701,7 +701,7 @@ export function AtalAIGeneralScreen() {
     }
     try {
       executeUndo(receipt as UndoReceipt, legacyExecutionContext(conversation.workContext, { conversationId: conversation.id, draftId: conversation.draftId }));
-      patchConversation({ savedResult: { ...conversation.savedResult, undo: undefined } });
+      patchConversation({ savedResult: { ...conversation.savedResult, summary: conversation.savedResult?.summary ?? [], undo: undefined } });
       append(createMessage('assistant', 'Cambio deshecho correctamente.'));
     } catch (cause) {
       setNotice(cause instanceof Error ? cause.message : 'No fue posible deshacer.');
