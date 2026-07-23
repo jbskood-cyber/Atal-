@@ -74,17 +74,9 @@ TDD correction evidence:
 
 ## Final verification
 
-Exact final HEAD:
+The implementation is complete on the branch tip recorded by PR #16. Final verification must always be read from the exact current branch HEAD and its corresponding GitHub Actions runs, rather than from an earlier evidence snapshot.
 
-`0e9d7a3d4f1dbc833ae2c966923ce4de1d53859e`
-
-Final GitHub Actions evidence:
-
-- quality #86 / run ID `29985710998`: PASS;
-- e2e #63 / run ID `29985710985`: PASS;
-- Playwright: 28 expected, 28 passed, 0 unexpected, 0 flaky, 0 skipped;
-- evidence artifact: `playwright-evidence`, ID `8554933453`, retained through 2026-08-06;
-- screenshot evidence confirms patient, clinical record, plan and exercise share the report launcher anchor at initial viewport scroll position.
+The latest verified checkpoint at the time of this document update passed both `quality` and deterministic Playwright with 28 expected tests, 0 unexpected, 0 flaky and 0 skipped. The PR conversation records the immutable final HEAD, workflow IDs and artifact ID used for approval.
 
 ## Protected invariants
 
