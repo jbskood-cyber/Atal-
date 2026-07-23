@@ -33,12 +33,12 @@ Implemented contracts:
 - stable contextual conversation identity without a second persistence key;
 - deterministic surface-specific actions and suggestions from stored data only.
 
-## 4.2C–F — Patient vertical slice
+## 4.2C–F — Shared contextual workspace
 
-Current implementation includes:
+The completed implementation includes:
 
 - compact Liquid Glass contextual orb;
-- up to two exterior patient actions;
+- up to two exterior context actions;
 - shared workspace controller;
 - complete bottom-navigation suppression while open;
 - underlying page inertness and scroll lock;
@@ -48,9 +48,43 @@ Current implementation includes:
 - operational conversation and structured draft pane;
 - Gemini request through the existing API client;
 - Block 4.1 execution path through `executeLegacyAIAction`;
-- confirmation proofs, audit, transaction and structured undo through the existing core.
+- confirmation proofs, audit, transaction and structured undo through the existing core;
+- patient, clinical-record, plan, exercise and report context adapters;
+- microphone-or-send composer behavior;
+- responsive Claro and Graphite layouts.
 
-At SHA `a7f7426d79e3a22637995f18f3cd163a88885e78`, quality #53 passed. Deterministic E2E remained in progress when this evidence checkpoint was written.
+## User visual-smoke correction
+
+The first Google AI Studio visual review approved the report workspace placement and structured draft, but exposed two cross-surface placement defects:
+
+1. Patient and clinical-record launchers were mounted inside long scrolling screens, so the user could need to reach the bottom before accessing Atal IA.
+2. Plan used a special raised offset that placed the orb and quick actions over exercise cards instead of matching the approved report anchor.
+
+Systematic diagnosis confirmed the launcher was fixed relative to transformed/scrolling screen containers on patient/record, while plan explicitly used the obsolete `raised` variant.
+
+TDD correction evidence:
+
+- regression test commit `b6fc36ec5ed9e9a068512b94016953e72066fa35` added a viewport-geometry comparison against Reporte clínico;
+- quality #81 passed while e2e #58 failed, proving the visual defect without a product regression;
+- `ContextualAISurface` now mounts through a global React portal;
+- plan, exercise and report use one standard launcher anchor;
+- the obsolete raised CSS path was removed;
+- patient, clinical record, plan and exercise are compared against the report bottom gap without automatic scrolling;
+- successful evidence includes named screenshots for report reference, patient, clinical record, plan and exercise.
+
+## Final verification
+
+Exact final HEAD:
+
+`6ebad2036629af0f5724800a6cdd7635a2e90bfb`
+
+Final GitHub Actions evidence:
+
+- quality #85 / run ID `29985544527`: PASS;
+- e2e #62 / run ID `29985544552`: PASS;
+- Playwright: 28 expected, 28 passed, 0 unexpected, 0 flaky, 0 skipped;
+- evidence artifact: `playwright-evidence`, ID `8554866070`, retained through 2026-08-06;
+- screenshot evidence confirms patient, clinical record, plan and exercise share the report launcher anchor at initial viewport scroll position.
 
 ## Protected invariants
 
@@ -59,4 +93,5 @@ At SHA `a7f7426d79e3a22637995f18f3cd163a88885e78`, quality #53 passed. Determini
 - existing AI conversation and draft persistence reused.
 - no second clinical store or mutation path.
 - no backend, deployment, secrets, auth, payments or unrelated redesign.
-- PR remains draft and unmerged.
+- structured draft design approved by the user and left unchanged.
+- PR remains draft and unmerged pending final visual approval and explicit merge authorization.
