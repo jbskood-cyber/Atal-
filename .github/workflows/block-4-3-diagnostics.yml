@@ -5,7 +5,7 @@ on:
     branches:
       - feature/atal-ai-agentic-audit-block-4-3
     paths:
-      - 'src/features/atal-ai/**'
+      - 'src/**'
       - 'server/**'
       - 'tests/**'
       - 'package.json'
@@ -27,17 +27,19 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Capture typecheck and focused tests
+      - name: Capture complete quality evidence
         shell: bash
         run: |
           mkdir -p docs/atal-ai/block-4-3
           set +e
           npm run typecheck > docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
           echo "TYPECHECK_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
-          npm run test:core:compile >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
-          echo "CORE_COMPILE_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
-          node --test tests/atal-ai-universal-read-tools.test.mjs tests/atal-ai-universal-actions.test.mjs >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
-          echo "FOCUSED_TEST_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
+          npm test >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "TEST_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
+          npm run build >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "BUILD_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
+          node --test tests/atal-ai-agent-loop.test.mjs tests/atal-ai-universal-read-tools.test.mjs tests/atal-ai-universal-actions.test.mjs >> docs/atal-ai/block-4-3/ci-diagnostic.txt 2>&1
+          echo "AGENT_FOCUSED_EXIT=$?" >> docs/atal-ai/block-4-3/ci-diagnostic.txt
           exit 0
       - name: Publish diagnostic output
         shell: bash
@@ -48,5 +50,5 @@ jobs:
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "test: publish Block 4.3 diagnostic output"
+          git commit -m "test: publish complete Block 4.3 diagnostic output"
           git push origin HEAD:feature/atal-ai-agentic-audit-block-4-3
