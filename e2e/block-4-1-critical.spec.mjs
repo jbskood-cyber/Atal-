@@ -121,13 +121,15 @@ test.describe('Block 4.1 critical E2E validation', () => {
     await page.goto('/assistant');
 
     await sendMessage(page, 'Añade una nota clínica demostrativa.');
-    const dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
 
     let state = await readStore(page);
     expect(state.notes).toHaveLength(0);
     expect(state.events.filter((event) => event.outcome === 'success')).toHaveLength(0);
 
+    await page.getByRole('button', { name: 'Aplicar cambios' }).click();
+    const dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
+    await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Confirmar y aplicar' }).click();
     await expect(page.getByText('Cambios aplicados', { exact: true })).toBeVisible();
 
@@ -173,11 +175,18 @@ test.describe('Block 4.1 critical E2E validation', () => {
     await page.goto('/assistant');
 
     await sendMessage(page, 'Activa el plan candidato.');
+    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+
+    let stored = await readStore(page);
+    expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('draft');
+    expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(false);
+
+    await page.getByRole('button', { name: 'Aplicar cambios' }).click();
     let dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
 
-    let stored = await readStore(page);
+    stored = await readStore(page);
     expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('draft');
     expect(stored.events.some((event) => event.toolName === 'plan.activate' && event.outcome === 'success')).toBe(false);
 
