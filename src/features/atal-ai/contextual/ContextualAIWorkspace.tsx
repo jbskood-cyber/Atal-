@@ -21,6 +21,7 @@ import { ConversationalDraftCard } from '../components/ConversationalDraftCard';
 import { contextualActionsFor } from './actions';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
+import { ContextualModal } from './ContextualModal';
 import { RouteContextualAISurface } from './RouteContextualAISurface';
 import { contextualSuggestionsFor } from './suggestions';
 import { useContextualConversation } from './useContextualConversation';
@@ -73,6 +74,13 @@ export function ContextualAIWorkspace() {
       aria-modal="true"
       aria-label={`Asistente ${context.contextLabel}`}
       data-conversation-id={controller.session.conversationId}
+      data-context-surface={context.surface}
+      data-patient-id={context.patientId}
+      data-record-id={context.clinicalRecordId}
+      data-plan-id={context.planId}
+      data-exercise-id={context.exerciseId}
+      data-session-id={context.sessionId}
+      data-report-id={context.reportId}
     >
       <header className="atal-contextual-workspace-header">
         <span className="atal-contextual-workspace-mark"><AtalMark /></span>
@@ -153,23 +161,23 @@ export function ContextualAIWorkspace() {
         <small>Atal IA propone. Tú revisas y confirmas.</small>
       </footer>
 
-      {model.confirmationOpen && <div className="atal-contextual-confirm-layer" role="dialog" aria-modal="true" aria-labelledby="atal-contextual-confirm-title">
+      {model.confirmationOpen && <ContextualModal className="atal-contextual-confirm-layer" labelledBy="atal-contextual-confirm-title" onCancel={model.cancelConfirmation}>
         <section>
           <AlertTriangle />
-          <h3 id="atal-contextual-confirm-title">¿Aplicar esta acción?</h3>
+          <h3 id="atal-contextual-confirm-title">¿Aplicar esta acción en {context.entityLabel}?</h3>
           <p>{model.draft?.assistantMessage || 'La acción modificará datos de Atal y quedará registrada en el historial.'}</p>
           <button type="button" className="is-primary" onClick={model.confirmExecution}>Confirmar y aplicar</button>
           <button type="button" onClick={model.cancelConfirmation}>Cancelar</button>
         </section>
-      </div>}
+      </ContextualModal>}
 
-      {compareOpen && model.draft && <div className="atal-contextual-confirm-layer" role="dialog" aria-modal="true" aria-label="Comparar cambios">
+      {compareOpen && model.draft && <ContextualModal className="atal-contextual-confirm-layer" label="Comparar cambios" onCancel={() => setCompareOpen(false)}>
         <section className="atal-contextual-compare">
           <h3>Comparar cambios</h3>
           <p>Revisa el borrador contextual antes de decidir si conservas o actualizas la versión.</p>
           <button type="button" onClick={() => setCompareOpen(false)}>Cerrar</button>
         </section>
-      </div>}
+      </ContextualModal>}
     </section>
   </>;
 }
