@@ -37,7 +37,27 @@ export function readAIDrafts(): AtalAIDraft[] {
 }
 export function getLatestAIConversation() { return readAIConversations().sort((a,b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null; }
 export function getAIDraft(id: string) { return readAIDrafts().find((draft) => draft.id === id) ?? null; }
-export function saveAIConversation(conversation: AIConversation) { const next = [...readAIConversations().filter((item) => item.id !== conversation.id), conversation]; window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(next)); }
+
+function contextualDraftMatches(conversation: AIConversation, draft: AtalAIDraft) {
+  if (!conversation.contextKey || !conversation.contextSurface) return false;
+  if (conversation.contextSurface === 'plan') return Boolean(conversation.workContext.selectedPlanId) && draft.selectedPlanId === conversation.workContext.selectedPlanId;
+  if (conversation.contextSurface === 'exercise') return Boolean(conversation.workContext.selectedExerciseId) && draft.selectedExerciseId === conversation.workContext.selectedExerciseId;
+  return Boolean(conversation.workContext.selectedPatientId) && draft.selectedPatientId === conversation.workContext.selectedPatientId;
+}
+
+function normalizeContextualDraftLink(conversation: AIConversation): AIConversation {
+  if (!conversation.contextKey || getAIDraft(conversation.draftId)) return conversation;
+  const recovered = readAIDrafts()
+    .filter((draft) => contextualDraftMatches(conversation, draft))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  return recovered ? { ...conversation, draftId: recovered.id } : conversation;
+}
+
+export function saveAIConversation(conversation: AIConversation) {
+  const normalized = normalizeContextualDraftLink(conversation);
+  const next = [...readAIConversations().filter((item) => item.id !== normalized.id), normalized];
+  window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(next));
+}
 export function saveAIDraft(draft: AtalAIDraft) { const next = [...readAIDrafts().filter((item) => item.id !== draft.id), draft]; window.localStorage.setItem(AI_DRAFTS_KEY, JSON.stringify(next)); }
 export function clearAIWorkspace(conversationId: string, draftId: string) { window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(readAIConversations().filter((item) => item.id !== conversationId))); window.localStorage.setItem(AI_DRAFTS_KEY, JSON.stringify(readAIDrafts().filter((item) => item.id !== draftId))); }
 
