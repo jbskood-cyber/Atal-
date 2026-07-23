@@ -15,73 +15,73 @@ TAP version 13
 # Subtest: registry exposes universal read action and client-effect tools
 ok 1 - registry exposes universal read action and client-effect tools
   ---
-  duration_ms: 27.605726
+  duration_ms: 18.570888
   type: 'test'
   ...
 # Subtest: explicit reversible patient contact update executes immediately, audits and undoes
 ok 2 - explicit reversible patient contact update executes immediately, audits and undoes
   ---
-  duration_ms: 6.704083
+  duration_ms: 5.276502
   type: 'test'
   ...
 # Subtest: file-derived reversible action pauses at compact review instead of mutating
 ok 3 - file-derived reversible action pauses at compact review instead of mutating
   ---
-  duration_ms: 1.694809
+  duration_ms: 0.933234
   type: 'test'
   ...
 # Subtest: patient lifecycle remains sensitive and requires explicit confirmation
 ok 4 - patient lifecycle remains sensitive and requires explicit confirmation
   ---
-  duration_ms: 1.464577
+  duration_ms: 0.891889
   type: 'test'
   ...
 # Subtest: note update and clinical record upsert persist with validated undo
 ok 5 - note update and clinical record upsert persist with validated undo
   ---
-  duration_ms: 3.006829
+  duration_ms: 2.096449
   type: 'test'
   ...
 # Subtest: plan duplicate and membership operations preserve canonical order and undo
 ok 6 - plan duplicate and membership operations preserve canonical order and undo
   ---
-  duration_ms: 3.355106
+  duration_ms: 2.60579
   type: 'test'
   ...
 # Subtest: exercise lifecycle and report review are canonical and reversible
 ok 7 - exercise lifecycle and report review are canonical and reversible
   ---
-  duration_ms: 2.682386
+  duration_ms: 2.256644
   type: 'test'
   ...
 # Subtest: approved client effects do not mutate canonical store
 ok 8 - approved client effects do not mutate canonical store
   ---
-  duration_ms: 1.307483
+  duration_ms: 0.992407
   type: 'test'
   ...
 # Subtest: universal read model exposes complete patient context without mutation
 ok 9 - universal read model exposes complete patient context without mutation
   ---
-  duration_ms: 27.410827
+  duration_ms: 23.02659
   type: 'test'
   ...
 # Subtest: universal read model filters plans and exercises deterministically
 ok 10 - universal read model filters plans and exercises deterministically
   ---
-  duration_ms: 0.927328
+  duration_ms: 0.757317
   type: 'test'
   ...
 # Subtest: session preparation and delivery use canonical patient plan and exercises
 ok 11 - session preparation and delivery use canonical patient plan and exercises
   ---
-  duration_ms: 1.39289
+  duration_ms: 1.216484
   type: 'test'
   ...
 # Subtest: universal read input remains bounded and rejects unsupported resources
 ok 12 - universal read input remains bounded and rejects unsupported resources
   ---
-  duration_ms: 0.402058
+  duration_ms: 0.290308
   type: 'test'
   ...
 1..12
@@ -92,5 +92,5 @@ ok 12 - universal read input remains bounded and rejects unsupported resources
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 107.018395
+# duration_ms 80.89922
 FOCUSED_TEST_EXIT=0
