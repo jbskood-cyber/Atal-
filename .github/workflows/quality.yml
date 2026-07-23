@@ -20,3 +20,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run quality
+      - name: Live Gemini function-calling smoke
+        run: npm run test:ai-live
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
