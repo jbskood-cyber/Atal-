@@ -7,6 +7,7 @@ import { useExerciseCatalog } from '@/src/data/localExercises';
 import { useLocalPlans } from '@/src/data/localPlans';
 import { usePatientCatalog } from '@/src/data/localPatients';
 import { useAtalStore } from '@/src/data/atalStore';
+import { ContextualAISurface } from '@/src/features/atal-ai/contextual/ContextualAISurface';
 import { useUnsavedChangesGuard } from '@/src/hooks/useUnsavedChangesGuard';
 import { createClinicalRecord, updateClinicalRecord, useClinicalRecord } from './clinicalRecordRepository';
 import { formatPainLevel, parsePainLevelInput, type ClinicalRecord } from './types';
@@ -91,6 +92,19 @@ export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
     </article>
     {printPreview && <button type="button" className="atal-record-print-action no-print" onClick={print}><Printer /> Abrir diálogo para Guardar como PDF</button>}
     {guard.hasPendingNavigation && <div className="atal-session-dialog no-print" role="dialog" aria-modal="true"><section><AlertTriangle /><h2>¿Salir sin guardar?</h2><p>Los cambios del expediente clínico todavía no se han guardado.</p><button type="button" onClick={guard.cancelDiscard}>Continuar editando</button><button type="button" className="atal-session-primary" onClick={guard.confirmDiscard}>Descartar y salir</button></section></div>}
+    {!editing && <ContextualAISurface context={{
+      surface: 'clinical-record',
+      route: `/patients/${patient.id}/clinical-record`,
+      patientId: patient.id,
+      clinicalRecordId: current.id === 'pending-record' ? '' : current.id,
+      clinicalRecordVersion: current.version,
+      planId: plan?.id ?? '',
+      exerciseId: '',
+      sessionId: '',
+      reportId: '',
+      contextLabel: 'en este expediente',
+      entityLabel: patient.name,
+    }} />}
   </main></AtalShell>;
 }
 
