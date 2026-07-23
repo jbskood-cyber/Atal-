@@ -176,6 +176,7 @@ export type AIConversation = {
   contextKey?: string;
   contextSurface?: 'patient' | 'clinical-record' | 'plan' | 'exercise' | 'report';
   contextEntityLabel?: string;
+  agentTask?: AgentTaskState;
   savedResult?: { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?:string; summary:string[]; undo?: AIUndoToken };
   error?: string;
 };
@@ -216,3 +217,5 @@ export type AtalAIAnalyzeRequest = {
 
 export type AtalAIAnalyzeResponse = { draft?: AtalAIDraft; transcript?: string };
 import type { ClientEffect, UndoReceipt } from './core/contracts';
+
+import type { AgentTaskState } from './core/agentic/contracts';
