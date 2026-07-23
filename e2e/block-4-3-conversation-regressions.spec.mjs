@@ -1,23 +1,46 @@
 import { expect, test } from '@playwright/test';
-import { createState } from './fixtures.mjs';
+import { createDraftResponse, createState, mockAnalyze, seedBrowser } from './fixtures.mjs';
+
+const patientPath = '/patients/patient-e2e';
 
 async function openAssistant(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.evaluate((state) => {
     localStorage.clear();
+    sessionStorage.clear();
     localStorage.setItem('atal:store:v2', JSON.stringify(state));
     localStorage.setItem('atal:ai-conversations:v1', '[]');
     localStorage.setItem('atal:ai-drafts:v1', '[]');
     localStorage.setItem('atal:theme', 'light');
   }, createState());
   await page.goto('/assistant');
-  await expect(page.getByRole('heading', { name: '¿Qué necesitas resolver?' })).toBeVisible();
+  await expect(page.locator('[data-assistant-scope="global"]')).toBeVisible();
+  await expect(page.getByText('Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.')).toBeVisible();
 }
 
 async function send(page, text) {
   await page.getByLabel('Mensaje para Atal IA').fill(text);
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+}
+
+function storedConversation({ id, updatedAt, scope, text, contextKey, contextSurface }) {
+  return {
+    id,
+    draftId: `draft-${id}`,
+    scope,
+    createdAt: updatedAt,
+    updatedAt,
+    status: 'empty',
+    composerText: '',
+    transcription: '',
+    messages: text ? [{ id: `message-${id}`, role: 'assistant', text, createdAt: updatedAt, attachments: [] }] : [],
+    attachmentMetadata: [],
+    privateContact: { phone: '', email: '', address: '', emergencyContact: '' },
+    workContext: { intent: 'create_patient_plan', patientMode: 'new', selectedPatientId: '', selectedPlanId: '', selectedExerciseId: '' },
+    ...(contextKey ? { contextKey } : {}),
+    ...(contextSurface ? { contextSurface } : {}),
+  };
 }
 
 test.describe('Block 4.3 conversational regressions', () => {
@@ -44,7 +67,7 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(page.locator('html')).toHaveJSProperty('scrollWidth', 390);
   });
 
-  test('a new completed turn sends the visible conversation history to Gemini', async ({ page }) => {
+  test('a new completed turn sends the visible global conversation history to Gemini', async ({ page }) => {
     await openAssistant(page);
     const payloads = [];
     let turn = 0;
@@ -100,5 +123,74 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(page.getByText('Revisa antes de guardar')).toHaveCount(0);
     expect(requestPayload.allowedTools).not.toContain('patient.update');
     expect(requestPayload.allowedTools).not.toContain('clinical_record.upsert');
+  });
+
+  test('the global assistant ignores a newer contextual conversation and hides it from global history', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.evaluate(({ state, conversations }) => {
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('atal:store:v2', JSON.stringify(state));
+      localStorage.setItem('atal:ai-conversations:v1', JSON.stringify(conversations));
+      localStorage.setItem('atal:ai-drafts:v1', '[]');
+      localStorage.setItem('atal:theme', 'light');
+    }, {
+      state: createState(),
+      conversations: [
+        storedConversation({ id: 'global-old', updatedAt: '2026-07-23T10:00:00.000Z', scope: 'global', text: 'Mensaje exclusivo del asistente general.' }),
+        storedConversation({ id: 'context-new', updatedAt: '2026-07-23T12:00:00.000Z', scope: 'contextual', text: 'Mensaje que solo pertenece al paciente.', contextKey: 'patient:patient-e2e', contextSurface: 'patient' }),
+      ],
+    });
+
+    await page.goto('/assistant');
+    await expect(page.getByText('Mensaje exclusivo del asistente general.')).toBeVisible();
+    await expect(page.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Acciones de la conversación' }).click();
+    await page.getByRole('menuitem', { name: /Ver conversaciones/ }).click();
+    const dialog = page.getByRole('dialog', { name: 'Conversaciones generales' });
+    await expect(dialog.getByText('Mensaje exclusivo del asistente general.')).toBeVisible();
+    await expect(dialog.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
+  });
+
+  test('structured work keeps the full reviewable draft inside the global assistant', async ({ page }) => {
+    await openAssistant(page);
+    await mockAnalyze(page, createDraftResponse({
+      intent: 'create_patient_plan',
+      assistantMessage: 'Preparé el borrador general para revisión.',
+    }));
+
+    await send(page, 'Prepara un plan de tratamiento de cuatro semanas.');
+    await expect(page.getByText('Preparé el borrador general para revisión.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Revisar todo' })).toBeVisible();
+    await expect(page.locator('[data-assistant-scope="global"]')).toBeVisible();
+  });
+
+  test('explicit handoff creates a new global session without copying the contextual transcript', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await seedBrowser(page, { state: createState() });
+    await page.goto(patientPath);
+    await page.getByRole('button', { name: 'Abrir Atal IA en este paciente' }).click();
+    const workspace = page.getByRole('dialog', { name: 'Asistente en este paciente' });
+    const contextualId = await workspace.getAttribute('data-conversation-id');
+    await workspace.getByRole('button', { name: 'Más opciones de Atal IA' }).click();
+    await workspace.getByRole('button', { name: /Abrir Atal IA completa/ }).click();
+
+    await expect(page).toHaveURL(/\/assistant$/);
+    await expect(page.locator('[data-assistant-scope="global"]')).toBeVisible();
+    await expect(page.getByText(/Contexto recibido desde Paciente E2E/)).toBeVisible();
+    await expect(page.getByLabel('Mensaje para Atal IA')).toHaveValue(/Continúa el trabajo sobre Paciente E2E/);
+
+    const conversations = await page.evaluate(() => JSON.parse(localStorage.getItem('atal:ai-conversations:v1') ?? '[]'));
+    const contextual = conversations.find((item) => item.id === contextualId);
+    const global = conversations.find((item) => item.scope === 'global');
+    expect(contextual.scope).toBe('contextual');
+    expect(contextual.contextKey).toBeTruthy();
+    expect(global).toBeTruthy();
+    expect(global.id).not.toBe(contextual.id);
+    expect(global.contextKey).toBeUndefined();
+    expect(global.messages).toHaveLength(1);
+    expect(global.messages[0].text).toContain('La conversación contextual permanece separada');
   });
 });
