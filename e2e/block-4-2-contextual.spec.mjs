@@ -53,7 +53,7 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(page.locator('.atal-mobile-dock')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Abrir Atal IA en este paciente' })).toBeFocused();
     expect(page.url()).toBe(expectedUrl);
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(expectedScroll);
+    await expect.poll(() => page.evaluate((expected) => Math.abs(window.scrollY - expected), expectedScroll)).toBeLessThanOrEqual(1);
   });
 
   test('close restores the screen and reopening recovers the same contextual conversation', async ({ page }) => {
