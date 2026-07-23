@@ -53,7 +53,7 @@ function transactionDone(transaction: IDBTransaction) {
 }
 
 export function dataUrlToBlob(dataUrl: string, fallbackType = 'application/octet-stream'): Blob {
-  const match = /^data:([^;,]+)?(?:;base64)?,(.*)$/s.exec(dataUrl);
+  const match = /^data:([^;,]+)?(?:;base64)?,([\s\S]*)$/.exec(dataUrl);
   if (!match) throw new Error('El archivo adjunto no tiene un formato válido.');
   const type = match[1] || fallbackType;
   const encoded = match[2];
@@ -131,14 +131,24 @@ export async function restoreAIArtifactPayloads(metadata: AIAttachmentMeta[]): P
   return restored.filter((item): item is AIAttachmentPayload => Boolean(item));
 }
 
-export async function updateAIArtifact(id: string, patch: Partial<Pick<AIArtifactRecord, 'transcript' | 'extractedProposal' | 'linkedResult' | 'status'>>): Promise<AIArtifactRecord> {
+export async function updateAIArtifact(
+  id: string,
+  patch: Partial<Pick<AIArtifactRecord, 'transcript' | 'extractedProposal' | 'linkedResult' | 'status'>>,
+): Promise<AIArtifactRecord> {
   const database = await openDatabase();
   const existing = await result(database.transaction(STORE, 'readonly').objectStore(STORE).get(id)) as AIArtifactRecord | undefined;
   if (!existing) {
     database.close();
     throw new Error('El archivo local de Atal IA ya no existe.');
   }
-  const next = { ...existing, ...structuredClone(patch), id: existing.id, conversationId: existing.conversationId, blob: existing.blob, updatedAt: new Date().toISOString() };
+  const next = {
+    ...existing,
+    ...structuredClone(patch),
+    id: existing.id,
+    conversationId: existing.conversationId,
+    blob: existing.blob,
+    updatedAt: new Date().toISOString(),
+  };
   const transaction = database.transaction(STORE, 'readwrite');
   transaction.objectStore(STORE).put(next);
   await transactionDone(transaction);
