@@ -1,4 +1,5 @@
 import type { ExerciseEntity, PlanEntity } from '@/src/data/atalStore';
+import { applyCreatePlan, applyPlanMembership, applyUpdatePlan } from '../../../../domain/actions/planActions';
 import {
   coreError,
   type EntityRef,
@@ -210,23 +211,25 @@ const planCreateTool: ToolDefinition<PlanCreateInput> = {
   },
   execute(environment, input) {
     const patient = environment.resolved.patient!;
-    const plan: PlanEntity = {
-      id: `${environment.transactionId}-plan`,
+    let eventIndex = 0;
+    const { plan } = applyCreatePlan(environment.state, {
       patientId: patient.id,
-      title: input.title,
-      focus: input.focus,
-      duration: input.duration,
-      frequency: input.frequency,
-      goal: input.goal,
-      exerciseIds: [...input.exerciseIds],
-      status: input.status,
-      progression: input.progression,
-      reportCriteria: input.reportCriteria,
-      generalInstructions: input.generalInstructions,
-      createdAt: environment.context.now,
-      updatedAt: environment.context.now,
-    };
-    environment.state.plans.push(plan);
+      planId: `${environment.transactionId}-plan`,
+      plan: {
+        title: input.title,
+        focus: input.focus,
+        duration: input.duration,
+        frequency: input.frequency,
+        goal: input.goal,
+        exerciseIds: input.exerciseIds,
+        status: input.status,
+        progression: input.progression,
+        reportCriteria: input.reportCriteria,
+        generalInstructions: input.generalInstructions,
+      },
+      now: environment.context.now,
+      createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
+    });
     return {
       status: 'success',
       message: `Plan “${plan.title}” creado.`,
@@ -250,12 +253,13 @@ const planUpdateTool: ToolDefinition<PlanUpdateInput> = {
   validateInput: validatePlanUpdate,
   preconditions() {},
   execute(environment, input) {
-    const plan = resolvedPlan(environment);
-    Object.assign(plan, input.patch, {
-      id: plan.id,
-      patientId: plan.patientId,
-      createdAt: plan.createdAt,
-      updatedAt: environment.context.now,
+    const current = resolvedPlan(environment);
+    let eventIndex = 0;
+    const { plan } = applyUpdatePlan(environment.state, {
+      planId: current.id,
+      patch: input.patch,
+      now: environment.context.now,
+      createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
     });
     return {
       status: 'success',
@@ -342,11 +346,15 @@ const planMembershipTool: ToolDefinition<MembershipInput> = {
     }
   },
   execute(environment, input) {
-    const plan = resolvedPlan(environment);
-    if (input.operation === 'add') plan.exerciseIds = [...new Set([...plan.exerciseIds, ...input.exerciseIds])];
-    if (input.operation === 'remove') plan.exerciseIds = plan.exerciseIds.filter((id) => !input.exerciseIds.includes(id));
-    if (input.operation === 'reorder') plan.exerciseIds = [...input.exerciseIds];
-    plan.updatedAt = environment.context.now;
+    const current = resolvedPlan(environment);
+    let eventIndex = 0;
+    const { plan } = applyPlanMembership(environment.state, {
+      planId: current.id,
+      operation: input.operation,
+      exerciseIds: input.exerciseIds,
+      now: environment.context.now,
+      createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
+    });
     return {
       status: 'success',
       message: 'Ejercicios del plan actualizados.',
