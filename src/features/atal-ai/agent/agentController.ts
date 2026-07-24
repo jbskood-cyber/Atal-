@@ -80,6 +80,16 @@ function draftSelectionHints(value: unknown): string {
   return hints.filter(Boolean).join(' ');
 }
 
+function draftHistory(input: AtalAgentControllerInput): AgentHistoryContent[] {
+  if (!input.draftContext) return [];
+  return [{
+    role: 'user',
+    parts: [{
+      text: `Borrador estructurado pendiente de revisión. Úsalo únicamente para continuar la solicitud actual y no lo consideres aplicado todavía:\n${JSON.stringify(input.draftContext)}`,
+    }],
+  }];
+}
+
 function requestShape(input: AtalAgentControllerInput) {
   return {
     conversationId: input.conversationId,
@@ -89,10 +99,9 @@ function requestShape(input: AtalAgentControllerInput) {
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
     selectedSessionId: input.selectedSessionId ?? sessionFromRoute(input.route),
-    conversationHistory: visibleConversationHistory(input),
+    conversationHistory: [...visibleConversationHistory(input), ...draftHistory(input)],
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
     previousInteractionId: input.task?.interactionId,
-    draftContext: input.draftContext,
   };
 }
 
