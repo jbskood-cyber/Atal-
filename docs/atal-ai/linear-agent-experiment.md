@@ -5,7 +5,8 @@
 - Base: `feature/atal-ai-agentic-audit-block-4-3`
 - Head: `feature/atal-ai-linear-agent`
 - Starting SHA: `f12fadede8fe1badd5ae16e64d1fdf2b2cc676d9`
-- Current implementation SHA: `9e533d4e87aec477388a359d278f2a47e4ccf0c0`
+- Validated branch SHA: `6aaf5778e502cf70488e6516951d2a9531ca13c0`
+- Agent implementation SHA: `9e533d4e87aec477388a359d278f2a47e4ccf0c0`
 - Pull request: #19
 - `main`, PR #18 and its source branch remain untouched.
 
@@ -51,7 +52,7 @@ If every model is temporarily unavailable, the user message remains stored and t
 - Internal `CORE_*` codes are not product copy.
 - No empty draft card is shown.
 
-## Verification on the implementation SHA
+## Verification on the validated branch SHA
 
 - dependency installation: PASS
 - TypeScript and Node quality suite: PASS
