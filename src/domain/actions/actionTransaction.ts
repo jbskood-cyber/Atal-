@@ -33,20 +33,14 @@ function createUndoPatches(before: AtalState, after: AtalState): ActionUndoPatch
     const beforeMap = byId(before[collection] as Array<{ id: string; updatedAt?: string }>);
     const afterMap = byId(after[collection] as Array<{ id: string; updatedAt?: string }>);
 
-    for (const [id, item] of afterMap) {
-      const previous = beforeMap.get(id);
-      if (!previous) {
-        patches.push({
-          operation: 'remove-created',
-          collection,
-          entityId: id,
-          expectedAfterUpdatedAt: item.updatedAt,
-        });
-        continue;
+    for (const [id, previous] of beforeMap) {
+      const item = afterMap.get(id);
+      if (!item) {
+        throw actionError('CORE_INVARIANT_FAILED', `La transacción eliminó una entidad existente de ${collection}.`);
       }
       if (stableSerialize(previous) === stableSerialize(item)) continue;
       if (collection === 'clinicalRecordVersions') {
-        throw actionError('CORE_UNDO_UNSUPPORTED', 'No se puede deshacer una modificación de una versión clínica existente.');
+        throw actionError('CORE_INVARIANT_FAILED', 'La transacción modificó una colección no restaurable de versiones clínicas.');
       }
       patches.push({
         operation: 'restore',
@@ -57,19 +51,28 @@ function createUndoPatches(before: AtalState, after: AtalState): ActionUndoPatch
       });
     }
 
-    for (const id of beforeMap.keys()) {
-      if (!afterMap.has(id)) {
-        throw actionError('CORE_UNDO_UNSUPPORTED', `No se puede deshacer con seguridad una eliminación existente en ${collection}.`);
-      }
+    for (const [id, item] of afterMap) {
+      if (beforeMap.has(id)) continue;
+      patches.push({
+        operation: 'remove-created',
+        collection,
+        entityId: id,
+        expectedAfterUpdatedAt: item.updatedAt,
+      });
     }
   }
 
-  if (stableSerialize(before.settings) !== stableSerialize(after.settings)) {
+  const changedSettings = Object.fromEntries(
+    (Object.keys(before.settings) as Array<keyof AtalState['settings']>)
+      .filter((key) => stableSerialize(before.settings[key]) !== stableSerialize(after.settings[key]))
+      .map((key) => [key, structuredClone(before.settings[key])]),
+  );
+  if (Object.keys(changedSettings).length > 0) {
     patches.push({
       operation: 'restore',
       collection: 'settings',
       entityId: 'settings',
-      before: structuredClone(before.settings),
+      before: changedSettings,
     });
   }
 
@@ -92,12 +95,21 @@ function resolveAffected(
   after: AtalState,
   affected: ActionAffectedEntity[],
 ): ActionAffectedEntity[] {
-  return affected.map((entity) => ({
-    type: entity.type,
-    id: entity.id,
-    beforeUpdatedAt: entityInState(before, entity)?.updatedAt,
-    afterUpdatedAt: entityInState(after, entity)?.updatedAt,
-  }));
+  return affected.map((entity) => {
+    if (entity.type === 'settings') {
+      return { type: entity.type, id: entity.id };
+    }
+    const afterEntity = entityInState(after, entity);
+    if (!afterEntity) {
+      throw actionError('CORE_INVARIANT_FAILED', 'Una entidad afectada no existe después de la transacción.');
+    }
+    return {
+      type: entity.type,
+      id: entity.id,
+      beforeUpdatedAt: entityInState(before, entity)?.updatedAt,
+      afterUpdatedAt: afterEntity.updatedAt,
+    };
+  });
 }
 
 function appendAudit(
@@ -142,7 +154,7 @@ export function executeActionTransaction<TResult extends ActionMutationResult>(
   if (!Number.isFinite(Date.parse(request.now))) throw actionError('CORE_INPUT_INVALID', 'La acción necesita una fecha válida.');
 
   const before = structuredClone(port.read());
-  const transactionId = createId('action-transaction');
+  const transactionId = createId(request.transactionIdPrefix?.trim() || 'action-transaction');
   let outcome: ActionTransactionOutcome<TResult> | undefined;
 
   port.mutate((candidate) => {
@@ -156,6 +168,7 @@ export function executeActionTransaction<TResult extends ActionMutationResult>(
     const generatedNotificationIds = candidate.notifications
       .filter((notification) => !beforeNotificationIds.has(notification.id))
       .map((notification) => notification.id);
+    const patches = createUndoPatches(before, candidate);
 
     const ttl = Math.min(Math.max(request.undoTtlMs ?? MAX_UNDO_TTL_MS, 0), MAX_UNDO_TTL_MS);
     const undo = request.supportsUndo ? {
@@ -164,7 +177,7 @@ export function executeActionTransaction<TResult extends ActionMutationResult>(
       action: request.action,
       issuedAt: request.now,
       expiresAt: new Date(Date.parse(request.now) + ttl).toISOString(),
-      patches: createUndoPatches(before, candidate),
+      patches,
       generatedEventIds,
       generatedNotificationIds,
     } satisfies ActionUndoReceipt : undefined;
