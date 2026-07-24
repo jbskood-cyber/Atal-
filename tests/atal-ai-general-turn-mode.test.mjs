@@ -4,13 +4,19 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const modeModule = () => loadCore('src/features/atal-ai/core/agentic/generalTurnMode.js');
 
-test('ordinary global conversation uses the universal agent', () => {
+ test('ordinary global conversation uses the universal agent', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Hola, ¿cómo puedes ayudarme?', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
 });
 
-test('conceptual questions stay conversational while only safe reads remain available', () => {
+test('conceptual questions stay conversational without exposing workspace tools', () => {
   const result = modeModule().classifyAgentTurn('¿Qué es un recurso de lectura compatible?');
   assert.equal(result.kind, 'conversation');
+  assert.deepEqual(result.allowedToolKinds, []);
+});
+
+test('patient count questions are grounded workspace reads', () => {
+  const result = modeModule().classifyAgentTurn('Dime cuantos pacientes tengo por favor.');
+  assert.equal(result.kind, 'read');
   assert.deepEqual(result.allowedToolKinds, ['read']);
 });
 
