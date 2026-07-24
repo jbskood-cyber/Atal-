@@ -65,6 +65,28 @@ test('canonical session review updates the report, marks its notification read a
   assert.equal(state.events[0].detail, 'Buena tolerancia; progresar carga.');
 });
 
+test('canonical session review allows empty observation while still marking the report reviewed', () => {
+  const state = baseState();
+  const { applyReviewSession } = sessionActions();
+  const result = applyReviewSession(state, {
+    sessionId: 'session-1', observation: '   ', now: '2026-07-24T12:05:00.000Z', createEventId: eventIds('event-empty'),
+  });
+  assert.equal(result.session.clinicalObservation, '');
+  assert.equal(result.session.reviewedAt, '2026-07-24T12:05:00.000Z');
+  assert.equal(state.events[0].detail, 'Sin observación adicional');
+  assert.equal(state.notifications.find((item) => item.id === 'notification-session').read, true);
+});
+
+test('canonical session review rejects observations over 2000 characters atomically', () => {
+  const state = baseState();
+  const before = structuredClone(state);
+  const { applyReviewSession } = sessionActions();
+  assert.throws(() => applyReviewSession(state, {
+    sessionId: 'session-1', observation: 'x'.repeat(2001), now: '2026-07-24T12:10:00.000Z', createEventId: eventIds('event-too-long'),
+  }), /2000 caracteres/i);
+  assert.deepEqual(state, before);
+});
+
 test('canonical session review rejects a missing session with zero mutation', () => {
   const state = baseState();
   const before = structuredClone(state);
@@ -72,6 +94,6 @@ test('canonical session review rejects a missing session with zero mutation', ()
 
   assert.throws(() => applyReviewSession(state, {
     sessionId: 'missing', observation: 'Revisado', now: '2026-07-24T12:00:00.000Z', createEventId: eventIds('event-review'),
-  }), /sesión no encontrada/i);
+  }), /sesión (ya no existe|no encontrada)/i);
   assert.deepEqual(state, before);
 });
