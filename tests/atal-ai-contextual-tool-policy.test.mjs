@@ -49,3 +49,20 @@ test('matching contextual references remain allowed', () => {
     { type: 'exercise', id: 'exercise-a' },
   ]), null);
 });
+
+test('contextual app.read cannot escape into workspace-wide collections', () => {
+  for (const resource of ['patients', 'plans', 'exercises', 'activity', 'settings']) {
+    assert.equal(
+      policy().contextualInvocationViolation(context('patient'), 'app.read', [], { resource }),
+      'La consulta contextual debe permanecer dentro del objeto fijado por esta pantalla.',
+      `expected ${resource} to be blocked from a patient contextual assistant`,
+    );
+  }
+
+  assert.equal(
+    policy().contextualInvocationViolation(context('patient'), 'app.read', [
+      { type: 'patient', id: 'patient-a' },
+    ], { resource: 'patient_profile' }),
+    null,
+  );
+});
