@@ -22,7 +22,7 @@ const text = (description: string, maxLength?: number): JsonSchema => ({
   ...(maxLength ? { maxLength } : {}),
 });
 const integer = (description: string, minimum: number, maximum: number): JsonSchema => ({ type: 'integer', description, minimum, maximum });
-const number = (description: string, minimum: number, maximum: number): JsonSchema => ({ type: ['number', 'null'], description, minimum, maximum });
+const number = (description: string, minimum: number, maximum: number): JsonSchema => ({ type: 'number', description, minimum, maximum });
 const stringArray = (description: string, maxItems = 100): JsonSchema => ({ type: 'array', description, items: { type: 'string' }, maxItems });
 const object = (properties: Record<string, unknown>, required: string[] = [], additionalProperties = false): AgentJsonSchema => ({
   type: 'object', properties, ...(required.length ? { required } : {}), additionalProperties,
