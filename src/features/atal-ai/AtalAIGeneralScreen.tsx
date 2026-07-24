@@ -451,6 +451,7 @@ export function AtalAIGeneralScreen() {
         attachments,
         messages: conversation.messages,
         task: conversation.agentTask,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
         signal: controller.signal,
         onTextDelta: (delta) => setStreamingText((current) => current + delta),
       });
@@ -689,6 +690,7 @@ export function AtalAIGeneralScreen() {
         attachments,
         messages: conversation.messages,
         task,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
         onTextDelta: (delta) => setStreamingText((current) => current + delta),
         confirmation: {
           id: uid('confirmation'),

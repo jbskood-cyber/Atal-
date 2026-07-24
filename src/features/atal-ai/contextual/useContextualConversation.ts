@@ -329,6 +329,7 @@ export function useContextualConversation({
         attachments: [],
         messages: conversation.messages,
         task: conversation.agentTask,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
         assistantScope: 'contextual',
         contextSurface: context.surface,
         selectedSessionId: context.sessionId,
@@ -372,8 +373,7 @@ export function useContextualConversation({
     if (!text) return;
     const userMessage = createMessage('user', text);
     const classification = classifyAgentTurn(text);
-    const useDraft = Boolean(draft)
-      || classification.kind === 'proposal'
+    const useDraft = classification.kind === 'proposal'
       || selectGeneralTurnMode({ text, hasDraft: Boolean(draft), draftModeArmed: false, hasImageOrPdf: false }) === 'draft';
     if (!useDraft) {
       void processAgent(text, userMessage);
@@ -444,6 +444,7 @@ export function useContextualConversation({
         attachments: [],
         messages: conversation.messages,
         task,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
         assistantScope: 'contextual',
         contextSurface: context.surface,
         selectedSessionId: context.sessionId,
