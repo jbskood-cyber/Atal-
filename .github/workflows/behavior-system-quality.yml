@@ -19,7 +19,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
 
-  tests:
+  core-compile:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -29,7 +29,33 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npm run test:core:compile
+
+  behavior-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:core:compile
+      - run: node --test tests/atal-behavior-system.test.mjs
+
+  legacy-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:core:compile
+      - run: find tests -maxdepth 1 -name '*.test.mjs' ! -name 'atal-behavior-system.test.mjs' -print0 | xargs -0 node --test
 
   build:
     runs-on: ubuntu-latest
