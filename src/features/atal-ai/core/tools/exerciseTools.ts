@@ -1,4 +1,4 @@
-import type { ExerciseEntity } from '@/src/data/atalStore';
+import { applyCreateExercise, applyUpdateExercise, type ExerciseActionDraft, type ExerciseActionPatch } from '../../../../domain/actions/exerciseActions';
 import type { AtalAIDraft, AIExerciseDraft, PrivateContactDraft } from '../../types';
 import { coreError, type AffectedEntity, type ToolDefinition, type ToolExecutionEnvironment } from '../contracts';
 import { normalizeEntityLabel } from '../stableValue';
@@ -26,13 +26,12 @@ function numberFromText(value: string): number | undefined {
   return match ? Number(match[0]) : undefined;
 }
 
-function exerciseEntity(draft: AIExerciseDraft, id: string, now: string): ExerciseEntity {
+function exerciseDraft(draft: AIExerciseDraft): ExerciseActionDraft {
   if (!draft.name.trim()) throw coreError('CORE_INPUT_INVALID', 'El ejercicio requiere un nombre.');
   if (draft.sets === null || !Number.isInteger(draft.sets) || draft.sets < 1) throw coreError('CORE_INPUT_INVALID', `Completa las series de “${draft.name}”.`);
   const repetitions = numberFromText(draft.repetitions);
   return {
-    id,
-    name: draft.name.trim(),
+    name: draft.name,
     region: draft.region.trim() || 'Personalizada',
     category: draft.category.trim() || 'Personalizado',
     objective: draft.objective,
@@ -49,10 +48,6 @@ function exerciseEntity(draft: AIExerciseDraft, id: string, now: string): Exerci
     tags: draft.tags,
     notes: draft.notes,
     media: { type: 'none' },
-    status: 'active',
-    source: 'local',
-    createdAt: now,
-    updatedAt: now,
   };
 }
 
@@ -64,6 +59,7 @@ export function materializeExercises(
   const affected: AffectedEntity[] = [];
   const summary: string[] = [];
   let firstCreatedId: string | undefined;
+  let eventIndex = 0;
 
   for (const [index, draft] of drafts.filter((item) => item.name.trim()).entries()) {
     const source = draft.sourceExerciseId
@@ -83,8 +79,12 @@ export function materializeExercises(
       summary.push(`Ejercicio reutilizado: ${exact.name}.`);
       continue;
     }
-    const created = exerciseEntity(draft, `${environment.transactionId}-exercise-${index + 1}`, environment.context.now);
-    environment.state.exercises.push(created);
+    const created = applyCreateExercise(environment.state, {
+      exerciseId: `${environment.transactionId}-exercise-${index + 1}`,
+      exercise: exerciseDraft(draft),
+      now: environment.context.now,
+      createEventId: () => `${environment.transactionId}-exercise-event-${eventIndex++}`,
+    }).exercise;
     exerciseIds.push(created.id);
     affected.push({ type: 'exercise', id: created.id });
     firstCreatedId ??= created.id;
@@ -122,19 +122,32 @@ export const exerciseTools: ToolDefinition[] = [
     },
     execute(environment, input) {
       const next = (input as DraftToolInput).draft.exercises[0];
-      const exercise = environment.state.exercises.find((item) => item.id === environment.resolved.exercise?.id)!;
+      const patch: ExerciseActionPatch = { name: next.name, sets: next.sets! };
       const repetitions = numberFromText(next.repetitions);
-      Object.assign(exercise, {
-        name: next.name.trim(), region: next.region.trim() || exercise.region, category: next.category.trim() || exercise.category,
-        objective: next.objective.trim() || exercise.objective, startingPosition: next.startingPosition.trim() || exercise.startingPosition,
-        instructions: next.instructions.length ? next.instructions : exercise.instructions,
-        precautions: next.precautions.length ? next.precautions.join('\n') : exercise.precautions,
-        equipment: next.equipment.trim() || exercise.equipment, difficulty: next.difficulty.trim() || exercise.difficulty,
-        sets: next.sets, repetitions, time: repetitions ? undefined : next.duration || exercise.time,
-        rest: next.rest.trim() || exercise.rest, maxPain: next.maxPain ?? exercise.maxPain,
-        tags: next.tags.length ? next.tags : exercise.tags, notes: next.notes.trim() || exercise.notes,
-        updatedAt: environment.context.now,
-      });
+      if (next.region.trim()) patch.region = next.region;
+      if (next.category.trim()) patch.category = next.category;
+      if (next.objective.trim()) patch.objective = next.objective;
+      if (next.startingPosition.trim()) patch.startingPosition = next.startingPosition;
+      if (next.instructions.length) patch.instructions = next.instructions;
+      if (next.precautions.length) patch.precautions = next.precautions.join('\n');
+      if (next.equipment.trim()) patch.equipment = next.equipment;
+      if (next.difficulty.trim()) patch.difficulty = next.difficulty;
+      if (repetitions !== undefined) {
+        patch.repetitions = repetitions;
+        patch.time = '';
+      } else if (next.duration.trim()) {
+        patch.time = next.duration;
+      }
+      if (next.rest.trim()) patch.rest = next.rest;
+      if (next.maxPain !== null) patch.maxPain = next.maxPain;
+      if (next.tags.length) patch.tags = next.tags;
+      if (next.notes.trim()) patch.notes = next.notes;
+
+      const exercise = applyUpdateExercise(environment.state, {
+        exerciseId: environment.resolved.exercise!.id,
+        patch,
+        now: environment.context.now,
+      }).exercise;
       return {
         status: 'success', message: `Ejercicio actualizado: ${exercise.name}.`, summary: [`Ejercicio actualizado: ${exercise.name}.`],
         data: { exerciseId: exercise.id }, href: `/exercises/${exercise.id}`, affected: [{ type: 'exercise', id: exercise.id }],
