@@ -33,14 +33,24 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: Abor
   const result = await response.json().catch(() => ({})) as { draft?: unknown; transcript?: unknown; error?: unknown };
   if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Atal IA no pudo procesar la solicitud.');
   if (payload.mode === 'transcribe') return { transcript: typeof result.transcript === 'string' ? result.transcript : '' };
-  const draft=normalizeAtalAIDraft(result.draft, payload.currentDraft?.id ?? payload.draftId);
-  if(payload.currentDraft){draft.createdAt=payload.currentDraft.createdAt;draft.baseVersions=payload.currentDraft.baseVersions;}
-  if(payload.workContext){
-    draft.intent=payload.workContext.intent;
-    draft.selectedPatientId=payload.workContext.selectedPatientId;
-    draft.selectedPlanId=payload.workContext.selectedPlanId;
-    draft.selectedExerciseId=payload.workContext.selectedExerciseId;
-    if(draft.command) draft.command={...draft.command,patientId:draft.command.patientId||payload.workContext.selectedPatientId,planId:draft.command.planId||payload.workContext.selectedPlanId,exerciseId:draft.command.exerciseId||payload.workContext.selectedExerciseId};
+  const draft = normalizeAtalAIDraft(result.draft, payload.currentDraft?.id ?? payload.draftId);
+  if (payload.currentDraft) {
+    draft.createdAt = payload.currentDraft.createdAt;
+    draft.baseVersions = payload.currentDraft.baseVersions;
+  }
+  if (payload.workContext) {
+    draft.intent = payload.workContext.intent;
+    draft.selectedPatientId = payload.workContext.selectedPatientId;
+    draft.selectedPlanId = payload.workContext.selectedPlanId;
+    draft.selectedExerciseId = payload.workContext.selectedExerciseId;
+    if (draft.command) {
+      draft.command = {
+        ...draft.command,
+        patientId: draft.command.patientId || payload.workContext.selectedPatientId,
+        planId: draft.command.planId || payload.workContext.selectedPlanId,
+        exerciseId: draft.command.exerciseId || payload.workContext.selectedExerciseId,
+      };
+    }
   }
   return { draft };
 }
@@ -58,6 +68,7 @@ async function requestJsonAgentTurn(payload: AgentTurnRequest, signal?: AbortSig
     text: typeof result.text === 'string' ? result.text : '',
     calls: Array.isArray(result.calls) ? result.calls : [],
     modelContent: result.modelContent,
+    interactionId: typeof result.interactionId === 'string' ? result.interactionId : undefined,
   };
 }
 
@@ -109,6 +120,11 @@ export async function requestAtalAgentTurn(
   onTextDelta?: (delta: string) => void,
 ): Promise<AgentModelTurn> {
   assertAIRequestSize(payload);
-  if (onTextDelta) return requestStreamingAgentTurn(payload, signal, onTextDelta);
-  return requestJsonAgentTurn(payload, signal);
+  if (!onTextDelta) return requestJsonAgentTurn(payload, signal);
+  try {
+    return await requestStreamingAgentTurn(payload, signal, onTextDelta);
+  } catch (error) {
+    if (signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) throw error;
+    return requestJsonAgentTurn(payload, signal);
+  }
 }
