@@ -10,7 +10,8 @@ export type ExerciseCatalogItem={id:string;name:string;region:string;category:st
 
 function now(){return new Date().toISOString();}
 function eventId(){return createEntityId('event');}
-function setExerciseMediaRef(id:string,media:ExerciseMediaRef){let result:ExerciseEntity|null=null;mutateAtalStore((draft)=>{const exercise=draft.exercises.find((item)=>item.id===id);if(!exercise)return;exercise.media=structuredClone(media);exercise.updatedAt=now();result=exercise;});return result;}
+function readExerciseOrThrow(id:string){const exercise=getAtalState().exercises.find((item)=>item.id===id);if(!exercise)throw new Error('Ejercicio no encontrado.');return exercise;}
+function setExerciseMediaRef(id:string,media:ExerciseMediaRef){mutateAtalStore((draft)=>{const exercise=draft.exercises.find((item)=>item.id===id);if(!exercise)return;exercise.media=structuredClone(media);exercise.updatedAt=now();});return readExerciseOrThrow(id);}
 function removeExerciseState(id:string){deleteExercise(id);}
 
 export function readLocalExercises(){return getAtalState().exercises;}
@@ -18,18 +19,18 @@ export function writeLocalExercises(items:LocalExercise[]){mutateAtalStore((draf
 
 export function createLocalExercise(input:NewLocalExercise){
   const timestamp=now();
+  const exerciseId=createEntityId('exercise');
   const {status,source,...exercise}=input;
-  let result:ExerciseEntity|null=null;
   mutateAtalStore((draft)=>{
-    result=applyCreateExercise(draft,{exerciseId:createEntityId('exercise'),exercise,now:timestamp,createEventId:eventId}).exercise;
-    if(result){result.status=status??'active';result.source=source??'local';}
+    applyCreateExercise(draft,{exerciseId,exercise,now:timestamp,createEventId:eventId});
+    const created=draft.exercises.find((item)=>item.id===exerciseId);
+    if(created){created.status=status??'active';created.source=source??'local';}
   });
-  return result;
+  return readExerciseOrThrow(exerciseId);
 }
 
 export function updateLocalExercise(id:string,patch:Partial<LocalExercise>){
-  const current=getAtalState().exercises.find((item)=>item.id===id);
-  if(!current)throw new Error('Ejercicio no encontrado.');
+  const current=readExerciseOrThrow(id);
   const next:ExerciseActionPatch={};
   if(patch.name!==undefined)next.name=patch.name.trim()||current.name;
   if(patch.region!==undefined)next.region=patch.region;
@@ -48,19 +49,25 @@ export function updateLocalExercise(id:string,patch:Partial<LocalExercise>){
   if(patch.tags!==undefined)next.tags=patch.tags;
   if(patch.notes!==undefined)next.notes=patch.notes;
   const timestamp=now();
-  let result:ExerciseEntity|null=null;
-  mutateAtalStore((draft)=>{result=applyUpdateExercise(draft,{exerciseId:id,patch:next,now:timestamp}).exercise;if(result&&patch.media!==undefined)result.media=structuredClone(patch.media);if(result&&patch.source!==undefined)result.source=patch.source;if(result&&patch.status!==undefined)result.status=patch.status;});
-  return result;
+  mutateAtalStore((draft)=>{
+    applyUpdateExercise(draft,{exerciseId:id,patch:next,now:timestamp});
+    if(patch.status!==undefined)applyExerciseLifecycle(draft,{exerciseId:id,archived:patch.status==='archived',now:timestamp});
+    const updated=draft.exercises.find((item)=>item.id===id);
+    if(updated&&patch.media!==undefined)updated.media=structuredClone(patch.media);
+    if(updated&&patch.source!==undefined)updated.source=patch.source;
+  });
+  return readExerciseOrThrow(id);
 }
 
 function duplicateExerciseState(id:string){
-  const source=getAtalState().exercises.find((item)=>item.id===id);
-  if(!source)throw new Error('Ejercicio no encontrado.');
+  const source=readExerciseOrThrow(id);
   const timestamp=now();
-  let result:ExerciseEntity|null=null;
-  mutateAtalStore((draft)=>{result=applyDuplicateExercise(draft,{exerciseId:id,duplicateId:createEntityId('exercise'),now:timestamp,createEventId:eventId}).exercise;if(result&&source.media.mediaId)result.media={type:'none'};});
-  if(!result)throw new Error('No pudimos duplicar el ejercicio.');
-  return {source,copy:result};
+  const duplicateId=createEntityId('exercise');
+  mutateAtalStore((draft)=>{
+    applyDuplicateExercise(draft,{exerciseId:id,duplicateId,now:timestamp,createEventId:eventId});
+    if(source.media.mediaId){const created=draft.exercises.find((item)=>item.id===duplicateId);if(created)created.media={type:'none'};}
+  });
+  return {source,copy:readExerciseOrThrow(duplicateId)};
 }
 
 export function duplicateExercise(id:string){
@@ -78,7 +85,7 @@ export async function duplicateExerciseWithMedia(id:string){
   try{
     const media=await cloneExerciseMedia(mediaId,copy.id);
     if(!media)return copy;
-    return setExerciseMediaRef(copy.id,{...source.media,mediaId:media.id})??copy;
+    return setExerciseMediaRef(copy.id,{...source.media,mediaId:media.id});
   }catch(error){
     try{removeExerciseState(copy.id);}catch{}
     throw error;
@@ -88,7 +95,7 @@ export async function duplicateExerciseWithMedia(id:string){
 export async function deleteExerciseWithMedia(id:string){const exercise=getAtalState().exercises.find((item)=>item.id===id);removeExerciseState(id);const mediaId=exercise?.media.mediaId;if(mediaId)await deleteExerciseMedia(mediaId);}
 export {deleteExercise};
 
-function setExerciseArchived(id:string,archived:boolean){const timestamp=now();let result:ExerciseEntity|null=null;mutateAtalStore((draft)=>{result=applyExerciseLifecycle(draft,{exerciseId:id,archived,now:timestamp}).exercise;});return result;}
+function setExerciseArchived(id:string,archived:boolean){const timestamp=now();mutateAtalStore((draft)=>{applyExerciseLifecycle(draft,{exerciseId:id,archived,now:timestamp});});return readExerciseOrThrow(id);}
 export const archiveLocalExercise=(id:string)=>setExerciseArchived(id,true);
 export const restoreLocalExercise=(id:string)=>setExerciseArchived(id,false);
 export function getLocalExerciseById(id:string){return getAtalState().exercises.find((exercise)=>exercise.id===id)??null;}
