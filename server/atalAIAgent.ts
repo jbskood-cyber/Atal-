@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { FunctionCallingConfigMode, GoogleGenAI } from '@google/genai';
 import { ATAL_AGENT_SYSTEM_PROMPT } from '../src/features/atal-ai/api/agentPrompt';
 import { agentToolCatalogByName, type AgentToolCatalogEntry } from '../src/features/atal-ai/api/agentToolCatalog';
-import type { AgentFunctionCall, AgentHistoryContent, AgentTurnRequest } from '../src/features/atal-ai/core/agentic/contracts';
+import type { AgentFunctionCall, AgentHistoryContent, AgentModelTurn, AgentTurnRequest } from '../src/features/atal-ai/core/agentic/contracts';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 
@@ -14,6 +14,10 @@ function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
   response.setHeader('Cache-Control', 'no-store');
   response.end(JSON.stringify(body));
+}
+
+function writeNdjson(response: ServerResponse, body: unknown) {
+  response.write(`${JSON.stringify(body)}\n`);
 }
 
 async function readJson(request: IncomingMessage): Promise<AgentTurnRequest> {
@@ -125,7 +129,22 @@ function modelCall(call: { id?: string; name?: string; args?: Record<string, unk
   };
 }
 
-export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
+function modelContentFor(text: string, calls: AgentFunctionCall[]): AgentHistoryContent | undefined {
+  const parts: Array<Record<string, unknown>> = [];
+  if (text.trim()) parts.push({ text: text.trim() });
+  for (const call of calls) {
+    parts.push({
+      functionCall: {
+        id: call.id,
+        name: call.bridge,
+        args: { tool: call.tool, input: call.input, references: call.references },
+      },
+    });
+  }
+  return parts.length ? { role: 'model', parts } : undefined;
+}
+
+function prepareModel(rawPayload: AgentTurnRequest) {
   const payload = validatePayload(rawPayload);
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
@@ -137,8 +156,6 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
     ...(readEntries.length ? [bridgeDeclaration('read', readEntries)] : []),
     ...(actionEntries.length ? [bridgeDeclaration('action', actionEntries)] : []),
   ];
-  const contents = [...payload.conversationHistory, initialUserContent(payload), ...payload.history];
-  const ai = new GoogleGenAI({ apiKey });
   const config: Record<string, unknown> = {
     systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
     maxOutputTokens: 2_048,
@@ -147,14 +164,47 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
     config.tools = [{ functionDeclarations: declarations }];
     config.toolConfig = { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } };
   }
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
-    contents: contents as never,
-    config: config as never,
-  });
-  const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, byName));
+  return {
+    ai: new GoogleGenAI({ apiKey }),
+    byName,
+    request: {
+      model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
+      contents: [...payload.conversationHistory, initialUserContent(payload), ...payload.history] as never,
+      config: config as never,
+    },
+  };
+}
+
+export async function analyzeAgentTurn(rawPayload: AgentTurnRequest): Promise<AgentModelTurn> {
+  const prepared = prepareModel(rawPayload);
+  const response = await prepared.ai.models.generateContent(prepared.request);
+  const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.byName));
+  const text = response.text?.trim() ?? '';
   const modelContent = response.candidates?.[0]?.content as AgentHistoryContent | undefined;
-  return { text: response.text?.trim() ?? '', calls, modelContent };
+  return { text, calls, modelContent: modelContent ?? modelContentFor(text, calls) };
+}
+
+export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta: (delta: string) => void): Promise<AgentModelTurn> {
+  const prepared = prepareModel(rawPayload);
+  const stream = await prepared.ai.models.generateContentStream(prepared.request);
+  let text = '';
+  const calls = new Map<string, AgentFunctionCall>();
+
+  for await (const chunk of stream) {
+    const delta = chunk.text ?? '';
+    if (delta) {
+      text += delta;
+      onTextDelta(delta);
+    }
+    for (const rawCall of chunk.functionCalls ?? []) {
+      const call = modelCall(rawCall as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.byName);
+      const key = call.id || JSON.stringify({ bridge: call.bridge, tool: call.tool, input: call.input, references: call.references });
+      calls.set(key, call);
+    }
+  }
+
+  const values = [...calls.values()];
+  return { text: text.trim(), calls: values, modelContent: modelContentFor(text, values) };
 }
 
 export async function atalAIAgentHandler(request: IncomingMessage, response: ServerResponse) {
@@ -164,5 +214,22 @@ export async function atalAIAgentHandler(request: IncomingMessage, response: Ser
   } catch (error) {
     const message = safeMessage(error);
     sendJson(response, /límite|demasiados/i.test(message) ? 413 : 503, { error: message });
+  }
+}
+
+export async function atalAIAgentStreamHandler(request: IncomingMessage, response: ServerResponse) {
+  if (request.method !== 'POST') return sendJson(response, 405, { error: 'Método no permitido.' });
+  response.statusCode = 200;
+  response.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+  response.setHeader('Cache-Control', 'no-store, no-transform');
+  response.setHeader('Connection', 'keep-alive');
+  response.flushHeaders?.();
+  try {
+    const turn = await streamAgentTurn(await readJson(request), (text) => writeNdjson(response, { type: 'text_delta', text }));
+    writeNdjson(response, { type: 'done', turn });
+  } catch (error) {
+    writeNdjson(response, { type: 'error', error: safeMessage(error) });
+  } finally {
+    response.end();
   }
 }
