@@ -19,6 +19,7 @@ export type AtalAgentControllerInput = {
   attachments: AIAttachmentPayload[];
   messages?: AIMessage[];
   task?: AgentTaskState;
+  draftContext?: unknown;
   assistantScope?: 'global' | 'contextual';
   contextSurface?: ContextualAgentSurface;
   selectedSessionId?: string;
@@ -68,6 +69,17 @@ function visibleConversationHistory(input: AtalAgentControllerInput): AgentHisto
   }));
 }
 
+function draftSelectionHints(value: unknown): string {
+  if (!value || typeof value !== 'object') return '';
+  const record = value as Record<string, unknown>;
+  const draft = record.draft && typeof record.draft === 'object' ? record.draft as Record<string, unknown> : record;
+  const hints = [typeof draft.intent === 'string' ? draft.intent : ''];
+  if (draft.patient) hints.push('patient expediente nota');
+  if (draft.plan) hints.push('plan tratamiento');
+  if (Array.isArray(draft.exercises) && draft.exercises.length) hints.push('exercise ejercicio');
+  return hints.filter(Boolean).join(' ');
+}
+
 function requestShape(input: AtalAgentControllerInput) {
   return {
     conversationId: input.conversationId,
@@ -80,6 +92,7 @@ function requestShape(input: AtalAgentControllerInput) {
     conversationHistory: visibleConversationHistory(input),
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
     previousInteractionId: input.task?.interactionId,
+    draftContext: input.draftContext,
   };
 }
 
@@ -88,6 +101,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     text: input.text,
     route: input.route,
     intent: input.workContext.intent,
+    selectionHints: draftSelectionHints(input.draftContext),
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
     contextSurface: input.contextSurface,
