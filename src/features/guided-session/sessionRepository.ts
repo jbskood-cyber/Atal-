@@ -1,39 +1,34 @@
-import {
-  createEntityId,
-  mutateAtalStore,
-  saveCompletedSession,
-  type ActivityEvent,
-  type SessionRecord,
-} from '@/src/data/atalStore';
+import { createEntityId, mutateAtalStore, type SessionRecord } from '@/src/data/atalStore';
+import { applyCompleteSession, applyRecordSessionStarted } from '@/src/domain/actions/sessionActions';
 import type { GuidedPlan, GuidedSessionDraft } from './types';
 
 export type ClinicalSessionRecord = SessionRecord & { planSnapshot?: GuidedPlan };
 
 export function saveCompletedClinicalSession(patientId: string, planId: string, draft: GuidedSessionDraft) {
-  const saved = saveCompletedSession(patientId, planId, draft) as ClinicalSessionRecord;
-  const snapshot = draft.planSnapshot ? structuredClone(draft.planSnapshot) : undefined;
-  if (!snapshot) return saved;
+  let saved: ClinicalSessionRecord | undefined;
   mutateAtalStore((state) => {
-    const session = state.sessions.find((item) => item.id === saved.id) as ClinicalSessionRecord | undefined;
-    if (session) session.planSnapshot = snapshot;
+    saved = applyCompleteSession(state, {
+      patientId,
+      planId,
+      draft,
+      now: draft.completedAt ?? new Date().toISOString(),
+      createSessionId: () => createEntityId('session'),
+      createEventId: () => createEntityId('event'),
+      createNotificationId: () => createEntityId('notification'),
+    }).session;
   });
-  return { ...saved, planSnapshot: snapshot } as ClinicalSessionRecord;
+  if (!saved) throw new Error('No se pudo guardar la sesión clínica.');
+  return saved;
 }
 
 export function recordClinicalSessionStarted(patientId: string, planId: string, startedAt: string) {
   mutateAtalStore((state) => {
-    if (state.events.some((event) => event.kind === 'session_started' && event.patientId === patientId && event.planId === planId && event.createdAt === startedAt)) return;
-    const patient = state.patients.find((item) => item.id === patientId);
-    const event: ActivityEvent = {
-      id: createEntityId('event'),
-      kind: 'session_started',
+    applyRecordSessionStarted(state, {
       patientId,
       planId,
-      title: 'Sesión iniciada',
-      detail: patient?.name ?? 'Paciente',
-      createdAt: startedAt,
-    };
-    state.events.unshift(event);
+      startedAt,
+      createEventId: () => createEntityId('event'),
+    });
   });
 }
 

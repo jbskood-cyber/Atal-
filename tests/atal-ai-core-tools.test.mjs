@@ -115,7 +115,7 @@ test('replace active changes two plans atomically and undo restores both', () =>
     { type: 'plan', id: 'plan-2' },
   ]);
   const result = execute(port, current, proof(current, 'explicit'));
-  assert.equal(result.status, 'success');
+  assert.equal(result.status, 'success', JSON.stringify(result));
   assert.deepEqual(port.read().plans.map((item) => [item.id, item.status]), [['plan-1', 'paused'], ['plan-2', 'active']]);
   executeUndo(result.undo, context({ now: '2026-07-21T18:00:20.000Z' }), port);
   assert.deepEqual(port.read().plans.map((item) => [item.id, item.status]), [['plan-1', 'active'], ['plan-2', 'draft']]);

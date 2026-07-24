@@ -1,16 +1,15 @@
 import {
-  createPlan,
+  createEntityId,
   deletePlan as deletePlanFromStore,
   duplicatePlan as duplicatePlanFromStore,
   findActivePlanConflict,
   getAtalState,
   mutateAtalStore,
-  updatePlan,
-  updatePlanStatus,
   useAtalStore,
   type PlanEntity,
   type PlanStatus,
 } from './atalStore';
+import { applyCreatePlan, applyPlanLifecycle, applyUpdatePlan, type PlanConflictResolution, type PlanUpdatePatch } from '../domain/actions/planActions';
 import { syncClinicalRecordPlanAssociation } from '@/src/domain/planAssociation';
 
 export const LOCAL_PLANS_KEY='atal:local-plans:v1';
@@ -22,15 +21,33 @@ function resyncPatient(patientId:string,preferredPlanId=''){
   mutateAtalStore((draft)=>{syncClinicalRecordPlanAssociation(draft,patientId,preferredPlanId);});
 }
 
+function transitionPlan(id:string,status:PlanStatus,resolution?:PlanConflictResolution){
+  const now=new Date().toISOString();
+  const holder:{result?:ReturnType<typeof applyPlanLifecycle>}={};
+  mutateAtalStore((draft)=>{holder.result=applyPlanLifecycle(draft,{planId:id,status,resolveActiveConflict:resolution,now,createEventId:()=>createEntityId('event'),createNotificationId:()=>createEntityId('notification'),createRecordVersionId:()=>createEntityId('record-version')});});
+  return holder.result?.plan??null;
+}
+
 export function readLocalPlans(){return getAtalState().plans;}
 export function writeLocalPlans(items:LocalPlan[]){mutateAtalStore((draft)=>{draft.plans=items;const patientIds=[...new Set(items.map((item)=>item.patientId))];patientIds.forEach((patientId)=>syncClinicalRecordPlanAssociation(draft,patientId));});}
-export function createLocalPlan(input:NewLocalPlan){const plan=createPlan({...input,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''});resyncPatient(plan.patientId,plan.id);return plan;}
-export function updateLocalPlan(id:string,patch:Partial<LocalPlan>){const plan=updatePlan(id,patch);if(plan)resyncPatient(plan.patientId,plan.id);return plan;}
-export const activatePlan=(id:string,resolution?:'pause'|'complete'|'archive')=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'active',resolution);if(plan)resyncPatient(plan.patientId,id);return result;};
-export const pausePlan=(id:string)=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'paused');if(plan)resyncPatient(plan.patientId,id);return result;};
-export const completePlan=(id:string)=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'completed');if(plan)resyncPatient(plan.patientId,id);return result;};
-export const archivePlan=(id:string)=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'archived');if(plan)resyncPatient(plan.patientId);return result;};
-export const restorePlan=(id:string)=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'draft');if(plan)resyncPatient(plan.patientId,id);return result;};
+export function createLocalPlan(input:NewLocalPlan){
+  const now=new Date().toISOString();
+  const planId=createEntityId('plan');
+  const holder:{result?:ReturnType<typeof applyCreatePlan>}={};
+  mutateAtalStore((draft)=>{holder.result=applyCreatePlan(draft,{patientId:input.patientId,planId,now,createEventId:()=>createEntityId('event'),createRecordVersionId:()=>createEntityId('record-version'),plan:{title:input.title,focus:input.focus,duration:input.duration,frequency:input.frequency,goal:input.goal,exerciseIds:input.exerciseIds,status:input.status,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''}});});
+  return holder.result!.plan;
+}
+export function updateLocalPlan(id:string,patch:PlanUpdatePatch){
+  const now=new Date().toISOString();
+  const holder:{result?:ReturnType<typeof applyUpdatePlan>}={};
+  mutateAtalStore((draft)=>{holder.result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event'),createRecordVersionId:()=>createEntityId('record-version')});});
+  return holder.result?.plan??null;
+}
+export const activatePlan=(id:string,resolution?:PlanConflictResolution)=>transitionPlan(id,'active',resolution);
+export const pausePlan=(id:string)=>transitionPlan(id,'paused');
+export const completePlan=(id:string)=>transitionPlan(id,'completed');
+export const archivePlan=(id:string)=>transitionPlan(id,'archived');
+export const restorePlan=(id:string)=>transitionPlan(id,'draft');
 export function duplicatePlan(id:string){const source=getAtalState().plans.find((item)=>item.id===id);const copy=duplicatePlanFromStore(id);if(source)resyncPatient(source.patientId,source.id);return copy;}
 export function deletePlan(id:string){const source=getAtalState().plans.find((item)=>item.id===id);deletePlanFromStore(id);if(source)resyncPatient(source.patientId);}
 export {findActivePlanConflict};

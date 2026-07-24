@@ -296,7 +296,7 @@ test.describe('Block 4.1 critical E2E validation', () => {
     await page.reload();
     await expect(page.getByText('Confirmación necesaria')).toBeVisible();
     await page.getByRole('button', { name: 'Continuar' }).click();
-    await expect(page.getByText(/El plan no puede pasar de archived a active./)).toBeVisible();
+    await expect(page.getByText(/La transición de archived a active no está permitida./)).toBeVisible();
 
     const stored = await readStore(page);
     expect(stored.plans.find((plan) => plan.id === 'plan-draft-e2e').status).toBe('archived');

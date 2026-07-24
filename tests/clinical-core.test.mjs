@@ -16,19 +16,23 @@ test('guided sessions preserve an immutable plan snapshot',()=>{
 
 test('completed sessions persist their historical clinical context',()=>{
   const repository=read('src/features/guided-session/sessionRepository.ts');
+  const actions=read('src/domain/actions/sessionActions.ts');
   const flow=read('src/features/guided-session/GuidedSessionFlow.tsx');
   assert.match(repository,/ClinicalSessionRecord/);
-  assert.match(repository,/session\.planSnapshot = snapshot/);
+  assert.match(repository,/applyCompleteSession/);
+  assert.match(actions,/planSnapshot: structuredClone\(input\.draft\.planSnapshot\)/);
+  assert.match(actions,/createdAt: completedAt/);
   assert.match(flow,/saveCompletedClinicalSession/);
-  assert.match(repository,/createdAt: startedAt/);
 });
 
 test('archived patients cannot continue active treatment',()=>{
   const patients=read('src/data/localPatients.ts');
+  const lifecycle=read('src/domain/actions/patientLifecycle.ts');
   const portal=read('src/screens/PatientPortalPreviewScreen.tsx');
   const flow=read('src/features/guided-session/GuidedSessionFlow.tsx');
-  assert.match(patients,/plan\.status='paused'/);
-  assert.match(patients,/paciente archivado/);
+  assert.match(patients,/applyPatientLifecycle/);
+  assert.match(lifecycle,/plan\.status = 'paused'/);
+  assert.match(lifecycle,/paciente archivado/);
   assert.match(portal,/patient\.status === 'archived'/);
   assert.match(flow,/patient\.status === 'archived'/);
 });
