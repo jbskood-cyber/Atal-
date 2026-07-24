@@ -154,8 +154,15 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     if (turn.modelContent) task.history.push(turn.modelContent);
 
     if (!turn.calls.length) {
+      const finalText = turn.text.trim();
+      if (!finalText) {
+        task.status = 'failed';
+        task.error = 'EMPTY_MODEL_TURN';
+        task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+        break;
+      }
       task.status = 'completed';
-      task.finalText = turn.text.trim() || 'Listo. Completé el trabajo solicitado.';
+      task.finalText = finalText;
       break;
     }
 
