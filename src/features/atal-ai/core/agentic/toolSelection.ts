@@ -34,9 +34,7 @@ export type ToolSelectionInput = {
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const value = `${input.text} ${input.route} ${input.intent ?? ''} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
-  const selected = classification.allowedToolKinds.includes('read') || input.hasImageOrPdf || input.hasAudio
-    ? [...READ_BASE]
-    : [];
+  const selected = classification.allowedToolKinds.includes('read') ? [...READ_BASE] : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
   const navigationRequested = includesAny(value, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
 
@@ -47,7 +45,7 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   const settings = includesAny(value, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
   const delivery = includesAny(value, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
 
-  if (navigationRequested) append(selected, ['navigation.open']);
+  if (navigationRequested && classification.kind !== 'conversation') append(selected, ['navigation.open']);
   if (allowMutations && patient) append(selected, PATIENT_TOOLS);
   if (allowMutations && plan) append(selected, PLAN_TOOLS);
   if (allowMutations && exercise) append(selected, EXERCISE_TOOLS);
