@@ -34,9 +34,29 @@ test('tool selection stays bounded and includes contextual patient and plan tool
   assert.equal(tools.includes('exercise.create_simple'), true);
 });
 
-test('ordinary conversation exposes only safe read tools and lets Gemini decide whether to use them', () => {
+test('ordinary conversation exposes no workspace tools', () => {
   const tools = selectionModule().selectAgentTools({
     text: 'Hola, explícame con calma qué puedes hacer por mí.',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.deepEqual(tools, []);
+});
+
+test('a conceptual question exposes no workspace or mutation tools', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: '¿Qué es un recurso de lectura compatible?',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.deepEqual(tools, []);
+});
+
+test('the exact patient count request exposes canonical read tools', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: 'Dime cuantos pacientes tengo por favor.',
     route: '/assistant',
     hasImageOrPdf: false,
     hasAudio: false,
@@ -44,19 +64,6 @@ test('ordinary conversation exposes only safe read tools and lets Gemini decide 
   assert.equal(tools.includes('app.read'), true);
   assert.equal(tools.includes('patient.search'), true);
   assert.equal(tools.includes('patient.update'), false);
-  assert.equal(tools.includes('navigation.open'), false);
-});
-
-test('a conceptual question can see safe reads but never mutation tools', () => {
-  const tools = selectionModule().selectAgentTools({
-    text: '¿Qué es un recurso de lectura compatible?',
-    route: '/assistant',
-    hasImageOrPdf: false,
-    hasAudio: false,
-  });
-  assert.equal(tools.includes('app.read'), true);
-  assert.equal(tools.includes('patient.update'), false);
-  assert.equal(tools.includes('clinical_record.upsert'), false);
 });
 
 test('a navigation request exposes navigation only when explicitly requested', () => {
@@ -117,6 +124,21 @@ test('an explicit contact mutation still exposes the canonical patient update to
     hasAudio: false,
   });
   assert.equal(tools.includes('patient.update'), true);
+});
+
+test('an empty model turn is never converted into a false success', async () => {
+  const { createAgentTask, runAgentLoop } = loopModule();
+  const task = createAgentTask('conversation-empty', 'Dime cuantos pacientes tengo por favor.', ['app.read', 'patient.search'], '2026-07-24T07:00:00.000Z');
+  const outcome = await runAgentLoop({
+    task,
+    request: request({ conversationId: 'conversation-empty', text: 'Dime cuantos pacientes tengo por favor.' }),
+    context: context({ conversationId: 'conversation-empty' }),
+    requestModel: async () => ({ text: '', calls: [], modelContent: { role: 'model', parts: [] } }),
+    executeTool: executor(memoryPort()),
+  });
+  assert.equal(outcome.task.status, 'failed');
+  assert.equal(outcome.task.error, 'EMPTY_MODEL_TURN');
+  assert.doesNotMatch(outcome.task.finalText, /Listo\. Completé el trabajo solicitado/i);
 });
 
 test('bounded loop executes safe multi-step work and returns grounded final text', async () => {
