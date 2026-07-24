@@ -55,7 +55,36 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:core:compile
-      - run: find tests -maxdepth 1 -name '*.test.mjs' ! -name 'atal-behavior-system.test.mjs' -print0 | xargs -0 node --test
+      - name: Run legacy tests individually
+        id: legacy
+        shell: bash
+        run: |
+          set +e
+          : > legacy-test-failures.txt
+          for file in tests/*.test.mjs; do
+            if [ "$file" = "tests/atal-behavior-system.test.mjs" ]; then
+              continue
+            fi
+            echo "=== $file ==="
+            node --test "$file"
+            code=$?
+            if [ $code -ne 0 ]; then
+              echo "$file" >> legacy-test-failures.txt
+            fi
+          done
+          if [ -s legacy-test-failures.txt ]; then
+            echo "Failing legacy test files:"
+            cat legacy-test-failures.txt
+            exit 1
+          fi
+      - name: Upload legacy failure manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-test-failure-manifest
+          path: legacy-test-failures.txt
+          if-no-files-found: error
+          retention-days: 1
 
   build:
     runs-on: ubuntu-latest
