@@ -27,18 +27,21 @@ import { universalPlanExerciseTools } from './tools/universalPlanExerciseTools';
 import { canonicalPlanToolNames, canonicalPlanTools } from './tools/canonicalPlanTools';
 import { canonicalPlanLifecycleToolNames, canonicalPlanLifecycleTools } from './tools/canonicalPlanLifecycleTools';
 import { canonicalUniversalExerciseToolNames, canonicalUniversalExerciseTools } from './tools/canonicalUniversalExerciseTools';
+import { canonicalPatientNoteToolNames, canonicalPatientNoteTools } from './tools/canonicalPatientNoteTools';
 import { universalSessionSettingsTools } from './tools/universalSessionSettingsTools';
 import { clientEffectTools } from './tools/clientEffectTools';
 
 const nonCanonicalPlanExerciseTools = universalPlanExerciseTools.filter((tool) =>
   !canonicalPlanToolNames.has(tool.name) && !canonicalUniversalExerciseToolNames.has(tool.name));
 const nonCanonicalPlanTools = planTools.filter((tool) => !canonicalPlanLifecycleToolNames.has(tool.name));
+const nonCanonicalUniversalPatientTools = universalPatientTools.filter((tool) => !canonicalPatientNoteToolNames.has(tool.name));
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
   ...universalReadTools,
   ...patientTools,
-  ...universalPatientTools,
+  ...nonCanonicalUniversalPatientTools,
+  ...canonicalPatientNoteTools,
   ...exerciseTools,
   ...canonicalUniversalExerciseTools,
   ...nonCanonicalPlanTools,
