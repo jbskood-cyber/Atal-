@@ -49,7 +49,7 @@ const explicitActionPatterns = [
 ];
 
 const workspaceReadPatterns = [
-  /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)\b/i,
+  /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra|abre|abrir|navega)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)/i,
   /\b(?:último|ultima|última|anterior|actual|activo|activa|reciente|recientes)\b.{0,48}\b(?:plan|sesión|sesion|reporte|expediente|paciente)\b/i,
   /\b(?:de|del|para)\s+[A-ZÁÉÍÓÚÑ][\p{L}]+/u,
   /\b(?:este|esta|ese|esa|aquel|aquella|su)\s+(?:paciente|plan|sesión|sesion|expediente|reporte)\b/i,
@@ -64,11 +64,12 @@ const conceptualPatterns = [
 
 /**
  * Safety classification for tool authorization only.
- * Gemini remains responsible for generating the response and deciding whether an allowed tool is useful.
+ * Safe reads remain available so Gemini can decide whether Atal data is actually needed.
+ * Mutating tools are exposed only after an explicit action request.
  */
 export function classifyAgentTurn(text: string): AgentTurnClassification {
   const value = text.trim();
-  if (!value) return { kind: 'conversation', allowedToolKinds: [] };
+  if (!value) return { kind: 'conversation', allowedToolKinds: ['read'] };
 
   if (deferredMutationPatterns.some((pattern) => pattern.test(value))) {
     return { kind: 'proposal', allowedToolKinds: ['read'] };
@@ -82,10 +83,10 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
   if (dependsOnWorkspace) return { kind: 'read', allowedToolKinds: ['read'] };
 
   if (conceptualPatterns.some((pattern) => pattern.test(value))) {
-    return { kind: 'conversation', allowedToolKinds: [] };
+    return { kind: 'conversation', allowedToolKinds: ['read'] };
   }
 
-  return { kind: 'conversation', allowedToolKinds: [] };
+  return { kind: 'conversation', allowedToolKinds: ['read'] };
 }
 
 export function selectGeneralTurnMode(input: GeneralTurnModeInput): GeneralTurnMode {
