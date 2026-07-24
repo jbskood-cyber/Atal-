@@ -34,6 +34,7 @@ export function selectGlobalConversationHistory<T extends ScopedConversationLike
 }
 
 export function selectContextualConversation<T extends ScopedConversationLike>(conversations: T[], contextKey: string): T | null {
+  if (!contextKey) return null;
   return conversations
     .filter((conversation) => isContextualConversation(conversation) && conversation.contextKey === contextKey)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null;
@@ -42,10 +43,11 @@ export function selectContextualConversation<T extends ScopedConversationLike>(c
 export function selectContextualConversationById<T extends ScopedConversationLike>(
   conversations: T[],
   conversationId: string,
-  contextKey?: string,
+  contextKey: string,
 ): T | null {
+  if (!conversationId || !contextKey) return null;
   return conversations.find((conversation) =>
     conversation.id === conversationId
     && isContextualConversation(conversation)
-    && (!contextKey || conversation.contextKey === contextKey)) ?? null;
+    && conversation.contextKey === contextKey) ?? null;
 }
