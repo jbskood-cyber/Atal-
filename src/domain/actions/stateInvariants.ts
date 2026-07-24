@@ -27,6 +27,19 @@ function assertIso(value: string, label: string): void {
   if (typeof value !== 'string' || Number.isNaN(Date.parse(value))) fail(`${label} debe ser una fecha ISO válida.`);
 }
 
+function isPlanAssociationOnlyRecordUpdate(
+  record: AtalState['clinicalRecords'][number],
+  before: AtalState['clinicalRecords'][number],
+): boolean {
+  if (record.version !== before.version) return false;
+  const normalized = {
+    ...record,
+    planId: before.planId,
+    updatedAt: before.updatedAt,
+  };
+  return stableSerialize(normalized) === stableSerialize(before);
+}
+
 function validateRecordUpdates(candidate: AtalState, previous: AtalState): void {
   const previousById = new Map(previous.clinicalRecords.map((record) => [record.id, record]));
   const previousVersionIds = new Set(previous.clinicalRecordVersions.map((version) => version.id));
@@ -39,6 +52,7 @@ function validateRecordUpdates(candidate: AtalState, previous: AtalState): void 
     }
     if (record.createdAt !== before.createdAt) fail('Una actualización de expediente debe preservar createdAt.');
     if (stableSerialize(record) === stableSerialize(before)) continue;
+    if (isPlanAssociationOnlyRecordUpdate(record, before)) continue;
     if (record.version !== before.version + 1) fail('La versión del expediente debe incrementarse exactamente una vez.');
     const snapshots = candidate.clinicalRecordVersions.filter((version) =>
       !previousVersionIds.has(version.id)
