@@ -57,8 +57,13 @@ test('explicit structured work restores the reviewable draft workspace', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Prepara un plan de tratamiento de cuatro semanas', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
 });
 
-test('an existing draft keeps non-action follow-up messages in draft mode', () => {
+test('an existing draft keeps explicit draft edits in draft mode', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Cambia la frecuencia a tres veces por semana', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
+});
+
+test('an existing draft does not hijack unrelated conversation', () => {
+  assert.equal(modeModule().selectGeneralTurnMode({ text: '¿Qué significa la frecuencia de un plan?', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
+  assert.equal(modeModule().selectGeneralTurnMode({ text: 'Explícame qué hemos preparado hasta ahora.', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
 });
 
 test('an explicit confirmation of an existing draft returns to the agent', () => {
