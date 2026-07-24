@@ -50,6 +50,7 @@ function visibleFailureMessage(result: Extract<ToolExecutionResult, { status: 'e
   if (result.code === 'CORE_INPUT_INVALID') return 'No pude completar esa consulta con la información disponible. Puedes reformularla o decirme qué necesitas revisar.';
   if (result.code === 'CORE_ENTITY_NOT_FOUND') return 'No encontré una entidad que coincida con la solicitud.';
   if (result.code.startsWith('TOOL_NOT_ALLOWED')) return 'Esa acción no está disponible desde este contexto.';
+  if (['CORE_PRECONDITION_FAILED', 'CORE_VERSION_CONFLICT', 'CORE_INVARIANT_FAILED'].includes(result.code)) return result.message;
   return 'No pude completar la solicitud de forma segura. No se aplicó ningún cambio dudoso.';
 }
 
