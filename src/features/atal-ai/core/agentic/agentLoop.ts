@@ -71,7 +71,7 @@ function functionResponseContent(call: AgentFunctionCall, result: ToolExecutionR
     parts: [{
       functionResponse: {
         id: call.id,
-        name: call.bridge,
+        name: call.functionName ?? call.bridge,
         response: modelOutput(result),
       },
     }],
@@ -128,9 +128,11 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       ...input.request,
       allowedTools: task.allowedTools,
       history: task.history,
+      previousInteractionId: task.interactionId ?? input.request.previousInteractionId,
     }, input.signal);
     task.stepCount += 1;
     task.updatedAt = now();
+    if (turn.interactionId) task.interactionId = turn.interactionId;
     if (turn.modelContent) task.history.push(turn.modelContent);
 
     if (!turn.calls.length) {
