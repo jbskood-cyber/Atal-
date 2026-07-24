@@ -5,7 +5,7 @@ import type { GuidedPlan, GuidedSessionDraft } from './types';
 export type ClinicalSessionRecord = SessionRecord & { planSnapshot?: GuidedPlan };
 
 export function saveCompletedClinicalSession(patientId: string, planId: string, draft: GuidedSessionDraft) {
-  let saved: ClinicalSessionRecord | null = null;
+  let saved: ClinicalSessionRecord | undefined;
   mutateAtalStore((state) => {
     saved = applyCompleteSession(state, {
       patientId,
@@ -17,7 +17,8 @@ export function saveCompletedClinicalSession(patientId: string, planId: string, 
       createNotificationId: () => createEntityId('notification'),
     }).session;
   });
-  return saved as ClinicalSessionRecord;
+  if (!saved) throw new Error('No se pudo guardar la sesión clínica.');
+  return saved;
 }
 
 export function recordClinicalSessionStarted(patientId: string, planId: string, startedAt: string) {
