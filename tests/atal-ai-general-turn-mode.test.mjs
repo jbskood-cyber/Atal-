@@ -8,10 +8,10 @@ test('ordinary global conversation uses the universal agent', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Hola, ¿cómo puedes ayudarme?', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
 });
 
-test('conceptual questions stay conversational and do not authorize tools', () => {
+test('conceptual questions stay conversational while only safe reads remain available', () => {
   const result = modeModule().classifyAgentTurn('¿Qué es un recurso de lectura compatible?');
   assert.equal(result.kind, 'conversation');
-  assert.deepEqual(result.allowedToolKinds, []);
+  assert.deepEqual(result.allowedToolKinds, ['read']);
 });
 
 test('workspace questions authorize read tools without authorizing writes', () => {
@@ -22,6 +22,12 @@ test('workspace questions authorize read tools without authorizing writes', () =
 
 test('elliptical follow-ups can continue a real-data comparison', () => {
   const result = modeModule().classifyAgentTurn('¿Y qué cambió respecto a la anterior?');
+  assert.equal(result.kind, 'read');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+});
+
+test('navigation requests can inspect entities and open the exact Atal route', () => {
+  const result = modeModule().classifyAgentTurn('Abre el expediente de María.');
   assert.equal(result.kind, 'read');
   assert.deepEqual(result.allowedToolKinds, ['read']);
 });
@@ -53,6 +59,10 @@ test('explicit structured work restores the reviewable draft workspace', () => {
 
 test('an existing draft keeps non-action follow-up messages in draft mode', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Cambia la frecuencia a tres veces por semana', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
+});
+
+test('an explicit confirmation of an existing draft returns to the agent', () => {
+  assert.equal(modeModule().selectGeneralTurnMode({ text: 'Ahora sí, guárdalo.', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
 });
 
 test('descriptive image questions remain conversational and never become drafts automatically', () => {
