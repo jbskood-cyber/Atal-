@@ -33,8 +33,6 @@ const conceptual = await ai.models.generateContent({
   contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
   config: {
     systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
-    tools: [{ functionDeclarations: [functionDeclaration] }],
-    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
     maxOutputTokens: 256,
   },
 });
@@ -56,4 +54,21 @@ const call = read.functionCalls?.[0];
 assert.ok(call, 'Gemini did not produce a direct function call.');
 assert.equal(call.name, 'atal_app_read');
 assert.equal(call.args?.resource, 'settings');
-console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model} conceptual=direct tool=atal_app_read`);
+
+const patientCount = await ai.models.generateContent({
+  model,
+  contents: [{ role: 'user', parts: [{ text: 'Dime cuantos pacientes tengo por favor. Debes consultar Atal antes de responder.' }] }],
+  config: {
+    systemInstruction: 'Eres Atal IA. Para preguntas sobre datos reales de la aplicación, usa la herramienta disponible y no inventes cifras.',
+    tools: [{ functionDeclarations: [functionDeclaration] }],
+    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
+    maxOutputTokens: 256,
+  },
+});
+
+const patientCall = patientCount.functionCalls?.[0];
+assert.ok(patientCall, 'Gemini did not request Atal data for the patient-count question.');
+assert.equal(patientCall.name, 'atal_app_read');
+assert.equal(patientCall.args?.resource, 'patients');
+
+console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model} conceptual=direct settings=atal_app_read patients=atal_app_read`);
