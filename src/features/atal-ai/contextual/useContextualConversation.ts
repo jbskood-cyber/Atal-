@@ -178,6 +178,7 @@ export function useContextualConversation({
       };
       patchConversation({ status: 'saved', savedResult: result, error: undefined });
       append(createMessage('assistant', `Cambios aplicados. ${result.summary.join(' ')}`));
+      setDraft(null);
       setPendingConfirmation(null);
       setConfirmationOpen(false);
       setForceApply(false);
@@ -302,6 +303,7 @@ export function useContextualConversation({
       } : current.savedResult,
       updatedAt: new Date().toISOString(),
     } : current);
+    if (mutationResult && draft) setDraft(null);
     if (outcome.task.status === 'needs-confirmation') {
       const pendingStep = outcome.task.completed.findLast((step) => step.result.status === 'confirmation-required');
       if (pendingStep?.result.status === 'confirmation-required') onProposalFingerprint(pendingStep.result.decision.fingerprint);
