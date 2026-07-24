@@ -114,6 +114,7 @@ export function executeToolInvocation(
       request.context,
       request.invocation.tool,
       request.invocation.references,
+      request.invocation.input,
     );
     if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
 
