@@ -26,7 +26,7 @@ export function isTransientGeminiFailure(error: unknown): boolean {
   if (/\b(?:401|403)\b|API key|permission denied|PERMISSION_DENIED|schema|function call|INVALID_ARGUMENT|invalid argument/i.test(message)) {
     return false;
   }
-  return /\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|ECONNRESET|ECONNREFUSED|EAI_AGAIN|fetch failed|network error/i.test(message);
+  return /MODEL_EMPTY_RESPONSE|\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|ECONNRESET|ECONNREFUSED|EAI_AGAIN|fetch failed|network error/i.test(message);
 }
 
 type GeminiFallbackOptions<T> = {
