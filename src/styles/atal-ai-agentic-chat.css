@@ -45,30 +45,37 @@
   color: var(--ink);
 }
 
-.atal-command-message.is-assistant p {
+.atal-command-message.is-assistant p,
+.atal-contextual-conversation article.is-assistant p {
   margin: 0 0 0.8em;
 }
 
-.atal-command-message.is-assistant p:last-child {
+.atal-command-message.is-assistant p:last-child,
+.atal-contextual-conversation article.is-assistant p:last-child {
   margin-bottom: 0;
 }
 
 .atal-command-message.is-assistant ul,
-.atal-command-message.is-assistant ol {
+.atal-command-message.is-assistant ol,
+.atal-contextual-conversation article.is-assistant ul,
+.atal-contextual-conversation article.is-assistant ol {
   margin: 0.45em 0 0.9em;
   padding-left: 1.35em;
 }
 
-.atal-command-message.is-assistant li + li {
+.atal-command-message.is-assistant li + li,
+.atal-contextual-conversation article.is-assistant li + li {
   margin-top: 0.35em;
 }
 
-.atal-command-message.is-assistant strong {
+.atal-command-message.is-assistant strong,
+.atal-contextual-conversation article.is-assistant strong {
   font-weight: 700;
   color: var(--ink);
 }
 
-.atal-command-message.is-assistant code {
+.atal-command-message.is-assistant code,
+.atal-contextual-conversation article.is-assistant code {
   padding: 0.12em 0.38em;
   border: 1px solid var(--command-border);
   border-radius: 7px;
@@ -76,7 +83,8 @@
   font-size: 0.9em;
 }
 
-.atal-command-message.is-user > div {
+.atal-command-message.is-user > div,
+.atal-contextual-conversation article.is-user > div {
   width: fit-content;
   max-width: min(88%, 620px);
   padding: 12px 15px;
@@ -91,7 +99,12 @@
 .atal-command-message.is-user > div header b,
 .atal-command-message.is-user > div header time,
 .atal-command-message.is-user > div p,
-.atal-command-message.is-user > div small {
+.atal-command-message.is-user > div small,
+.atal-contextual-conversation article.is-user > div header,
+.atal-contextual-conversation article.is-user > div header b,
+.atal-contextual-conversation article.is-user > div header time,
+.atal-contextual-conversation article.is-user > div p,
+.atal-contextual-conversation article.is-user > div small {
   color: #ffffff;
 }
 
@@ -124,6 +137,60 @@
   min-width: 0;
 }
 
+.atal-assistant-rich-text {
+  min-width: 0;
+}
+
+.atal-assistant-rich-text h2,
+.atal-assistant-rich-text h3 {
+  margin: 0.9em 0 0.45em;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.atal-assistant-rich-text h2:first-child,
+.atal-assistant-rich-text h3:first-child {
+  margin-top: 0;
+}
+
+.atal-streaming-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  vertical-align: -0.12em;
+  animation: atal-agent-caret 0.9s steps(1) infinite;
+}
+
+.atal-contextual-conversation article.is-user {
+  justify-content: flex-end;
+}
+
+.atal-contextual-conversation article.is-user > span {
+  display: none;
+}
+
+.atal-contextual-conversation article.is-assistant > div {
+  min-width: 0;
+  width: 100%;
+  overflow-wrap: break-word;
+  word-break: normal;
+  line-height: 1.6;
+}
+
+@keyframes atal-agent-caret {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atal-streaming-caret {
+    animation: none;
+  }
+}
+
 @media (max-width: 480px) {
   .atal-command-thread {
     padding-right: max(16px, env(safe-area-inset-right));
@@ -131,17 +198,22 @@
   }
 
   .atal-command-message.is-user > div,
-  .atal-command-message.is-assistant > div {
+  .atal-command-message.is-assistant > div,
+  .atal-contextual-conversation article.is-user > div,
+  .atal-contextual-conversation article.is-assistant > div {
     font-size: 15px;
   }
 
-  .atal-command-message.is-user > div {
+  .atal-command-message.is-user > div,
+  .atal-contextual-conversation article.is-user > div {
     max-width: 90%;
   }
 }
 
 [data-theme='dark'] .atal-command-message.is-user > div,
-.dark .atal-command-message.is-user > div {
+.dark .atal-command-message.is-user > div,
+[data-theme='dark'] .atal-contextual-conversation article.is-user > div,
+.dark .atal-contextual-conversation article.is-user > div {
   border-color: color-mix(in srgb, #7fbb99 78%, #ffffff 22%);
   background: #4f896b;
   color: #ffffff;
