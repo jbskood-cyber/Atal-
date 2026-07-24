@@ -16,31 +16,31 @@ jobs:
   diagnose:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: feature/atal-ai-linear-agent
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm install --no-save --no-package-lock @playwright/test@1.61.1
       - run: npx playwright install --with-deps chromium
       - name: Run focused E2E and capture output
-        id: focused
         shell: bash
         run: |
           set +e
           npx playwright test e2e/block-4-3-conversation-regressions.spec.mjs --reporter=line > /tmp/atal-e2e.txt 2>&1
           status=$?
-          echo "status=$status" >> "$GITHUB_OUTPUT"
           {
             echo '## Temporary Atal agent E2E diagnostic'
             echo
             echo "Exit status: $status"
             echo
             echo '```text'
-            tail -n 220 /tmp/atal-e2e.txt
+            tail -n 240 /tmp/atal-e2e.txt
             echo '```'
           } > /tmp/atal-comment.md
           exit 0
