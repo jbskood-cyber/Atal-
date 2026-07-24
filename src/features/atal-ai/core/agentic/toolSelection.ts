@@ -3,7 +3,7 @@ import { classifyAgentTurn } from './generalTurnMode';
 
 const MAX_ACTIVE_TOOLS = 20;
 
-const READ_BASE = ['app.read', 'patient.search', 'navigation.open'];
+const READ_BASE = ['app.read', 'patient.search'];
 const PATIENT_TOOLS = ['patient.create', 'patient.update', 'patient.lifecycle', 'patient_note.add', 'patient_note.update', 'clinical_record.upsert'];
 const PLAN_TOOLS = ['plan.create_simple', 'plan.update_fields', 'plan.duplicate', 'plan.membership', 'plan.activate', 'plan.pause', 'plan.complete', 'plan.archive', 'plan.restore', 'plan.replace_active'];
 const EXERCISE_TOOLS = ['exercise.create_simple', 'exercise.update_fields', 'exercise.duplicate', 'exercise.lifecycle', 'exercise.media'];
@@ -33,13 +33,12 @@ export type ToolSelectionInput = {
 
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
-  if (classification.kind === 'conversation' && !input.hasImageOrPdf && !input.hasAudio) return [];
-
   const value = `${input.text} ${input.route} ${input.intent ?? ''} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
   const selected = classification.allowedToolKinds.includes('read') || input.hasImageOrPdf || input.hasAudio
     ? [...READ_BASE]
     : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
+  const navigationRequested = includesAny(value, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
 
   const patient = includesAny(value, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
@@ -48,6 +47,7 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   const settings = includesAny(value, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
   const delivery = includesAny(value, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
 
+  if (navigationRequested) append(selected, ['navigation.open']);
   if (allowMutations && patient) append(selected, PATIENT_TOOLS);
   if (allowMutations && plan) append(selected, PLAN_TOOLS);
   if (allowMutations && exercise) append(selected, EXERCISE_TOOLS);
