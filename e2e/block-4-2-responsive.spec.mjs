@@ -57,12 +57,12 @@ test.describe('Block 4.2 responsive, theme and keyboard evidence', () => {
     });
   }
 
-  test('desktop uses the balanced conversation and draft workspace', async ({ page }, testInfo) => {
+  test('desktop starts with a balanced conversation and no empty draft workspace', async ({ page }, testInfo) => {
     const errors = collectFatalErrors(page);
     await seedAt(page, 1024, 768, 'light');
     const workspace = await openWorkspace(page);
     await expect(workspace.getByLabel('Conversación contextual')).toBeVisible();
-    await expect(workspace.getByLabel('Borrador contextual')).toBeVisible();
+    await expect(workspace.getByLabel('Borrador contextual')).toHaveCount(0);
     await expect(workspace.getByRole('navigation', { name: 'Vista del asistente' })).toBeHidden();
     await expectNoPageOverflow(page);
     await testInfo.attach('open-desktop-light', { body: await page.screenshot(), contentType: 'image/png' });

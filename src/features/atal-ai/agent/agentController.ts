@@ -3,6 +3,7 @@ import type { ConfirmationProof } from '../core/contracts';
 import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
 import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
+import type { ContextualAgentSurface } from '../core/agentic/contextualToolPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
 import { readAIConversations } from '../data/aiRepository';
@@ -18,7 +19,12 @@ export type AtalAgentControllerInput = {
   attachments: AIAttachmentPayload[];
   messages?: AIMessage[];
   task?: AgentTaskState;
+  draftContext?: unknown;
+  assistantScope?: 'global' | 'contextual';
+  contextSurface?: ContextualAgentSurface;
+  selectedSessionId?: string;
   signal?: AbortSignal;
+  onTextDelta?: (delta: string) => void;
 };
 
 function sessionFromRoute(route: string): string {
@@ -34,7 +40,9 @@ function executionContext(input: AtalAgentControllerInput) {
     selectedPatientId: input.workContext.selectedPatientId,
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
-    selectedSessionId: sessionFromRoute(input.route),
+    selectedSessionId: input.selectedSessionId ?? sessionFromRoute(input.route),
+    assistantScope: input.assistantScope ?? 'global' as const,
+    contextSurface: input.contextSurface,
     now: new Date().toISOString(),
   };
 }
@@ -61,6 +69,27 @@ function visibleConversationHistory(input: AtalAgentControllerInput): AgentHisto
   }));
 }
 
+function draftSelectionHints(value: unknown): string {
+  if (!value || typeof value !== 'object') return '';
+  const record = value as Record<string, unknown>;
+  const draft = record.draft && typeof record.draft === 'object' ? record.draft as Record<string, unknown> : record;
+  const hints = [typeof draft.intent === 'string' ? draft.intent : ''];
+  if (draft.patient) hints.push('patient expediente nota');
+  if (draft.plan) hints.push('plan tratamiento');
+  if (Array.isArray(draft.exercises) && draft.exercises.length) hints.push('exercise ejercicio');
+  return hints.filter(Boolean).join(' ');
+}
+
+function draftHistory(input: AtalAgentControllerInput): AgentHistoryContent[] {
+  if (!input.draftContext) return [];
+  return [{
+    role: 'user',
+    parts: [{
+      text: `Borrador estructurado pendiente de revisión. Úsalo únicamente para continuar la solicitud actual y no lo consideres aplicado todavía:\n${JSON.stringify(input.draftContext)}`,
+    }],
+  }];
+}
+
 function requestShape(input: AtalAgentControllerInput) {
   return {
     conversationId: input.conversationId,
@@ -69,9 +98,10 @@ function requestShape(input: AtalAgentControllerInput) {
     selectedPatientId: input.workContext.selectedPatientId,
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
-    selectedSessionId: sessionFromRoute(input.route),
-    conversationHistory: visibleConversationHistory(input),
+    selectedSessionId: input.selectedSessionId ?? sessionFromRoute(input.route),
+    conversationHistory: [...visibleConversationHistory(input), ...draftHistory(input)],
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
+    previousInteractionId: input.task?.interactionId,
   };
 }
 
@@ -80,20 +110,26 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     text: input.text,
     route: input.route,
     intent: input.workContext.intent,
+    selectionHints: draftSelectionHints(input.draftContext),
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
+    contextSurface: input.contextSurface,
   });
+  const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
   const task = input.task?.status === 'running'
     ? {
         ...input.task,
         allowedTools: [...new Set([...input.task.allowedTools, ...allowedTools])].slice(0, AGENT_MAX_ACTIVE_TOOLS),
       }
-    : createAgentTask(input.conversationId, input.text, allowedTools);
+    : {
+        ...freshTask,
+        interactionId: input.task?.interactionId,
+      };
   return runAgentLoop({
     task,
     request: requestShape({ ...input, task }),
     context: executionContext(input),
-    requestModel: requestAtalAgentTurn,
+    requestModel: (request, signal) => requestAtalAgentTurn(request, signal, input.onTextDelta),
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
     signal: input.signal,
   });
@@ -112,7 +148,7 @@ export async function confirmAndContinueAtalAgent(
     task,
     request: requestShape({ ...input, task }),
     context: executionContext(input),
-    requestModel: requestAtalAgentTurn,
+    requestModel: (request, signal) => requestAtalAgentTurn(request, signal, input.onTextDelta),
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
     signal: input.signal,
   });

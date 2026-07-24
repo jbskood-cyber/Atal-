@@ -3,9 +3,14 @@ import type { Plugin } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { ATAL_AI_SYSTEM_PROMPT, ATAL_AI_TRANSCRIPTION_PROMPT } from '../src/features/atal-ai/api/prompts';
 import { atalAIDraftJsonSchema } from '../src/features/atal-ai/api/schemas';
+import {
+  DEFAULT_GEMINI_MODEL_CASCADE,
+  resolveGeminiModelCascade,
+  runWithGeminiFallback,
+} from '../src/features/atal-ai/core/agentic/modelFallback';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 import type { AtalAIAnalyzeRequest } from '../src/features/atal-ai/types';
-import { atalAIAgentHandler } from './atalAIAgent';
+import { atalAIAgentHandler, atalAIAgentStreamHandler } from './atalAIAgent';
 
 type AtalAIPayload = AtalAIAnalyzeRequest & {
   preferences?: {
@@ -39,12 +44,29 @@ function cleanDataUrl(data: string) {
   return comma >= 0 ? data.slice(comma + 1) : data;
 }
 
+function rawMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error ?? '');
+}
+
 function safeMessage(error: unknown) {
-  const message = error instanceof Error ? error.message : '';
+  const message = rawMessage(error);
   if (/API key|GEMINI_API_KEY|403|401/i.test(message)) return 'Atal IA no está configurada todavía. Añade GEMINI_API_KEY como secreto del proyecto en Google AI Studio y vuelve a intentarlo.';
-  if (/quota|429/i.test(message)) return 'Gemini alcanzó temporalmente su límite. Conservamos tu borrador; inténtalo de nuevo en unos minutos.';
+  if (/quota|429|RESOURCE_EXHAUSTED|503|UNAVAILABLE|overload|timed? out|timeout|fetch failed|network/i.test(message)) {
+    return 'Atal IA está temporalmente ocupada. Conservamos tu borrador; vuelve a intentarlo en unos segundos.';
+  }
   if (/JSON|schema|response/i.test(message)) return 'Gemini devolvió una respuesta que no pudimos validar. Tu entrada sigue intacta; vuelve a intentarlo o edítala.';
   return message || 'Gemini no pudo procesar la solicitud. Tu contenido no se perdió.';
+}
+
+function errorStatus(error: unknown): number {
+  return /supera el límite seguro|demasiados archivos/i.test(rawMessage(error)) ? 413 : 503;
+}
+
+function configuredModels(): string[] {
+  const explicitCascade = process.env.GEMINI_MODEL_CASCADE?.trim();
+  if (explicitCascade) return resolveGeminiModelCascade(explicitCascade);
+  const preferred = process.env.GEMINI_MODEL?.trim();
+  return resolveGeminiModelCascade([preferred, ...DEFAULT_GEMINI_MODEL_CASCADE].filter(Boolean).join(','));
 }
 
 function promptFor(payload: AtalAIPayload) {
@@ -66,34 +88,44 @@ async function analyze(payload: AtalAIPayload) {
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
   const ai = new GoogleGenAI({ apiKey });
   const attachments = Array.isArray(payload.attachments) ? payload.attachments : [];
-  const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
+  const models = configuredModels();
 
   if (payload.mode === 'transcribe') {
     const audio = attachments.find((attachment) => attachment.kind === 'audio' && attachment.data);
     if (!audio) throw new Error('No encontramos un audio válido para transcribir.');
-    const response = await ai.models.generateContent({
-      model,
-      contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.type, data: cleanDataUrl(audio.data) } }, { text: ATAL_AI_TRANSCRIPTION_PROMPT }] }],
+    return runWithGeminiFallback({
+      models,
+      operation: async (model) => {
+        const response = await ai.models.generateContent({
+          model,
+          contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.type, data: cleanDataUrl(audio.data) } }, { text: ATAL_AI_TRANSCRIPTION_PROMPT }] }],
+        });
+        return { transcript: response.text?.trim() ?? '' };
+      },
     });
-    return { transcript: response.text?.trim() ?? '' };
   }
 
   const parts = [
     ...attachments.filter((attachment) => attachment.data).map((attachment) => ({ inlineData: { mimeType: attachment.type, data: cleanDataUrl(attachment.data) } })),
     { text: promptFor(payload) },
   ];
-  const response = await ai.models.generateContent({
-    model,
-    contents: [{ role: 'user', parts }],
-    config: {
-      systemInstruction: ATAL_AI_SYSTEM_PROMPT,
-      responseMimeType: 'application/json',
-      responseJsonSchema: atalAIDraftJsonSchema,
+  return runWithGeminiFallback({
+    models,
+    operation: async (model) => {
+      const response = await ai.models.generateContent({
+        model,
+        contents: [{ role: 'user', parts }],
+        config: {
+          systemInstruction: ATAL_AI_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseJsonSchema: atalAIDraftJsonSchema,
+        },
+      });
+      const text = response.text;
+      if (!text) throw new Error('Gemini devolvió una respuesta vacía.');
+      return { draft: JSON.parse(text) as unknown };
     },
   });
-  const text = response.text;
-  if (!text) throw new Error('Gemini devolvió una respuesta vacía.');
-  return { draft: JSON.parse(text) as unknown };
 }
 
 export function atalAIPlugin(): Plugin {
@@ -102,17 +134,19 @@ export function atalAIPlugin(): Plugin {
     try {
       sendJson(response, 200, await analyze(await readJson(request)));
     } catch (error) {
-      sendJson(response, /límite|demasiado/i.test(safeMessage(error)) ? 413 : 503, { error: safeMessage(error) });
+      sendJson(response, errorStatus(error), { error: safeMessage(error) });
     }
   };
   return {
     name: 'atal-ai-secure-endpoint',
     configureServer(server) {
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
     configurePreviewServer(server) {
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
   };

@@ -11,6 +11,7 @@ import type {
 
 const DEFAULT_MAX_STEPS = 8;
 const MAX_RESULT_CHARS = 40_000;
+const MAX_REPAIRABLE_FAILURES = 1;
 
 function now(): string {
   return new Date().toISOString();
@@ -45,6 +46,14 @@ function resultMessage(result: ToolExecutionResult): string {
   return result.message;
 }
 
+function visibleFailureMessage(result: Extract<ToolExecutionResult, { status: 'error' }>): string {
+  if (result.code === 'CORE_INPUT_INVALID') return 'No pude completar esa consulta con la información disponible. Puedes reformularla o decirme qué necesitas revisar.';
+  if (result.code === 'CORE_ENTITY_NOT_FOUND') return 'No encontré una entidad que coincida con la solicitud.';
+  if (result.code.startsWith('TOOL_NOT_ALLOWED')) return 'Esa acción no está disponible desde este contexto.';
+  if (['CORE_PRECONDITION_FAILED', 'CORE_VERSION_CONFLICT', 'CORE_INVARIANT_FAILED'].includes(result.code)) return result.message;
+  return 'No pude completar la solicitud de forma segura. No se aplicó ningún cambio dudoso.';
+}
+
 function modelOutput(result: ToolExecutionResult): Record<string, unknown> {
   const serialized = JSON.stringify(result);
   if (serialized.length <= MAX_RESULT_CHARS) return { output: result };
@@ -63,7 +72,7 @@ function functionResponseContent(call: AgentFunctionCall, result: ToolExecutionR
     parts: [{
       functionResponse: {
         id: call.id,
-        name: call.bridge,
+        name: call.functionName ?? call.bridge,
         response: modelOutput(result),
       },
     }],
@@ -89,12 +98,26 @@ function terminalState(task: AgentTaskState, result: ToolExecutionResult, invoca
     return { ...task, status: 'needs-clarification', pendingInvocation: invocation, pendingCall: call, finalText: result.clarification.message };
   }
   if (result.status === 'blocked') return { ...task, status: 'blocked', finalText: result.message };
-  if (result.status === 'error') return { ...task, status: 'failed', finalText: result.message, error: result.code };
+  if (result.status === 'error') return { ...task, status: 'failed', finalText: visibleFailureMessage(result), error: result.code };
   return task;
+}
+
+function isRepairableResult(result: ToolExecutionResult): result is Extract<ToolExecutionResult, { status: 'error' }> {
+  return result.status === 'error' && ['CORE_INPUT_INVALID', 'CORE_ENTITY_NOT_FOUND', 'CORE_ENTITY_RELATION_INVALID'].includes(result.code);
+}
+
+function repairableFailures(task: AgentTaskState): number {
+  return task.completed.filter((step) => isRepairableResult(step.result)).length;
 }
 
 function isTerminalResult(result: ToolExecutionResult): boolean {
   return result.status !== 'success';
+}
+
+function providerFailureMessage(error: unknown): string {
+  return error instanceof Error && error.message.trim()
+    ? error.message.trim()
+    : 'Atal IA no pudo continuar la tarea. No se perdió ningún cambio.';
 }
 
 export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutcome> {
@@ -108,18 +131,38 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       break;
     }
 
-    const turn = await input.requestModel({
-      ...input.request,
-      allowedTools: task.allowedTools,
-      history: task.history,
-    }, input.signal);
+    let turn;
+    try {
+      turn = await input.requestModel({
+        ...input.request,
+        allowedTools: task.allowedTools,
+        history: task.history,
+        previousInteractionId: task.interactionId ?? input.request.previousInteractionId,
+      }, input.signal);
+    } catch (error) {
+      if (input.signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+        task = { ...task, status: 'cancelled', finalText: 'Procesamiento cancelado. El trabajo completado se conservó.', updatedAt: now() };
+      } else {
+        task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+      }
+      break;
+    }
+
     task.stepCount += 1;
     task.updatedAt = now();
+    if (turn.interactionId) task.interactionId = turn.interactionId;
     if (turn.modelContent) task.history.push(turn.modelContent);
 
     if (!turn.calls.length) {
+      const finalText = turn.text.trim();
+      if (!finalText) {
+        task.status = 'failed';
+        task.error = 'EMPTY_MODEL_TURN';
+        task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+        break;
+      }
       task.status = 'completed';
-      task.finalText = turn.text.trim() || 'Listo. Completé el trabajo solicitado.';
+      task.finalText = finalText;
       break;
     }
 
@@ -127,7 +170,7 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     for (const call of turn.calls) {
       if (!task.allowedTools.includes(call.tool)) {
         task.status = 'blocked';
-        task.finalText = 'La acción solicitada no estaba disponible para este contexto.';
+        task.finalText = 'Esa acción no está disponible desde este contexto.';
         task.error = `TOOL_NOT_ALLOWED:${call.tool}`;
         break;
       }
@@ -141,9 +184,15 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       task.seenCallSignatures.push(signature);
       const invocation = invocationFor(call, fileDerived);
       const result = input.executeTool(invocation);
+      const priorRepairableFailures = repairableFailures(task);
       const step = { callId: call.id, invocation, result } satisfies AgentStepResult;
       task.completed.push(step);
       lastResults.push(step);
+
+      if (isRepairableResult(result) && priorRepairableFailures < MAX_REPAIRABLE_FAILURES) {
+        responseParts.push(...functionResponseContent(call, result).parts);
+        continue;
+      }
 
       if (isTerminalResult(result)) {
         task = terminalState(task, result, invocation, call);
@@ -179,7 +228,7 @@ export function appendConfirmedResult(
   next.status = result.status === 'success' ? 'running'
     : result.status === 'clarification' ? 'needs-clarification'
       : result.status === 'blocked' ? 'blocked' : 'failed';
-  next.finalText = result.status === 'success' ? '' : resultMessage(result);
+  next.finalText = result.status === 'success' ? '' : result.status === 'error' ? visibleFailureMessage(result) : resultMessage(result);
   next.updatedAt = now();
   return next;
 }

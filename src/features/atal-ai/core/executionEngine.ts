@@ -10,6 +10,7 @@ import {
   type ToolExecutionResult,
   type ToolInvocation,
 } from './contracts';
+import { contextualInvocationViolation } from './agentic/contextualToolPolicy';
 import { resolveEntities } from './entityResolver';
 import { decideExecutionPolicy } from './riskPolicy';
 import { createToolRegistry, type ToolRegistry } from './toolRegistry';
@@ -75,7 +76,9 @@ function safeResult(error: unknown): ToolExecutionResult {
         : 'ENTITY_RELATION_INVALID';
     return { status: 'clarification', clarification: { code, message: core.message } };
   }
-  if (core.code === 'CORE_EXTERNAL_BLOCKED') return { status: 'blocked', code: core.code, message: core.message };
+  if (core.code === 'CORE_EXTERNAL_BLOCKED' || core.code === 'CORE_CONTEXT_SCOPE_VIOLATION') {
+    return { status: 'blocked', code: core.code, message: core.message };
+  }
   return { status: 'error', code: core.code, message: core.message };
 }
 
@@ -90,6 +93,13 @@ export function executeToolInvocation(
     if (request.invocation.version !== 1 || !request.invocation.proposalId || !Array.isArray(request.invocation.references)) {
       throw coreError('CORE_INPUT_INVALID', 'La propuesta de Atal IA no es válida.');
     }
+    const contextualViolation = contextualInvocationViolation(
+      request.context,
+      request.invocation.tool,
+      request.invocation.references,
+    );
+    if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
+
     const definition = registry.get(request.invocation.tool);
     const validatedInput = definition.validateInput(request.invocation.input);
     const invocation = { ...request.invocation, input: validatedInput };

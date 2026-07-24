@@ -24,6 +24,18 @@ async function send(page, text) {
   await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 }
 
+async function fulfillAgentStream(route, turn, deltas = [turn.text]) {
+  const events = [
+    ...deltas.filter(Boolean).map((text) => ({ type: 'text_delta', text })),
+    { type: 'done', turn },
+  ];
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/x-ndjson; charset=utf-8',
+    body: `${events.map((event) => JSON.stringify(event)).join('\n')}\n`,
+  });
+}
+
 function storedConversation({ id, updatedAt, scope, text, contextKey, contextSurface }) {
   return {
     id,
@@ -44,44 +56,65 @@ function storedConversation({ id, updatedAt, scope, text, contextKey, contextSur
 }
 
 test.describe('Block 4.3 conversational regressions', () => {
-  test('assistant messages keep a readable mobile width instead of collapsing to one word per line', async ({ page }) => {
+  test('an empty conversation does not render a draft until reviewable work exists', async ({ page }) => {
     await openAssistant(page);
-    await page.route('**/api/atal-ai/agent-turn', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          text: 'Puedo conversar contigo, consultar Atal y actuar cuando me lo pidas.',
-          calls: [],
-          modelContent: { role: 'model', parts: [{ text: 'Respuesta natural.' }] },
-        }),
-      });
+    await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Revisar todo' })).toHaveCount(0);
+    await expect(page.locator('.atal-conversational-draft')).toHaveCount(0);
+  });
+
+  test('assistant messages keep a readable mobile width and user messages use Atal green with white text', async ({ page }) => {
+    await openAssistant(page);
+    await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
+      const text = 'Puedo conversar contigo, consultar Atal y actuar cuando me lo pidas.';
+      await fulfillAgentStream(route, {
+        text,
+        calls: [],
+        modelContent: { role: 'model', parts: [{ text }] },
+      }, ['Puedo conversar contigo, ', 'consultar Atal y actuar cuando me lo pidas.']);
     });
 
     await send(page, 'Hola, ¿cómo puedes ayudarme?');
-    const body = page.locator('.atal-command-message.is-assistant > div').last();
-    await expect(body).toContainText('Puedo conversar contigo');
-    const box = await body.boundingBox();
+    const assistantBody = page.locator('.atal-command-message.is-assistant > div').last();
+    await expect(assistantBody).toContainText('Puedo conversar contigo');
+    const box = await assistantBody.boundingBox();
     expect(box).not.toBeNull();
     expect(box.width).toBeGreaterThan(240);
+
+    const userBubble = page.locator('.atal-command-message.is-user > div').last();
+    await expect(userBubble).toHaveCSS('background-color', 'rgb(127, 187, 153)');
+    await expect(userBubble).toHaveCSS('color', 'rgb(255, 255, 255)');
     await expect(page.locator('html')).toHaveJSProperty('scrollWidth', 390);
+  });
+
+  test('streamed assistant Markdown is rendered as safe headings, paragraphs and lists', async ({ page }) => {
+    await openAssistant(page);
+    await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
+      const text = '## Resumen\n\nEl paciente mejoró.\n\n- Menor dolor\n- Mejor movilidad';
+      await fulfillAgentStream(route, {
+        text,
+        calls: [],
+        modelContent: { role: 'model', parts: [{ text }] },
+      }, ['## Resumen\n\n', 'El paciente mejoró.\n\n', '- Menor dolor\n- Mejor movilidad']);
+    });
+
+    await send(page, 'Dame un resumen con formato.');
+    await expect(page.getByRole('heading', { name: 'Resumen', level: 2 })).toBeVisible();
+    await expect(page.locator('.atal-assistant-rich-text li')).toHaveText(['Menor dolor', 'Mejor movilidad']);
+    await expect(page.locator('.atal-assistant-rich-text script')).toHaveCount(0);
   });
 
   test('a new completed turn sends the visible global conversation history to Gemini', async ({ page }) => {
     await openAssistant(page);
     const payloads = [];
     let turn = 0;
-    await page.route('**/api/atal-ai/agent-turn', async (route) => {
+    await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
       payloads.push(route.request().postDataJSON());
       turn += 1;
       const text = turn === 1
         ? 'Claro. Puedo hablar contigo de forma natural y también operar Atal.'
         : 'Sí. Recuerdo que acabamos de hablar sobre cómo puedo ayudarte.';
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ text, calls: [], modelContent: { role: 'model', parts: [{ text }] } }),
-      });
+      await fulfillAgentStream(route, { text, calls: [], modelContent: { role: 'model', parts: [{ text }] } });
     });
 
     await send(page, 'Hola, ¿puedes conversar conmigo?');
@@ -99,17 +132,10 @@ test.describe('Block 4.3 conversational regressions', () => {
   test('a plain image question remains conversational and does not open a clinical review', async ({ page }) => {
     await openAssistant(page);
     let requestPayload;
-    await page.route('**/api/atal-ai/agent-turn', async (route) => {
+    await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
       requestPayload = route.request().postDataJSON();
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          text: 'La imagen muestra el interior de una habitación. No veo información clínica suficiente para modificar un expediente.',
-          calls: [],
-          modelContent: { role: 'model', parts: [{ text: 'Descripción visual.' }] },
-        }),
-      });
+      const text = 'La imagen muestra el interior de una habitación. No veo información clínica suficiente para modificar un expediente.';
+      await fulfillAgentStream(route, { text, calls: [], modelContent: { role: 'model', parts: [{ text: 'Descripción visual.' }] } });
     });
 
     const chooserPromise = page.waitForEvent('filechooser');
@@ -153,7 +179,7 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(dialog.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
   });
 
-  test('structured work keeps the full reviewable draft inside the global assistant', async ({ page }) => {
+  test('structured work restores the full reviewable draft inside the global assistant', async ({ page }) => {
     await openAssistant(page);
     await mockAnalyze(page, createDraftResponse({
       intent: 'create_patient_plan',

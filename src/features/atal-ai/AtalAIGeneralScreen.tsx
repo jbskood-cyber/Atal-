@@ -20,7 +20,7 @@ import { executeAtalClientEffect } from './agent/executeClientEffect';
 import { clearAIWorkspace, createAIConversation, getAIDraft, getLatestAIConversation, readGlobalAIConversations, saveAIConversation, saveAIDraft } from './data/aiRepository';
 import { deleteAIArtifact, deleteAIConversationArtifacts, restoreAIArtifactPayloads, saveAIArtifact, updateAIArtifact } from './data/aiArtifactRepository';
 import type { AgentLoopOutcome } from './core/agentic/contracts';
-import { selectGeneralTurnMode } from './core/agentic/generalTurnMode';
+import { classifyAgentTurn, selectGeneralTurnMode } from './core/agentic/generalTurnMode';
 import type { ConfirmationProof, PolicyDecision, ToolInvocation, UndoReceipt } from './core/contracts';
 import { executeLegacyAIAction, executionContext as legacyExecutionContext } from './core/legacyAdapters';
 import { executeUndo } from './core/undoEngine';
@@ -31,6 +31,7 @@ import { AttachmentMenu } from './components/AttachmentMenu';
 import { AttachmentPreview } from './components/AttachmentPreview';
 import { AudioRecorder } from './components/AudioRecorder';
 import { ConversationalDraftCard } from './components/ConversationalDraftCard';
+import { AssistantMessageContent } from './components/AssistantMessageContent';
 import { SuggestionBar } from './components/SuggestionBar';
 import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest, AIWorkContext } from './types';
 
@@ -133,6 +134,7 @@ export function AtalAIGeneralScreen() {
   const [noticeLeaving, setNoticeLeaving] = useState(false);
   const [retryPayload, setRetryPayload] = useState<{ request: AtalAIAnalyzeRequest; messageId?: string } | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const [transcribing, setTranscribing] = useState(false);
   const [applying, setApplying] = useState(false);
   const [forceApply, setForceApply] = useState(false);
@@ -423,6 +425,7 @@ export function AtalAIGeneralScreen() {
       saveAIConversation(next);
       return next;
     });
+    if (mutationResult && draft && outcome.task.status === 'completed') setDraft(null);
     setAttachments([]);
     if (outcome.task.status === 'needs-confirmation') {
       setDialog('agent-confirmation');
@@ -436,6 +439,7 @@ export function AtalAIGeneralScreen() {
     const controller = new AbortController();
     abortRef.current = controller;
     setProcessing(true);
+    setStreamingText('');
     setNotice('');
     patchConversation({ status: 'processing', composerText: '', transcription: '', error: undefined });
     try {
@@ -448,10 +452,14 @@ export function AtalAIGeneralScreen() {
         attachments,
         messages: conversation.messages,
         task: conversation.agentTask,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
         signal: controller.signal,
+        onTextDelta: (delta) => setStreamingText((current) => current + delta),
       });
       await applyAgentOutcome(outcome, userMessage);
+      setStreamingText('');
     } catch (cause) {
+      setStreamingText('');
       const text = cause instanceof Error ? cause.message : 'Atal IA no pudo continuar la tarea.';
       setConversation((current) => {
         const next = {
@@ -476,7 +484,8 @@ export function AtalAIGeneralScreen() {
     if ((!text && !transcription && !attachments.length) || processing) return;
     const prompt = [text, transcription && `Transcripción: ${transcription}`].filter(Boolean).join('\n\n') || 'Describe los archivos adjuntos y responde a mi solicitud.';
     const userMessage = createMessage('user', prompt, attachments);
-    const mode = selectGeneralTurnMode({
+    const classification = classifyAgentTurn(prompt);
+    const mode = classification.kind === 'proposal' ? 'draft' : selectGeneralTurnMode({
       text: prompt,
       hasDraft: Boolean(draft),
       draftModeArmed,
@@ -633,6 +642,7 @@ export function AtalAIGeneralScreen() {
           },
         });
         append(createMessage('assistant', `Cambios aplicados. ${coreResult.summary.join(' ')}`));
+        setDraft(null);
         setLegacyConfirmation(null);
         setDialog(null);
         setForceApply(false);
@@ -670,6 +680,7 @@ export function AtalAIGeneralScreen() {
     if (mode !== 'review' && mode !== 'explicit' && mode !== 'reinforced') return;
     const now = new Date();
     setProcessing(true);
+    setStreamingText('');
     try {
       const outcome = await confirmAndContinueAtalAgent({
         conversationId: conversation.id,
@@ -680,6 +691,8 @@ export function AtalAIGeneralScreen() {
         attachments,
         messages: conversation.messages,
         task,
+        draftContext: draft ? { draft, privateContact: conversation.privateContact } : undefined,
+        onTextDelta: (delta) => setStreamingText((current) => current + delta),
         confirmation: {
           id: uid('confirmation'),
           fingerprint: pendingStep.result.decision.fingerprint,
@@ -690,7 +703,9 @@ export function AtalAIGeneralScreen() {
       });
       setDialog(null);
       await applyAgentOutcome(outcome);
+      setStreamingText('');
     } catch (cause) {
+      setStreamingText('');
       setNotice(cause instanceof Error ? cause.message : 'No pudimos continuar la acción confirmada.');
     } finally {
       setProcessing(false);
@@ -788,9 +803,10 @@ export function AtalAIGeneralScreen() {
       {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><h1>¿Qué necesitas resolver?</h1><p>Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.</p></div></article>}
       {conversation.messages.map((item) => <article key={item.id} className={`atal-command-message is-${item.role}`}>
         <span>{item.role === 'assistant' ? <AtalMark /> : <UserRound />}</span>
-        <div><header><b>{item.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(item.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header><p>{item.text}</p>{item.attachments.length > 0 && <div className="atal-command-message-files">{item.attachments.map((file) => <small key={file.id}><Paperclip />{file.name}</small>)}</div>}</div>
+        <div><header><b>{item.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(item.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header>{item.role === 'assistant' ? <AssistantMessageContent text={item.text} /> : <p>{item.text}</p>}{item.attachments.length > 0 && <div className="atal-command-message-files">{item.attachments.map((file) => <small key={file.id}><Paperclip />{file.name}</small>)}</div>}</div>
       </article>)}
-      {(processing || conversation.status === 'processing') && <div className="atal-command-processing" role="status" aria-live="assertive"><LoaderCircle className="is-spinning" /><span><b>Trabajando…</b><small>{draft ? 'Atal IA está actualizando el mismo borrador' : 'Atal IA está consultando y ejecutando solo lo autorizado'}</small></span></div>}
+      {streamingText && <article className="atal-command-message is-assistant is-streaming"><span><AtalMark /></span><div><header><b>Atal IA</b><time>ahora</time></header><AssistantMessageContent text={streamingText} streaming /></div></article>}
+      {(processing || conversation.status === 'processing') && !streamingText && <div className="atal-command-processing" role="status" aria-live="assertive"><LoaderCircle className="is-spinning" /><span><b>Trabajando…</b><small>{draft ? 'Atal IA está actualizando el mismo borrador' : 'Atal IA está consultando y ejecutando solo lo autorizado'}</small></span></div>}
       {conversation.error && <div className="atal-command-error" role="alert"><AlertTriangle /><div><b>No pudimos completar la solicitud</b><p>{conversation.error}</p><span>{retryPayload && <button type="button" onClick={retry}><RotateCcw />Reintentar</button>}{retryPayload && <button type="button" onClick={editFailed}>Editar y reenviar</button>}</span></div></div>}
       {matchingPatient && <div className="atal-command-match"><UserRound /><div><b>Encontré a {matchingPatient.name}</b><p>{matchingPatient.diagnosis}</p><span><button type="button" onClick={() => {
         const workContext = { intent: 'create_plan_for_existing_patient' as const, patientMode: 'existing' as const, selectedPatientId: matchingPatient.id, selectedPlanId: '', selectedExerciseId: '' };

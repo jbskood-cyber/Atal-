@@ -75,10 +75,16 @@ export function getAIDraft(id: string) {
   return readAIDrafts().find((draft) => draft.id === id) ?? null;
 }
 
+export function deleteAIDraft(id: string) {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(AI_DRAFTS_KEY, JSON.stringify(readAIDrafts().filter((draft) => draft.id !== id)));
+}
+
 export function saveAIConversation(conversation: AIConversation & { scope?: ConversationScope }) {
   const persisted: PersistedConversation = { ...conversation, scope: inferConversationScope(conversation) };
   const next = [...readAIConversations().filter((item) => item.id !== conversation.id), persisted];
   window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(next));
+  if (conversation.status === 'saved') deleteAIDraft(conversation.draftId);
 }
 
 export function saveAIDraft(draft: AtalAIDraft) {
@@ -88,7 +94,7 @@ export function saveAIDraft(draft: AtalAIDraft) {
 
 export function clearAIWorkspace(conversationId: string, draftId: string) {
   window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(readAIConversations().filter((item) => item.id !== conversationId)));
-  window.localStorage.setItem(AI_DRAFTS_KEY, JSON.stringify(readAIDrafts().filter((item) => item.id !== draftId)));
+  deleteAIDraft(draftId);
 }
 
 export function createAIConversation(scope: ConversationScope = 'global'): PersistedConversation {
