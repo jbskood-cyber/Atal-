@@ -8,6 +8,30 @@ test('ordinary global conversation uses the universal agent', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Hola, ¿cómo puedes ayudarme?', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'agent');
 });
 
+test('conceptual questions stay conversational and do not authorize tools', () => {
+  const result = modeModule().classifyAgentTurn('¿Qué es un recurso de lectura compatible?');
+  assert.equal(result.kind, 'conversation');
+  assert.deepEqual(result.allowedToolKinds, []);
+});
+
+test('workspace questions authorize read tools without authorizing writes', () => {
+  const result = modeModule().classifyAgentTurn('¿Cuál fue la última sesión de Laura?');
+  assert.equal(result.kind, 'read');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+});
+
+test('review requests create proposals without authorizing mutations', () => {
+  const result = modeModule().classifyAgentTurn('Prepara una nota de seguimiento, pero no la guardes todavía.');
+  assert.equal(result.kind, 'proposal');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+});
+
+test('explicit mutations authorize read and action tools', () => {
+  const result = modeModule().classifyAgentTurn('Añade esta nota al expediente de Laura.');
+  assert.equal(result.kind, 'action');
+  assert.deepEqual(result.allowedToolKinds, ['read', 'action']);
+});
+
 test('explicit structured work restores the reviewable draft workspace', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Ayúdame con un nuevo ejercicio para movilidad de hombro', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Prepara un plan de tratamiento de cuatro semanas', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
