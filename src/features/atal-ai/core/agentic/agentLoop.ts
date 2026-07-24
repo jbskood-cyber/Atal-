@@ -11,6 +11,7 @@ import type {
 
 const DEFAULT_MAX_STEPS = 8;
 const MAX_RESULT_CHARS = 40_000;
+const MAX_REPAIRABLE_FAILURES = 1;
 
 function now(): string {
   return new Date().toISOString();
@@ -43,6 +44,13 @@ function resultMessage(result: ToolExecutionResult): string {
   if (result.status === 'clarification') return result.clarification.message;
   if (result.status === 'confirmation-required') return result.decision.reason;
   return result.message;
+}
+
+function visibleFailureMessage(result: Extract<ToolExecutionResult, { status: 'error' }>): string {
+  if (result.code === 'CORE_INPUT_INVALID') return 'No pude completar esa consulta con la información disponible. Puedes reformularla o decirme qué necesitas revisar.';
+  if (result.code === 'CORE_ENTITY_NOT_FOUND') return 'No encontré una entidad que coincida con la solicitud.';
+  if (result.code.startsWith('TOOL_NOT_ALLOWED')) return 'Esa acción no está disponible desde este contexto.';
+  return 'No pude completar la solicitud de forma segura. No se aplicó ningún cambio dudoso.';
 }
 
 function modelOutput(result: ToolExecutionResult): Record<string, unknown> {
@@ -89,8 +97,16 @@ function terminalState(task: AgentTaskState, result: ToolExecutionResult, invoca
     return { ...task, status: 'needs-clarification', pendingInvocation: invocation, pendingCall: call, finalText: result.clarification.message };
   }
   if (result.status === 'blocked') return { ...task, status: 'blocked', finalText: result.message };
-  if (result.status === 'error') return { ...task, status: 'failed', finalText: result.message, error: result.code };
+  if (result.status === 'error') return { ...task, status: 'failed', finalText: visibleFailureMessage(result), error: result.code };
   return task;
+}
+
+function isRepairableResult(result: ToolExecutionResult): result is Extract<ToolExecutionResult, { status: 'error' }> {
+  return result.status === 'error' && ['CORE_INPUT_INVALID', 'CORE_ENTITY_NOT_FOUND', 'CORE_ENTITY_RELATION_INVALID'].includes(result.code);
+}
+
+function repairableFailures(task: AgentTaskState): number {
+  return task.completed.filter((step) => isRepairableResult(step.result)).length;
 }
 
 function isTerminalResult(result: ToolExecutionResult): boolean {
@@ -127,7 +143,7 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     for (const call of turn.calls) {
       if (!task.allowedTools.includes(call.tool)) {
         task.status = 'blocked';
-        task.finalText = 'La acción solicitada no estaba disponible para este contexto.';
+        task.finalText = 'Esa acción no está disponible desde este contexto.';
         task.error = `TOOL_NOT_ALLOWED:${call.tool}`;
         break;
       }
@@ -141,9 +157,15 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       task.seenCallSignatures.push(signature);
       const invocation = invocationFor(call, fileDerived);
       const result = input.executeTool(invocation);
+      const priorRepairableFailures = repairableFailures(task);
       const step = { callId: call.id, invocation, result } satisfies AgentStepResult;
       task.completed.push(step);
       lastResults.push(step);
+
+      if (isRepairableResult(result) && priorRepairableFailures < MAX_REPAIRABLE_FAILURES) {
+        responseParts.push(...functionResponseContent(call, result).parts);
+        continue;
+      }
 
       if (isTerminalResult(result)) {
         task = terminalState(task, result, invocation, call);
@@ -179,7 +201,7 @@ export function appendConfirmedResult(
   next.status = result.status === 'success' ? 'running'
     : result.status === 'clarification' ? 'needs-clarification'
       : result.status === 'blocked' ? 'blocked' : 'failed';
-  next.finalText = result.status === 'success' ? '' : resultMessage(result);
+  next.finalText = result.status === 'success' ? '' : result.status === 'error' ? visibleFailureMessage(result) : resultMessage(result);
   next.updatedAt = now();
   return next;
 }
