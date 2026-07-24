@@ -16,6 +16,7 @@ export type AgentHistoryContent = {
 export type AgentFunctionCall = {
   id: string;
   bridge: 'atal_read' | 'atal_action';
+  functionName?: string;
   tool: string;
   input: unknown;
   references: Array<{ type: string; id?: string; label?: string; parent?: unknown }>;
@@ -25,6 +26,7 @@ export type AgentModelTurn = {
   text: string;
   calls: AgentFunctionCall[];
   modelContent?: AgentHistoryContent;
+  interactionId?: string;
 };
 
 export type AgentTurnRequest = {
@@ -39,6 +41,7 @@ export type AgentTurnRequest = {
   conversationHistory: AgentHistoryContent[];
   history: AgentHistoryContent[];
   attachments: AgentAttachmentRef[];
+  previousInteractionId?: string;
 };
 
 export type AgentTaskStatus =
@@ -71,6 +74,7 @@ export type AgentTaskState = {
   pendingCall?: AgentFunctionCall;
   finalText: string;
   error?: string;
+  interactionId?: string;
   createdAt: string;
   updatedAt: string;
 };
