@@ -39,6 +39,8 @@ export type ExecutionContext = {
   selectedPlanId: string;
   selectedExerciseId: string;
   selectedSessionId: string;
+  assistantScope?: 'global' | 'contextual';
+  contextSurface?: 'patient' | 'clinical-record' | 'plan' | 'exercise' | 'report';
   now: string;
 };
 
@@ -180,48 +182,16 @@ export type ToolDefinition<TInput = unknown, TData = unknown> = {
 
 export type StorePort = {
   read(): AtalState;
-  mutate(mutator: (candidate: AtalState) => void): AtalState;
+  write(next: AtalState): void;
 };
-
-export type TransactionRequest<TInput = unknown> = {
-  definition: ToolDefinition<TInput>;
-  invocation: ToolInvocation<TInput>;
-  context: ExecutionContext;
-  resolved: ResolvedEntities;
-  confirmation?: ConfirmationProof;
-};
-
-export type TransactionOutcome<TData = unknown> = ToolSuccess<TData> & {
-  transactionId: string;
-  committedAt: string;
-};
-
-export type CoreErrorCode =
-  | 'CORE_INPUT_INVALID'
-  | 'CORE_TOOL_UNKNOWN'
-  | 'CORE_ENTITY_NOT_FOUND'
-  | 'CORE_ENTITY_AMBIGUOUS'
-  | 'CORE_ENTITY_RELATION_INVALID'
-  | 'CORE_CONFIRMATION_REQUIRED'
-  | 'CORE_CONFIRMATION_STALE'
-  | 'CORE_PRECONDITION_FAILED'
-  | 'CORE_VERSION_CONFLICT'
-  | 'CORE_INVARIANT_FAILED'
-  | 'CORE_UNDO_EXPIRED'
-  | 'CORE_UNDO_STALE'
-  | 'CORE_EXTERNAL_BLOCKED'
-  | 'CORE_EXECUTION_FAILED';
 
 export class CoreExecutionError extends Error {
-  readonly code: CoreErrorCode;
-
-  constructor(code: CoreErrorCode, message: string) {
+  constructor(public readonly code: string, message: string) {
     super(message);
     this.name = 'CoreExecutionError';
-    this.code = code;
   }
 }
 
-export function coreError(code: CoreErrorCode, message: string): CoreExecutionError {
+export function coreError(code: string, message: string): CoreExecutionError {
   return new CoreExecutionError(code, message);
 }
