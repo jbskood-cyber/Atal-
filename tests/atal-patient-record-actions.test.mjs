@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const patientActions = () => loadCore('src/domain/actions/patientActions.js');
@@ -220,4 +221,10 @@ test('canonical clinical record update creates exactly one snapshot and preserve
   assert.deepEqual(state.clinicalRecordVersions[0].snapshot, before);
   assert.equal(state.events[0].kind, 'record_updated');
   assert.match(state.events[0].detail, /Versión 2/);
+});
+
+test('patient.create composite delegates optional plan creation to the canonical plan action', () => {
+  const toolSource = readFileSync('src/features/atal-ai/core/tools/universalPatientTools.ts', 'utf8');
+  assert.match(toolSource, /applyCreatePlan/);
+  assert.doesNotMatch(toolSource, /environment\.state\.plans\.push\(/);
 });
