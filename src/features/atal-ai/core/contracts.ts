@@ -180,9 +180,22 @@ export type ToolDefinition<TInput = unknown, TData = unknown> = {
   execute(environment: ToolExecutionEnvironment, input: TInput): ToolSuccess<TData>;
 };
 
+export type TransactionRequest<TInput = unknown, TData = unknown> = {
+  definition: ToolDefinition<TInput, TData>;
+  invocation: ToolInvocation<TInput>;
+  context: ExecutionContext;
+  resolved: ResolvedEntities;
+  confirmation?: ConfirmationProof;
+};
+
+export type TransactionOutcome<TData = unknown> = ToolSuccess<TData> & {
+  transactionId: string;
+  committedAt: string;
+};
+
 export type StorePort = {
   read(): AtalState;
-  write(next: AtalState): void;
+  mutate(mutator: (state: AtalState) => void): void;
 };
 
 export class CoreExecutionError extends Error {
