@@ -88,6 +88,7 @@ export type ActionTransactionRequest<TResult extends ActionMutationResult = Acti
   action: string;
   now: string;
   origin: ActionOrigin;
+  transactionIdPrefix?: string;
   supportsUndo: boolean;
   undoTtlMs?: number;
   mutate(state: AtalState, transactionId: string): TResult;
