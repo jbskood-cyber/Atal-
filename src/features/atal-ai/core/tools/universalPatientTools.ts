@@ -1,4 +1,5 @@
-import type { PatientEntity } from '@/src/data/atalStore';
+import { createEntityId, type PatientEntity } from '@/src/data/atalStore';
+import { applyPatientLifecycle } from '@/src/domain/actions/patientLifecycle';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 import { normalizeEntityLabel } from '../stableValue';
@@ -256,10 +257,28 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     },
     preconditions() {},
     execute(environment, input) {
-      const patient = environment.state.patients.find((item) => item.id === environment.resolved.patient?.id)!;
-      patient.status = input.archived ? 'archived' : 'active';
-      patient.updatedAt = environment.context.now;
-      return { status: 'success', message: `${patient.name} quedó ${input.archived ? 'archivado' : 'restaurado'}.`, summary: [`Paciente ${input.archived ? 'archivado' : 'restaurado'}.`], data: { patientId: patient.id }, href: `/patients/${patient.id}`, affected: [{ type: 'patient', id: patient.id }] };
+      const patientId = environment.resolved.patient?.id!;
+      const lifecycle = applyPatientLifecycle(environment.state, {
+        patientId,
+        archived: input.archived,
+        now: environment.context.now,
+        createEventId: () => createEntityId('event'),
+      });
+      const affected: Array<{ type: 'patient' | 'plan'; id: string }> = [
+        { type: 'patient', id: lifecycle.patient.id },
+        ...lifecycle.pausedPlanIds.map((id) => ({ type: 'plan' as const, id })),
+      ];
+      return {
+        status: 'success',
+        message: `${lifecycle.patient.name} quedó ${input.archived ? 'archivado' : 'restaurado'}.`,
+        summary: [
+          `Paciente ${input.archived ? 'archivado' : 'restaurado'}.`,
+          ...(lifecycle.pausedPlanIds.length ? [`${lifecycle.pausedPlanIds.length} plan${lifecycle.pausedPlanIds.length === 1 ? '' : 'es'} activo${lifecycle.pausedPlanIds.length === 1 ? '' : 's'} pausado${lifecycle.pausedPlanIds.length === 1 ? '' : 's'}.`] : []),
+        ],
+        data: { patientId: lifecycle.patient.id, pausedPlanIds: lifecycle.pausedPlanIds },
+        href: `/patients/${lifecycle.patient.id}`,
+        affected,
+      };
     },
   },
   {
