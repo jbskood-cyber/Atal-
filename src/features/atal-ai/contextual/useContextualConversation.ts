@@ -1,12 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getAtalState, useAtalStore } from '@/src/data/atalStore';
+import { confirmAndContinueAtalAgent, runAtalAgentRequest } from '../agent/agentController';
+import { executeAtalClientEffect } from '../agent/executeClientEffect';
 import { requestAtalAI } from '../api/geminiClient';
-import { getAIDraft, saveAIConversation, saveAIDraft } from '../data/aiRepository';
-import type { ClientEffect, ConfirmationProof, PolicyDecision, ToolInvocation } from '../core/contracts';
+import type { AgentLoopOutcome } from '../core/agentic/contracts';
+import { classifyAgentTurn, selectGeneralTurnMode } from '../core/agentic/generalTurnMode';
+import type { ClientEffect, ConfirmationProof, PolicyDecision, ToolInvocation, UndoReceipt } from '../core/contracts';
 import { executeLegacyAIAction, executionContext } from '../core/legacyAdapters';
 import { executeUndo } from '../core/undoEngine';
+import { getAIDraft, saveAIConversation, saveAIDraft } from '../data/aiRepository';
 import type { AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest } from '../types';
 import type { ContextualAIAction } from './actions';
 import { workContextForContext } from './conversationAdapter';
@@ -15,15 +20,18 @@ import type { ContextualAIContext } from './types';
 
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
-function executeClientEffect(effect: ClientEffect) {
-  if (effect.type !== 'download') return;
-  const blob = new Blob([effect.content], { type: effect.mimeType });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = effect.filename;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+type PendingConfirmation = { decision: PolicyDecision; invocation: ToolInvocation };
+
+type UseContextualConversationInput = {
+  context: ContextualAIContext | null;
+  conversationId: string;
+  draftId: string;
+  onProposalFingerprint: (fingerprint: string) => void;
+  onDraftReady: () => void;
+};
+
+function createMessage(role: AIMessage['role'], text: string): AIMessage {
+  return { id: uid('message'), role, text, createdAt: new Date().toISOString(), attachments: [] };
 }
 
 function buildExistingContext(conversation: AIConversation) {
@@ -75,15 +83,9 @@ function buildExistingContext(conversation: AIConversation) {
   };
 }
 
-type PendingConfirmation = { decision: PolicyDecision; invocation: ToolInvocation };
-
-type UseContextualConversationInput = {
-  context: ContextualAIContext | null;
-  conversationId: string;
-  draftId: string;
-  onProposalFingerprint: (fingerprint: string) => void;
-  onDraftReady: () => void;
-};
+function statusForDraft(draft: AtalAIDraft | null): AIConversation['status'] {
+  return draft ? 'ready_for_review' : 'empty';
+}
 
 export function useContextualConversation({
   context,
@@ -92,10 +94,12 @@ export function useContextualConversation({
   onProposalFingerprint,
   onDraftReady,
 }: UseContextualConversationInput) {
+  const navigate = useNavigate();
   const initial = useMemo(() => conversationId ? readConversationById(conversationId) : null, [conversationId]);
   const [conversation, setConversation] = useState<AIConversation | null>(initial);
   const [draft, setDraft] = useState<AtalAIDraft | null>(() => draftId ? getAIDraft(draftId) : null);
   const [notice, setNotice] = useState('');
+  const [streamingText, setStreamingText] = useState('');
   const [applying, setApplying] = useState(false);
   const [forceApply, setForceApply] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<PendingConfirmation | null>(null);
@@ -108,8 +112,9 @@ export function useContextualConversation({
     setConversation(next);
     setDraft(next ? getAIDraft(next.draftId) : null);
     setNotice('');
+    setStreamingText('');
     setPendingConfirmation(null);
-    setConfirmationOpen(false);
+    setConfirmationOpen(next?.agentTask?.status === 'needs-confirmation');
     setForceApply(false);
   }, [conversationId]);
 
@@ -145,8 +150,8 @@ export function useContextualConversation({
   const handleCoreOutcome = useCallback((coreResult: ReturnType<typeof executeLegacyAIAction>, nextDraft?: AtalAIDraft) => {
     if (!conversation) return;
     if (coreResult.status === 'clarification') {
-      append({ id: uid('message'), role: 'assistant', text: coreResult.clarification.message, createdAt: new Date().toISOString(), attachments: [] });
-      patchConversation({ status: draft ? 'ready_for_review' : 'empty' });
+      append(createMessage('assistant', coreResult.clarification.message));
+      patchConversation({ status: statusForDraft(draft) });
       return;
     }
     if (coreResult.status === 'confirmation-required') {
@@ -163,7 +168,6 @@ export function useContextualConversation({
       return;
     }
     if (coreResult.status === 'success') {
-      if (coreResult.clientEffect) executeClientEffect(coreResult.clientEffect);
       const data = (coreResult.data ?? {}) as { patientId?: string; planId?: string; clinicalRecordId?: string; exerciseId?: string };
       const result = {
         ...data,
@@ -173,7 +177,7 @@ export function useContextualConversation({
         planId: (data.planId ?? nextDraft?.command?.planId ?? conversation.workContext.selectedPlanId) || undefined,
       };
       patchConversation({ status: 'saved', savedResult: result, error: undefined });
-      append({ id: uid('message'), role: 'assistant', text: `Cambios aplicados. ${result.summary.join(' ')}`, createdAt: new Date().toISOString(), attachments: [] });
+      append(createMessage('assistant', `Cambios aplicados. ${result.summary.join(' ')}`));
       setPendingConfirmation(null);
       setConfirmationOpen(false);
       setForceApply(false);
@@ -185,25 +189,18 @@ export function useContextualConversation({
       handleCoreOutcome(coreResult);
       return;
     }
-    if (coreResult.clientEffect) executeClientEffect(coreResult.clientEffect);
     const text = coreResult.summary.join(' ').trim() || coreResult.message;
     setConversation((current) => current ? {
       ...current,
-      status: draft ? 'ready_for_review' : 'empty',
+      status: statusForDraft(draft),
       savedResult: undefined,
       error: undefined,
-      messages: [...current.messages, {
-        id: uid('message'),
-        role: 'assistant',
-        text,
-        createdAt: new Date().toISOString(),
-        attachments: [],
-      }],
+      messages: [...current.messages, createMessage('assistant', text)],
       updatedAt: new Date().toISOString(),
     } : current);
   }, [draft, handleCoreOutcome]);
 
-  const process = useCallback(async (request: AtalAIAnalyzeRequest, userMessage: AIMessage) => {
+  const processDraft = useCallback(async (request: AtalAIAnalyzeRequest, userMessage: AIMessage) => {
     if (!conversation) return;
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -243,20 +240,14 @@ export function useContextualConversation({
           status: next.missingFields.length || next.uncertainFields.length ? 'needs_information' : 'ready_for_review',
           composerText: '',
           transcription: '',
-          messages: [...current.messages, {
-            id: uid('message'),
-            role: 'assistant',
-            text: next.assistantMessage || next.followUpQuestion || 'Preparé el borrador. Puedes revisarlo antes de aplicar cambios.',
-            createdAt: new Date().toISOString(),
-            attachments: [],
-          }],
+          messages: [...current.messages, createMessage('assistant', next.assistantMessage || next.followUpQuestion || 'Preparé el borrador. Puedes revisarlo antes de aplicar cambios.')],
           updatedAt: new Date().toISOString(),
         } : current);
         onDraftReady();
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        patchConversation({ status: draft ? 'ready_for_review' : 'empty' });
+        patchConversation({ status: statusForDraft(draft) });
         setNotice('Procesamiento cancelado.');
       } else {
         const message = error instanceof Error ? error.message : 'No pudimos procesar la solicitud.';
@@ -268,8 +259,100 @@ export function useContextualConversation({
     }
   }, [conversation, currentVersions, draft, handleReadOnlyOutcome, onDraftReady, patchConversation]);
 
+  const applyAgentOutcome = useCallback(async (outcome: AgentLoopOutcome, userMessage?: AIMessage) => {
+    if (!conversation) return;
+    const effectMessages: string[] = [];
+    for (const step of outcome.lastResults) {
+      if (step.result.status !== 'success' || !step.result.clientEffect) continue;
+      const effect = await executeAtalClientEffect(step.result.clientEffect, {
+        navigate,
+        conversationId: conversation.id,
+        draftId: conversation.draftId,
+      });
+      effectMessages.push(effect.message);
+    }
+    const successful = outcome.lastResults.filter((step) => step.result.status === 'success');
+    const mutation = successful.findLast((step) => step.result.status === 'success' && (step.result.affected.length > 0 || step.result.undo));
+    const mutationResult = mutation?.result.status === 'success' ? mutation.result : undefined;
+    const data = mutationResult?.data && typeof mutationResult.data === 'object' ? mutationResult.data as Record<string, unknown> : {};
+    const finalText = [outcome.task.finalText, ...effectMessages].filter(Boolean).join(' ');
+    setConversation((current) => current ? {
+      ...current,
+      messages: [
+        ...current.messages,
+        ...(userMessage ? [userMessage] : []),
+        ...(finalText ? [createMessage('assistant', finalText)] : []),
+      ],
+      agentTask: outcome.task,
+      status: outcome.task.status === 'needs-confirmation'
+        ? 'ready_for_review'
+        : outcome.task.status === 'failed' || outcome.task.status === 'blocked'
+          ? 'error'
+          : mutationResult ? 'saved' : statusForDraft(draft),
+      composerText: '',
+      transcription: '',
+      error: outcome.task.error,
+      savedResult: mutationResult ? {
+        patientId: typeof data.patientId === 'string' ? data.patientId : undefined,
+        planId: typeof data.planId === 'string' ? data.planId : undefined,
+        clinicalRecordId: typeof data.clinicalRecordId === 'string' ? data.clinicalRecordId : undefined,
+        exerciseId: typeof data.exerciseId === 'string' ? data.exerciseId : undefined,
+        summary: mutationResult.summary,
+        undo: mutationResult.undo,
+      } : current.savedResult,
+      updatedAt: new Date().toISOString(),
+    } : current);
+    if (outcome.task.status === 'needs-confirmation') {
+      const pendingStep = outcome.task.completed.findLast((step) => step.result.status === 'confirmation-required');
+      if (pendingStep?.result.status === 'confirmation-required') onProposalFingerprint(pendingStep.result.decision.fingerprint);
+      setConfirmationOpen(true);
+    } else {
+      setConfirmationOpen(false);
+    }
+  }, [conversation, draft, navigate, onProposalFingerprint]);
+
+  const processAgent = useCallback(async (text: string, userMessage: AIMessage) => {
+    if (!conversation || !context) return;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setStreamingText('');
+    setNotice('');
+    patchConversation({ status: 'processing', composerText: '', transcription: '', error: undefined });
+    try {
+      const outcome = await runAtalAgentRequest({
+        conversationId: conversation.id,
+        draftId: conversation.draftId,
+        text,
+        route: context.route,
+        workContext: conversation.workContext,
+        attachments: [],
+        messages: conversation.messages,
+        task: conversation.agentTask,
+        assistantScope: 'contextual',
+        contextSurface: context.surface,
+        selectedSessionId: context.sessionId,
+        signal: controller.signal,
+        onTextDelta: (delta) => setStreamingText((current) => current + delta),
+      });
+      await applyAgentOutcome(outcome, userMessage);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Atal IA no pudo continuar la tarea.';
+      setConversation((current) => current ? {
+        ...current,
+        messages: [...current.messages, userMessage, createMessage('assistant', message)],
+        status: 'error',
+        error: message,
+        updatedAt: new Date().toISOString(),
+      } : current);
+    } finally {
+      setStreamingText('');
+      abortRef.current = null;
+    }
+  }, [applyAgentOutcome, context, conversation, patchConversation]);
+
   const setText = useCallback((composerText: string) => {
-    patchConversation({ composerText, status: composerText ? 'composing' : draft ? 'ready_for_review' : 'empty' });
+    patchConversation({ composerText, status: composerText ? 'composing' : statusForDraft(draft) });
   }, [draft, patchConversation]);
 
   const prepareAction = useCallback((action: ContextualAIAction) => {
@@ -287,6 +370,15 @@ export function useContextualConversation({
     if (!conversation || !context) return;
     const text = conversation.composerText.trim();
     if (!text) return;
+    const userMessage = createMessage('user', text);
+    const classification = classifyAgentTurn(text);
+    const useDraft = Boolean(draft)
+      || classification.kind === 'proposal'
+      || selectGeneralTurnMode({ text, hasDraft: Boolean(draft), draftModeArmed: false, hasImageOrPdf: false }) === 'draft';
+    if (!useDraft) {
+      void processAgent(text, userMessage);
+      return;
+    }
     if (conversation.workContext.patientMode === 'existing' && !conversation.workContext.selectedPatientId) {
       setNotice('Selecciona el paciente antes de continuar.');
       return;
@@ -299,8 +391,7 @@ export function useContextualConversation({
       setNotice('Selecciona el ejercicio antes de continuar.');
       return;
     }
-    const userMessage: AIMessage = { id: uid('message'), role: 'user', text, createdAt: new Date().toISOString(), attachments: [] };
-    void process({
+    void processDraft({
       mode: 'analyze',
       draftId: conversation.draftId,
       text,
@@ -309,7 +400,7 @@ export function useContextualConversation({
       workContext: conversation.workContext,
       existingContext: buildExistingContext(conversation),
     }, userMessage);
-  }, [context, conversation, draft, process]);
+  }, [context, conversation, draft, processAgent, processDraft]);
 
   const performApply = useCallback(async (confirmation?: ConfirmationProof) => {
     if (!conversation || !draft) return;
@@ -333,7 +424,52 @@ export function useContextualConversation({
 
   const apply = useCallback(() => { void performApply(); }, [performApply]);
 
+  const confirmAgent = useCallback(async () => {
+    if (!conversation || !context || conversation.agentTask?.status !== 'needs-confirmation') return;
+    const task = conversation.agentTask;
+    const pendingStep = task.completed.findLast((step) => step.result.status === 'confirmation-required');
+    if (!pendingStep || pendingStep.result.status !== 'confirmation-required') return;
+    const mode = pendingStep.result.decision.mode;
+    if (mode !== 'review' && mode !== 'explicit' && mode !== 'reinforced') return;
+    const now = new Date();
+    setApplying(true);
+    setStreamingText('');
+    try {
+      const outcome = await confirmAndContinueAtalAgent({
+        conversationId: conversation.id,
+        draftId: conversation.draftId,
+        text: '',
+        route: context.route,
+        workContext: conversation.workContext,
+        attachments: [],
+        messages: conversation.messages,
+        task,
+        assistantScope: 'contextual',
+        contextSurface: context.surface,
+        selectedSessionId: context.sessionId,
+        onTextDelta: (delta) => setStreamingText((current) => current + delta),
+        confirmation: {
+          id: uid('confirmation'),
+          fingerprint: pendingStep.result.decision.fingerprint,
+          mode,
+          confirmedAt: now.toISOString(),
+          expiresAt: new Date(now.getTime() + 5 * 60_000).toISOString(),
+        },
+      });
+      await applyAgentOutcome(outcome);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'No pudimos continuar la acción confirmada.');
+    } finally {
+      setStreamingText('');
+      setApplying(false);
+    }
+  }, [applyAgentOutcome, context, conversation]);
+
   const confirmExecution = useCallback(() => {
+    if (conversation?.agentTask?.status === 'needs-confirmation') {
+      void confirmAgent();
+      return;
+    }
     if (!pendingConfirmation) return;
     const mode = pendingConfirmation.decision.mode;
     if (mode !== 'review' && mode !== 'explicit' && mode !== 'reinforced') {
@@ -348,12 +484,27 @@ export function useContextualConversation({
       confirmedAt: now,
       expiresAt: new Date(Date.parse(now) + 5 * 60_000).toISOString(),
     });
-  }, [pendingConfirmation, performApply]);
+  }, [confirmAgent, conversation?.agentTask?.status, pendingConfirmation, performApply]);
 
   const cancelConfirmation = useCallback(() => {
+    if (conversation?.agentTask?.status === 'needs-confirmation') {
+      const task = {
+        ...conversation.agentTask,
+        status: 'cancelled' as const,
+        pendingInvocation: undefined,
+        pendingCall: undefined,
+        finalText: 'Acción cancelada. Los pasos seguros ya completados se conservaron.',
+        updatedAt: new Date().toISOString(),
+      };
+      patchConversation({
+        agentTask: task,
+        status: statusForDraft(draft),
+        messages: [...conversation.messages, createMessage('assistant', task.finalText)],
+      });
+    }
     setPendingConfirmation(null);
     setConfirmationOpen(false);
-  }, []);
+  }, [conversation, draft, patchConversation]);
 
   const undo = useCallback(() => {
     if (!conversation?.savedResult?.undo) return;
@@ -363,9 +514,9 @@ export function useContextualConversation({
       return;
     }
     try {
-      executeUndo(receipt, executionContext(conversation.workContext, { conversationId: conversation.id, draftId: conversation.draftId }));
+      executeUndo(receipt as UndoReceipt, executionContext(conversation.workContext, { conversationId: conversation.id, draftId: conversation.draftId }));
       patchConversation({ savedResult: { ...conversation.savedResult, undo: undefined } });
-      append({ id: uid('message'), role: 'assistant', text: 'Cambio deshecho correctamente.', createdAt: new Date().toISOString(), attachments: [] });
+      append(createMessage('assistant', 'Cambio deshecho correctamente.'));
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'No fue posible deshacer.');
     }
@@ -423,6 +574,7 @@ export function useContextualConversation({
     conversation,
     draft,
     notice,
+    streamingText,
     applying,
     confirmationOpen,
     conflict,
