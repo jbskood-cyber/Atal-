@@ -38,6 +38,14 @@ test('review requests create proposals without authorizing mutations', () => {
   assert.deepEqual(result.allowedToolKinds, ['read']);
 });
 
+test('a note prepared for later review opens the structured draft workspace', () => {
+  const text = 'Ayúdame a preparar una nota clínica breve para este paciente. La revisaré antes de aplicarla.';
+  const result = modeModule().classifyAgentTurn(text);
+  assert.equal(result.kind, 'proposal');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+  assert.equal(modeModule().selectGeneralTurnMode({ text, hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
+});
+
 test('explicit mutations authorize read and action tools', () => {
   const result = modeModule().classifyAgentTurn('Añade esta nota al expediente de Laura.');
   assert.equal(result.kind, 'action');
