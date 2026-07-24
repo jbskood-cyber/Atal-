@@ -177,3 +177,77 @@ test('AI plan create/update/membership produce the canonical record association 
   assert.deepEqual(plan.exerciseIds, ['exercise-1', 'exercise-2']);
   assert.equal(state.events[0].kind, 'plan_updated');
 });
+
+test('canonical plan lifecycle enforces allowed transitions and syncs record association', () => {
+  const { applyPlanLifecycle } = planActions();
+  const state = baseState();
+  state.plans[0].status = 'draft';
+  state.clinicalRecords[0].planId = '';
+  const activated = applyPlanLifecycle(state, { planId: 'plan-active', status: 'active', now: '2026-07-24T15:00:00.000Z', createEventId: idFactory('event-active'), createNotificationId: idFactory('notification-active') });
+  assert.equal(activated.plan.status, 'active');
+  assert.equal(state.events[0].kind, 'plan_activated');
+  assert.equal(state.notifications[0].href, '/plans/plan-active');
+  assert.equal(state.clinicalRecords[0].planId, 'plan-active');
+
+  const paused = applyPlanLifecycle(state, { planId: 'plan-active', status: 'paused', now: '2026-07-24T15:05:00.000Z', createEventId: idFactory('event-paused'), createNotificationId: idFactory('notification-unused') });
+  assert.equal(paused.plan.status, 'paused');
+  assert.equal(state.events[0].kind, 'plan_paused');
+
+  const completed = applyPlanLifecycle(state, { planId: 'plan-active', status: 'completed', now: '2026-07-24T15:10:00.000Z', createEventId: idFactory('event-completed'), createNotificationId: idFactory('notification-unused') });
+  assert.equal(completed.plan.status, 'completed');
+  assert.equal(state.events[0].kind, 'plan_completed');
+
+  const archived = applyPlanLifecycle(state, { planId: 'plan-active', status: 'archived', now: '2026-07-24T15:15:00.000Z', createEventId: idFactory('event-archived'), createNotificationId: idFactory('notification-unused') });
+  assert.equal(archived.plan.status, 'archived');
+  assert.equal(state.events[0].kind, 'plan_archived');
+
+  const restored = applyPlanLifecycle(state, { planId: 'plan-active', status: 'draft', now: '2026-07-24T15:20:00.000Z', createEventId: idFactory('event-restored'), createNotificationId: idFactory('notification-unused') });
+  assert.equal(restored.plan.status, 'draft');
+  assert.equal(state.events[0].kind, 'plan_restored');
+});
+
+test('canonical plan lifecycle rejects illegal transitions and active plans without exercises atomically', () => {
+  const { applyPlanLifecycle } = planActions();
+  const illegal = baseState();
+  illegal.plans[0].status = 'draft';
+  const illegalBefore = structuredClone(illegal);
+  assert.throws(() => applyPlanLifecycle(illegal, { planId: 'plan-active', status: 'completed', now: '2026-07-24T16:00:00.000Z', createEventId: idFactory('event'), createNotificationId: idFactory('notification') }), /transición.*no.*permitida/i);
+  assert.deepEqual(illegal, illegalBefore);
+
+  const noExercises = baseState();
+  noExercises.plans[0].status = 'paused';
+  noExercises.plans[0].exerciseIds = [];
+  const noExercisesBefore = structuredClone(noExercises);
+  assert.throws(() => applyPlanLifecycle(noExercises, { planId: 'plan-active', status: 'active', now: '2026-07-24T16:05:00.000Z', createEventId: idFactory('event'), createNotificationId: idFactory('notification') }), /activo necesita al menos un ejercicio/i);
+  assert.deepEqual(noExercises, noExercisesBefore);
+});
+
+test('canonical activation rejects active conflict unless an explicit resolution is supplied', () => {
+  const { applyPlanLifecycle } = planActions();
+  const state = baseState();
+  state.plans.push({ ...state.plans[0], id: 'plan-target', title: 'Plan objetivo', status: 'paused', exerciseIds: ['exercise-2'] });
+  const before = structuredClone(state);
+  assert.throws(() => applyPlanLifecycle(state, { planId: 'plan-target', status: 'active', now: '2026-07-24T16:10:00.000Z', createEventId: idFactory('event'), createNotificationId: idFactory('notification') }), /plan activo/i);
+  assert.deepEqual(state, before);
+});
+
+test('canonical active replacement resolves previous plan, activates target, syncs record and audits both transitions', () => {
+  const { applyPlanLifecycle } = planActions();
+  for (const resolution of ['pause', 'complete', 'archive']) {
+    const state = baseState();
+    state.plans.push({ ...state.plans[0], id: 'plan-target', title: 'Plan objetivo', status: 'paused', exerciseIds: ['exercise-2'] });
+    const result = applyPlanLifecycle(state, {
+      planId: 'plan-target', status: 'active', resolveActiveConflict: resolution,
+      now: '2026-07-24T16:20:00.000Z', createEventId: idFactory('event-previous', 'event-target'), createNotificationId: idFactory('notification-target'),
+    });
+    const previous = state.plans.find((plan) => plan.id === 'plan-active');
+    assert.equal(previous.status, resolution === 'complete' ? 'completed' : resolution === 'archive' ? 'archived' : 'paused');
+    assert.equal(result.plan.status, 'active');
+    assert.equal(state.events.length, 2);
+    assert.equal(state.events[0].kind, 'plan_activated');
+    assert.equal(state.events[1].kind, resolution === 'complete' ? 'plan_completed' : resolution === 'archive' ? 'plan_archived' : 'plan_paused');
+    assert.equal(state.clinicalRecords[0].planId, 'plan-target');
+    assert.equal(state.notifications.length, 1);
+    assert.equal(state.notifications[0].href, '/plans/plan-target');
+  }
+});
