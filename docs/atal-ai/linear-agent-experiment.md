@@ -5,8 +5,8 @@
 - Base: `feature/atal-ai-agentic-audit-block-4-3`
 - Head: `feature/atal-ai-linear-agent`
 - Starting SHA: `f12fadede8fe1badd5ae16e64d1fdf2b2cc676d9`
-- Validated branch SHA: `6aaf5778e502cf70488e6516951d2a9531ca13c0`
-- Agent implementation SHA: `9e533d4e87aec477388a359d278f2a47e4ccf0c0`
+- Current branch HEAD: `24f99ce5ee9572f94c31ceb16e7074906ff5a3f0`
+- Fully validated implementation SHA: `9e533d4e87aec477388a359d278f2a47e4ccf0c0`
 - Pull request: #19
 - `main`, PR #18 and its source branch remain untouched.
 
@@ -52,7 +52,9 @@ If every model is temporarily unavailable, the user message remains stored and t
 - Internal `CORE_*` codes are not product copy.
 - No empty draft card is shown.
 
-## Verification on the validated branch SHA
+## Verification
+
+On implementation SHA `9e533d4e87aec477388a359d278f2a47e4ccf0c0`:
 
 - dependency installation: PASS
 - TypeScript and Node quality suite: PASS
@@ -62,5 +64,10 @@ If every model is temporarily unavailable, the user message remains stored and t
 - fallback policy unit tests: PASS
 - Playwright: 43 passed, 0 failed, 0 skipped
 - mobile provider-limit regression: PASS
+
+On current branch HEAD `24f99ce5ee9572f94c31ceb16e7074906ff5a3f0`:
+
+- quality: PASS
+- Playwright repetition: still running at documentation time; no production code changed after the fully validated implementation SHA.
 
 The remaining gate is product-owner visual and conversational validation in Google AI Studio. PR #19 must remain draft and unmerged until explicit authorization.
