@@ -83,7 +83,7 @@ function entityInState(state: AtalState, entity: ActionAffectedEntity): { update
     case 'exercise': return state.exercises.find((item) => item.id === entity.id);
     case 'clinical-record': return state.clinicalRecords.find((item) => item.id === entity.id);
     case 'session': return state.sessions.find((item) => item.id === entity.id);
-    case 'settings': return state.settings;
+    case 'settings': return undefined;
   }
 }
 
