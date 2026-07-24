@@ -49,7 +49,7 @@ const explicitActionPatterns = [
 ];
 
 const workspaceReadPatterns = [
-  /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra|abre|abrir|navega)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)/i,
+  /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra|abre|abrir|navega)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)\b/i,
   /\b(?:último|ultima|última|anterior|actual|activo|activa|reciente|recientes)\b.{0,48}\b(?:plan|sesión|sesion|reporte|expediente|paciente)\b/i,
   /\b(?:de|del|para)\s+[A-ZÁÉÍÓÚÑ][\p{L}]+/u,
   /\b(?:este|esta|ese|esa|aquel|aquella|su)\s+(?:paciente|plan|sesión|sesion|expediente|reporte)\b/i,
