@@ -1,0 +1,44 @@
+name: atal-e2e-diagnostic
+
+on:
+  push:
+    branches:
+      - feature/atal-ai-linear-agent
+    paths:
+      - .github/workflows/atal-e2e-diagnostic.yml
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/atal-ai-linear-agent
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Capture focused Playwright output
+        shell: bash
+        run: |
+          mkdir -p docs/diagnostics
+          set +e
+          npx playwright test e2e/block-4-3-conversation-regressions.spec.mjs --reporter=line > docs/diagnostics/atal-linear-agent-e2e.txt 2>&1
+          status=$?
+          echo "EXIT_STATUS=$status" >> docs/diagnostics/atal-linear-agent-e2e.txt
+          exit 0
+      - name: Commit diagnostic output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/diagnostics/atal-linear-agent-e2e.txt
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "chore: capture Atal agent E2E diagnostics"
+          git push origin HEAD:feature/atal-ai-linear-agent
