@@ -23,13 +23,14 @@ test('configured cascade is trimmed deduplicated and falls back to safe defaults
   assert.deepEqual(resolveGeminiModelCascade(''), fallbackModule().DEFAULT_GEMINI_MODEL_CASCADE);
 });
 
-test('only transient provider failures authorize another model', () => {
+test('only transient provider or empty-model failures authorize another model', () => {
   const { isTransientGeminiFailure } = fallbackModule();
   for (const message of [
     '429 RESOURCE_EXHAUSTED quota exceeded',
     '503 UNAVAILABLE service overloaded',
     'The request timed out',
     'fetch failed ECONNRESET',
+    'MODEL_EMPTY_RESPONSE',
   ]) assert.equal(isTransientGeminiFailure(new Error(message)), true, message);
 
   for (const message of [
