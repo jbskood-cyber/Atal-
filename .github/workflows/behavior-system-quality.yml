@@ -66,7 +66,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:core:compile
-      - run: node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs
+      - run: node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs
 
   legacy-tests:
     runs-on: ubuntu-latest
@@ -87,7 +87,7 @@ jobs:
           : > legacy-test-failures.txt
           : > legacy-test-output.txt
           for file in tests/*.test.mjs; do
-            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ]; then
+            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-association-versioning.test.mjs" ]; then
               continue
             fi
             echo "=== $file ===" | tee -a legacy-test-output.txt
