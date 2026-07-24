@@ -34,17 +34,36 @@ test('tool selection stays bounded and includes contextual patient and plan tool
   assert.equal(tools.includes('exercise.create_simple'), true);
 });
 
-test('ordinary conversation stays read-only instead of defaulting to patient mutations', () => {
+test('ordinary conversation exposes no tools and lets Gemini answer directly', () => {
   const tools = selectionModule().selectAgentTools({
     text: 'Hola, explícame con calma qué puedes hacer por mí.',
     route: '/assistant',
     hasImageOrPdf: false,
     hasAudio: false,
   });
+  assert.deepEqual(tools, []);
+});
+
+test('a conceptual question about tools does not call app.read', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: '¿Qué es un recurso de lectura compatible?',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.deepEqual(tools, []);
+});
+
+test('a workspace question exposes read tools without mutation tools', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: '¿Cuál fue la última sesión de Laura?',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
   assert.equal(tools.includes('app.read'), true);
   assert.equal(tools.includes('patient.update'), false);
-  assert.equal(tools.includes('patient.create'), false);
-  assert.equal(tools.includes('clinical_record.upsert'), false);
+  assert.equal(tools.includes('session.complete'), false);
 });
 
 test('a descriptive image question does not expose clinical mutation tools', () => {
