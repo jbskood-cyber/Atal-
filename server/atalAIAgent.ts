@@ -37,7 +37,9 @@ function safeMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : '';
   if (/API key|GEMINI_API_KEY|403|401/i.test(message)) return 'Atal IA no está configurada todavía. Añade GEMINI_API_KEY como secreto del proyecto.';
   if (/quota|429/i.test(message)) return 'Gemini alcanzó temporalmente su límite. El trabajo completado sigue guardado.';
-  if (/JSON|schema|function call|response/i.test(message)) return 'Gemini devolvió una llamada que Atal no pudo validar. No se aplicó ningún cambio dudoso.';
+  if (/CORE_INPUT_INVALID|schema|function call|response|JSON/i.test(message)) return 'No pude completar esa consulta con la información disponible. Puedes reformularla o decirme qué necesitas revisar.';
+  if (/CORE_ENTITY_NOT_FOUND/i.test(message)) return 'No encontré una entidad que coincida con la solicitud.';
+  if (/TOOL_NOT_ALLOWED/i.test(message)) return 'Esa acción no está disponible desde este contexto.';
   return message || 'Gemini no pudo continuar esta tarea. El trabajo completado sigue guardado.';
 }
 
@@ -45,7 +47,7 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   if (!payload || typeof payload !== 'object') throw new Error('La solicitud del agente no es válida.');
   if (typeof payload.conversationId !== 'string' || !payload.conversationId.trim()) throw new Error('Falta la conversación del agente.');
   if (typeof payload.text !== 'string' || payload.text.length > 30_000) throw new Error('El mensaje no es válido.');
-  if (!Array.isArray(payload.allowedTools) || payload.allowedTools.length < 1 || payload.allowedTools.length > AGENT_MAX_ACTIVE_TOOLS) throw new Error('La selección de herramientas no es válida.');
+  if (!Array.isArray(payload.allowedTools) || payload.allowedTools.length > AGENT_MAX_ACTIVE_TOOLS) throw new Error('La selección de herramientas no es válida.');
   const conversationHistory = Array.isArray(payload.conversationHistory) ? payload.conversationHistory : [];
   if (conversationHistory.length > MAX_CONVERSATION_CONTENTS) throw new Error('La conversación supera el límite seguro.');
   if (!Array.isArray(payload.history) || payload.history.length > MAX_HISTORY_CONTENTS) throw new Error('El historial de la tarea supera el límite seguro.');
@@ -137,15 +139,18 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest) {
   ];
   const contents = [...payload.conversationHistory, initialUserContent(payload), ...payload.history];
   const ai = new GoogleGenAI({ apiKey });
+  const config: Record<string, unknown> = {
+    systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
+    maxOutputTokens: 2_048,
+  };
+  if (declarations.length) {
+    config.tools = [{ functionDeclarations: declarations }];
+    config.toolConfig = { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } };
+  }
   const response = await ai.models.generateContent({
     model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
     contents: contents as never,
-    config: {
-      systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
-      tools: [{ functionDeclarations: declarations as never }],
-      toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
-      maxOutputTokens: 2_048,
-    },
+    config: config as never,
   });
   const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, byName));
   const modelContent = response.candidates?.[0]?.content as AgentHistoryContent | undefined;
