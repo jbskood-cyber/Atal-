@@ -20,7 +20,7 @@ import { executeAtalClientEffect } from './agent/executeClientEffect';
 import { clearAIWorkspace, createAIConversation, getAIDraft, getLatestAIConversation, readGlobalAIConversations, saveAIConversation, saveAIDraft } from './data/aiRepository';
 import { deleteAIArtifact, deleteAIConversationArtifacts, restoreAIArtifactPayloads, saveAIArtifact, updateAIArtifact } from './data/aiArtifactRepository';
 import type { AgentLoopOutcome } from './core/agentic/contracts';
-import { selectGeneralTurnMode } from './core/agentic/generalTurnMode';
+import { classifyAgentTurn, selectGeneralTurnMode } from './core/agentic/generalTurnMode';
 import type { ConfirmationProof, PolicyDecision, ToolInvocation, UndoReceipt } from './core/contracts';
 import { executeLegacyAIAction, executionContext as legacyExecutionContext } from './core/legacyAdapters';
 import { executeUndo } from './core/undoEngine';
@@ -482,7 +482,8 @@ export function AtalAIGeneralScreen() {
     if ((!text && !transcription && !attachments.length) || processing) return;
     const prompt = [text, transcription && `Transcripción: ${transcription}`].filter(Boolean).join('\n\n') || 'Describe los archivos adjuntos y responde a mi solicitud.';
     const userMessage = createMessage('user', prompt, attachments);
-    const mode = selectGeneralTurnMode({
+    const classification = classifyAgentTurn(prompt);
+    const mode = classification.kind === 'proposal' ? 'draft' : selectGeneralTurnMode({
       text: prompt,
       hasDraft: Boolean(draft),
       draftModeArmed,
@@ -639,6 +640,7 @@ export function AtalAIGeneralScreen() {
           },
         });
         append(createMessage('assistant', `Cambios aplicados. ${coreResult.summary.join(' ')}`));
+        setDraft(null);
         setLegacyConfirmation(null);
         setDialog(null);
         setForceApply(false);
