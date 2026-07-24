@@ -18,6 +18,7 @@ test('every agent tool has a unique direct function name and concrete input sche
 test('app.read exposes the exact supported resources instead of a generic object', () => {
   const entry = catalog().agentToolCatalogByName.get('app.read');
   assert.deepEqual(entry.inputSchema.properties.resource.enum, [
+    'patients',
     'patient_profile',
     'clinical_record',
     'clinical_record_versions',

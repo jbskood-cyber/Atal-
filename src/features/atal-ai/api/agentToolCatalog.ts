@@ -76,7 +76,7 @@ function entry(name: string, kind: AgentToolCatalogEntry['kind'], contract: stri
 }
 
 export const APP_READ_RESOURCES = [
-  'patient_profile', 'clinical_record', 'clinical_record_versions', 'plans', 'plan', 'exercises', 'exercise',
+  'patients', 'patient_profile', 'clinical_record', 'clinical_record_versions', 'plans', 'plan', 'exercises', 'exercise',
   'session_preparation', 'sessions', 'report', 'activity', 'settings', 'delivery',
 ] as const;
 

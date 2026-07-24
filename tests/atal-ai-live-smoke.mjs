@@ -17,7 +17,7 @@ const functionDeclaration = {
     properties: {
       resource: {
         type: 'string',
-        enum: ['patient_profile', 'clinical_record', 'plans', 'plan', 'exercises', 'exercise', 'sessions', 'report', 'activity', 'settings', 'delivery'],
+        enum: ['patients', 'patient_profile', 'clinical_record', 'plans', 'plan', 'exercises', 'exercise', 'sessions', 'report', 'activity', 'settings', 'delivery'],
       },
       query: { type: 'string' },
       status: { type: 'string' },

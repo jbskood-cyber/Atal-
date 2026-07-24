@@ -2,6 +2,7 @@ import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 import { normalizeEntityLabel } from '../stableValue';
 
 export type AppReadResource =
+  | 'patients'
   | 'patient_profile'
   | 'clinical_record'
   | 'clinical_record_versions'
@@ -28,6 +29,7 @@ export type AppReadInput = {
 };
 
 const resources = new Set<AppReadResource>([
+  'patients',
   'patient_profile',
   'clinical_record',
   'clinical_record_versions',
@@ -110,6 +112,22 @@ function readTool(): ToolDefinition<AppReadInput> {
     execute(environment, input) {
       const { resource, query, status, limit } = input;
       const normalizedQuery = normalizeEntityLabel(query);
+
+      if (resource === 'patients') {
+        const matching = newestFirst(environment.state.patients.filter((item) =>
+          (!status || item.status === status)
+          && (!normalizedQuery || normalizeEntityLabel(`${item.name} ${item.diagnosis} ${item.affectedArea}`).includes(normalizedQuery)),
+        ));
+        const patients = matching.slice(0, limit);
+        return {
+          status: 'success',
+          message: `Encontré ${matching.length} pacientes.`,
+          summary: [`${matching.length} pacientes coinciden.`, ...patients.map((item) => `${item.name} · ${item.status}`)],
+          data: { patients, total: matching.length },
+          href: '/patients',
+          affected: [],
+        };
+      }
 
       if (resource === 'patient_profile') {
         const patient = requireResolved(environment.resolved.patient, 'el paciente');
