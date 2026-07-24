@@ -72,7 +72,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-review-actions.test.mjs 2>&1 | tee behavior-test-output.txt
+          node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-actions.test.mjs tests/atal-session-review-actions.test.mjs tests/atal-session-completion-actions.test.mjs 2>&1 | tee behavior-test-output.txt
       - name: Upload behavior test output
         if: always()
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
           : > legacy-test-failures.txt
           : > legacy-test-output.txt
           for file in tests/*.test.mjs; do
-            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-association-versioning.test.mjs" ] || [ "$file" = "tests/atal-exercise-actions.test.mjs" ] || [ "$file" = "tests/atal-session-review-actions.test.mjs" ]; then
+            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-association-versioning.test.mjs" ] || [ "$file" = "tests/atal-exercise-actions.test.mjs" ] || [ "$file" = "tests/atal-session-actions.test.mjs" ] || [ "$file" = "tests/atal-session-review-actions.test.mjs" ] || [ "$file" = "tests/atal-session-completion-actions.test.mjs" ]; then
               continue
             fi
             echo "=== $file ===" | tee -a legacy-test-output.txt
