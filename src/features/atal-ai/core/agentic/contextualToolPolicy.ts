@@ -17,7 +17,6 @@ export type ContextualEntityReference = {
 
 const COMMON_READ_TOOLS = new Set([
   'app.read',
-  'navigation.open',
 ]);
 
 const TOOLS_BY_SURFACE: Record<ContextualAgentSurface, ReadonlySet<string>> = {
