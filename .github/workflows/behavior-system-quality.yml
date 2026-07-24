@@ -47,6 +47,7 @@ jobs:
           set -o pipefail
           npm run test:core:compile 2>&1 | tee core-compile.log
           test -f .tmp/core-tests/src/domain/actions/exerciseActions.js
+          test -f .tmp/core-tests/src/domain/actions/sessionActions.js
       - name: Upload core compile log
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,7 +68,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:core:compile
-      - run: node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs
+      - run: node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-review-actions.test.mjs
 
   legacy-tests:
     runs-on: ubuntu-latest
@@ -88,7 +89,7 @@ jobs:
           : > legacy-test-failures.txt
           : > legacy-test-output.txt
           for file in tests/*.test.mjs; do
-            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-association-versioning.test.mjs" ] || [ "$file" = "tests/atal-exercise-actions.test.mjs" ]; then
+            if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-association-versioning.test.mjs" ] || [ "$file" = "tests/atal-exercise-actions.test.mjs" ] || [ "$file" = "tests/atal-session-review-actions.test.mjs" ]; then
               continue
             fi
             echo "=== $file ===" | tee -a legacy-test-output.txt
