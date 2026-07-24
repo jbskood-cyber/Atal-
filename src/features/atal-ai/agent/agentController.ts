@@ -73,6 +73,7 @@ function requestShape(input: AtalAgentControllerInput) {
     selectedSessionId: sessionFromRoute(input.route),
     conversationHistory: visibleConversationHistory(input),
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
+    previousInteractionId: input.task?.interactionId,
   };
 }
 
@@ -84,12 +85,16 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
   });
+  const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
   const task = input.task?.status === 'running'
     ? {
         ...input.task,
         allowedTools: [...new Set([...input.task.allowedTools, ...allowedTools])].slice(0, AGENT_MAX_ACTIVE_TOOLS),
       }
-    : createAgentTask(input.conversationId, input.text, allowedTools);
+    : {
+        ...freshTask,
+        interactionId: input.task?.interactionId,
+      };
   return runAgentLoop({
     task,
     request: requestShape({ ...input, task }),
