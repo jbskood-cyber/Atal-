@@ -76,13 +76,7 @@ function safeResult(error: unknown): ToolExecutionResult {
         : 'ENTITY_RELATION_INVALID';
     return { status: 'clarification', clarification: { code, message: core.message } };
   }
-  if ([
-    'CORE_EXTERNAL_BLOCKED',
-    'CORE_CONTEXT_SCOPE_VIOLATION',
-    'CORE_PRECONDITION_FAILED',
-    'CORE_VERSION_CONFLICT',
-    'CORE_INVARIANT_FAILED',
-  ].includes(core.code)) {
+  if (core.code === 'CORE_EXTERNAL_BLOCKED' || core.code === 'CORE_CONTEXT_SCOPE_VIOLATION') {
     return { status: 'blocked', code: core.code, message: core.message };
   }
   return { status: 'error', code: core.code, message: core.message };
