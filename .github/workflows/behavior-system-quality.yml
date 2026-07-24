@@ -85,13 +85,14 @@ jobs:
         run: |
           set +e
           : > legacy-test-failures.txt
+          : > legacy-test-output.txt
           for file in tests/*.test.mjs; do
             if [ "$file" = "tests/atal-behavior-system.test.mjs" ] || [ "$file" = "tests/atal-action-transaction-compat.test.mjs" ] || [ "$file" = "tests/atal-patient-record-actions.test.mjs" ] || [ "$file" = "tests/atal-plan-actions.test.mjs" ]; then
               continue
             fi
-            echo "=== $file ==="
-            node --test "$file"
-            code=$?
+            echo "=== $file ===" | tee -a legacy-test-output.txt
+            node --test "$file" 2>&1 | tee -a legacy-test-output.txt
+            code=${PIPESTATUS[0]}
             if [ $code -ne 0 ]; then
               echo "$file" >> legacy-test-failures.txt
             fi
@@ -107,6 +108,14 @@ jobs:
         with:
           name: legacy-test-failure-manifest
           path: legacy-test-failures.txt
+          if-no-files-found: error
+          retention-days: 1
+      - name: Upload legacy test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: legacy-test-output
+          path: legacy-test-output.txt
           if-no-files-found: error
           retention-days: 1
 
