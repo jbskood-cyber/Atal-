@@ -34,24 +34,40 @@ test('tool selection stays bounded and includes contextual patient and plan tool
   assert.equal(tools.includes('exercise.create_simple'), true);
 });
 
-test('ordinary conversation exposes no tools and lets Gemini answer directly', () => {
+test('ordinary conversation exposes only safe read tools and lets Gemini decide whether to use them', () => {
   const tools = selectionModule().selectAgentTools({
     text: 'Hola, explícame con calma qué puedes hacer por mí.',
     route: '/assistant',
     hasImageOrPdf: false,
     hasAudio: false,
   });
-  assert.deepEqual(tools, []);
+  assert.equal(tools.includes('app.read'), true);
+  assert.equal(tools.includes('patient.search'), true);
+  assert.equal(tools.includes('patient.update'), false);
+  assert.equal(tools.includes('navigation.open'), false);
 });
 
-test('a conceptual question about tools does not call app.read', () => {
+test('a conceptual question can see safe reads but never mutation tools', () => {
   const tools = selectionModule().selectAgentTools({
     text: '¿Qué es un recurso de lectura compatible?',
     route: '/assistant',
     hasImageOrPdf: false,
     hasAudio: false,
   });
-  assert.deepEqual(tools, []);
+  assert.equal(tools.includes('app.read'), true);
+  assert.equal(tools.includes('patient.update'), false);
+  assert.equal(tools.includes('clinical_record.upsert'), false);
+});
+
+test('a navigation request exposes navigation only when explicitly requested', () => {
+  const tools = selectionModule().selectAgentTools({
+    text: 'Abre el expediente de María.',
+    route: '/assistant',
+    hasImageOrPdf: false,
+    hasAudio: false,
+  });
+  assert.equal(tools.includes('navigation.open'), true);
+  assert.equal(tools.includes('patient.update'), false);
 });
 
 test('a workspace question exposes read tools without mutation tools', () => {
