@@ -40,6 +40,8 @@ const deferredMutationPatterns = [
 
 const explicitActionPatterns = [
   /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
+  /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b/i,
+  /\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra|actualiza)\b/i,
 ];
 
 const workspaceReadPatterns = [
@@ -47,6 +49,8 @@ const workspaceReadPatterns = [
   /\b(?:último|ultima|última|anterior|actual|activo|activa|reciente|recientes)\b.{0,48}\b(?:plan|sesión|sesion|reporte|expediente|paciente)\b/i,
   /\b(?:de|del|para)\s+[A-ZÁÉÍÓÚÑ][\p{L}]+/u,
   /\b(?:este|esta|ese|esa|aquel|aquella|su)\s+(?:paciente|plan|sesión|sesion|expediente|reporte)\b/i,
+  /\b(?:qué|que)\s+cambi(?:ó|o|a)\b.{0,48}\b(?:anterior|última|ultima|previa|previo)\b/i,
+  /\b(?:respecto a|comparad[oa] con|frente a)\s+(?:la|el)\s+(?:anterior|últim[oa]|previ[oa])\b/i,
 ];
 
 const conceptualPatterns = [
