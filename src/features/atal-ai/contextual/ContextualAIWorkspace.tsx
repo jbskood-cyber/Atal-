@@ -20,6 +20,7 @@ import { useAtalStore } from '@/src/data/atalStore';
 import { AssistantMessageContent } from '../components/AssistantMessageContent';
 import { ConversationalDraftCard } from '../components/ConversationalDraftCard';
 import { contextualActionsFor } from './actions';
+import { contextualConversationKey } from './conversationAdapter';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
 import { ContextualModal } from './ContextualModal';
@@ -70,6 +71,7 @@ export function ContextualAIWorkspace() {
   }, [controller, controller.session.activePane, model.draft]);
 
   if (controller.session.mode !== 'open' || !context || !model.conversation) return <RouteContextualAISurface />;
+  if (model.conversation.contextKey !== contextualConversationKey(context)) return <RouteContextualAISurface />;
 
   const processing = model.conversation.status === 'processing';
   const hasText = Boolean(model.conversation.composerText.trim());
@@ -178,16 +180,18 @@ export function ContextualAIWorkspace() {
         <section>
           <AlertTriangle />
           <h3 id="atal-contextual-confirm-title">¿Aplicar esta acción en {context.entityLabel}?</h3>
-          <p>{model.draft?.assistantMessage || model.conversation.agentTask?.finalText || 'La acción modificará datos de Atal y quedará registrada en el historial.'}</p>
-          <button type="button" className="is-primary" onClick={model.confirmExecution}>Confirmar y aplicar</button>
-          <button type="button" onClick={model.cancelConfirmation}>Cancelar</button>
+          <p>Revisa el cambio antes de confirmarlo.</p>
+          <div>
+            <button type="button" onClick={model.cancelConfirmation}>Cancelar</button>
+            <button type="button" onClick={model.confirm}>Confirmar</button>
+          </div>
         </section>
       </ContextualModal>}
 
-      {compareOpen && model.draft && <ContextualModal className="atal-contextual-confirm-layer" label="Comparar cambios" onCancel={() => setCompareOpen(false)}>
-        <section className="atal-contextual-compare">
-          <h3>Comparar cambios</h3>
-          <p>Revisa el borrador contextual antes de decidir si conservas o actualizas la versión.</p>
+      {compareOpen && <ContextualModal className="atal-contextual-compare-layer" labelledBy="atal-contextual-compare-title" onCancel={() => setCompareOpen(false)}>
+        <section>
+          <h3 id="atal-contextual-compare-title">Comparar cambios</h3>
+          <p>Revisa la propuesta contextual antes de decidir qué versión conservar.</p>
           <button type="button" onClick={() => setCompareOpen(false)}>Cerrar</button>
         </section>
       </ContextualModal>}
