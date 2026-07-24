@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const planActions = () => loadCore('src/domain/actions/planActions.js');
+const planExerciseTools = () => loadCore('src/features/atal-ai/core/tools/universalPlanExerciseTools.js');
 
 function baseState() {
   const createdAt = '2026-07-24T10:00:00.000Z';
@@ -120,4 +121,59 @@ test('canonical plan membership add/remove/reorder enforces the same exercise in
   const before = structuredClone(active);
   assert.throws(() => applyPlanMembership(active, { planId: 'plan-active', operation: 'remove', exerciseIds: ['exercise-1'], now: '2026-07-24T13:10:00.000Z', createEventId: idFactory('event-remove') }), /activo no puede quedarse sin ejercicios/i);
   assert.deepEqual(active, before);
+});
+
+test('AI plan create/update/membership produce the canonical record association and activity events', () => {
+  const { universalPlanExerciseTools } = planExerciseTools();
+  const createTool = universalPlanExerciseTools.find((tool) => tool.name === 'plan.create_simple');
+  const updateTool = universalPlanExerciseTools.find((tool) => tool.name === 'plan.update_fields');
+  const membershipTool = universalPlanExerciseTools.find((tool) => tool.name === 'plan.membership');
+  assert.ok(createTool && updateTool && membershipTool);
+
+  const state = baseState();
+  state.plans[0].status = 'paused';
+  state.clinicalRecords[0].planId = '';
+  const patient = state.patients[0];
+  const createEnvironment = {
+    state,
+    resolved: { patient },
+    transactionId: 'tx-create',
+    context: { now: '2026-07-24T14:00:00.000Z' },
+  };
+  const createInput = createTool.validateInput({
+    patient: { type: 'patient', id: patient.id },
+    title: ' Plan IA ', focus: ' Fuerza ', duration: '6 semanas', frequency: '4 días', goal: 'Mejorar fuerza', exerciseIds: ['exercise-1', 'exercise-1'], status: 'draft', progression: '', reportCriteria: '', generalInstructions: '',
+  });
+  createTool.preconditions(createEnvironment, createInput);
+  const created = createTool.execute(createEnvironment, createInput);
+  assert.equal(created.data.planId, 'tx-create-plan');
+  assert.equal(state.clinicalRecords[0].planId, 'tx-create-plan');
+  assert.equal(state.events[0].kind, 'plan_created');
+  assert.equal(state.plans.at(-1).title, 'Plan IA');
+  assert.deepEqual(state.plans.at(-1).exerciseIds, ['exercise-1']);
+
+  const plan = state.plans.at(-1);
+  const updateEnvironment = {
+    state,
+    resolved: { plan },
+    transactionId: 'tx-update',
+    context: { now: '2026-07-24T14:05:00.000Z' },
+  };
+  const updateInput = updateTool.validateInput({ plan: { type: 'plan', id: plan.id }, patch: { title: ' Plan IA editado ' } });
+  updateTool.preconditions(updateEnvironment, updateInput);
+  updateTool.execute(updateEnvironment, updateInput);
+  assert.equal(plan.title, 'Plan IA editado');
+  assert.equal(state.events[0].kind, 'plan_updated');
+
+  const membershipEnvironment = {
+    state,
+    resolved: { plan },
+    transactionId: 'tx-membership',
+    context: { now: '2026-07-24T14:10:00.000Z' },
+  };
+  const membershipInput = membershipTool.validateInput({ plan: { type: 'plan', id: plan.id }, operation: 'add', exerciseIds: ['exercise-2', 'exercise-2'] });
+  membershipTool.preconditions(membershipEnvironment, membershipInput);
+  membershipTool.execute(membershipEnvironment, membershipInput);
+  assert.deepEqual(plan.exerciseIds, ['exercise-1', 'exercise-2']);
+  assert.equal(state.events[0].kind, 'plan_updated');
 });
