@@ -425,7 +425,7 @@ export function AtalAIGeneralScreen() {
       saveAIConversation(next);
       return next;
     });
-    if (mutationResult && draft) setDraft(null);
+    if (mutationResult && draft && outcome.task.status === 'completed') setDraft(null);
     setAttachments([]);
     if (outcome.task.status === 'needs-confirmation') {
       setDialog('agent-confirmation');

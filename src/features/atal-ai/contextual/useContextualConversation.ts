@@ -303,7 +303,7 @@ export function useContextualConversation({
       } : current.savedResult,
       updatedAt: new Date().toISOString(),
     } : current);
-    if (mutationResult && draft) setDraft(null);
+    if (mutationResult && draft && outcome.task.status === 'completed') setDraft(null);
     if (outcome.task.status === 'needs-confirmation') {
       const pendingStep = outcome.task.completed.findLast((step) => step.result.status === 'confirmation-required');
       if (pendingStep?.result.status === 'confirmation-required') onProposalFingerprint(pendingStep.result.decision.fingerprint);
