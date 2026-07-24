@@ -2,6 +2,7 @@ import type { PatientEntity } from '@/src/data/atalStore';
 import { applyUpsertClinicalRecord } from '../../../../domain/actions/clinicalRecordActions';
 import { applyCreatePatient, applyUpdatePatient } from '../../../../domain/actions/patientActions';
 import { applyPatientLifecycle } from '../../../../domain/actions/patientLifecycle';
+import { applyCreatePlan } from '../../../../domain/actions/planActions';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 
@@ -199,7 +200,9 @@ export const universalPatientTools: ToolDefinition<any>[] = [
       const patientId = `${environment.transactionId}-patient`;
       const recordId = `${environment.transactionId}-record`;
       let eventIndex = 0;
+      let recordVersionIndex = 0;
       const createEventId = () => `${environment.transactionId}-event-${eventIndex++}`;
+      const createRecordVersionId = () => `${environment.transactionId}-record-version-${recordVersionIndex++}`;
       const created = applyCreatePatient(environment.state, {
         patientId,
         patient: {
@@ -221,13 +224,26 @@ export const universalPatientTools: ToolDefinition<any>[] = [
       const summary = ['Paciente creado.', 'Expediente inicial creado.'];
       let planId: string | undefined;
       if (input.plan) {
-        planId = `${environment.transactionId}-plan`;
-        environment.state.plans.push({
-          id: planId, patientId, title: input.plan.title, focus: input.plan.focus, duration: input.plan.duration,
-          frequency: input.plan.frequency, goal: input.plan.goal, exerciseIds: [...new Set<string>(input.plan.exerciseIds as string[])],
-          status: input.plan.status, progression: input.plan.progression, reportCriteria: input.plan.reportCriteria,
-          generalInstructions: input.plan.generalInstructions, createdAt: environment.context.now, updatedAt: environment.context.now,
+        const planResult = applyCreatePlan(environment.state, {
+          patientId,
+          planId: `${environment.transactionId}-plan`,
+          plan: {
+            title: input.plan.title,
+            focus: input.plan.focus,
+            duration: input.plan.duration,
+            frequency: input.plan.frequency,
+            goal: input.plan.goal,
+            exerciseIds: input.plan.exerciseIds,
+            status: input.plan.status,
+            progression: input.plan.progression,
+            reportCriteria: input.plan.reportCriteria,
+            generalInstructions: input.plan.generalInstructions,
+          },
+          now: environment.context.now,
+          createEventId,
+          createRecordVersionId,
         });
+        planId = planResult.plan.id;
         affected.push({ type: 'plan', id: planId });
         summary.push(`Plan creado como ${input.plan.status === 'active' ? 'activo' : 'borrador'}.`);
       }
