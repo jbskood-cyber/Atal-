@@ -26,10 +26,12 @@ import { universalPatientTools } from './tools/universalPatientTools';
 import { universalPlanExerciseTools } from './tools/universalPlanExerciseTools';
 import { canonicalPlanToolNames, canonicalPlanTools } from './tools/canonicalPlanTools';
 import { canonicalPlanLifecycleToolNames, canonicalPlanLifecycleTools } from './tools/canonicalPlanLifecycleTools';
+import { canonicalUniversalExerciseToolNames, canonicalUniversalExerciseTools } from './tools/canonicalUniversalExerciseTools';
 import { universalSessionSettingsTools } from './tools/universalSessionSettingsTools';
 import { clientEffectTools } from './tools/clientEffectTools';
 
-const nonCanonicalPlanExerciseTools = universalPlanExerciseTools.filter((tool) => !canonicalPlanToolNames.has(tool.name));
+const nonCanonicalPlanExerciseTools = universalPlanExerciseTools.filter((tool) =>
+  !canonicalPlanToolNames.has(tool.name) && !canonicalUniversalExerciseToolNames.has(tool.name));
 const nonCanonicalPlanTools = planTools.filter((tool) => !canonicalPlanLifecycleToolNames.has(tool.name));
 
 export const atalAIToolRegistry = createToolRegistry([
@@ -38,6 +40,7 @@ export const atalAIToolRegistry = createToolRegistry([
   ...patientTools,
   ...universalPatientTools,
   ...exerciseTools,
+  ...canonicalUniversalExerciseTools,
   ...nonCanonicalPlanTools,
   ...canonicalPlanLifecycleTools,
   ...nonCanonicalPlanExerciseTools,
