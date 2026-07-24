@@ -20,6 +20,7 @@ test('completed sessions persist their historical clinical context',()=>{
   const flow=read('src/features/guided-session/GuidedSessionFlow.tsx');
   assert.match(repository,/ClinicalSessionRecord/);
   assert.match(repository,/applyCompleteSession/);
+  assert.match(repository,/sessionPlanSnapshot/);
   assert.match(actions,/planSnapshot: structuredClone\(input\.draft\.planSnapshot\)/);
   assert.match(actions,/createdAt: completedAt/);
   assert.match(flow,/saveCompletedClinicalSession/);
