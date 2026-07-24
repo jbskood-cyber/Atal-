@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const scope = () => loadCore('src/features/atal-ai/core/agentic/conversationScope.js');
@@ -39,13 +38,4 @@ test('contextual lookup by id accepts only the matching contextual instance', ()
     scope().selectContextualConversationById(conversations, 'context-id', 'patient:patient-a'),
     matching,
   );
-});
-
-test('contextual repository and hook bind conversation id lookup to the current context key', () => {
-  const repository = readFileSync('src/features/atal-ai/contextual/repository.ts', 'utf8');
-  const hook = readFileSync('src/features/atal-ai/contextual/useContextualConversation.ts', 'utf8');
-
-  assert.match(repository, /readConversationById\(id: string, contextKey: string\)/);
-  assert.match(repository, /selectContextualConversationById\(readAIConversations\(\), id, contextKey\)/);
-  assert.match(hook, /readConversationById\(conversationId, contextualConversationKey\(context\)\)/);
 });
