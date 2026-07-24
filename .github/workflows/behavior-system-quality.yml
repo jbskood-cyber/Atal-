@@ -68,7 +68,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:core:compile
-      - run: node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-review-actions.test.mjs
+      - name: Run behavior tests
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-review-actions.test.mjs 2>&1 | tee behavior-test-output.txt
+      - name: Upload behavior test output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-test-output
+          path: behavior-test-output.txt
+          if-no-files-found: error
+          retention-days: 1
 
   legacy-tests:
     runs-on: ubuntu-latest
