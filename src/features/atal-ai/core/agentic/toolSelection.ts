@@ -1,3 +1,4 @@
+import { isContextualToolAllowed, type ContextualAgentSurface } from './contextualToolPolicy';
 import { classifyAgentTurn } from './generalTurnMode';
 
 const MAX_ACTIVE_TOOLS = 20;
@@ -26,6 +27,7 @@ export type ToolSelectionInput = {
   intent?: string;
   hasImageOrPdf: boolean;
   hasAudio: boolean;
+  contextSurface?: ContextualAgentSurface;
 };
 
 export function selectAgentTools(input: ToolSelectionInput): string[] {
@@ -52,7 +54,10 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && settings) append(selected, SETTINGS_TOOLS);
   if (allowMutations && delivery) append(selected, DELIVERY_TOOLS);
 
-  return selected.slice(0, MAX_ACTIVE_TOOLS);
+  const scoped = input.contextSurface
+    ? selected.filter((tool) => isContextualToolAllowed(input.contextSurface!, tool))
+    : selected;
+  return scoped.slice(0, MAX_ACTIVE_TOOLS);
 }
 
 export const AGENT_MAX_ACTIVE_TOOLS = MAX_ACTIVE_TOOLS;
