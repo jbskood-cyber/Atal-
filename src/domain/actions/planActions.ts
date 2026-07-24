@@ -1,5 +1,5 @@
 import type { AtalState, PlanEntity, PlanStatus } from '../../data/atalStore';
-import { syncClinicalRecordPlanAssociation } from '../planAssociation';
+import { syncClinicalRecordPlanAssociationVersioned } from '../planAssociation';
 import { actionError } from './contracts';
 
 const TEXT_FIELDS = [
@@ -20,7 +20,11 @@ export type PlanUpdatePatch = Partial<Pick<PlanEntity, PlanTextField | 'exercise
 export type PlanMembershipOperation = 'add' | 'remove' | 'reorder';
 export type PlanConflictResolution = 'pause' | 'complete' | 'archive';
 
-export type PlanCreateActionInput = {
+type VersionedAssociationInput = {
+  createRecordVersionId: () => string;
+};
+
+export type PlanCreateActionInput = VersionedAssociationInput & {
   patientId: string;
   planId: string;
   plan: PlanCreateData;
@@ -28,14 +32,14 @@ export type PlanCreateActionInput = {
   createEventId: () => string;
 };
 
-export type PlanUpdateActionInput = {
+export type PlanUpdateActionInput = VersionedAssociationInput & {
   planId: string;
   patch: PlanUpdatePatch;
   now: string;
   createEventId: () => string;
 };
 
-export type PlanMembershipActionInput = {
+export type PlanMembershipActionInput = VersionedAssociationInput & {
   planId: string;
   operation: PlanMembershipOperation;
   exerciseIds: string[];
@@ -43,7 +47,7 @@ export type PlanMembershipActionInput = {
   createEventId: () => string;
 };
 
-export type PlanLifecycleActionInput = {
+export type PlanLifecycleActionInput = VersionedAssociationInput & {
   planId: string;
   status: PlanStatus;
   resolveActiveConflict?: PlanConflictResolution;
@@ -119,6 +123,16 @@ function assertLifecycleTransition(current: PlanStatus, next: PlanStatus) {
   }
 }
 
+function syncAssociation(
+  state: AtalState,
+  patientId: string,
+  preferredPlanId: string,
+  now: string,
+  createRecordVersionId: () => string,
+) {
+  return syncClinicalRecordPlanAssociationVersioned(state, patientId, preferredPlanId, now, createRecordVersionId);
+}
+
 export function applyCreatePlan(state: AtalState, input: PlanCreateActionInput) {
   ensurePatientExists(state, input.patientId);
   if (state.plans.some((plan) => plan.id === input.planId)) {
@@ -152,7 +166,7 @@ export function applyCreatePlan(state: AtalState, input: PlanCreateActionInput) 
 
   const eventId = input.createEventId();
   state.plans.push(plan);
-  syncClinicalRecordPlanAssociation(state, plan.patientId, plan.id, input.now);
+  syncAssociation(state, plan.patientId, plan.id, input.now, input.createRecordVersionId);
   state.events.unshift({
     id: eventId,
     kind: 'plan_created',
@@ -187,7 +201,7 @@ export function applyUpdatePlan(state: AtalState, input: PlanUpdateActionInput) 
     updatedAt: input.now,
   });
 
-  syncClinicalRecordPlanAssociation(state, plan.patientId, plan.id, input.now);
+  syncAssociation(state, plan.patientId, plan.id, input.now, input.createRecordVersionId);
   const eventId = input.createEventId();
   state.events.unshift({
     id: eventId,
@@ -232,7 +246,7 @@ export function applyPlanMembership(state: AtalState, input: PlanMembershipActio
 
   plan.exerciseIds = nextExerciseIds;
   plan.updatedAt = input.now;
-  syncClinicalRecordPlanAssociation(state, plan.patientId, plan.id, input.now);
+  syncAssociation(state, plan.patientId, plan.id, input.now, input.createRecordVersionId);
   const eventId = input.createEventId();
   state.events.unshift({
     id: eventId,
@@ -282,7 +296,7 @@ export function applyPlanLifecycle(state: AtalState, input: PlanLifecycleActionI
 
   plan.status = input.status;
   plan.updatedAt = input.now;
-  syncClinicalRecordPlanAssociation(state, plan.patientId, input.status === 'active' ? plan.id : plan.id, input.now);
+  syncAssociation(state, plan.patientId, plan.id, input.now, input.createRecordVersionId);
   state.events.unshift({
     id: input.createEventId(),
     kind: lifecycleKind(input.status),
