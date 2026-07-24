@@ -1,8 +1,9 @@
 import type { PatientEntity } from '@/src/data/atalStore';
+import { applyUpsertClinicalRecord } from '../../../../domain/actions/clinicalRecordActions';
+import { applyCreatePatient, applyUpdatePatient } from '../../../../domain/actions/patientActions';
 import { applyPatientLifecycle } from '../../../../domain/actions/patientLifecycle';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
-import { normalizeEntityLabel } from '../stableValue';
 
 function objectInput(input: unknown, message: string): Record<string, unknown> {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw coreError('CORE_INPUT_INVALID', message);
@@ -189,11 +190,6 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: [],
     validateInput: validatePatientCreate,
     preconditions(environment, input) {
-      const normalized = normalizeEntityLabel(input.name);
-      const existing = environment.state.patients.find((item) => normalizeEntityLabel(item.name) === normalized);
-      if (existing) {
-        throw coreError('CORE_ENTITY_AMBIGUOUS', `Ya existe el paciente “${existing.name}”. Usa ese expediente o indica un nombre distinto para crear otro.`);
-      }
       if (input.plan) {
         const exerciseIds = new Set(environment.state.exercises.map((item) => item.id));
         if (input.plan.exerciseIds.some((id: string) => !exerciseIds.has(id))) throw coreError('CORE_PRECONDITION_FAILED', 'El plan incluye un ejercicio inexistente.');
@@ -202,23 +198,26 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     execute(environment, input) {
       const patientId = `${environment.transactionId}-patient`;
       const recordId = `${environment.transactionId}-record`;
-      const patient: PatientEntity = {
-        id: patientId, name: input.name, diagnosis: input.diagnosis, age: input.age, birthDate: input.birthDate,
-        sex: input.sex, affectedArea: input.affectedArea, status: 'active', visitType: input.visitType,
-        contact: structuredClone(input.contact), createdAt: environment.context.now, updatedAt: environment.context.now,
-      };
-      const record: ClinicalRecord = {
-        id: recordId, patientId, version: 1, date: environment.context.now,
-        reasonForVisit: input.record.reasonForVisit, evolution: input.record.evolution, affectedArea: input.affectedArea,
-        symptoms: input.record.symptoms, painLevel: input.record.painLevel, providedDiagnosis: input.record.providedDiagnosis,
-        functionalLimitations: input.record.functionalLimitations, goals: input.record.goals,
-        relevantHistory: input.record.relevantHistory, precautions: input.record.precautions,
-        clinicalNotes: input.record.clinicalNotes, planId: '', professional: environment.state.settings.professionalName,
-        createdAt: environment.context.now, updatedAt: environment.context.now,
-      };
-      environment.state.patients.push(patient);
-      environment.state.clinicalRecords.push(record);
-      const affected: Array<{ type: 'patient' | 'clinical-record' | 'plan'; id: string }> = [{ type: 'patient', id: patientId }, { type: 'clinical-record', id: recordId }];
+      let eventIndex = 0;
+      const createEventId = () => `${environment.transactionId}-event-${eventIndex++}`;
+      const created = applyCreatePatient(environment.state, {
+        patientId,
+        patient: {
+          name: input.name,
+          diagnosis: input.diagnosis,
+          age: input.age,
+          birthDate: input.birthDate,
+          sex: input.sex,
+          affectedArea: input.affectedArea,
+          status: 'active',
+          visitType: input.visitType,
+          contact: structuredClone(input.contact),
+        },
+        now: environment.context.now,
+        createEventId,
+      });
+
+      const affected: Array<{ type: 'patient' | 'clinical-record' | 'plan'; id: string }> = [{ type: 'patient', id: created.patient.id }];
       const summary = ['Paciente creado.', 'Expediente inicial creado.'];
       let planId: string | undefined;
       if (input.plan) {
@@ -229,11 +228,34 @@ export const universalPatientTools: ToolDefinition<any>[] = [
           status: input.plan.status, progression: input.plan.progression, reportCriteria: input.plan.reportCriteria,
           generalInstructions: input.plan.generalInstructions, createdAt: environment.context.now, updatedAt: environment.context.now,
         });
-        record.planId = planId;
         affected.push({ type: 'plan', id: planId });
         summary.push(`Plan creado como ${input.plan.status === 'active' ? 'activo' : 'borrador'}.`);
       }
-      return { status: 'success', message: `${input.name} quedó registrado.`, summary, data: { patientId, clinicalRecordId: recordId, planId }, href: `/patients/${patientId}`, affected };
+
+      const recordResult = applyUpsertClinicalRecord(environment.state, {
+        patientId,
+        patch: {
+          reasonForVisit: input.record.reasonForVisit,
+          evolution: input.record.evolution,
+          affectedArea: input.affectedArea,
+          symptoms: input.record.symptoms,
+          painLevel: input.record.painLevel,
+          providedDiagnosis: input.record.providedDiagnosis,
+          functionalLimitations: input.record.functionalLimitations,
+          goals: input.record.goals,
+          relevantHistory: input.record.relevantHistory,
+          precautions: input.record.precautions,
+          clinicalNotes: input.record.clinicalNotes,
+          planId: planId ?? '',
+        },
+        recordId,
+        versionId: `${environment.transactionId}-record-version`,
+        now: environment.context.now,
+        createEventId,
+      });
+      affected.splice(1, 0, { type: 'clinical-record', id: recordResult.record.id });
+
+      return { status: 'success', message: `${input.name} quedó registrado.`, summary, data: { patientId, clinicalRecordId: recordResult.record.id, planId }, href: `/patients/${patientId}`, affected };
     },
   },
   {
@@ -241,10 +263,14 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['patient'],
     validateInput: validatePatientUpdate, preconditions() {},
     execute(environment, input) {
-      const patient = environment.state.patients.find((item) => item.id === environment.resolved.patient?.id)!;
-      const contact = input.patch.contact ? { ...patient.contact, ...input.patch.contact } : patient.contact;
-      Object.assign(patient, input.patch, { contact, id: patient.id, createdAt: patient.createdAt, updatedAt: environment.context.now });
-      return { status: 'success', message: `Actualicé los datos de ${patient.name}.`, summary: ['Datos del paciente actualizados.'], data: { patientId: patient.id }, href: `/patients/${patient.id}`, affected: [{ type: 'patient', id: patient.id }] };
+      const patientId = environment.resolved.patient?.id!;
+      const updated = applyUpdatePatient(environment.state, {
+        patientId,
+        patch: input.patch,
+        now: environment.context.now,
+        createEventId: () => `${environment.transactionId}-event-0`,
+      });
+      return { status: 'success', message: `Actualicé los datos de ${updated.patient.name}.`, summary: ['Datos del paciente actualizados.'], data: { patientId: updated.patient.id }, href: `/patients/${updated.patient.id}`, affected: [{ type: 'patient', id: updated.patient.id }] };
     },
   },
   {
@@ -307,38 +333,26 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     name: 'clinical_record.upsert', version: 1, description: 'Crea o actualiza el expediente clínico canónico y conserva una versión anterior.',
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['patient'],
     validateInput: validateRecordUpsert,
-    preconditions(environment, input) {
-      if (input.patch.planId) {
-        const plan = environment.state.plans.find((item) => item.id === input.patch.planId);
-        if (!plan || plan.patientId !== environment.resolved.patient?.id) throw coreError('CORE_PRECONDITION_FAILED', 'El plan indicado no pertenece al paciente.');
-      }
-    },
+    preconditions() {},
     execute(environment, input) {
       const patient = environment.resolved.patient!;
-      const existing = environment.state.clinicalRecords.find((item) => item.patientId === patient.id);
-      if (!existing) {
-        const record: ClinicalRecord = {
-          id: `${environment.transactionId}-record`, patientId: patient.id, version: 1, date: environment.context.now,
-          reasonForVisit: input.patch.reasonForVisit ?? '', evolution: input.patch.evolution ?? '',
-          affectedArea: input.patch.affectedArea ?? patient.affectedArea, symptoms: input.patch.symptoms ?? [],
-          painLevel: input.patch.painLevel ?? null, providedDiagnosis: input.patch.providedDiagnosis ?? '',
-          functionalLimitations: input.patch.functionalLimitations ?? [], goals: input.patch.goals ?? [],
-          relevantHistory: input.patch.relevantHistory ?? [], precautions: input.patch.precautions ?? [],
-          clinicalNotes: input.patch.clinicalNotes ?? '', planId: input.patch.planId ?? '',
-          professional: environment.state.settings.professionalName, createdAt: environment.context.now, updatedAt: environment.context.now,
-        };
-        environment.state.clinicalRecords.push(record);
-        return { status: 'success', message: 'Expediente clínico creado.', summary: ['Expediente clínico creado.'], data: { patientId: patient.id, clinicalRecordId: record.id }, href: `/patients/${patient.id}/clinical-record`, affected: [{ type: 'clinical-record', id: record.id }] };
-      }
-      environment.state.clinicalRecordVersions.push({
-        id: `${environment.transactionId}-record-version`, recordId: existing.id, patientId: patient.id,
-        version: existing.version, snapshot: structuredClone(existing), createdAt: environment.context.now,
+      const existed = environment.state.clinicalRecords.some((item) => item.patientId === patient.id);
+      const result = applyUpsertClinicalRecord(environment.state, {
+        patientId: patient.id,
+        patch: input.patch,
+        recordId: `${environment.transactionId}-record`,
+        versionId: `${environment.transactionId}-record-version`,
+        now: environment.context.now,
+        createEventId: () => `${environment.transactionId}-event-0`,
       });
-      Object.assign(existing, input.patch, {
-        id: existing.id, patientId: existing.patientId, version: existing.version + 1,
-        createdAt: existing.createdAt, date: environment.context.now, updatedAt: environment.context.now,
-      });
-      return { status: 'success', message: 'Expediente clínico actualizado.', summary: [`Expediente actualizado a versión ${existing.version}.`], data: { patientId: patient.id, clinicalRecordId: existing.id }, href: `/patients/${patient.id}/clinical-record`, affected: [{ type: 'clinical-record', id: existing.id }] };
+      return {
+        status: 'success',
+        message: existed ? 'Expediente clínico actualizado.' : 'Expediente clínico creado.',
+        summary: [existed ? `Expediente actualizado a versión ${result.record.version}.` : 'Expediente clínico creado.'],
+        data: { patientId: patient.id, clinicalRecordId: result.record.id },
+        href: `/patients/${patient.id}/clinical-record`,
+        affected: [{ type: 'clinical-record', id: result.record.id }],
+      };
     },
   },
 ];
