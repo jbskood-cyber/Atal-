@@ -38,10 +38,14 @@ const deferredMutationPatterns = [
   /\b(?:quiero|déjame|dejame) revis(?:ar|arlo|arla)\b/i,
 ];
 
+const draftCommitPatterns = [
+  /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b/i,
+  /\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i,
+];
+
 const explicitActionPatterns = [
   /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
-  /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b/i,
-  /\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra|actualiza)\b/i,
+  ...draftCommitPatterns,
 ];
 
 const workspaceReadPatterns = [
@@ -86,7 +90,7 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
 
 export function selectGeneralTurnMode(input: GeneralTurnModeInput): GeneralTurnMode {
   const text = input.text.trim();
-  if (input.hasDraft && classifyAgentTurn(text).kind === 'action') return 'agent';
+  if (input.hasDraft && draftCommitPatterns.some((pattern) => pattern.test(text))) return 'agent';
   if (input.hasDraft || input.draftModeArmed) return 'draft';
   if (input.hasImageOrPdf && descriptiveFilePatterns.some((pattern) => pattern.test(text))) return 'agent';
   if (structuredDraftPatterns.some((pattern) => pattern.test(text))) return 'draft';
