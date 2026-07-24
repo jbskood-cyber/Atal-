@@ -17,7 +17,19 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
+      - name: Run typecheck
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee typecheck.log
+      - name: Upload typecheck log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-typecheck-log
+          path: typecheck.log
+          if-no-files-found: error
+          retention-days: 1
 
   core-compile:
     runs-on: ubuntu-latest
@@ -29,7 +41,19 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run test:core:compile
+      - name: Compile core
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:core:compile 2>&1 | tee core-compile.log
+      - name: Upload core compile log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-core-compile-log
+          path: core-compile.log
+          if-no-files-found: error
+          retention-days: 1
 
   behavior-test:
     runs-on: ubuntu-latest
@@ -96,4 +120,16 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - name: Run build
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: behavior-build-log
+          path: build.log
+          if-no-files-found: error
+          retention-days: 1
