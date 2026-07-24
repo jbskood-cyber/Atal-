@@ -48,6 +48,11 @@ const explicitActionPatterns = [
   ...draftCommitPatterns,
 ];
 
+const draftEditPatterns = [
+  /\b(?:cambia|modifica|ajusta|corrige|edita|añade|anade|agrega|quita|elimina|reordena)\b.{0,80}\b(?:borrador|paciente|expediente|plan|tratamiento|ejercicio|frecuencia|duración|duracion|objetivo|enfoque|progresión|progresion|indicaciones|series|repeticiones|tiempo|descanso|precauciones)\b/i,
+  /\b(?:en el|del|al)\s+borrador\b/i,
+];
+
 const workspaceReadPatterns = [
   /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra|abre|abrir|navega)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)\b/i,
   /\b(?:último|ultima|última|anterior|actual|activo|activa|reciente|recientes)\b.{0,48}\b(?:plan|sesión|sesion|reporte|expediente|paciente)\b/i,
@@ -63,9 +68,9 @@ const conceptualPatterns = [
 ];
 
 /**
- * Safety classification for tool authorization only.
- * Safe reads remain available so Gemini can decide whether Atal data is actually needed.
- * Mutating tools are exposed only after an explicit action request.
+ * Safety classification used only to authorize tool categories.
+ * Gemini remains responsible for generating the response and choosing among
+ * the tools that Atal makes available for the current turn.
  */
 export function classifyAgentTurn(text: string): AgentTurnClassification {
   const value = text.trim();
@@ -92,8 +97,14 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
 export function selectGeneralTurnMode(input: GeneralTurnModeInput): GeneralTurnMode {
   const text = input.text.trim();
   if (input.hasDraft && draftCommitPatterns.some((pattern) => pattern.test(text))) return 'agent';
-  if (input.hasDraft || input.draftModeArmed) return 'draft';
   if (input.hasImageOrPdf && descriptiveFilePatterns.some((pattern) => pattern.test(text))) return 'agent';
+  if (input.draftModeArmed) return 'draft';
+  if (input.hasDraft) {
+    if (deferredMutationPatterns.some((pattern) => pattern.test(text))) return 'draft';
+    if (structuredDraftPatterns.some((pattern) => pattern.test(text))) return 'draft';
+    if (draftEditPatterns.some((pattern) => pattern.test(text))) return 'draft';
+    return 'agent';
+  }
   if (structuredDraftPatterns.some((pattern) => pattern.test(text))) return 'draft';
   return 'agent';
 }
