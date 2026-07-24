@@ -17,6 +17,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AtalMark } from '@/src/components/atal/AtalLogo';
 import { useAtalStore } from '@/src/data/atalStore';
+import { AssistantMessageContent } from '../components/AssistantMessageContent';
 import { ConversationalDraftCard } from '../components/ConversationalDraftCard';
 import { contextualActionsFor } from './actions';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
@@ -60,7 +61,13 @@ export function ContextualAIWorkspace() {
   useEffect(() => {
     if (controller.session.mode !== 'open') return;
     endRef.current?.scrollIntoView({ block: 'end' });
-  }, [controller.session.mode, model.conversation?.messages.length, model.conversation?.status, model.draft?.updatedAt]);
+  }, [controller.session.mode, model.conversation?.messages.length, model.conversation?.status, model.draft?.updatedAt, model.streamingText]);
+
+  useEffect(() => {
+    if (!model.draft && controller.session.activePane === 'draft') {
+      controller.updateView({ activePane: 'conversation' });
+    }
+  }, [controller, controller.session.activePane, model.draft]);
 
   if (controller.session.mode !== 'open' || !context || !model.conversation) return <RouteContextualAISurface />;
 
@@ -110,20 +117,21 @@ export function ContextualAIWorkspace() {
 
       <nav className="atal-contextual-pane-tabs" aria-label="Vista del asistente">
         <button type="button" className={controller.session.activePane === 'conversation' ? 'is-active' : ''} onClick={() => controller.updateView({ activePane: 'conversation' })}><MessageSquareText />Conversación</button>
-        <button type="button" className={controller.session.activePane === 'draft' ? 'is-active' : ''} onClick={() => controller.updateView({ activePane: 'draft' })}><Sparkles />Borrador</button>
+        {model.draft && <button type="button" className={controller.session.activePane === 'draft' ? 'is-active' : ''} onClick={() => controller.updateView({ activePane: 'draft' })}><Sparkles />Borrador</button>}
       </nav>
 
       <div className="atal-contextual-work-area">
         <section className={`atal-contextual-conversation${controller.session.activePane === 'conversation' ? ' is-active' : ''}`} aria-label="Conversación contextual" aria-live="polite">
-          {!model.conversation.messages.length && <div className="atal-contextual-empty"><AtalMark /><b>Trabaja con Atal IA sin salir de esta pantalla</b><p>Pregunta, prepara cambios o revisa el contexto de {context.entityLabel}.</p></div>}
-          {model.conversation.messages.map((message) => <article key={message.id} className={`is-${message.role}`}><span>{message.role === 'assistant' ? <AtalMark /> : <UserRound />}</span><div><header><b>{message.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(message.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header><p>{message.text}</p></div></article>)}
-          {processing && <div className="atal-contextual-processing" role="status"><LoaderCircle className="is-spinning" /><span><b>Comprobando información…</b><small>Atal IA está trabajando sobre el contexto fijado</small></span></div>}
+          {!model.conversation.messages.length && !model.streamingText && <div className="atal-contextual-empty"><AtalMark /><b>Trabaja con Atal IA sin salir de esta pantalla</b><p>Pregunta, prepara cambios o revisa el contexto de {context.entityLabel}.</p></div>}
+          {model.conversation.messages.map((message) => <article key={message.id} className={`is-${message.role}`}><span>{message.role === 'assistant' ? <AtalMark /> : <UserRound />}</span><div><header><b>{message.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(message.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header>{message.role === 'assistant' ? <AssistantMessageContent text={message.text} /> : <p>{message.text}</p>}</div></article>)}
+          {model.streamingText && <article className="is-assistant is-streaming"><span><AtalMark /></span><div><header><b>Atal IA</b><time>ahora</time></header><AssistantMessageContent text={model.streamingText} streaming /></div></article>}
+          {processing && !model.streamingText && <div className="atal-contextual-processing" role="status"><LoaderCircle className="is-spinning" /><span><b>Comprobando información…</b><small>Atal IA está trabajando sobre el contexto fijado</small></span></div>}
           {model.conversation.error && <div className="atal-contextual-error" role="alert"><AlertTriangle /><span><b>No pudimos completar la solicitud</b><small>{model.conversation.error}</small></span></div>}
           <div ref={endRef} />
         </section>
 
-        <section className={`atal-contextual-draft-pane${controller.session.activePane === 'draft' ? ' is-active' : ''}`} aria-label="Borrador contextual">
-          {model.draft ? <ConversationalDraftCard
+        {model.draft && <section className={`atal-contextual-draft-pane${controller.session.activePane === 'draft' ? ' is-active' : ''}`} aria-label="Borrador contextual">
+          <ConversationalDraftCard
             draft={model.draft}
             patientLabel={model.patientLabel}
             applying={model.applying}
@@ -135,8 +143,8 @@ export function ContextualAIWorkspace() {
             onRefreshConflict={model.refreshConflict}
             onCompare={() => setCompareOpen(true)}
             onKeepVersion={model.keepVersion}
-          /> : <div className="atal-contextual-empty"><Sparkles /><b>Borrador contextual</b><p>Las propuestas estructuradas aparecerán aquí antes de aplicar cualquier cambio.</p></div>}
-        </section>
+          />
+        </section>}
       </div>
 
       {model.conversation.savedResult && <section className="atal-contextual-result atal-contextual-result--persistent" aria-live="polite"><CheckCircle2 /><div><b>Cambios aplicados</b><ul>{model.conversation.savedResult.summary.map((item) => <li key={item}>{item}</li>)}</ul>{model.conversation.savedResult.undo && <button type="button" onClick={() => { model.undo(); controller.updateView({ activePane: 'conversation' }); }}>Deshacer cambio</button>}</div></section>}
@@ -163,14 +171,14 @@ export function ContextualAIWorkspace() {
             : hasText ? <button type="button" className="is-send" aria-label="Enviar mensaje" onClick={model.send}><Send /></button>
               : <ContextualAudioCapture onTranscript={model.setText} />}
         </div>
-        <small>Atal IA propone. Tú revisas y confirmas.</small>
+        <small>Atal IA conversa y usa únicamente las herramientas autorizadas para esta pantalla.</small>
       </footer>
 
       {model.confirmationOpen && <ContextualModal className="atal-contextual-confirm-layer" labelledBy="atal-contextual-confirm-title" onCancel={model.cancelConfirmation}>
         <section>
           <AlertTriangle />
           <h3 id="atal-contextual-confirm-title">¿Aplicar esta acción en {context.entityLabel}?</h3>
-          <p>{model.draft?.assistantMessage || 'La acción modificará datos de Atal y quedará registrada en el historial.'}</p>
+          <p>{model.draft?.assistantMessage || model.conversation.agentTask?.finalText || 'La acción modificará datos de Atal y quedará registrada en el historial.'}</p>
           <button type="button" className="is-primary" onClick={model.confirmExecution}>Confirmar y aplicar</button>
           <button type="button" onClick={model.cancelConfirmation}>Cancelar</button>
         </section>
