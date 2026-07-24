@@ -76,7 +76,7 @@ const conceptualPatterns = [
  */
 export function classifyAgentTurn(text: string): AgentTurnClassification {
   const value = text.trim();
-  if (!value) return { kind: 'conversation', allowedToolKinds: ['read'] };
+  if (!value) return { kind: 'conversation', allowedToolKinds: [] };
 
   if (deferredMutationPatterns.some((pattern) => pattern.test(value))) {
     return { kind: 'proposal', allowedToolKinds: ['read'] };
@@ -90,10 +90,10 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
   if (dependsOnWorkspace) return { kind: 'read', allowedToolKinds: ['read'] };
 
   if (conceptualPatterns.some((pattern) => pattern.test(value))) {
-    return { kind: 'conversation', allowedToolKinds: ['read'] };
+    return { kind: 'conversation', allowedToolKinds: [] };
   }
 
-  return { kind: 'conversation', allowedToolKinds: ['read'] };
+  return { kind: 'conversation', allowedToolKinds: [] };
 }
 
 export function selectGeneralTurnMode(input: GeneralTurnModeInput): GeneralTurnMode {
