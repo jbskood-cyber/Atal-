@@ -27,15 +27,15 @@ export function writeLocalPlans(items:LocalPlan[]){mutateAtalStore((draft)=>{dra
 export function createLocalPlan(input:NewLocalPlan){
   const now=new Date().toISOString();
   const planId=createEntityId('plan');
-  let result:ReturnType<typeof applyCreatePlan>|null=null;
-  mutateAtalStore((draft)=>{result=applyCreatePlan(draft,{patientId:input.patientId,planId,now,createEventId:()=>createEntityId('event'),plan:{title:input.title,focus:input.focus,duration:input.duration,frequency:input.frequency,goal:input.goal,exerciseIds:input.exerciseIds,status:input.status,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''}});});
-  return result!.plan;
+  const holder:{result?:ReturnType<typeof applyCreatePlan>}={};
+  mutateAtalStore((draft)=>{holder.result=applyCreatePlan(draft,{patientId:input.patientId,planId,now,createEventId:()=>createEntityId('event'),plan:{title:input.title,focus:input.focus,duration:input.duration,frequency:input.frequency,goal:input.goal,exerciseIds:input.exerciseIds,status:input.status,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''}});});
+  return holder.result!.plan;
 }
 export function updateLocalPlan(id:string,patch:PlanUpdatePatch){
   const now=new Date().toISOString();
-  let result:ReturnType<typeof applyUpdatePlan>|null=null;
-  mutateAtalStore((draft)=>{result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event')});});
-  return result?.plan??null;
+  const holder:{result?:ReturnType<typeof applyUpdatePlan>}={};
+  mutateAtalStore((draft)=>{holder.result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event')});});
+  return holder.result?.plan??null;
 }
 export const activatePlan=(id:string,resolution?:'pause'|'complete'|'archive')=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'active',resolution);if(plan)resyncPatient(plan.patientId,id);return result;};
 export const pausePlan=(id:string)=>{const plan=getAtalState().plans.find((item)=>item.id===id);const result=updatePlanStatus(id,'paused');if(plan)resyncPatient(plan.patientId,id);return result;};
