@@ -1,5 +1,5 @@
-import { createEntityId, type PatientEntity } from '@/src/data/atalStore';
-import { applyPatientLifecycle } from '@/src/domain/actions/patientLifecycle';
+import type { PatientEntity } from '@/src/data/atalStore';
+import { applyPatientLifecycle } from '../../../../domain/actions/patientLifecycle';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 import { normalizeEntityLabel } from '../stableValue';
@@ -258,11 +258,12 @@ export const universalPatientTools: ToolDefinition<any>[] = [
     preconditions() {},
     execute(environment, input) {
       const patientId = environment.resolved.patient?.id!;
+      let eventIndex = 0;
       const lifecycle = applyPatientLifecycle(environment.state, {
         patientId,
         archived: input.archived,
         now: environment.context.now,
-        createEventId: () => createEntityId('event'),
+        createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
       });
       const affected: Array<{ type: 'patient' | 'plan'; id: string }> = [
         { type: 'patient', id: lifecycle.patient.id },
