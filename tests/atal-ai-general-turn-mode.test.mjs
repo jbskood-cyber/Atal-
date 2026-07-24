@@ -20,6 +20,12 @@ test('workspace questions authorize read tools without authorizing writes', () =
   assert.deepEqual(result.allowedToolKinds, ['read']);
 });
 
+test('elliptical follow-ups can continue a real-data comparison', () => {
+  const result = modeModule().classifyAgentTurn('¿Y qué cambió respecto a la anterior?');
+  assert.equal(result.kind, 'read');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+});
+
 test('review requests create proposals without authorizing mutations', () => {
   const result = modeModule().classifyAgentTurn('Prepara una nota de seguimiento, pero no la guardes todavía.');
   assert.equal(result.kind, 'proposal');
@@ -32,12 +38,20 @@ test('explicit mutations authorize read and action tools', () => {
   assert.deepEqual(result.allowedToolKinds, ['read', 'action']);
 });
 
+test('natural confirmations of a prepared draft authorize actions', () => {
+  for (const text of ['Ahora sí, guárdalo.', 'Hazlo.', 'Aplícalo.']) {
+    const result = modeModule().classifyAgentTurn(text);
+    assert.equal(result.kind, 'action', text);
+    assert.deepEqual(result.allowedToolKinds, ['read', 'action']);
+  }
+});
+
 test('explicit structured work restores the reviewable draft workspace', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Ayúdame con un nuevo ejercicio para movilidad de hombro', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Prepara un plan de tratamiento de cuatro semanas', hasDraft: false, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
 });
 
-test('an existing draft keeps follow-up messages in draft mode', () => {
+test('an existing draft keeps non-action follow-up messages in draft mode', () => {
   assert.equal(modeModule().selectGeneralTurnMode({ text: 'Cambia la frecuencia a tres veces por semana', hasDraft: true, draftModeArmed: false, hasImageOrPdf: false }), 'draft');
 });
 
