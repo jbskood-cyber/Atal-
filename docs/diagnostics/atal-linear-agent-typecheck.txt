@@ -2,18 +2,4 @@
 > ai-studio-applet@0.1.0 typecheck
 > tsc --noEmit
 
-src/features/atal-ai/core/atalStorePort.ts(6,3): error TS2353: Object literal may only specify known properties, and 'mutate' does not exist in type 'StorePort'.
-src/features/atal-ai/core/transactionEngine.ts(9,8): error TS2305: Module '"./contracts"' has no exported member 'TransactionOutcome'.
-src/features/atal-ai/core/transactionEngine.ts(10,8): error TS2305: Module '"./contracts"' has no exported member 'TransactionRequest'.
-src/features/atal-ai/core/transactionEngine.ts(143,8): error TS2339: Property 'mutate' does not exist on type 'StorePort'.
-src/features/atal-ai/core/transactionEngine.ts(143,16): error TS7006: Parameter 'candidate' implicitly has an 'any' type.
-src/features/atal-ai/core/transactionEngine.ts(162,56): error TS7006: Parameter 'event' implicitly has an 'any' type.
-src/features/atal-ai/core/transactionEngine.ts(162,124): error TS7006: Parameter 'event' implicitly has an 'any' type.
-src/features/atal-ai/core/transactionEngine.ts(163,70): error TS7006: Parameter 'notification' implicitly has an 'any' type.
-src/features/atal-ai/core/transactionEngine.ts(163,159): error TS7006: Parameter 'notification' implicitly has an 'any' type.
-src/features/atal-ai/core/undoEngine.ts(3,65): error TS2305: Module '"./contracts"' has no exported member 'TransactionOutcome'.
-src/features/atal-ai/core/undoEngine.ts(99,8): error TS2339: Property 'mutate' does not exist on type 'StorePort'.
-src/features/atal-ai/core/undoEngine.ts(99,16): error TS7006: Parameter 'candidate' implicitly has an 'any' type.
-src/features/atal-ai/core/undoEngine.ts(100,49): error TS7006: Parameter 'event' implicitly has an 'any' type.
-src/features/atal-ai/core/undoEngine.ts(101,63): error TS7006: Parameter 'notification' implicitly has an 'any' type.
-EXIT_STATUS=2
+EXIT_STATUS=0
