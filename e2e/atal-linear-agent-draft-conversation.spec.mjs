@@ -41,7 +41,7 @@ test('a reviewable draft stays available without hijacking normal conversation',
 
   await send(page, 'Prepara un plan de tratamiento de cuatro semanas.');
   await expect(page.getByText('Preparé el plan para que lo revises.')).toBeVisible();
-  await expect(page.locator('.atal-conversational-draft')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Borrador preparado' })).toBeVisible();
   expect(analyzeCalls).toBe(1);
 
   await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
@@ -60,6 +60,6 @@ test('a reviewable draft stays available without hijacking normal conversation',
 
   await send(page, '¿Qué significa la frecuencia de un plan?');
   await expect(page.getByText(/La frecuencia indica cuántas veces/)).toBeVisible();
-  await expect(page.locator('.atal-conversational-draft')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Borrador preparado' })).toBeVisible();
   expect(analyzeCalls).toBe(1);
 });
