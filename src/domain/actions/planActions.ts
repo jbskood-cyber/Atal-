@@ -21,7 +21,7 @@ export type PlanMembershipOperation = 'add' | 'remove' | 'reorder';
 export type PlanConflictResolution = 'pause' | 'complete' | 'archive';
 
 type VersionedAssociationInput = {
-  createRecordVersionId: () => string;
+  createRecordVersionId?: () => string;
 };
 
 export type PlanCreateActionInput = VersionedAssociationInput & {
@@ -128,9 +128,11 @@ function syncAssociation(
   patientId: string,
   preferredPlanId: string,
   now: string,
-  createRecordVersionId: () => string,
+  createRecordVersionId?: () => string,
 ) {
-  return syncClinicalRecordPlanAssociationVersioned(state, patientId, preferredPlanId, now, createRecordVersionId);
+  let fallbackIndex = 0;
+  const createVersionId = createRecordVersionId ?? (() => `record-version-${state.clinicalRecordVersions.length}-${fallbackIndex++}-${now}`);
+  return syncClinicalRecordPlanAssociationVersioned(state, patientId, preferredPlanId, now, createVersionId);
 }
 
 export function applyCreatePlan(state: AtalState, input: PlanCreateActionInput) {
