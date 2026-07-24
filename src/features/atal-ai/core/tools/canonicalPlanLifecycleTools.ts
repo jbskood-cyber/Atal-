@@ -25,12 +25,14 @@ function transitionTool(name: string, risk: ToolRisk, status: PlanStatus): ToolD
     execute(environment) {
       let eventIndex = 0;
       let notificationIndex = 0;
+      let recordVersionIndex = 0;
       const result = applyPlanLifecycle(environment.state, {
         planId: environment.resolved.plan!.id,
         status,
         now: environment.context.now,
         createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
         createNotificationId: () => `${environment.transactionId}-notification-${notificationIndex++}`,
+        createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
       });
       return {
         status: 'success',
@@ -64,6 +66,7 @@ const replaceActiveTool: ToolDefinition<any> = {
   execute(environment) {
     let eventIndex = 0;
     let notificationIndex = 0;
+    let recordVersionIndex = 0;
     const result = applyPlanLifecycle(environment.state, {
       planId: environment.resolved.plan!.id,
       status: 'active',
@@ -71,6 +74,7 @@ const replaceActiveTool: ToolDefinition<any> = {
       now: environment.context.now,
       createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
       createNotificationId: () => `${environment.transactionId}-notification-${notificationIndex++}`,
+      createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
     });
     return {
       status: 'success',
