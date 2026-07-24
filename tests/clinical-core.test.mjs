@@ -16,11 +16,13 @@ test('guided sessions preserve an immutable plan snapshot',()=>{
 
 test('completed sessions persist their historical clinical context',()=>{
   const repository=read('src/features/guided-session/sessionRepository.ts');
+  const actions=read('src/domain/actions/sessionActions.ts');
   const flow=read('src/features/guided-session/GuidedSessionFlow.tsx');
   assert.match(repository,/ClinicalSessionRecord/);
-  assert.match(repository,/session\.planSnapshot = snapshot/);
+  assert.match(repository,/applyCompleteSession/);
+  assert.match(actions,/planSnapshot: structuredClone\(input\.draft\.planSnapshot\)/);
+  assert.match(actions,/createdAt: completedAt/);
   assert.match(flow,/saveCompletedClinicalSession/);
-  assert.match(repository,/createdAt: startedAt/);
 });
 
 test('archived patients cannot continue active treatment',()=>{
