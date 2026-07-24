@@ -1,4 +1,4 @@
-import type { AtalState, PlanEntity } from '../../data/atalStore';
+import type { AtalState, PlanEntity, PlanStatus } from '../../data/atalStore';
 import { syncClinicalRecordPlanAssociation } from '../planAssociation';
 import { actionError } from './contracts';
 
@@ -18,6 +18,7 @@ type PlanTextField = (typeof TEXT_FIELDS)[number];
 export type PlanCreateData = Omit<PlanEntity, 'id' | 'patientId' | 'createdAt' | 'updatedAt'>;
 export type PlanUpdatePatch = Partial<Pick<PlanEntity, PlanTextField | 'exerciseIds'>>;
 export type PlanMembershipOperation = 'add' | 'remove' | 'reorder';
+export type PlanConflictResolution = 'pause' | 'complete' | 'archive';
 
 export type PlanCreateActionInput = {
   patientId: string;
@@ -40,6 +41,15 @@ export type PlanMembershipActionInput = {
   exerciseIds: string[];
   now: string;
   createEventId: () => string;
+};
+
+export type PlanLifecycleActionInput = {
+  planId: string;
+  status: PlanStatus;
+  resolveActiveConflict?: PlanConflictResolution;
+  now: string;
+  createEventId: () => string;
+  createNotificationId: () => string;
 };
 
 function uniqueExerciseIds(ids: string[]) {
@@ -82,6 +92,31 @@ function normalizedTextPatch(plan: PlanEntity, patch: PlanUpdatePatch) {
   }
   if (patch.exerciseIds !== undefined) next.exerciseIds = uniqueExerciseIds(patch.exerciseIds);
   return next;
+}
+
+function lifecycleKind(status: PlanStatus) {
+  return status === 'active' ? 'plan_activated' as const
+    : status === 'paused' ? 'plan_paused' as const
+      : status === 'completed' ? 'plan_completed' as const
+        : status === 'archived' ? 'plan_archived' as const
+          : 'plan_restored' as const;
+}
+
+function lifecycleTitle(status: PlanStatus) {
+  return `Plan ${status === 'active' ? 'activado' : status === 'paused' ? 'pausado' : status === 'completed' ? 'completado' : status === 'archived' ? 'archivado' : 'restaurado'}`;
+}
+
+function assertLifecycleTransition(current: PlanStatus, next: PlanStatus) {
+  const allowed: Record<PlanStatus, PlanStatus[]> = {
+    draft: ['active', 'archived'],
+    active: ['paused', 'completed'],
+    paused: ['active', 'completed', 'archived'],
+    completed: ['archived'],
+    archived: ['draft'],
+  };
+  if (!allowed[current].includes(next)) {
+    throw actionError('CORE_PRECONDITION_FAILED', `La transición de ${current} a ${next} no está permitida.`);
+  }
 }
 
 export function applyCreatePlan(state: AtalState, input: PlanCreateActionInput) {
@@ -210,4 +245,65 @@ export function applyPlanMembership(state: AtalState, input: PlanMembershipActio
   });
 
   return { plan, eventId };
+}
+
+export function applyPlanLifecycle(state: AtalState, input: PlanLifecycleActionInput) {
+  const plan = state.plans.find((item) => item.id === input.planId);
+  if (!plan) throw actionError('CORE_ENTITY_NOT_FOUND', 'Plan no encontrado.');
+
+  assertLifecycleTransition(plan.status, input.status);
+  if (input.status === 'active') ensureActivePlanHasExercises('active', plan.exerciseIds);
+
+  const conflict = input.status === 'active'
+    ? state.plans.find((item) => item.patientId === plan.patientId && item.status === 'active' && item.id !== plan.id)
+    : undefined;
+  if (conflict && !input.resolveActiveConflict) {
+    throw actionError('CORE_PRECONDITION_FAILED', 'El paciente ya tiene un plan activo. Usa reemplazar plan activo.');
+  }
+
+  if (conflict && input.resolveActiveConflict) {
+    const previousStatus: PlanStatus = input.resolveActiveConflict === 'complete'
+      ? 'completed'
+      : input.resolveActiveConflict === 'archive'
+        ? 'archived'
+        : 'paused';
+    conflict.status = previousStatus;
+    conflict.updatedAt = input.now;
+    state.events.unshift({
+      id: input.createEventId(),
+      kind: lifecycleKind(previousStatus),
+      patientId: conflict.patientId,
+      planId: conflict.id,
+      title: lifecycleTitle(previousStatus),
+      detail: conflict.title,
+      createdAt: input.now,
+    });
+  }
+
+  plan.status = input.status;
+  plan.updatedAt = input.now;
+  syncClinicalRecordPlanAssociation(state, plan.patientId, input.status === 'active' ? plan.id : plan.id, input.now);
+  state.events.unshift({
+    id: input.createEventId(),
+    kind: lifecycleKind(input.status),
+    patientId: plan.patientId,
+    planId: plan.id,
+    title: lifecycleTitle(input.status),
+    detail: plan.title,
+    createdAt: input.now,
+  });
+
+  if (input.status === 'active' && state.settings.notifications) {
+    state.notifications.unshift({
+      id: input.createNotificationId(),
+      title: 'Plan activo',
+      detail: `${plan.title} ya está disponible para el paciente.`,
+      severity: 'stable',
+      href: `/plans/${plan.id}`,
+      read: false,
+      createdAt: input.now,
+    });
+  }
+
+  return { plan, replacedPlan: conflict ?? null };
 }
