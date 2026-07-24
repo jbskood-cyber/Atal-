@@ -9,42 +9,51 @@ if (!apiKey) {
 
 const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 const ai = new GoogleGenAI({ apiKey });
-const response = await ai.models.generateContent({
+const functionDeclaration = {
+  name: 'atal_app_read',
+  description: 'Consulta información canónica mínima de Atal. Úsala solo cuando la respuesta dependa de datos reales de la aplicación.',
+  parametersJsonSchema: {
+    type: 'object',
+    properties: {
+      resource: {
+        type: 'string',
+        enum: ['patient_profile', 'clinical_record', 'plans', 'plan', 'exercises', 'exercise', 'sessions', 'report', 'activity', 'settings', 'delivery'],
+      },
+      query: { type: 'string' },
+      status: { type: 'string' },
+      limit: { type: 'integer', minimum: 1, maximum: 50 },
+    },
+    required: ['resource'],
+    additionalProperties: false,
+  },
+};
+
+const conceptual = await ai.models.generateContent({
   model,
-  contents: [{
-    role: 'user',
-    parts: [{ text: 'Consulta los ajustes actuales de Atal usando la herramienta disponible. No inventes el resultado.' }],
-  }],
+  contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
   config: {
-    systemInstruction: 'Eres Atal IA. Para consultar datos de Atal debes llamar la función disponible y esperar su resultado.',
-    tools: [{
-      functionDeclarations: [{
-        name: 'atal_read',
-        description: 'Solicita una lectura determinista de Atal.',
-        parametersJsonSchema: {
-          type: 'object',
-          properties: {
-            tool: { type: 'string', enum: ['app.read'] },
-            input: {
-              type: 'object',
-              properties: { resource: { type: 'string', enum: ['settings'] } },
-              required: ['resource'],
-            },
-            references: { type: 'array', items: { type: 'object' } },
-          },
-          required: ['tool', 'input', 'references'],
-        },
-      }],
-    }],
-    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_read'] } },
+    systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
+    tools: [{ functionDeclarations: [functionDeclaration] }],
+    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } },
+    maxOutputTokens: 256,
+  },
+});
+assert.equal(conceptual.functionCalls?.length ?? 0, 0, 'Gemini called a tool for a conceptual question.');
+assert.ok(conceptual.text?.trim(), 'Gemini did not answer the conceptual question.');
+
+const read = await ai.models.generateContent({
+  model,
+  contents: [{ role: 'user', parts: [{ text: 'Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.' }] }],
+  config: {
+    systemInstruction: 'Eres Atal IA. Cuando una respuesta dependa del estado real de Atal, solicita la función precisa y espera su resultado.',
+    tools: [{ functionDeclarations: [functionDeclaration] }],
+    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
     maxOutputTokens: 256,
   },
 });
 
-const call = response.functionCalls?.[0];
-assert.ok(call, 'Gemini did not produce a function call.');
-assert.equal(call.name, 'atal_read');
-assert.equal(call.args?.tool, 'app.read');
-assert.equal(call.args?.input?.resource, 'settings');
-assert.deepEqual(call.args?.references, []);
-console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model}`);
+const call = read.functionCalls?.[0];
+assert.ok(call, 'Gemini did not produce a direct function call.');
+assert.equal(call.name, 'atal_app_read');
+assert.equal(call.args?.resource, 'settings');
+console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model} conceptual=direct tool=atal_app_read`);
