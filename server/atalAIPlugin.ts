@@ -5,7 +5,7 @@ import { ATAL_AI_SYSTEM_PROMPT, ATAL_AI_TRANSCRIPTION_PROMPT } from '../src/feat
 import { atalAIDraftJsonSchema } from '../src/features/atal-ai/api/schemas';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 import type { AtalAIAnalyzeRequest } from '../src/features/atal-ai/types';
-import { atalAIAgentHandler } from './atalAIAgent';
+import { atalAIAgentHandler, atalAIAgentStreamHandler } from './atalAIAgent';
 
 type AtalAIPayload = AtalAIAnalyzeRequest & {
   preferences?: {
@@ -109,10 +109,12 @@ export function atalAIPlugin(): Plugin {
     name: 'atal-ai-secure-endpoint',
     configureServer(server) {
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
     configurePreviewServer(server) {
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
+      server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
   };
