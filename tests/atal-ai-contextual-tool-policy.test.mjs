@@ -32,6 +32,16 @@ test('a contextual invocation cannot target another selected entity', () => {
   ]), 'La acción intentó usar un plan diferente al contexto actual.');
 });
 
+test('a contextual invocation cannot escape by resolving another entity label', () => {
+  assert.equal(policy().contextualInvocationViolation(context('patient'), 'patient.update', [
+    { type: 'patient', label: 'Paciente B' },
+  ]), 'La acción contextual debe usar el paciente fijado por esta pantalla.');
+
+  assert.equal(policy().contextualInvocationViolation(context('plan'), 'plan.update_fields', [
+    { type: 'plan', label: 'Plan de otro paciente' },
+  ]), 'La acción contextual debe usar el plan fijado por esta pantalla.');
+});
+
 test('matching contextual references remain allowed', () => {
   assert.equal(policy().contextualInvocationViolation(context('plan'), 'plan.membership', [
     { type: 'patient', id: 'patient-a' },
