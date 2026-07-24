@@ -57,6 +57,7 @@ export function executeMutationTransaction<TInput, TData = unknown>(
         riskLevel: request.definition.risk,
         confirmationId: request.confirmation?.id,
       },
+      transactionIdPrefix: 'ai-transaction',
       supportsUndo: request.definition.supportsUndo,
       undoTtlMs: request.definition.undoTtlMs,
       mutate(candidate, transactionId) {
