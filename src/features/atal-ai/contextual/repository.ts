@@ -33,6 +33,6 @@ export function ensureContextualConversation(context: ContextualAIContext): AICo
   return conversation;
 }
 
-export function readConversationById(id: string, contextKey: string): AIConversation | null {
-  return selectContextualConversationById(readAIConversations(), id, contextKey);
+export function readConversationById(id: string): AIConversation | null {
+  return selectContextualConversationById(readAIConversations(), id);
 }
