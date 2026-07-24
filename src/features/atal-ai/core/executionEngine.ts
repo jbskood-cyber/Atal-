@@ -28,6 +28,7 @@ import { canonicalPlanToolNames, canonicalPlanTools } from './tools/canonicalPla
 import { canonicalPlanLifecycleToolNames, canonicalPlanLifecycleTools } from './tools/canonicalPlanLifecycleTools';
 import { canonicalUniversalExerciseToolNames, canonicalUniversalExerciseTools } from './tools/canonicalUniversalExerciseTools';
 import { canonicalPatientNoteToolNames, canonicalPatientNoteTools } from './tools/canonicalPatientNoteTools';
+import { canonicalSettingsToolNames, canonicalSettingsTools } from './tools/canonicalSettingsTools';
 import { universalSessionSettingsTools } from './tools/universalSessionSettingsTools';
 import { clientEffectTools } from './tools/clientEffectTools';
 
@@ -35,6 +36,8 @@ const nonCanonicalPlanExerciseTools = universalPlanExerciseTools.filter((tool) =
   !canonicalPlanToolNames.has(tool.name) && !canonicalUniversalExerciseToolNames.has(tool.name));
 const nonCanonicalPlanTools = planTools.filter((tool) => !canonicalPlanLifecycleToolNames.has(tool.name));
 const nonCanonicalUniversalPatientTools = universalPatientTools.filter((tool) => !canonicalPatientNoteToolNames.has(tool.name));
+const nonCanonicalSettingsTools = settingsTools.filter((tool) => !canonicalSettingsToolNames.has(tool.name));
+const nonCanonicalUniversalSessionSettingsTools = universalSessionSettingsTools.filter((tool) => !canonicalSettingsToolNames.has(tool.name));
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
@@ -48,8 +51,9 @@ export const atalAIToolRegistry = createToolRegistry([
   ...canonicalPlanLifecycleTools,
   ...nonCanonicalPlanExerciseTools,
   ...canonicalPlanTools,
-  ...settingsTools,
-  ...universalSessionSettingsTools,
+  ...nonCanonicalSettingsTools,
+  ...nonCanonicalUniversalSessionSettingsTools,
+  ...canonicalSettingsTools,
   ...clientEffectTools,
   ...exportTools,
   ...blockedTools,
