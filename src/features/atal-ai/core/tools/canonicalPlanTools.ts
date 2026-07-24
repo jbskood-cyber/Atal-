@@ -97,6 +97,7 @@ const planCreateTool: ToolDefinition<PlanCreateInput> = {
   execute(environment, input) {
     const patientId = environment.resolved.patient!.id;
     let eventIndex = 0;
+    let recordVersionIndex = 0;
     const result = applyCreatePlan(environment.state, {
       patientId,
       planId: `${environment.transactionId}-plan`,
@@ -107,6 +108,7 @@ const planCreateTool: ToolDefinition<PlanCreateInput> = {
       },
       now: environment.context.now,
       createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
+      createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
     });
     return {
       status: 'success', message: `Plan “${result.plan.title}” creado.`, summary: [`Plan creado como ${result.plan.status}.`],
@@ -121,11 +123,13 @@ const planUpdateTool: ToolDefinition<PlanUpdateInput> = {
   validateInput: validatePlanUpdate, preconditions() {},
   execute(environment, input) {
     let eventIndex = 0;
+    let recordVersionIndex = 0;
     const result = applyUpdatePlan(environment.state, {
       planId: environment.resolved.plan!.id,
       patch: input.patch,
       now: environment.context.now,
       createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
+      createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
     });
     return {
       status: 'success', message: `Plan “${result.plan.title}” actualizado.`, summary: ['Datos del plan actualizados.'],
@@ -148,12 +152,14 @@ const planMembershipTool: ToolDefinition<MembershipInput> = {
   preconditions() {},
   execute(environment, input) {
     let eventIndex = 0;
+    let recordVersionIndex = 0;
     const result = applyPlanMembership(environment.state, {
       planId: environment.resolved.plan!.id,
       operation: input.operation,
       exerciseIds: input.exerciseIds,
       now: environment.context.now,
       createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
+      createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
     });
     return {
       status: 'success', message: 'Ejercicios del plan actualizados.', summary: [`Membresía del plan: ${input.operation}.`],
