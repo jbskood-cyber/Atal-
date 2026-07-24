@@ -14,6 +14,23 @@ import {
 
 const patientPath = '/patients/patient-e2e';
 
+async function mockAgent(page, turns) {
+  let index = 0;
+  await page.route('**/api/atal-ai/agent-turn', async (route) => {
+    const turn = turns[Math.min(index, turns.length - 1)];
+    index += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(turn),
+    });
+  });
+}
+
+function agentModelContent(id, bridge) {
+  return { role: 'model', parts: [{ functionCall: { id, name: bridge, args: {} } }] };
+}
+
 async function openPatient(page, options = {}) {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedBrowser(page, { state: createState(), ...options });
@@ -109,14 +126,27 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(workspace).toHaveAttribute('data-conversation-id', conversationId);
   });
 
-  test('contextual patient summary is read-only and remains inside the current route', async ({ page }) => {
+  test('contextual patient summary uses the agent read loop and remains inside the current route', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await seedBrowser(page, { state: createState() });
-    await mockAnalyze(page, createDraftResponse({
-      intent: 'summarize_patient',
-      responseMode: 'query',
-      command: commandFixture('summarize_patient', { patientId: 'patient-e2e' }),
-    }));
+    await mockAgent(page, [
+      {
+        text: '',
+        modelContent: agentModelContent('read-patient', 'atal_read'),
+        calls: [{
+          id: 'read-patient',
+          bridge: 'atal_read',
+          tool: 'app.read',
+          input: { resource: 'patient_profile', patient: { type: 'patient', id: 'patient-e2e' }, limit: 10 },
+          references: [{ type: 'patient', id: 'patient-e2e' }],
+        }],
+      },
+      {
+        text: 'Plan activo: Plan activo E2E. La última sesión terminó con dolor 3/10.',
+        modelContent: { role: 'model', parts: [{ text: 'Resumen preparado.' }] },
+        calls: [],
+      },
+    ]);
     await page.goto(patientPath);
     const before = await readStore(page);
     const url = page.url();
