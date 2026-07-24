@@ -19,6 +19,7 @@ export type AtalAgentControllerInput = {
   messages?: AIMessage[];
   task?: AgentTaskState;
   signal?: AbortSignal;
+  onTextDelta?: (delta: string) => void;
 };
 
 function sessionFromRoute(route: string): string {
@@ -93,7 +94,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     task,
     request: requestShape({ ...input, task }),
     context: executionContext(input),
-    requestModel: requestAtalAgentTurn,
+    requestModel: (request, signal) => requestAtalAgentTurn(request, signal, input.onTextDelta),
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
     signal: input.signal,
   });
@@ -112,7 +113,7 @@ export async function confirmAndContinueAtalAgent(
     task,
     request: requestShape({ ...input, task }),
     context: executionContext(input),
-    requestModel: requestAtalAgentTurn,
+    requestModel: (request, signal) => requestAtalAgentTurn(request, signal, input.onTextDelta),
     executeTool: (invocation, confirmation) => executeToolInvocation({ invocation, context: executionContext(input), confirmation }),
     signal: input.signal,
   });
