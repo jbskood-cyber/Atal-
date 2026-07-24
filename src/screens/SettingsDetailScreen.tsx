@@ -5,7 +5,8 @@ import { ArrowLeft, Bot, Check, EyeOff, Moon, Save, ShieldCheck, Sun, UserRound,
 import { useRouter } from 'next/navigation';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { useTheme, type ThemeMode } from '@/src/context/ThemeContext';
-import { updateSettings, useAtalStore } from '@/src/data/atalStore';
+import { useAtalStore } from '@/src/data/atalStore';
+import { updateLocalSettings } from '@/src/data/settingsRepository';
 
 export type SettingsKind = 'profile' | 'privacy' | 'ai' | 'appearance';
 const titles = { profile: 'Perfil profesional', privacy: 'Privacidad y seguridad', ai: 'Preferencias de Atal IA', appearance: 'Apariencia' };
@@ -49,7 +50,7 @@ function Profile() {
         <label><span>Centro o clínica</span><input value={clinic} placeholder="Opcional" onChange={(event) => { setClinic(event.target.value); setSaved(false); }} /></label>
       </div>
       <SaveButton saved={saved} onClick={() => {
-        updateSettings({ professionalName: name.trim() || 'Fisioterapeuta', specialty: specialty.trim() || 'Fisioterapeuta', clinic: clinic.trim() });
+        updateLocalSettings({ professionalName: name.trim() || 'Fisioterapeuta', specialty: specialty.trim() || 'Fisioterapeuta', clinic: clinic.trim() });
         setSaved(true);
       }} />
     </>
@@ -67,7 +68,7 @@ function Privacy() {
           title="Ocultar nombre en vista del paciente"
           detail="Muestra “Paciente” al previsualizar o compartir su plan"
           value={settings.clinicalPrivacy}
-          onChange={(clinicalPrivacy) => updateSettings({ clinicalPrivacy })}
+          onChange={(clinicalPrivacy) => updateLocalSettings({ clinicalPrivacy })}
         />
       </div>
       <div className="atal-role-note is-neutral">
@@ -86,14 +87,14 @@ function AiPreferences() {
     <>
       <DetailHeading icon={<WandSparkles />} title={titles.ai} text="Personaliza las respuestas y alertas del asistente." />
       <div className="atal-settings-card">
-        <LocalToggle icon={<Bot />} title="Sugerencias clínicas" detail="Incluye propuestas útiles al preparar planes" value={settings.aiSuggestions} onChange={(aiSuggestions) => updateSettings({ aiSuggestions })} />
-        <LocalToggle icon={<WandSparkles />} title="Alertas inteligentes" detail="Destaca información que requiere revisión" value={settings.aiAlerts} onChange={(aiAlerts) => updateSettings({ aiAlerts })} />
+        <LocalToggle icon={<Bot />} title="Sugerencias clínicas" detail="Incluye propuestas útiles al preparar planes" value={settings.aiSuggestions} onChange={(aiSuggestions) => updateLocalSettings({ aiSuggestions })} />
+        <LocalToggle icon={<WandSparkles />} title="Alertas inteligentes" detail="Destaca información que requiere revisión" value={settings.aiAlerts} onChange={(aiAlerts) => updateLocalSettings({ aiAlerts })} />
       </div>
       <label className="atal-settings-textarea">
         <span>Indicaciones para las respuestas</span>
         <textarea value={instructions} placeholder="Ej. Responde de forma breve y prioriza seguridad clínica." onChange={(event) => { setInstructions(event.target.value); setSaved(false); }} />
       </label>
-      <SaveButton saved={saved} onClick={() => { updateSettings({ aiInstructions: instructions.trim() }); setSaved(true); }} />
+      <SaveButton saved={saved} onClick={() => { updateLocalSettings({ aiInstructions: instructions.trim() }); setSaved(true); }} />
     </>
   );
 }
