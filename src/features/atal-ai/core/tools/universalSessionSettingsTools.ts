@@ -25,8 +25,7 @@ export const universalSessionSettingsTools: ToolDefinition<any>[] = [
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['session'],
     validateInput(input) {
       const value = objectInput(input, 'La revisión del reporte no es válida.');
-      const observation = text(value.observation) ?? '';
-      if (!observation) throw coreError('CORE_INPUT_INVALID', 'Escribe la observación clínica.');
+      const observation = text(value.observation, 2_000) ?? '';
       return { session: ref(value.session, 'session'), observation };
     },
     preconditions(environment) {
