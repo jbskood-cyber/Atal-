@@ -41,6 +41,22 @@ test('contextual lookup by id accepts only the matching contextual instance', ()
   );
 });
 
+test('contextual selector refuses id-only lookup when contextKey is omitted', () => {
+  const conversations = [
+    conversation({ id: 'context-id', updatedAt: '2026-07-24T12:00:00.000Z', scope: 'contextual', contextKey: 'patient:patient-a' }),
+  ];
+
+  assert.equal(scope().selectContextualConversationById(conversations, 'context-id'), null);
+});
+
+test('global history excludes contextual conversations even when they are newer', () => {
+  const global = conversation({ id: 'global-id', updatedAt: '2026-07-24T12:00:00.000Z', scope: 'global' });
+  const contextual = conversation({ id: 'context-id', updatedAt: '2026-07-24T13:00:00.000Z', scope: 'contextual', contextKey: 'patient:patient-a' });
+
+  assert.deepEqual(scope().selectGlobalConversationHistory([contextual, global]), [global]);
+  assert.equal(scope().selectLatestGlobalConversation([contextual, global]), global);
+});
+
 test('contextual repository lookup must require contextKey instead of trusting conversationId alone', () => {
   const source = fs.readFileSync('src/features/atal-ai/contextual/repository.ts', 'utf8');
   assert.match(source, /readConversationById\(id:\s*string,\s*contextKey:\s*string\)/);
