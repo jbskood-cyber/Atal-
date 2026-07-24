@@ -45,13 +45,54 @@
   color: var(--ink);
 }
 
+.atal-command-message.is-assistant p {
+  margin: 0 0 0.8em;
+}
+
+.atal-command-message.is-assistant p:last-child {
+  margin-bottom: 0;
+}
+
+.atal-command-message.is-assistant ul,
+.atal-command-message.is-assistant ol {
+  margin: 0.45em 0 0.9em;
+  padding-left: 1.35em;
+}
+
+.atal-command-message.is-assistant li + li {
+  margin-top: 0.35em;
+}
+
+.atal-command-message.is-assistant strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.atal-command-message.is-assistant code {
+  padding: 0.12em 0.38em;
+  border: 1px solid var(--command-border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--command-surface) 88%, var(--command-primary) 12%);
+  font-size: 0.9em;
+}
+
 .atal-command-message.is-user > div {
   width: fit-content;
   max-width: min(88%, 620px);
   padding: 12px 15px;
-  border: 1px solid var(--command-border);
+  border: 1px solid color-mix(in srgb, #77b995 72%, #ffffff 28%);
   border-radius: 20px 8px 20px 20px;
-  background: #e9efec;
+  background: #7fbb99;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgb(46 111 78 / 12%);
+}
+
+.atal-command-message.is-user > div header,
+.atal-command-message.is-user > div header b,
+.atal-command-message.is-user > div header time,
+.atal-command-message.is-user > div p,
+.atal-command-message.is-user > div small {
+  color: #ffffff;
 }
 
 .atal-command-message.is-user > small {
@@ -101,5 +142,7 @@
 
 [data-theme='dark'] .atal-command-message.is-user > div,
 .dark .atal-command-message.is-user > div {
-  background: color-mix(in srgb, var(--command-surface) 82%, #16a36a 18%);
+  border-color: color-mix(in srgb, #7fbb99 78%, #ffffff 22%);
+  background: #4f896b;
+  color: #ffffff;
 }
