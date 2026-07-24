@@ -114,6 +114,12 @@ function isTerminalResult(result: ToolExecutionResult): boolean {
   return result.status !== 'success';
 }
 
+function providerFailureMessage(error: unknown): string {
+  return error instanceof Error && error.message.trim()
+    ? error.message.trim()
+    : 'Atal IA no pudo continuar la tarea. No se perdió ningún cambio.';
+}
+
 export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutcome> {
   let task = structuredClone(input.task);
   const lastResults: AgentStepResult[] = [];
@@ -125,12 +131,23 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       break;
     }
 
-    const turn = await input.requestModel({
-      ...input.request,
-      allowedTools: task.allowedTools,
-      history: task.history,
-      previousInteractionId: task.interactionId ?? input.request.previousInteractionId,
-    }, input.signal);
+    let turn;
+    try {
+      turn = await input.requestModel({
+        ...input.request,
+        allowedTools: task.allowedTools,
+        history: task.history,
+        previousInteractionId: task.interactionId ?? input.request.previousInteractionId,
+      }, input.signal);
+    } catch (error) {
+      if (input.signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+        task = { ...task, status: 'cancelled', finalText: 'Procesamiento cancelado. El trabajo completado se conservó.', updatedAt: now() };
+      } else {
+        task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+      }
+      break;
+    }
+
     task.stepCount += 1;
     task.updatedAt = now();
     if (turn.interactionId) task.interactionId = turn.interactionId;
