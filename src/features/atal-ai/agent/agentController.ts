@@ -90,6 +90,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     intent: input.workContext.intent,
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
+    contextSurface: input.contextSurface,
   });
   const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
   const task = input.task?.status === 'running'
