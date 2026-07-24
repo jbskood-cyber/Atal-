@@ -12,6 +12,7 @@ export type ContextualExecutionBoundary = {
 export type ContextualEntityReference = {
   type: string;
   id?: string;
+  label?: string;
 };
 
 const COMMON_READ_TOOLS = new Set([
@@ -110,10 +111,13 @@ export function contextualInvocationViolation(
   }
 
   for (const reference of references) {
-    if (!reference.id?.trim()) continue;
     const expected = expectedId(context, reference.type);
-    if (expected && reference.id !== expected) {
+    if (!expected) continue;
+    if (reference.id?.trim() && reference.id !== expected) {
       return `La acción intentó usar un ${entityLabel(reference.type)} diferente al contexto actual.`;
+    }
+    if (!reference.id?.trim() && reference.label?.trim()) {
+      return `La acción contextual debe usar el ${entityLabel(reference.type)} fijado por esta pantalla.`;
     }
   }
   return null;
