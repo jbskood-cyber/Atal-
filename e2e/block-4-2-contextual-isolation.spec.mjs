@@ -106,8 +106,9 @@ test('patient A and patient B keep isolated contextual conversations', async ({ 
   expect(contextual).toHaveLength(2);
   const storedA = contextual.find((conversation) => conversation.id === conversationA);
   const storedB = contextual.find((conversation) => conversation.id === conversationB);
-  expect(storedA.contextKey).toBe('patient:patient-e2e');
-  expect(storedB.contextKey).toBe('patient:patient-b-e2e');
+  expect(storedA.contextKey).not.toBe(storedB.contextKey);
+  expect(storedA.contextKey).toMatch(/^contextual:patient:patient-e2e:/);
+  expect(storedB.contextKey).toMatch(/^contextual:patient:patient-b-e2e:/);
   expect(storedA.workContext.selectedPatientId).toBe('patient-e2e');
   expect(storedB.workContext.selectedPatientId).toBe('patient-b-e2e');
   expect(storedA.composerText).toBe('Borrador privado del paciente A');
