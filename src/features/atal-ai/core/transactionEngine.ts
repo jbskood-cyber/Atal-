@@ -71,7 +71,7 @@ export function executeMutationTransaction<TInput, TData = unknown>(
         try {
           request.definition.preconditions(environment, request.invocation.input);
         } catch (error) {
-          if (error instanceof CoreExecutionError) throw error;
+          if (error instanceof CoreExecutionError || error instanceof ActionExecutionError) throw error;
           throw coreError(
             'CORE_PRECONDITION_FAILED',
             error instanceof Error ? error.message : 'No se cumplieron las condiciones de la acción.',
@@ -81,7 +81,7 @@ export function executeMutationTransaction<TInput, TData = unknown>(
         try {
           return request.definition.execute(environment, request.invocation.input) as ToolSuccess<TData>;
         } catch (error) {
-          if (error instanceof CoreExecutionError) throw error;
+          if (error instanceof CoreExecutionError || error instanceof ActionExecutionError) throw error;
           throw coreError(
             'CORE_EXECUTION_FAILED',
             error instanceof Error ? error.message : 'No se pudo ejecutar la acción.',
