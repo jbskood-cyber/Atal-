@@ -3,6 +3,7 @@ import type { ConfirmationProof } from '../core/contracts';
 import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
 import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
+import type { ContextualAgentSurface } from '../core/agentic/contextualToolPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
 import { readAIConversations } from '../data/aiRepository';
@@ -18,6 +19,9 @@ export type AtalAgentControllerInput = {
   attachments: AIAttachmentPayload[];
   messages?: AIMessage[];
   task?: AgentTaskState;
+  assistantScope?: 'global' | 'contextual';
+  contextSurface?: ContextualAgentSurface;
+  selectedSessionId?: string;
   signal?: AbortSignal;
   onTextDelta?: (delta: string) => void;
 };
@@ -35,7 +39,9 @@ function executionContext(input: AtalAgentControllerInput) {
     selectedPatientId: input.workContext.selectedPatientId,
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
-    selectedSessionId: sessionFromRoute(input.route),
+    selectedSessionId: input.selectedSessionId ?? sessionFromRoute(input.route),
+    assistantScope: input.assistantScope ?? 'global' as const,
+    contextSurface: input.contextSurface,
     now: new Date().toISOString(),
   };
 }
@@ -70,7 +76,7 @@ function requestShape(input: AtalAgentControllerInput) {
     selectedPatientId: input.workContext.selectedPatientId,
     selectedPlanId: input.workContext.selectedPlanId,
     selectedExerciseId: input.workContext.selectedExerciseId,
-    selectedSessionId: sessionFromRoute(input.route),
+    selectedSessionId: input.selectedSessionId ?? sessionFromRoute(input.route),
     conversationHistory: visibleConversationHistory(input),
     attachments: input.attachments.map((item) => ({ id: item.id, name: item.name, type: item.type, kind: item.kind, data: item.data })),
     previousInteractionId: input.task?.interactionId,
