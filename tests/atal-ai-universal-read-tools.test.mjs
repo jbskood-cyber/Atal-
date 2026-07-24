@@ -12,6 +12,27 @@ function execute(port, input, references = []) {
   return executeToolInvocation({ invocation: invocation(input, references), context: context() }, { port });
 }
 
+test('universal read model lists and counts active patients without mutation', () => {
+  const state = validState();
+  state.patients.push({
+    ...structuredClone(state.patients[0]),
+    id: 'patient-2',
+    name: 'Paciente archivado',
+    status: 'archived',
+    createdAt: state.updatedAt,
+    updatedAt: state.updatedAt,
+  });
+  const port = memoryPort(state);
+  const before = structuredClone(port.read());
+  const result = execute(port, { resource: 'patients', status: 'active', limit: 50 });
+  assert.equal(result.status, 'success');
+  assert.equal(result.data.total, 1);
+  assert.equal(result.data.patients[0].id, 'patient-1');
+  assert.match(result.message, /1 pacientes/);
+  assert.deepEqual(port.read(), before);
+  assert.equal(port.mutationCount(), 0);
+});
+
 test('universal read model exposes complete patient context without mutation', () => {
   const state = validState();
   state.notes.push({ id: 'note-1', patientId: 'patient-1', content: 'Mejor tolerancia.', professional: 'Terapeuta', createdAt: state.updatedAt, updatedAt: state.updatedAt });
