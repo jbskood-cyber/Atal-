@@ -13,9 +13,11 @@ export type ReviewSessionActionResult = {
 
 export function applyReviewSession(state: AtalState, input: ReviewSessionActionInput): ReviewSessionActionResult {
   const session = state.sessions.find((item) => item.id === input.sessionId);
-  if (!session) throw new Error('Sesión no encontrada.');
+  if (!session) throw new Error('La sesión ya no existe.');
 
   const observation = input.observation.trim();
+  if (observation.length > 2_000) throw new Error('La observación clínica supera 2000 caracteres.');
+
   session.clinicalObservation = observation;
   session.reviewedAt = input.now;
   session.updatedAt = input.now;
