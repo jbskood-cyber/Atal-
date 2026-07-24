@@ -37,7 +37,7 @@ const deferredMutationPatterns = [
   /\b(?:todavía|todavia|aún|aun) no\b/i,
   /\bsolo (?:redacta|prepara|propón|propon|diseña|simula)\b/i,
   /\b(?:quiero|déjame|dejame) revis(?:ar|arlo|arla)\b/i,
-  /\b(?:lo|la|los|las) revisar(?:é|e|emos|án|an)\b/i,
+  /\b(?:lo|la|los|las)\s+revisar/i,
 ];
 
 const draftCommitPatterns = [
