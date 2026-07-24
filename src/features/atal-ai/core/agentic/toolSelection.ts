@@ -25,6 +25,7 @@ export type ToolSelectionInput = {
   text: string;
   route: string;
   intent?: string;
+  selectionHints?: string;
   hasImageOrPdf: boolean;
   hasAudio: boolean;
   contextSurface?: ContextualAgentSurface;
@@ -34,7 +35,7 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   if (classification.kind === 'conversation' && !input.hasImageOrPdf && !input.hasAudio) return [];
 
-  const value = `${input.text} ${input.route} ${input.intent ?? ''}`.toLocaleLowerCase('es-MX');
+  const value = `${input.text} ${input.route} ${input.intent ?? ''} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
   const selected = classification.allowedToolKinds.includes('read') || input.hasImageOrPdf || input.hasAudio
     ? [...READ_BASE]
     : [];
