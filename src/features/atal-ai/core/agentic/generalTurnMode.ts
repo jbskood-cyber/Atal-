@@ -86,6 +86,7 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
 
 export function selectGeneralTurnMode(input: GeneralTurnModeInput): GeneralTurnMode {
   const text = input.text.trim();
+  if (input.hasDraft && classifyAgentTurn(text).kind === 'action') return 'agent';
   if (input.hasDraft || input.draftModeArmed) return 'draft';
   if (input.hasImageOrPdf && descriptiveFilePatterns.some((pattern) => pattern.test(text))) return 'agent';
   if (structuredDraftPatterns.some((pattern) => pattern.test(text))) return 'draft';
