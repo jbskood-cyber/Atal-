@@ -6,7 +6,8 @@ import { Archive, ArrowLeft, CalendarDays, ChevronRight, Eye, FileText, Pencil, 
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { archiveLocalPatient, restoreLocalPatient, updateLocalPatient, usePatientCatalog } from '@/src/data/localPatients';
-import { addPatientNote, deletePatientNote, updatePatientNote, useAtalStore, type ActivityEvent, type PatientNote, type SessionRecord } from '@/src/data/atalStore';
+import { addPatientNote, deletePatientNote, useAtalStore, type ActivityEvent, type PatientNote, type SessionRecord } from '@/src/data/atalStore';
+import { updateClinicalPatientNote } from '@/src/data/patientNoteRepository';
 import { summarizeClinicalSessions } from '@/src/domain/clinicalMetrics';
 import { validatePatientInput } from '@/src/domain/validation';
 import { ContextualAISurface } from '@/src/features/atal-ai/contextual/ContextualAISurface';
@@ -113,7 +114,7 @@ function History({ events }: { events: ActivityEvent[] }) {
 
 function Notes({ patientId, notes, professional }: { patientId: string; notes: PatientNote[]; professional: string }) {
   const [value, setValue] = useState(''); const [editing, setEditing] = useState<string | null>(null); const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const save = () => { if (!value.trim()) return; if (editing) updatePatientNote(editing, value); else addPatientNote(patientId, value, professional); setValue(''); setEditing(null); };
+  const save = () => { if (!value.trim()) return; if (editing) updateClinicalPatientNote(editing, value); else addPatientNote(patientId, value, professional); setValue(''); setEditing(null); };
   return <section className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea maxLength={1000} value={value} onChange={(event) => setValue(event.target.value)} placeholder="Escribe una observación clínica…" /><small>{value.length}/1000</small><button type="button" disabled={!value.trim()} onClick={save}><Save />{editing ? 'Actualizar nota' : 'Guardar nota'}</button><div className="atal-note-history">{[...notes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((note) => <article key={note.id}><p>{note.content}</p><small>{note.professional} · {new Date(note.updatedAt).toLocaleString('es-MX')}</small><div><button type="button" onClick={() => { setEditing(note.id); setValue(note.content); }}><Pencil />Editar</button>{pendingDelete === note.id ? <><button type="button" onClick={() => { deletePatientNote(note.id); setPendingDelete(null); }}><Trash2 />Confirmar</button><button type="button" onClick={() => setPendingDelete(null)}>Cancelar</button></> : <button type="button" onClick={() => setPendingDelete(note.id)}><Trash2 />Eliminar</button>}</div></article>)}{!notes.length && <p>No hay notas todavía.</p>}</div></section>;
 }
 
