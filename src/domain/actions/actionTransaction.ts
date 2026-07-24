@@ -161,7 +161,6 @@ export function executeActionTransaction<TResult extends ActionMutationResult>(
     const result = request.mutate(candidate, transactionId);
     validateActionStateInvariants(candidate, before);
 
-    const affected = resolveAffected(before, candidate, result.affected);
     const beforeEventIds = new Set(before.events.map((event) => event.id));
     const beforeNotificationIds = new Set(before.notifications.map((notification) => notification.id));
     const generatedEventIds = candidate.events.filter((event) => !beforeEventIds.has(event.id)).map((event) => event.id);
@@ -169,6 +168,7 @@ export function executeActionTransaction<TResult extends ActionMutationResult>(
       .filter((notification) => !beforeNotificationIds.has(notification.id))
       .map((notification) => notification.id);
     const patches = createUndoPatches(before, candidate);
+    const affected = resolveAffected(before, candidate, result.affected);
 
     const ttl = Math.min(Math.max(request.undoTtlMs ?? MAX_UNDO_TTL_MS, 0), MAX_UNDO_TTL_MS);
     const undo = request.supportsUndo ? {
