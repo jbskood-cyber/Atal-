@@ -1,13 +1,18 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { FunctionCallingConfigMode, GoogleGenAI } from '@google/genai';
 import { ATAL_AGENT_SYSTEM_PROMPT } from '../src/features/atal-ai/api/agentPrompt';
-import { agentToolCatalogByName, type AgentToolCatalogEntry } from '../src/features/atal-ai/api/agentToolCatalog';
+import {
+  agentToolCatalogByFunctionName,
+  agentToolCatalogByName,
+  type AgentToolCatalogEntry,
+} from '../src/features/atal-ai/api/agentToolCatalog';
 import type { AgentFunctionCall, AgentHistoryContent, AgentModelTurn, AgentTurnRequest } from '../src/features/atal-ai/core/agentic/contracts';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
 
 const MAX_HISTORY_CONTENTS = 32;
 const MAX_CONVERSATION_CONTENTS = 24;
+const ENTITY_TYPES = new Set(['patient', 'plan', 'exercise', 'session', 'clinical-record', 'settings']);
 
 function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.statusCode = status;
@@ -61,37 +66,11 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   return { ...payload, allowedTools, conversationHistory };
 }
 
-function bridgeDescription(kind: AgentToolCatalogEntry['kind'], entries: AgentToolCatalogEntry[]): string {
-  const contracts = entries.map((entry) => `- ${entry.name}: ${entry.contract}`).join('\n');
-  return `${kind === 'read' ? 'Consulta' : 'Ejecuta'} una herramienta determinista de Atal. Herramientas disponibles en este turno:\n${contracts}`;
-}
-
-function bridgeDeclaration(kind: AgentToolCatalogEntry['kind'], entries: AgentToolCatalogEntry[]) {
-  const name = kind === 'read' ? 'atal_read' : 'atal_action';
+function toolDeclaration(entry: AgentToolCatalogEntry) {
   return {
-    name,
-    description: bridgeDescription(kind, entries),
-    parametersJsonSchema: {
-      type: 'object',
-      properties: {
-        tool: { type: 'string', enum: entries.map((entry) => entry.name), description: 'Nombre exacto de la herramienta Atal.' },
-        input: { type: 'object', description: 'Argumentos exactos descritos en el contrato de la herramienta.', additionalProperties: true },
-        references: {
-          type: 'array',
-          description: 'Referencias de entidades necesarias. Usa IDs cuando estén disponibles.',
-          items: {
-            type: 'object',
-            properties: {
-              type: { type: 'string', enum: ['patient', 'plan', 'exercise', 'session', 'clinical-record', 'settings'] },
-              id: { type: 'string' },
-              label: { type: 'string' },
-            },
-            required: ['type'],
-          },
-        },
-      },
-      required: ['tool', 'input', 'references'],
-    },
+    name: entry.functionName,
+    description: `${entry.contract} Atal validará los datos, el riesgo, la persistencia, la auditoría y Deshacer.`,
+    parametersJsonSchema: entry.inputSchema,
   };
 }
 
@@ -112,20 +91,44 @@ function initialUserContent(payload: AgentTurnRequest): AgentHistoryContent {
   return { role: 'user', parts };
 }
 
-function modelCall(call: { id?: string; name?: string; args?: Record<string, unknown> }, entries: Map<string, AgentToolCatalogEntry>): AgentFunctionCall {
-  const bridge = call.name === 'atal_read' ? 'atal_read' : call.name === 'atal_action' ? 'atal_action' : undefined;
-  if (!bridge) throw new Error('Gemini solicitó una función desconocida.');
-  const args = call.args && typeof call.args === 'object' ? call.args : {};
-  const tool = typeof args.tool === 'string' ? args.tool : '';
-  const entry = entries.get(tool);
-  if (!entry) throw new Error(`Gemini solicitó una herramienta no permitida: ${tool}`);
-  if ((bridge === 'atal_read' ? 'read' : 'action') !== entry.kind) throw new Error('Gemini usó el puente incorrecto para la herramienta.');
+function collectReferences(value: unknown): AgentFunctionCall['references'] {
+  const references: AgentFunctionCall['references'] = [];
+  const seen = new Set<string>();
+  const visit = (candidate: unknown) => {
+    if (Array.isArray(candidate)) {
+      candidate.forEach(visit);
+      return;
+    }
+    if (!candidate || typeof candidate !== 'object') return;
+    const record = candidate as Record<string, unknown>;
+    const type = typeof record.type === 'string' ? record.type : '';
+    const id = typeof record.id === 'string' ? record.id : undefined;
+    const label = typeof record.label === 'string' ? record.label : undefined;
+    if (ENTITY_TYPES.has(type) && (id?.trim() || label?.trim())) {
+      const key = `${type}:${id ?? ''}:${label ?? ''}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        references.push({ type, id, label });
+      }
+    }
+    Object.values(record).forEach(visit);
+  };
+  visit(value);
+  return references;
+}
+
+function modelCall(call: { id?: string; name?: string; args?: Record<string, unknown> }, allowedFunctions: Map<string, AgentToolCatalogEntry>): AgentFunctionCall {
+  const functionName = call.name ?? '';
+  const entry = allowedFunctions.get(functionName) ?? agentToolCatalogByFunctionName.get(functionName);
+  if (!entry || !allowedFunctions.has(functionName)) throw new Error(`Gemini solicitó una herramienta no permitida: ${functionName || 'desconocida'}`);
+  const input = call.args && typeof call.args === 'object' ? call.args : {};
   return {
     id: call.id || `call-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    bridge,
-    tool,
-    input: args.input && typeof args.input === 'object' ? args.input : {},
-    references: Array.isArray(args.references) ? args.references as AgentFunctionCall['references'] : [],
+    bridge: entry.kind === 'read' ? 'atal_read' : 'atal_action',
+    functionName: entry.functionName,
+    tool: entry.name,
+    input,
+    references: collectReferences(input),
   };
 }
 
@@ -136,8 +139,8 @@ function modelContentFor(text: string, calls: AgentFunctionCall[]): AgentHistory
     parts.push({
       functionCall: {
         id: call.id,
-        name: call.bridge,
-        args: { tool: call.tool, input: call.input, references: call.references },
+        name: call.functionName ?? call.bridge,
+        args: call.input,
       },
     });
   }
@@ -149,24 +152,18 @@ function prepareModel(rawPayload: AgentTurnRequest) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error('GEMINI_API_KEY no configurada');
   const entries = payload.allowedTools.map((name) => agentToolCatalogByName.get(name)!);
-  const byName = new Map(entries.map((entry) => [entry.name, entry]));
-  const readEntries = entries.filter((entry) => entry.kind === 'read');
-  const actionEntries = entries.filter((entry) => entry.kind === 'action');
-  const declarations = [
-    ...(readEntries.length ? [bridgeDeclaration('read', readEntries)] : []),
-    ...(actionEntries.length ? [bridgeDeclaration('action', actionEntries)] : []),
-  ];
+  const allowedFunctions = new Map(entries.map((entry) => [entry.functionName, entry]));
   const config: Record<string, unknown> = {
     systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
     maxOutputTokens: 2_048,
   };
-  if (declarations.length) {
-    config.tools = [{ functionDeclarations: declarations }];
+  if (entries.length) {
+    config.tools = [{ functionDeclarations: entries.map(toolDeclaration) }];
     config.toolConfig = { functionCallingConfig: { mode: FunctionCallingConfigMode.AUTO } };
   }
   return {
     ai: new GoogleGenAI({ apiKey }),
-    byName,
+    allowedFunctions,
     request: {
       model: process.env.GEMINI_MODEL ?? 'gemini-3.6-flash',
       contents: [...payload.conversationHistory, initialUserContent(payload), ...payload.history] as never,
@@ -178,7 +175,7 @@ function prepareModel(rawPayload: AgentTurnRequest) {
 export async function analyzeAgentTurn(rawPayload: AgentTurnRequest): Promise<AgentModelTurn> {
   const prepared = prepareModel(rawPayload);
   const response = await prepared.ai.models.generateContent(prepared.request);
-  const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.byName));
+  const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.allowedFunctions));
   const text = response.text?.trim() ?? '';
   const modelContent = response.candidates?.[0]?.content as AgentHistoryContent | undefined;
   return { text, calls, modelContent: modelContent ?? modelContentFor(text, calls) };
@@ -197,8 +194,8 @@ export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta:
       onTextDelta(delta);
     }
     for (const rawCall of chunk.functionCalls ?? []) {
-      const call = modelCall(rawCall as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.byName);
-      const key = call.id || JSON.stringify({ bridge: call.bridge, tool: call.tool, input: call.input, references: call.references });
+      const call = modelCall(rawCall as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.allowedFunctions);
+      const key = call.id || JSON.stringify({ tool: call.tool, input: call.input });
       calls.set(key, call);
     }
   }
