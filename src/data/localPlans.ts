@@ -24,7 +24,7 @@ function resyncPatient(patientId:string,preferredPlanId=''){
 function transitionPlan(id:string,status:PlanStatus,resolution?:PlanConflictResolution){
   const now=new Date().toISOString();
   const holder:{result?:ReturnType<typeof applyPlanLifecycle>}={};
-  mutateAtalStore((draft)=>{holder.result=applyPlanLifecycle(draft,{planId:id,status,resolveActiveConflict:resolution,now,createEventId:()=>createEntityId('event'),createNotificationId:()=>createEntityId('notification')});});
+  mutateAtalStore((draft)=>{holder.result=applyPlanLifecycle(draft,{planId:id,status,resolveActiveConflict:resolution,now,createEventId:()=>createEntityId('event'),createNotificationId:()=>createEntityId('notification'),createRecordVersionId:()=>createEntityId('record-version')});});
   return holder.result?.plan??null;
 }
 
@@ -34,13 +34,13 @@ export function createLocalPlan(input:NewLocalPlan){
   const now=new Date().toISOString();
   const planId=createEntityId('plan');
   const holder:{result?:ReturnType<typeof applyCreatePlan>}={};
-  mutateAtalStore((draft)=>{holder.result=applyCreatePlan(draft,{patientId:input.patientId,planId,now,createEventId:()=>createEntityId('event'),plan:{title:input.title,focus:input.focus,duration:input.duration,frequency:input.frequency,goal:input.goal,exerciseIds:input.exerciseIds,status:input.status,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''}});});
+  mutateAtalStore((draft)=>{holder.result=applyCreatePlan(draft,{patientId:input.patientId,planId,now,createEventId:()=>createEntityId('event'),createRecordVersionId:()=>createEntityId('record-version'),plan:{title:input.title,focus:input.focus,duration:input.duration,frequency:input.frequency,goal:input.goal,exerciseIds:input.exerciseIds,status:input.status,progression:input.progression??'',reportCriteria:input.reportCriteria??'',generalInstructions:input.generalInstructions??''}});});
   return holder.result!.plan;
 }
 export function updateLocalPlan(id:string,patch:PlanUpdatePatch){
   const now=new Date().toISOString();
   const holder:{result?:ReturnType<typeof applyUpdatePlan>}={};
-  mutateAtalStore((draft)=>{holder.result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event')});});
+  mutateAtalStore((draft)=>{holder.result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event'),createRecordVersionId:()=>createEntityId('record-version')});});
   return holder.result?.plan??null;
 }
 export const activatePlan=(id:string,resolution?:PlanConflictResolution)=>transitionPlan(id,'active',resolution);
