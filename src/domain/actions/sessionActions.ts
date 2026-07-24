@@ -1,5 +1,7 @@
 import type { AtalState, SessionRecord } from '../../data/atalStore';
 
+const MAX_CLINICAL_OBSERVATION_LENGTH = 2_000;
+
 export type ReviewSessionActionInput = {
   sessionId: string;
   observation: string;
@@ -16,7 +18,9 @@ export function applyReviewSession(state: AtalState, input: ReviewSessionActionI
   if (!session) throw new Error('La sesión ya no existe.');
 
   const observation = input.observation.trim();
-  if (observation.length > 2_000) throw new Error('La observación clínica supera 2000 caracteres.');
+  if (observation.length > MAX_CLINICAL_OBSERVATION_LENGTH) {
+    throw new Error(`La observación clínica supera ${MAX_CLINICAL_OBSERVATION_LENGTH} caracteres.`);
+  }
 
   session.clinicalObservation = observation;
   session.reviewedAt = input.now;
