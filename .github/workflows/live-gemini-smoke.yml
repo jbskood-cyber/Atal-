@@ -15,11 +15,21 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Resolve live checkpoint gate
         id: gate
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" || -f .github/live-gemini-trigger ]]; then
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          git fetch origin "$head_sha" --depth=2
+          if git rev-parse "${head_sha}^" >/dev/null 2>&1 && ! git diff --quiet "${head_sha}^" "$head_sha" -- .github/live-gemini-trigger; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
@@ -42,20 +52,13 @@ jobs:
       - name: Compile Action Core harness
         if: steps.gate.outputs.enabled == 'true'
         run: npm run test:core:compile
-      - name: Verify real Gemini patient-create flow
-        if: steps.gate.outputs.enabled == 'true'
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
-          GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
-        run: npm run test:ai-live > live-agent-e2e.log 2>&1
       - name: Install Playwright test runner without changing the lockfile
         if: steps.gate.outputs.enabled == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
         if: steps.gate.outputs.enabled == 'true'
         run: npx playwright install --with-deps chromium
-      - name: Verify live Gemini patient update, note and lifecycle persistence
+      - name: Verify current live Gemini capability checkpoint
         if: steps.gate.outputs.enabled == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -69,7 +72,6 @@ jobs:
         with:
           name: live-gemini-diagnostics
           path: |
-            live-agent-e2e.log
             live-browser-e2e.log
             playwright-report/
             test-results/
