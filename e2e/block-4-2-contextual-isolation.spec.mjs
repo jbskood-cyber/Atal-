@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   CONVERSATIONS_KEY,
+  createConversation,
   createState,
   DRAFTS_KEY,
   STORE_KEY,
@@ -9,6 +10,8 @@ import {
 
 const patientAPath = '/patients/patient-e2e';
 const patientBPath = '/patients/patient-b-e2e';
+const globalConversationId = 'global-conversation-e2e';
+const globalComposerText = 'Borrador global intacto';
 
 function createTwoPatientState() {
   const state = createState();
@@ -43,14 +46,18 @@ function createTwoPatientState() {
 async function seedPersistentBrowser(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.evaluate(({ state, keys }) => {
+  await page.evaluate(({ state, globalConversation, keys }) => {
     localStorage.clear();
     localStorage.setItem(keys.store, JSON.stringify(state));
-    localStorage.setItem(keys.conversations, '[]');
+    localStorage.setItem(keys.conversations, JSON.stringify([globalConversation]));
     localStorage.setItem(keys.drafts, '[]');
     localStorage.setItem(keys.theme, 'light');
   }, {
     state: createTwoPatientState(),
+    globalConversation: {
+      ...createConversation({ id: globalConversationId }),
+      composerText: globalComposerText,
+    },
     keys: {
       store: STORE_KEY,
       conversations: CONVERSATIONS_KEY,
@@ -74,7 +81,7 @@ async function storedConversation(page, conversationId) {
   }, { key: CONVERSATIONS_KEY, id: conversationId });
 }
 
-test('patient A and patient B keep isolated contextual conversations', async ({ page }) => {
+test('patient A and patient B keep isolated contextual conversations without contaminating global conversation', async ({ page }) => {
   await seedPersistentBrowser(page);
 
   let workspace = await openPatientWorkspace(page, patientAPath, 'Paciente E2E');
@@ -102,8 +109,18 @@ test('patient A and patient B keep isolated contextual conversations', async ({ 
   await expect(workspace.getByLabel('Mensaje para Atal IA contextual')).toHaveValue('Borrador privado del paciente A');
 
   const conversations = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);
+  expect(conversations).toHaveLength(3);
+
+  const global = conversations.find((conversation) => conversation.id === globalConversationId);
+  expect(global).toBeTruthy();
+  expect(global.scope ?? 'global').toBe('global');
+  expect(global.contextKey).toBeUndefined();
+  expect(global.composerText).toBe(globalComposerText);
+
   const contextual = conversations.filter((conversation) => conversation.scope === 'contextual');
   expect(contextual).toHaveLength(2);
+  expect(contextual.some((conversation) => conversation.id === globalConversationId)).toBe(false);
+
   const storedA = contextual.find((conversation) => conversation.id === conversationA);
   const storedB = contextual.find((conversation) => conversation.id === conversationB);
   expect(storedA.contextKey).not.toBe(storedB.contextKey);
