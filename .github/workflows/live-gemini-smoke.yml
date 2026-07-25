@@ -50,24 +50,28 @@ jobs:
           }
           NODE
       - name: Verify conceptual turn stays conversational
+        if: always()
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           ATAL_AI_LIVE_STAGE: conceptual
         run: npm run test:ai-live
       - name: Verify forced function call is emitted
+        if: always()
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           ATAL_AI_LIVE_STAGE: call-presence
         run: npm run test:ai-live
       - name: Verify settings function arguments
+        if: always()
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           ATAL_AI_LIVE_STAGE: settings
         run: npm run test:ai-live
       - name: Verify patient-count function arguments
+        if: always()
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
