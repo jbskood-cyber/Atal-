@@ -22,6 +22,13 @@ test('activating a selected plan exposes only the canonical activation mutation'
   );
 });
 
+test('pausing a selected plan exposes only the canonical pause mutation', () => {
+  assert.deepEqual(
+    selection('Pausa el plan seleccionado. Hazlo ahora.', 'update_plan_status'),
+    ['app.read', 'patient.search', 'plan.pause'],
+  );
+});
+
 test('archiving a selected plan exposes only the canonical archive mutation', () => {
   assert.deepEqual(
     selection('Archiva el plan seleccionado. Hazlo ahora.', 'archive_plan'),
