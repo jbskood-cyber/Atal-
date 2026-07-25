@@ -40,4 +40,37 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await expect(page.getByLabel('Nombre')).toHaveValue(originalName);
     expect(await readStore(page)).toEqual(before);
   });
+
+  test('note edit can be cancelled without mutating or leaking the abandoned draft into a new note', async ({ page }) => {
+    const state = createState();
+    state.notes = [{
+      id: 'note-e2e',
+      patientId: 'patient-e2e',
+      content: 'Nota original E2E',
+      professional: 'Fisioterapeuta E2E',
+      createdAt: '2026-07-22T12:00:00.000Z',
+      updatedAt: '2026-07-22T12:00:00.000Z',
+    }];
+
+    await seed(page, state);
+    await page.goto('/patients/patient-e2e');
+    await page.getByRole('button', { name: 'Notas' }).click();
+
+    const before = await readStore(page);
+    const note = page.locator('.atal-note-history article').filter({ hasText: 'Nota original E2E' });
+    await note.getByRole('button', { name: 'Editar' }).click();
+
+    const composer = page.getByPlaceholder('Escribe una observación clínica…');
+    await expect(composer).toHaveValue('Nota original E2E');
+    await composer.fill('Borrador de nota que debe descartarse');
+
+    await page.getByRole('button', { name: 'Cancelar edición de nota' }).click();
+    expect(await readStore(page)).toEqual(before);
+    await expect(composer).toHaveValue('');
+    await expect(page.getByRole('button', { name: 'Guardar nota' })).toBeVisible();
+
+    await note.getByRole('button', { name: 'Editar' }).click();
+    await expect(composer).toHaveValue('Nota original E2E');
+    expect(await readStore(page)).toEqual(before);
+  });
 });
