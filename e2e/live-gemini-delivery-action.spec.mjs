@@ -52,7 +52,7 @@ async function send(page, text) {
 }
 
 test.describe('Live Gemini delivery action', () => {
-  test('prepares a download of the selected plan through Gemini real after explicit confirmation', async ({ page }) => {
+  test('downloads the selected plan through Gemini real after explicit confirmation', async ({ page }) => {
     test.setTimeout(150_000);
     await seed(page);
     await page.goto('/assistant');
@@ -62,13 +62,14 @@ test.describe('Live Gemini delivery action', () => {
     const confirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
     await expect(confirmation).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole('alert')).toHaveCount(0);
+
+    const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
     await confirmation.getByRole('button', { name: 'Continuar' }).click();
+    const download = await downloadPromise;
 
     await expect(page).toHaveURL(/\/plans\/plan-active-e2e\/delivery$/, { timeout: 60_000 });
-    const request = await page.evaluate(() => JSON.parse(sessionStorage.getItem('atal:delivery-action:plan-active-e2e') ?? 'null'));
-    expect(request).toBeTruthy();
-    expect(request.action).toBe('download');
-    expect(request.options ?? {}).toEqual({});
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
+    await expect(page.getByRole('status')).toContainText(/PDF descargado/i, { timeout: 60_000 });
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
