@@ -1,0 +1,2 @@
+Live Gemini checkpoint for browser patient-create after Gemini-compatible schema fix.
+Target capability: natural save confirmation -> patient.create -> atal:store:v2 -> reload persistence.
