@@ -36,7 +36,9 @@ function preferencePatch(input: unknown): Partial<AppSettings> & Record<string, 
 
 function profilePatch(input: unknown): Partial<AppSettings> & Record<string, unknown> {
   const value = objectInput(input, 'Los datos del perfil profesional no son válidos.');
-  const profile = objectInput(value.profile, 'No se indicaron cambios para el perfil profesional.');
+  const profile = value.profile === undefined
+    ? value
+    : objectInput(value.profile, 'No se indicaron cambios para el perfil profesional.');
   const entries = Object.entries(profile);
   if (!entries.length) throw coreError('CORE_INPUT_INVALID', 'No se indicaron cambios para el perfil profesional.');
 
