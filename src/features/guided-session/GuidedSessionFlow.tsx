@@ -49,6 +49,11 @@ export function GuidedSessionFlow({ patientId }: { patientId: string }) {
     setResumeGate(false);
     setConfirmRestart(false);
   };
+  const start = () => {
+    const startedAt = draft.startedAt ?? new Date().toISOString();
+    recordClinicalSessionStarted(patientId, draft.planId, startedAt);
+    setDraft((current) => ({ ...current, planSnapshot: structuredClone(plan), stage: 'exercise', status: 'in_progress', startedAt }));
+  };
   const finishEarly = () => {
     setDraft((current) => ({ ...current, status: 'partial', stage: 'close' }));
     setConfirmFinish(false);
@@ -65,7 +70,7 @@ export function GuidedSessionFlow({ patientId }: { patientId: string }) {
 
   return <PatientSessionFrame label={draft.stage === 'exercise' ? `Ejercicio ${currentIndex + 1} de ${plan.exercises.length}` : draft.stage === 'summary' ? 'Resumen' : draft.stage === 'close' ? 'Cierre' : 'Preparación'} progress={progress} onExit={() => router.push(`/patients/${patientId}/portal-preview`)}>
     {resumeGate ? <section className="atal-session-card atal-resume-card"><RotateCcw /><span className="atal-session-kicker">Sesión sin terminar</span><h1>Continúa donde lo dejaste</h1><p>Conservamos la versión del plan, el ejercicio actual, tus series, valores y comentarios.</p><div><button type="button" className="atal-session-primary" onClick={() => setResumeGate(false)}>Continuar sesión</button><button type="button" onClick={() => setConfirmRestart(true)}>Empezar de nuevo</button></div></section> : <>
-      {draft.stage === 'prepare' && <SessionPreparation plan={plan} draft={draft} onChange={setDraft} onStart={() => setDraft((current) => { const startedAt = current.startedAt ?? new Date().toISOString(); recordClinicalSessionStarted(patientId, current.planId, startedAt); return { ...current, planSnapshot: structuredClone(plan), stage: 'exercise', status: 'in_progress', startedAt }; })} />}
+      {draft.stage === 'prepare' && <SessionPreparation plan={plan} draft={draft} onChange={setDraft} onStart={start} />}
       {draft.stage === 'exercise' && exercise && safeRecord && <ActiveExercise exercise={exercise} record={safeRecord} index={currentIndex} total={plan.exercises.length} onChange={(record) => setDraft((current) => ({ ...current, currentExerciseIndex: currentIndex, exercises: { ...current.exercises, [exercise.id]: record } }))} onPrevious={() => setDraft((current) => ({ ...current, currentExerciseIndex: Math.max(0, currentIndex - 1) }))} onNext={() => setDraft((current) => currentIndex === plan.exercises.length - 1 ? { ...current, currentExerciseIndex: currentIndex, stage: 'close' } : { ...current, currentExerciseIndex: currentIndex + 1 })} onFinishEarly={() => setConfirmFinish(true)} />}
       {draft.stage === 'close' && <SessionClose plan={plan} draft={draft} onChange={setDraft} onFinish={finish} />}
       {draft.stage === 'summary' && <SessionSummary plan={plan} draft={draft} onPlan={() => router.push(`/patients/${patientId}/portal-preview`)} onRestart={() => setConfirmRestart(true)} />}
