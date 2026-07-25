@@ -153,6 +153,14 @@ function selectSettingsActionTools(rawText: string): string[] {
   return [];
 }
 
+function deliveryRequestTool(rawText: string): 'delivery.open' | 'delivery.action' | undefined {
+  const mentionsDelivery = includesAny(rawText, ['entrega', 'delivery']);
+  if (!mentionsDelivery) return undefined;
+  if (includesAny(rawText, ['descarga', 'descargar', 'comparte', 'compartir', 'imprime', 'imprimir'])) return 'delivery.action';
+  if (includesAny(rawText, ['abre', 'abrir', 'muestra', 'mostrar', 'previsualiza', 'previsualizar'])) return 'delivery.open';
+  return undefined;
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -160,6 +168,21 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   const intent = input.intent ?? '';
   const selected = classification.allowedToolKinds.includes('read') ? [...READ_BASE] : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
+
+  if (allowMutations && intent === 'export_data') {
+    append(selected, ['data.export_local']);
+    return scopeTools(selected, input.contextSurface);
+  }
+
+  const requestedDeliveryTool = deliveryRequestTool(rawText);
+  if (requestedDeliveryTool === 'delivery.open') {
+    append(selected, ['delivery.open']);
+    return scopeTools(selected, input.contextSurface);
+  }
+  if (allowMutations && requestedDeliveryTool === 'delivery.action') {
+    append(selected, ['delivery.action']);
+    return scopeTools(selected, input.contextSurface);
+  }
 
   if (allowMutations && intent === 'create_patient_plan' && DRAFT_COMMIT_PATTERN.test(input.text)) {
     append(selected, ['patient.create']);
