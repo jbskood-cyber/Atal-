@@ -27,6 +27,11 @@ type DeliveryOutcome = {
   message: string;
 };
 
+type DeliveryExecution = {
+  planId: string;
+  promise: Promise<DeliveryOutcome>;
+};
+
 function actionKey(planId: string) {
   return `atal:delivery-action:${planId}`;
 }
@@ -90,10 +95,9 @@ async function executePendingDelivery(planId: string, pending: PendingDeliveryAc
 export function AgenticPatientPlanDeliveryScreen({ planId }: { planId: string }) {
   const [state, setState] = useState<'idle' | 'working' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  const executionRef = useRef<{ planId: string; promise: Promise<DeliveryOutcome> } | null>(null);
+  const executionRef = useRef<DeliveryExecution | null>(null);
 
   useEffect(() => {
-    let active = true;
     let execution = executionRef.current;
     if (!execution || execution.planId !== planId) {
       const pending = readPendingAction(planId);
@@ -108,13 +112,12 @@ export function AgenticPatientPlanDeliveryScreen({ planId }: { planId: string })
 
     setState('working');
     setMessage('Preparando el documento solicitado por Atal IA…');
-    void execution.promise.then((outcome) => {
-      if (!active) return;
+    const currentExecution = execution;
+    void currentExecution.promise.then((outcome) => {
+      if (executionRef.current !== currentExecution) return;
       setState(outcome.state);
       setMessage(outcome.message);
     });
-
-    return () => { active = false; };
   }, [planId]);
 
   return <>
