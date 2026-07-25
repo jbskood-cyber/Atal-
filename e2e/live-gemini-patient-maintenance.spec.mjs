@@ -74,6 +74,19 @@ test.describe('Live Gemini patient maintenance', () => {
 
     await expect.poll(() => patientMaintenanceSnapshot(page), { timeout: 120_000 }).toMatchObject({
       phone: '4441112233',
+      status: 'active',
+      note: 'Mejora tolerancia al movimiento',
+      updateEvents: 1,
+      noteEvents: 1,
+      lifecycleEvents: 0,
+    });
+
+    const confirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
+    await expect(confirmation).toBeVisible({ timeout: 20_000 });
+    await confirmation.getByRole('button', { name: 'Continuar' }).click();
+
+    await expect.poll(() => patientMaintenanceSnapshot(page), { timeout: 60_000 }).toMatchObject({
+      phone: '4441112233',
       status: 'archived',
       note: 'Mejora tolerancia al movimiento',
       updateEvents: 1,
