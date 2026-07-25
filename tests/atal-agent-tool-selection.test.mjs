@@ -81,3 +81,11 @@ test('updating patient pain does not expose session mutations without a session 
   assert.equal(tools.some((tool) => tool.startsWith('session.')), false);
   assert.equal(tools.includes('report.review'), false);
 });
+
+test('creating a plan for the selected patient exposes only plan creation', () => {
+  const tools = selection(
+    'Crea un plan nuevo para el paciente seleccionado llamado Rehabilitación lumbar, con frecuencia 4 días por semana, como borrador.',
+    'create_plan_for_existing_patient',
+  );
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.create_simple']);
+});
