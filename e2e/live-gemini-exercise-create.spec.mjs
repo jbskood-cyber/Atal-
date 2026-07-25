@@ -72,6 +72,8 @@ test.describe('Live Gemini exercise create', () => {
 
     const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
     await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
+    const exerciseSection = preparedDraft.getByRole('button', { name: /Ejercicios 1 ejercicio/ });
+    await exerciseSection.click();
     await expect(preparedDraft).toContainText('Remo escapular IA');
     await expect.poll(() => exerciseSnapshot(page), { timeout: 5_000 }).toMatchObject({
       exists: false,
