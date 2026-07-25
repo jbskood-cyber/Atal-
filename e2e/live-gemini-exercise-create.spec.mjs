@@ -60,7 +60,7 @@ async function exerciseSnapshot(page) {
 }
 
 test.describe('Live Gemini exercise create', () => {
-  test('creates an exercise through Gemini real and persists it after reload', async ({ page }) => {
+  test('prepares, reviews, applies and persists an exercise through Gemini real', async ({ page }) => {
     test.setTimeout(180_000);
     await seedExerciseConversation(page);
     await page.goto('/assistant');
@@ -70,14 +70,31 @@ test.describe('Live Gemini exercise create', () => {
     );
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 
-    await expect.poll(() => exerciseSnapshot(page), { timeout: 90_000 }).toMatchObject({
+    const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
+    await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
+    await expect(preparedDraft).toContainText('Remo escapular IA');
+    await expect.poll(() => exerciseSnapshot(page), { timeout: 5_000 }).toMatchObject({
+      exists: false,
+      createEvents: 0,
+    });
+
+    const thread = page.locator('.atal-command-thread');
+    await thread.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: 'instant' }));
+    const apply = preparedDraft.getByRole('button', { name: 'Aplicar cambios' });
+    await expect(apply).toBeVisible();
+    await apply.click();
+
+    const confirmation = page.getByRole('dialog', { name: '¿Aplicar este borrador?' });
+    await expect(confirmation).toBeVisible({ timeout: 20_000 });
+    await confirmation.getByRole('button', { name: 'Confirmar y aplicar' }).click();
+
+    await expect.poll(() => exerciseSnapshot(page), { timeout: 60_000 }).toMatchObject({
       exists: true,
       status: 'active',
       sets: 4,
       repetitions: 12,
       createEvents: 1,
     });
-    await expect(page.locator('body')).toContainText(/ejercicio .*cread[oa]/i);
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
 
