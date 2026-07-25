@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { useAtalStore } from '@/src/data/atalStore';
+import { buildHomeDashboard } from '@/src/domain/queries/homeDashboard';
 
 type AlertTone = 'urgent' | 'attention' | 'neutral';
 type HomeAlert = {
@@ -37,27 +38,22 @@ const formatDate = (value: string) => new Intl.DateTimeFormat('es-MX', {
 export function HomeScreen() {
   const router = useRouter();
   const state = useAtalStore((store) => store);
-  const activePatients = state.patients.filter((patient) => patient.status !== 'archived');
-  const activePlans = state.plans.filter((plan) => plan.status === 'active');
-  const sortedSessions = [...state.sessions].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
-  const pendingReports = sortedSessions.filter((session) => !session.reviewedAt);
-  const patientsWithoutPlan = activePatients.filter((patient) => !state.plans.some((plan) => plan.patientId === patient.id && ['active', 'draft'].includes(plan.status)));
+  const dashboard = buildHomeDashboard(state);
 
   const alerts: HomeAlert[] = [];
-  for (const session of pendingReports) {
-    const patient = state.patients.find((item) => item.id === session.patientId);
-    const urgent = session.endPain >= 7 || session.symptoms.some((item) => !['ninguno', 'otro'].includes(item));
+  for (const session of dashboard.pendingReports) {
+    const patient = dashboard.patientById.get(session.patientId);
     alerts.push({
       id: `session-${session.id}`,
-      tone: urgent ? 'urgent' : 'attention',
-      title: urgent ? 'Sesión requiere atención' : 'Reporte pendiente',
+      tone: session.urgent ? 'urgent' : 'attention',
+      title: session.urgent ? 'Sesión requiere atención' : 'Reporte pendiente',
       detail: `${patient?.name ?? 'Paciente'} · Dolor ${session.endPain}/10`,
       meta: formatDate(session.completedAt),
       href: `/activity/${session.id}`,
-      icon: urgent ? 'alert' : 'clock',
+      icon: session.urgent ? 'alert' : 'clock',
     });
   }
-  for (const patient of patientsWithoutPlan) {
+  for (const patient of dashboard.patientsWithoutPlan) {
     alerts.push({
       id: `patient-${patient.id}`,
       tone: 'neutral',
@@ -69,7 +65,6 @@ export function HomeScreen() {
     });
   }
 
-  const recentReports = sortedSessions.slice(0, 3);
   const today = new Intl.DateTimeFormat('es-MX', {
     weekday: 'long',
     day: 'numeric',
@@ -92,9 +87,9 @@ export function HomeScreen() {
         </button>
 
         <section className="atal-home-metrics" aria-label="Resumen clínico">
-          <HomeMetric icon={<UsersRound />} value={activePatients.length} label="Pacientes" onClick={() => router.push('/patients')} />
-          <HomeMetric icon={<ClipboardList />} value={activePlans.length} label="Planes activos" onClick={() => router.push('/plans')} />
-          <HomeMetric icon={<FileText />} value={pendingReports.length} label="Por revisar" onClick={() => router.push('/activity?view=reports')} attention={pendingReports.length > 0} />
+          <HomeMetric icon={<UsersRound />} value={dashboard.activePatientCount} label="Pacientes" onClick={() => router.push('/patients')} />
+          <HomeMetric icon={<ClipboardList />} value={dashboard.activePlanCount} label="Planes activos" onClick={() => router.push('/plans')} />
+          <HomeMetric icon={<FileText />} value={dashboard.pendingReportCount} label="Por revisar" onClick={() => router.push('/activity?view=reports')} attention={dashboard.pendingReportCount > 0} />
         </section>
 
         <section className="atal-home-section">
@@ -114,8 +109,8 @@ export function HomeScreen() {
         <section className="atal-home-section">
           <SectionHeading title="Reportes recientes" action="Ver todos" onClick={() => router.push('/activity?view=reports')} />
           <div className="atal-home-list">
-            {recentReports.map((session) => {
-              const patient = state.patients.find((item) => item.id === session.patientId);
+            {dashboard.recentReports.map((session) => {
+              const patient = dashboard.patientById.get(session.patientId);
               return (
                 <button type="button" key={session.id} className={`atal-home-row is-${session.reviewedAt ? 'stable' : 'urgent'}`} onClick={() => router.push(`/activity/${session.id}`)}>
                   <span className="atal-home-row-icon"><FileText /></span>
@@ -128,7 +123,7 @@ export function HomeScreen() {
                 </button>
               );
             })}
-            {!recentReports.length && <div className="atal-home-empty"><b>Sin reportes todavía</b><small>Los reportes aparecerán al terminar una sesión guiada.</small></div>}
+            {!dashboard.recentReports.length && <div className="atal-home-empty"><b>Sin reportes todavía</b><small>Los reportes aparecerán al terminar una sesión guiada.</small></div>}
           </div>
         </section>
 
