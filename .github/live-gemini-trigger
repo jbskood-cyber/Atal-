@@ -1,2 +1,2 @@
 Live Gemini plan creation checkpoint.
-Target: selected patient -> structured plan draft -> block scroll flow -> reachable Apply changes -> plan.create_simple -> atal:store:v2 -> reload persistence.
+Target: selected patient -> structured plan draft -> reachable Apply changes -> explicit Confirmar y aplicar -> plan.create_simple -> atal:store:v2 -> reload persistence.
