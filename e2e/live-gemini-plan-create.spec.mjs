@@ -59,7 +59,7 @@ async function planSnapshot(page) {
 }
 
 test.describe('Live Gemini plan creation', () => {
-  test('creates a draft plan for the selected patient through the real app', async ({ page }) => {
+  test('creates and applies a structured draft plan for the selected patient through the real app', async ({ page }) => {
     test.setTimeout(180_000);
     await seedPlanConversation(page);
     await page.goto('/assistant');
@@ -69,7 +69,12 @@ test.describe('Live Gemini plan creation', () => {
     );
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 
-    await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
+    const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
+    await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
+    await expect.poll(() => planSnapshot(page), { timeout: 5_000 }).toMatchObject({ exists: false, createEvents: 0 });
+    await preparedDraft.getByRole('button', { name: 'Aplicar cambios' }).click();
+
+    await expect.poll(() => planSnapshot(page), { timeout: 60_000 }).toMatchObject({
       exists: true,
       patientId: 'patient-e2e',
       frequency: '4 días por semana',
