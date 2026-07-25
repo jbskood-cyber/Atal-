@@ -1,0 +1,2 @@
+Live Gemini patient maintenance checkpoint.
+Target: selected patient -> update phone + add note + archive -> atal:store:v2 -> reload persistence.
