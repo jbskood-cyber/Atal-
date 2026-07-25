@@ -1,6 +1,8 @@
 import { createEntityId, getAtalState, mutateAtalStore, useAtalStore, type PatientEntity, type PatientStatus } from './atalStore';
+import { executeActionTransaction } from '@/src/domain/actions/actionTransaction';
 import { applyCreatePatient, applyUpdatePatient, type PatientUpdatePatch } from '@/src/domain/actions/patientActions';
 import { applyPatientLifecycle } from '@/src/domain/actions/patientLifecycle';
+import { applyUpsertClinicalRecord, type ClinicalRecordPatch } from '@/src/domain/actions/clinicalRecordActions';
 import { buildPatientCatalog, buildPatientView, type PatientCatalogView } from '@/src/domain/queries/patientCatalog';
 
 export const LOCAL_PATIENTS_KEY = 'atal:local-patients:v1';
@@ -10,6 +12,22 @@ export type NewLocalPatient = { name:string; diagnosis:string; age?:number|null;
 export type PatientView = PatientCatalogView;
 
 export const statusColor:Record<PatientStatus,string>={active:'#16a36a',attention:'#f4a61d',archived:'#7f8582'};
+
+const localPatientPort={read:getAtalState,mutate:mutateAtalStore};
+
+function patientCreateData(input:NewLocalPatient){
+  return {
+    name:input.name,
+    diagnosis:input.diagnosis,
+    age:input.age??null,
+    birthDate:input.birthDate??'',
+    sex:input.sex??'',
+    affectedArea:input.affectedArea??'',
+    status:input.status??'active' as PatientStatus,
+    visitType:input.visitType??'first' as const,
+    contact:{phone:input.contact?.phone??'',email:input.contact?.email??'',address:input.contact?.address??'',emergencyContact:input.contact?.emergencyContact??''},
+  };
+}
 
 function setLocalPatientArchived(id:string,archived:boolean):PatientEntity|null{
   const timestamp=new Date().toISOString();
@@ -30,20 +48,43 @@ export function createLocalPatient(input:NewLocalPatient){
       patientId:createEntityId('patient'),
       now:timestamp,
       createEventId:()=>createEntityId('event'),
-      patient:{
-        name:input.name,
-        diagnosis:input.diagnosis,
-        age:input.age??null,
-        birthDate:input.birthDate??'',
-        sex:input.sex??'',
-        affectedArea:input.affectedArea??'',
-        status:input.status??'active',
-        visitType:input.visitType??'first',
-        contact:{phone:input.contact?.phone??'',email:input.contact?.email??'',address:input.contact?.address??'',emergencyContact:input.contact?.emergencyContact??''},
-      },
+      patient:patientCreateData(input),
     }).patient;
   });
   return result!;
+}
+export function createLocalPatientWithRecord(input:NewLocalPatient,record:ClinicalRecordPatch){
+  const now=new Date().toISOString();
+  return executeActionTransaction({
+    action:'patient.create',
+    now,
+    origin:{type:'manual-ui'},
+    supportsUndo:true,
+    mutate(draft,transactionId){
+      let eventIndex=0;
+      const patient=applyCreatePatient(draft,{
+        patientId:`${transactionId}-patient`,
+        now,
+        createEventId:()=>`${transactionId}-event-${eventIndex++}`,
+        patient:patientCreateData(input),
+      }).patient;
+      const clinicalRecord=applyUpsertClinicalRecord(draft,{
+        patientId:patient.id,
+        patch:record,
+        recordId:`${transactionId}-record`,
+        versionId:`${transactionId}-record-version`,
+        now,
+        createEventId:()=>`${transactionId}-event-${eventIndex++}`,
+      }).record;
+      return {
+        status:'success' as const,
+        message:'Paciente creado.',
+        summary:['Paciente creado.','Expediente inicial creado.'],
+        data:{patientId:patient.id,clinicalRecordId:clinicalRecord.id},
+        affected:[{type:'patient' as const,id:patient.id},{type:'clinical-record' as const,id:clinicalRecord.id}],
+      };
+    },
+  },localPatientPort);
 }
 export function updateLocalPatient(id:string,patch:Partial<LocalPatient>){
   const {id:_id,createdAt:_createdAt,updatedAt:_updatedAt,...safePatch}=patch;
