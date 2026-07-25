@@ -25,6 +25,30 @@ jobs:
         run: |
           set -euo pipefail
           test -n "${GEMINI_API_KEY:-}"
+      - name: Verify basic Gemini request
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { GoogleGenAI } from '@google/genai';
+          const apiKey = process.env.GEMINI_API_KEY?.trim();
+          const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.6-flash';
+          const ai = new GoogleGenAI({ apiKey });
+          try {
+            const response = await ai.models.generateContent({
+              model,
+              contents: [{ role: 'user', parts: [{ text: 'Responde únicamente: OK' }] }],
+            });
+            if (!response.text?.trim()) throw new Error('EMPTY_TEXT');
+            console.log(`GEMINI_BASIC=PASS model=${model}`);
+          } catch (error) {
+            console.error(`GEMINI_BASIC=FAIL name=${error?.name ?? 'unknown'} status=${error?.status ?? 'unknown'} code=${error?.code ?? 'unknown'}`);
+            process.exit(1);
+          }
+          NODE
       - name: Verify real Gemini function calling
         shell: bash
         env:
