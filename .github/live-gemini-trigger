@@ -1,2 +1,2 @@
-Live Gemini settings checkpoint — provider may split a requested patch into multiple valid calls.
-Target: final requested preference state + audit, then profile + appearance, all persisted across reload; do not require exactly one settings.update call.
+Live Gemini settings checkpoint — request-scoped preference schema + idle composer sequencing.
+Target: combined preference request requires exactly the canonical requested keys at provider schema level; then profile + appearance persist across reload.
