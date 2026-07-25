@@ -15,12 +15,24 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Resolve live checkpoint gate
+        id: gate
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || -f .github/live-gemini-trigger ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+        if: steps.gate.outputs.enabled == 'true'
       - name: Verify Gemini secret is configured
+        if: steps.gate.outputs.enabled == 'true'
         shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -28,25 +40,30 @@ jobs:
           set -euo pipefail
           test -n "${GEMINI_API_KEY:-}"
       - name: Compile Action Core harness
+        if: steps.gate.outputs.enabled == 'true'
         run: npm run test:core:compile
       - name: Verify real Gemini patient-create flow
+        if: steps.gate.outputs.enabled == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
         run: npm run test:ai-live > live-agent-e2e.log 2>&1
       - name: Install Playwright test runner without changing the lockfile
+        if: steps.gate.outputs.enabled == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
+        if: steps.gate.outputs.enabled == 'true'
         run: npx playwright install --with-deps chromium
       - name: Verify live Gemini persists patient through the real browser app
+        if: steps.gate.outputs.enabled == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
         run: npx playwright test e2e/live-gemini-patient-create.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
-        if: always()
+        if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: live-gemini-diagnostics
