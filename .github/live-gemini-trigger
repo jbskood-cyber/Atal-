@@ -1,2 +1,2 @@
-Live Gemini exercise create checkpoint — reviewed application flow v2.
-Target: natural create-exercise prompt -> inspect structured exercise draft -> explicit apply/confirmation -> canonical exercise Action Core -> atal:store:v2 -> reload persistence.
+Live Gemini exercise create checkpoint — canonical reviewed flow.
+Target: natural create-exercise prompt -> inspect structured exercise draft -> explicit apply/confirmation -> exercise.create Action Core audit -> atal:store:v2 -> reload persistence.
