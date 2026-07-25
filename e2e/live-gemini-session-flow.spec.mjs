@@ -89,6 +89,16 @@ test.describe('Live Gemini guided session flow', () => {
     await expect(page.getByLabel('Mensaje para Atal IA')).toBeVisible({ timeout: 20_000 });
     await send(page, 'Completa la sesión del paciente y plan seleccionados como completada con dolor final 3, energía final 6, esfuerzo 5 y comentario “Sesión IA completada”. Hazlo ahora.');
 
+    const confirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
+    await expect(confirmation).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => sessionSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      startAudits: 1,
+      startedEvents: 1,
+      completeAudits: 0,
+      generatedExists: false,
+    });
+    await confirmation.getByRole('button', { name: 'Continuar' }).click();
+
     await expect.poll(() => sessionSnapshot(page), { timeout: 60_000 }).toMatchObject({
       startAudits: 1,
       startedEvents: 1,
