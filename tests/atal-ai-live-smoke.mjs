@@ -7,8 +7,14 @@ if (!apiKey) {
   process.exit(0);
 }
 
-const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.6-flash';
-const stage = process.env.ATAL_AI_LIVE_STAGE?.trim() || 'all';
+const configuredCascade = process.env.GEMINI_MODEL_CASCADE?.trim();
+const preferredModel = process.env.GEMINI_MODEL?.trim();
+const models = [...new Set((configuredCascade
+  ? configuredCascade.split(',')
+  : [preferredModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'])
+  .map((value) => value?.trim())
+  .filter(Boolean))];
+const stage = process.env.ATAL_AI_LIVE_STAGE?.trim() || 'patients';
 const ai = new GoogleGenAI({ apiKey });
 const functionDeclaration = {
   name: 'atal_app_read',
@@ -28,23 +34,46 @@ const functionDeclaration = {
   },
 };
 
+function isTransient(error) {
+  const message = error instanceof Error ? `${error.name} ${error.message}` : String(error ?? '');
+  if (/\b(?:401|403)\b|API key|permission denied|PERMISSION_DENIED|INVALID_ARGUMENT|invalid argument/i.test(message)) return false;
+  return /\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|fetch failed|network/i.test(message);
+}
+
+async function withModelFallback(operation) {
+  let lastError;
+  for (let index = 0; index < models.length; index += 1) {
+    const model = models[index];
+    try {
+      return { value: await operation(model), model };
+    } catch (error) {
+      lastError = error;
+      const nextModel = models[index + 1];
+      if (!nextModel || !isTransient(error)) throw error;
+      console.log(`ATAL_AI_LIVE_FALLBACK failed=${model} next=${nextModel}`);
+      await new Promise((resolve) => setTimeout(resolve, 250 * (2 ** index)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Gemini live smoke failed.');
+}
+
 async function conceptual() {
-  const response = await ai.models.generateContent({
-    model,
+  const { value: response, model } = await withModelFallback((candidateModel) => ai.models.generateContent({
+    model: candidateModel,
     contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
     config: {
       systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
       maxOutputTokens: 2_048,
     },
-  });
+  }));
   assert.equal(response.functionCalls?.length ?? 0, 0, 'Gemini called a tool for a conceptual question.');
   assert.ok(response.text?.trim(), 'Gemini did not answer the conceptual question.');
   console.log(`ATAL_AI_LIVE_STAGE=conceptual PASS model=${model}`);
 }
 
 async function forcedCall(prompt) {
-  const response = await ai.models.generateContent({
-    model,
+  const { value: response, model } = await withModelFallback((candidateModel) => ai.models.generateContent({
+    model: candidateModel,
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: {
       systemInstruction: 'Eres Atal IA. Cuando una respuesta dependa del estado real de Atal, solicita la función precisa y espera su resultado.',
@@ -52,27 +81,27 @@ async function forcedCall(prompt) {
       toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
       maxOutputTokens: 2_048,
     },
-  });
+  }));
   const call = response.functionCalls?.[0];
   assert.ok(call, 'Gemini did not produce a direct function call.');
   assert.equal(call.name, 'atal_app_read');
-  console.log(`ATAL_AI_LIVE_CALL name=${call.name} resource=${String(call.args?.resource ?? '')}`);
-  return call;
+  console.log(`ATAL_AI_LIVE_CALL name=${call.name} resource=${String(call.args?.resource ?? '')} model=${model}`);
+  return { call, model };
 }
 
 async function callPresence() {
-  await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
+  const { model } = await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
   console.log(`ATAL_AI_LIVE_STAGE=call-presence PASS model=${model}`);
 }
 
 async function settingsArgs() {
-  const call = await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
+  const { call, model } = await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
   assert.equal(call.args?.resource, 'settings');
   console.log(`ATAL_AI_LIVE_STAGE=settings PASS model=${model}`);
 }
 
 async function patientsArgs() {
-  const call = await forcedCall('Dime cuantos pacientes tengo por favor. Debes consultar Atal antes de responder.');
+  const { call, model } = await forcedCall('Dime cuantos pacientes tengo por favor. Debes consultar Atal antes de responder.');
   assert.equal(call.args?.resource, 'patients');
   console.log(`ATAL_AI_LIVE_STAGE=patients PASS model=${model}`);
 }
@@ -84,11 +113,7 @@ const stages = {
   patients: patientsArgs,
 };
 
-if (stage === 'all') {
-  for (const run of Object.values(stages)) await run();
-  console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model}`);
-} else {
-  const run = stages[stage];
-  if (!run) throw new Error(`Unknown live smoke stage: ${stage}`);
-  await run();
-}
+const run = stages[stage];
+if (!run) throw new Error(`Unknown live smoke stage: ${stage}`);
+await run();
+console.log(`ATAL_AI_LIVE_SMOKE=PASS stage=${stage}`);
