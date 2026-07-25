@@ -41,6 +41,18 @@ async function seed(page, state, conversation) {
   });
 }
 
+async function seedFreshConversation(page, overrides = {}) {
+  const state = createState();
+  const conversation = createConversation({
+    id: 'conversation-live-gemini-fresh',
+    draftId: 'draft-live-gemini-fresh',
+    status: 'empty',
+    messages: [],
+    ...overrides,
+  });
+  await seed(page, state, conversation);
+}
+
 async function seedLiveConversation(page) {
   const state = createState();
   const conversation = createConversation({
@@ -80,6 +92,15 @@ async function seedExistingPatientConversation(page) {
   await seed(page, state, conversation);
 }
 
+async function waitForAssistantMessage(page, conversationId) {
+  await page.waitForFunction(({ conversationsKey, id }) => {
+    const raw = localStorage.getItem(conversationsKey);
+    if (!raw) return false;
+    const conversation = JSON.parse(raw).find((item) => item.id === id);
+    return Boolean(conversation?.messages?.some((item) => item.role === 'assistant' && item.text?.trim()));
+  }, { conversationsKey: CONVERSATIONS_KEY, id: conversationId }, { timeout: 120_000 });
+}
+
 async function waitForPatientDomainMutation(page) {
   await page.waitForFunction((storeKey) => {
     const raw = localStorage.getItem(storeKey);
@@ -93,6 +114,51 @@ async function waitForPatientDomainMutation(page) {
 }
 
 test.describe('Live Gemini browser certification', () => {
+  test('fresh general conversation returns visible text instead of EMPTY_MODEL_TURN', async ({ page }) => {
+    test.setTimeout(180_000);
+    await seedFreshConversation(page);
+    await page.goto('/assistant');
+
+    await page.getByLabel('Mensaje para Atal IA').fill('¿En qué me puedes ayudar?');
+    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+    await waitForAssistantMessage(page, 'conversation-live-gemini-fresh');
+    await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
+    await expect(page.locator('body')).not.toContainText('Atal IA no recibió una respuesta válida del modelo');
+  });
+
+  test('fresh patient-intake prompt produces a usable draft/assistant turn before seeded history exists', async ({ page }) => {
+    test.setTimeout(180_000);
+    await seedFreshConversation(page, {
+      id: 'conversation-live-gemini-fresh-patient',
+      draftId: 'draft-live-gemini-fresh-patient',
+      intent: 'create_patient_plan',
+      patientMode: 'new',
+      selectedPatientId: '',
+      selectedPlanId: '',
+      selectedExerciseId: '',
+    });
+    await page.goto('/assistant');
+
+    await page.getByLabel('Mensaje para Atal IA').fill('Me ayudas a registrar un paciente nuevo?');
+    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+    await page.waitForFunction(({ conversationsKey, draftsKey, id }) => {
+      const conversations = JSON.parse(localStorage.getItem(conversationsKey) ?? '[]');
+      const drafts = JSON.parse(localStorage.getItem(draftsKey) ?? '[]');
+      const conversation = conversations.find((item) => item.id === id);
+      const assistantAnswered = conversation?.messages?.some((item) => item.role === 'assistant' && item.text?.trim());
+      return Boolean(assistantAnswered || drafts.length > 0);
+    }, {
+      conversationsKey: CONVERSATIONS_KEY,
+      draftsKey: DRAFTS_KEY,
+      id: 'conversation-live-gemini-fresh-patient',
+    }, { timeout: 120_000 });
+
+    await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
+    await expect(page.locator('body')).not.toContainText('Atal IA no recibió una respuesta válida del modelo');
+  });
+
   test('natural save confirmation creates and persists the patient in atal:store:v2', async ({ page }) => {
     test.setTimeout(180_000);
     await seedLiveConversation(page);
