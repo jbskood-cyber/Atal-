@@ -65,7 +65,7 @@ jobs:
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
           ATAL_LIVE_GEMINI_E2E: '1'
-        run: npx playwright test e2e/live-gemini-export.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
+        run: npx playwright test e2e/live-gemini-delivery.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
         uses: actions/upload-artifact@v4
