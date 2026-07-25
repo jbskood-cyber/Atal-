@@ -100,6 +100,26 @@ function selectPlanLifecycleTools(rawText: string, intent: string): string[] {
   return [];
 }
 
+function selectExerciseMaintenanceTools(rawText: string): string[] {
+  if (includesAny(rawText, ['archiva', 'archivar', 'restaura', 'restaurar', 'reactiva', 'reactivar'])) {
+    return ['exercise.lifecycle'];
+  }
+  if (includesAny(rawText, ['duplica', 'duplicar', 'copia', 'copiar'])) {
+    return ['exercise.duplicate'];
+  }
+  if (includesAny(rawText, ['imagen', 'foto', 'secuencia', 'multimedia', 'media'])) {
+    return ['exercise.media'];
+  }
+  if (includesAny(rawText, [
+    'nombre', 'región', 'region', 'categoría', 'categoria', 'objetivo', 'posición', 'posicion',
+    'instrucciones', 'precauciones', 'equipo', 'dificultad', 'serie', 'series', 'repetición', 'repeticion',
+    'repeticiones', 'tiempo', 'descanso', 'dolor', 'etiqueta', 'etiquetas', 'nota', 'notas',
+  ])) {
+    return ['exercise.update_fields'];
+  }
+  return ['exercise.update_fields'];
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -138,6 +158,16 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
       append(selected, lifecycleTools);
       return scopeTools(selected, input.contextSurface);
     }
+  }
+
+  if (allowMutations && intent === 'create_exercise') {
+    append(selected, ['exercise.create_simple']);
+    return scopeTools(selected, input.contextSurface);
+  }
+
+  if (allowMutations && intent === 'update_existing_exercise') {
+    append(selected, selectExerciseMaintenanceTools(rawText));
+    return scopeTools(selected, input.contextSurface);
   }
 
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
