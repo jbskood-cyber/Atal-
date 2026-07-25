@@ -52,16 +52,13 @@ jobs:
       - name: Install Playwright test runner without changing the lockfile
         if: steps.gate.outputs.enabled == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
-      - name: Install Chromium and system dependencies
-        if: steps.gate.outputs.enabled == 'true'
-        run: npx playwright install --with-deps chromium
-      - name: Verify live Gemini persists patient through the real browser app
+      - name: Verify live Gemini patient update, note and lifecycle persistence
         if: steps.gate.outputs.enabled == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
-        run: npx playwright test e2e/live-gemini-patient-create.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
+        run: npx playwright test e2e/live-gemini-patient-maintenance.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
         uses: actions/upload-artifact@v4
