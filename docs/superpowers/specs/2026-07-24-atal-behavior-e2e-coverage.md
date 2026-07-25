@@ -21,7 +21,7 @@ The architecture matrix proves that UI and Atal IA adapters delegate to the same
 | 1 | Create patient | `behavior-phase-6-patient.spec.mjs`: successful browser create persists patient + initial clinical record in one canonical transaction; normalized duplicate is rejected with zero mutation. | `behavior-phase-6-patient.spec.mjs`: successful `patient.create` persists patient + initial record and audited transaction. `block-4-1-critical.spec.mjs` additionally proves normalized duplicate rejection with zero mutation. | **Covered** |
 | 2 | Update patient | `behavior-ux-consistency.spec.mjs`: patient profile save persists canonical update; cancel is zero-mutation. | `behavior-phase-6-patient.spec.mjs`: `patient.update` persists the requested change and produces a reversible-write audit. | **Covered** |
 | 3 | Archive / restore patient | `behavior-phase-6-patient.spec.mjs`: archive pauses the active plan, emits lifecycle activity, and restore reactivates the patient without silently reactivating the plan. | `behavior-phase-6-patient.spec.mjs`: sensitive `patient.lifecycle` performs zero mutation before confirmation, then archives the patient and pauses the active plan after confirmation. | **Covered** |
-| 4 | Create / update clinical record | `block-4-1-critical.spec.mjs` + `behavior-clinical-record-edit.spec.mjs`: browser edit validates, versions and persists; Phase 5 also proves cancel is zero-mutation. | Not yet verified. | Partial |
+| 4 | Create / update clinical record | `block-4-1-critical.spec.mjs` + `behavior-clinical-record-edit.spec.mjs`: browser edit validates, versions and persists; Phase 5 also proves cancel is zero-mutation. | `behavior-phase-6-patient.spec.mjs`: `clinical_record.upsert` updates the selected record through the assistant, increments the version, preserves the previous snapshot and emits the reversible-write transaction audit. | **Covered** |
 | 5 | Create plan | Not yet verified. | Not yet verified. | Gap |
 | 6 | Update plan fields | `behavior-plan-edit-undo.spec.mjs`: browser edit saves through canonical transaction and Undo restores prior state. | Not yet verified. | Partial |
 | 7 | Plan lifecycle | Not yet verified. | `block-4-1-critical.spec.mjs`: `plan.activate` confirmation, cancel/no-mutation and confirmed activation are exercised. | Partial |
@@ -37,6 +37,8 @@ The fix routes the actual screen through `createLocalPatientWithRecord`, which c
 
 Closure evidence for the patient slice: SHA `8e77379da5f52a6155f4b3ad696940f28a524977` · `behavior-system-quality` #171 ✅ · `quality` #600 ✅ · `e2e` #576 ✅.
 
+Closure evidence for the clinical-record slice: SHA `ba57a9c9aa34222915a13694eab8be7dace1cf6b` · `behavior-system-quality` #174 ✅ · `quality` #603 ✅ · `e2e` #579 ✅.
+
 ## Cross-cutting evidence already green
 
 These tests do not replace the ten rows, but protect the system around them:
@@ -50,10 +52,9 @@ These tests do not replace the ten rows, but protect the system around them:
 
 Close the remaining gaps in bounded groups rather than one brittle mega-test:
 
-1. clinical record: add the representative Atal IA upsert browser route;
-2. plan: create + AI field update + UI lifecycle + membership;
-3. exercise: representative create/update/lifecycle on UI and IA;
-4. session: source-audit existing guided-session E2E, then add only the missing clinician-review browser route.
+1. plan: create + AI field update + UI lifecycle + membership;
+2. exercise: representative create/update/lifecycle on UI and IA;
+3. session: source-audit existing guided-session E2E, then add only the missing clinician-review browser route.
 
 Each new test should verify persisted `atal:store:v2` state and, for AI writes, the corresponding audit/transaction semantics where relevant.
 
