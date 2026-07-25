@@ -79,3 +79,22 @@ test('canonical settings.profile_update delegates profile normalization to the s
   assert.equal(result.status, 'success');
   assert.deepEqual(result.affected, [{ type: 'settings', id: 'settings' }]);
 });
+
+test('settings.profile_update accepts the public Gemini catalog shape', () => {
+  const state = baseState();
+  const { canonicalSettingsTools } = canonicalTools();
+  const tool = canonicalSettingsTools.find((item) => item.name === 'settings.profile_update');
+  assert.ok(tool);
+
+  const input = tool.validateInput({
+    professionalName: '  Dra. Ana E2E  ',
+    specialty: '  Fisioterapia deportiva  ',
+    clinic: '  Norte E2E  ',
+  });
+  const result = tool.execute(environment(state), input);
+
+  assert.equal(state.settings.professionalName, 'Dra. Ana E2E');
+  assert.equal(state.settings.specialty, 'Fisioterapia deportiva');
+  assert.equal(state.settings.clinic, 'Norte E2E');
+  assert.equal(result.status, 'success');
+});
