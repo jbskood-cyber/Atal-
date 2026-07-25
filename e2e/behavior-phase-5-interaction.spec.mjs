@@ -110,4 +110,31 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     expect(await readStore(page)).toEqual(before);
     await expect(instructions).toHaveValue('Instrucción original E2E');
   });
+
+  test('mobile dock stays out of the way while shell overlays are open and returns after close', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await seed(page, createState());
+    await page.goto('/patients');
+
+    const dock = page.locator('.atal-mobile-dock');
+    await expect(dock).not.toHaveClass(/is-hidden/);
+
+    await page.getByRole('button', { name: 'Buscar en Atal' }).click();
+    await expect(page.getByRole('dialog', { name: 'Buscar en Atal' })).toBeVisible();
+    await expect(dock).toHaveClass(/is-hidden/);
+    await page.getByRole('button', { name: 'Cerrar' }).click();
+    await expect(dock).not.toHaveClass(/is-hidden/);
+
+    await page.getByRole('button', { name: /notificaciones sin leer/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Notificaciones' })).toBeVisible();
+    await expect(dock).toHaveClass(/is-hidden/);
+    await page.getByRole('button', { name: 'Cerrar' }).click();
+    await expect(dock).not.toHaveClass(/is-hidden/);
+
+    await page.getByRole('button', { name: 'Crear nuevo' }).click();
+    await expect(page.getByRole('dialog', { name: 'Crear nuevo' })).toBeVisible();
+    await expect(dock).toHaveClass(/is-hidden/);
+    await page.getByRole('button', { name: 'Cerrar' }).click();
+    await expect(dock).not.toHaveClass(/is-hidden/);
+  });
 });
