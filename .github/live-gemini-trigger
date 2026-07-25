@@ -1,2 +1,2 @@
-Final live Gemini regression — current-head representative certification.
-Target: patient create/update/record persistence + sensitive session start/complete + two-patient contextual isolation/global history, all through real Gemini on the current branch head.
+Final live Gemini regression — rerun after guided-session metric schema repair.
+Target: patient create/update/record persistence + guided session start/complete with exact end metrics/comment + two-patient contextual isolation/global history, all through real Gemini on current head.
