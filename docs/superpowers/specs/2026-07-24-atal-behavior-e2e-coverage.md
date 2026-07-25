@@ -14,13 +14,13 @@ The architecture matrix proves that UI and Atal IA adapters delegate to the same
 4. Intentional non-parity remains intentional: do not invent an AI command for patient-side guided-session start/completion.
 5. One representative browser path per invocation surface is sufficient when lower-level behavior tests already exhaustively cover the domain variants.
 
-## Verified browser evidence at audit start
+## Verified browser evidence
 
 | # | Behavior | Direct UI browser evidence | Atal IA browser evidence | Phase 6.1 state |
 |---|---|---|---|---|
-| 1 | Create patient | Not yet verified in this audit | `block-4-1-critical.spec.mjs`: normalized duplicate `patient.create` is rejected with zero mutation. Successful create path still missing. | Gap |
-| 2 | Update patient | `behavior-ux-consistency.spec.mjs`: patient profile save persists canonical update; cancel is zero-mutation. | Not yet verified. | Partial |
-| 3 | Archive / restore patient | Not yet verified. | Not yet verified. | Gap |
+| 1 | Create patient | `behavior-phase-6-patient.spec.mjs`: successful browser create persists patient + initial clinical record in one canonical transaction; normalized duplicate is rejected with zero mutation. | `behavior-phase-6-patient.spec.mjs`: successful `patient.create` persists patient + initial record and audited transaction. `block-4-1-critical.spec.mjs` additionally proves normalized duplicate rejection with zero mutation. | **Covered** |
+| 2 | Update patient | `behavior-ux-consistency.spec.mjs`: patient profile save persists canonical update; cancel is zero-mutation. | `behavior-phase-6-patient.spec.mjs`: `patient.update` persists the requested change and produces a reversible-write audit. | **Covered** |
+| 3 | Archive / restore patient | `behavior-phase-6-patient.spec.mjs`: archive pauses the active plan, emits lifecycle activity, and restore reactivates the patient without silently reactivating the plan. | `behavior-phase-6-patient.spec.mjs`: sensitive `patient.lifecycle` performs zero mutation before confirmation, then archives the patient and pauses the active plan after confirmation. | **Covered** |
 | 4 | Create / update clinical record | `block-4-1-critical.spec.mjs` + `behavior-clinical-record-edit.spec.mjs`: browser edit validates, versions and persists; Phase 5 also proves cancel is zero-mutation. | Not yet verified. | Partial |
 | 5 | Create plan | Not yet verified. | Not yet verified. | Gap |
 | 6 | Update plan fields | `behavior-plan-edit-undo.spec.mjs`: browser edit saves through canonical transaction and Undo restores prior state. | Not yet verified. | Partial |
@@ -28,6 +28,14 @@ The architecture matrix proves that UI and Atal IA adapters delegate to the same
 | 8 | Plan exercise membership | Not yet verified. | Not yet verified. | Gap |
 | 9 | Exercise create / update / lifecycle | Not yet verified. | Not yet verified. | Gap |
 | 10 | Guided session start / complete + clinician review | Existing repository E2E must be source-audited before credit is assigned. | Clinician-review path must be source-audited; no AI start/complete path should be invented. | Audit pending |
+
+## Defect exposed by Phase 6.1
+
+The first patient browser RED uncovered a real escaped mutation path: `NewPatientScreen` still called legacy `createPatientWithRecord` directly from `atalStore`, so manual patient creation bypassed `applyCreatePatient`, shared duplicate normalization, Action Core audit and transaction semantics even though the lower-level parity matrix looked green.
+
+The fix routes the actual screen through `createLocalPatientWithRecord`, which composes `applyCreatePatient` + `applyUpsertClinicalRecord` inside `executeActionTransaction`. The parity test now also inspects `NewPatientScreen` so this bypass cannot silently return.
+
+Closure evidence for the patient slice: SHA `8e77379da5f52a6155f4b3ad696940f28a524977` · `behavior-system-quality` #171 ✅ · `quality` #600 ✅ · `e2e` #576 ✅.
 
 ## Cross-cutting evidence already green
 
@@ -40,9 +48,9 @@ These tests do not replace the ten rows, but protect the system around them:
 
 ## Next implementation slice
 
-Close gaps in bounded groups rather than one brittle mega-test:
+Close the remaining gaps in bounded groups rather than one brittle mega-test:
 
-1. patient: successful create + AI update + UI/AI lifecycle;
+1. clinical record: add the representative Atal IA upsert browser route;
 2. plan: create + AI field update + UI lifecycle + membership;
 3. exercise: representative create/update/lifecycle on UI and IA;
 4. session: source-audit existing guided-session E2E, then add only the missing clinician-review browser route.
