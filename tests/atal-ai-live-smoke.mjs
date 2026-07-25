@@ -34,7 +34,7 @@ async function conceptual() {
     contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
     config: {
       systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
-      maxOutputTokens: 256,
+      maxOutputTokens: 2_048,
     },
   });
   assert.equal(response.functionCalls?.length ?? 0, 0, 'Gemini called a tool for a conceptual question.');
@@ -50,7 +50,7 @@ async function forcedCall(prompt) {
       systemInstruction: 'Eres Atal IA. Cuando una respuesta dependa del estado real de Atal, solicita la función precisa y espera su resultado.',
       tools: [{ functionDeclarations: [functionDeclaration] }],
       toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
-      maxOutputTokens: 256,
+      maxOutputTokens: 2_048,
     },
   });
   const call = response.functionCalls?.[0];
