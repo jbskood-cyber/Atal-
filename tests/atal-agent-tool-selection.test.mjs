@@ -89,3 +89,11 @@ test('creating a plan for the selected patient exposes only plan creation', () =
   );
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.create_simple']);
 });
+
+test('updating a selected plan field exposes only canonical field update', () => {
+  const tools = selection(
+    'Cambia la frecuencia del plan seleccionado a 5 días por semana. Hazlo ahora.',
+    'update_existing_plan',
+  );
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields']);
+});
