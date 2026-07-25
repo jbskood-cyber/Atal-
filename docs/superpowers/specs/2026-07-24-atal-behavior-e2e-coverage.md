@@ -1,10 +1,10 @@
 # ATAL × Linear — E2E Coverage Audit
 
-Status: **in progress — Phase 6.1**
+Status: **Phase 6.1 complete — 10/10 behaviors covered**
 
 This document is the runtime-coverage companion to `2026-07-24-atal-behavior-parity-matrix.md`.
 
-The architecture matrix proves that UI and Atal IA adapters delegate to the same canonical domain families. This audit has a stricter purpose: identify which of the ten behaviors are already exercised through real browser surfaces and which representative UI/AI paths are still missing before Phase 6.1 can be closed.
+The architecture matrix proves that UI and Atal IA adapters delegate to the same canonical domain families. This audit has a stricter purpose: prove the ten fundamental behaviors through real browser surfaces, persisted `atal:store:v2` state, and audited AI transactions where an AI invocation surface actually exists.
 
 ## Rules
 
@@ -27,37 +27,40 @@ The architecture matrix proves that UI and Atal IA adapters delegate to the same
 | 7 | Plan lifecycle | `behavior-phase-6-plan-runtime.spec.mjs`: real plan-detail actions pause an active plan and emit lifecycle activity. | `block-4-1-critical.spec.mjs`: `plan.activate` confirmation, cancel/no-mutation and confirmed activation are exercised. | **Covered** |
 | 8 | Plan exercise membership | `behavior-phase-6-plan-runtime.spec.mjs`: adding an exercise remains staged until explicit Save, then persists the canonical membership set. | `behavior-phase-6-plan-runtime.spec.mjs`: `plan.membership` adds the exercise and records the audited reversible write. | **Covered** |
 | 9 | Exercise create / update / lifecycle | `behavior-phase-6-exercise.spec.mjs`: the real local builder creates an active local exercise; the real detail screen persists a field edit and archives the same exercise. | `behavior-phase-6-exercise.spec.mjs`: `exercise.create_simple`, `exercise.update_fields` and `exercise.lifecycle` persist the canonical state and emit successful audited transactions. | **Covered** |
-| 10 | Guided session start / complete + clinician review | Existing repository E2E must be source-audited before credit is assigned. | Clinician-review path must be source-audited; no AI start/complete path should be invented. | Audit pending |
+| 10 | Guided session start / complete + clinician review | `behavior-phase-6-session-review.spec.mjs`: the patient browser starts a real guided session, creates exactly one `session_started`, completes it as partial with a historical `planSnapshot`, activity and notification; the clinician UI then persists a review and emits `report_reviewed`. | `behavior-phase-6-session-review.spec.mjs`: `report.review` updates the same session through Atal IA and proves the successful reversible-write audit/transaction. Patient-side start/completion intentionally has no AI command. | **Covered** |
 
-## Defect exposed by Phase 6.1
+## Defects exposed by Phase 6.1
+
+### Escaped patient creation path
 
 The first patient browser RED uncovered a real escaped mutation path: `NewPatientScreen` still called legacy `createPatientWithRecord` directly from `atalStore`, so manual patient creation bypassed `applyCreatePatient`, shared duplicate normalization, Action Core audit and transaction semantics even though the lower-level parity matrix looked green.
 
 The fix routes the actual screen through `createLocalPatientWithRecord`, which composes `applyCreatePatient` + `applyUpsertClinicalRecord` inside `executeActionTransaction`. The parity test now also inspects `NewPatientScreen` so this bypass cannot silently return.
 
-Closure evidence for the patient slice: SHA `8e77379da5f52a6155f4b3ad696940f28a524977` · `behavior-system-quality` #171 ✅ · `quality` #600 ✅ · `e2e` #576 ✅.
+### Duplicate guided-session start event
 
-Closure evidence for the clinical-record slice: SHA `ba57a9c9aa34222915a13694eab8be7dace1cf6b` · `behavior-system-quality` #174 ✅ · `quality` #603 ✅ · `e2e` #579 ✅.
+The final guided-session browser RED exposed a second real behavior defect: `GuidedSessionFlow` called `recordClinicalSessionStarted()` from inside a React state-updater callback. In development/Strict Mode that updater can be invoked more than once to validate purity, so one user click produced two `session_started` events with slightly different timestamps. The completion record matched only one of them, leaving duplicate clinical activity.
 
-Closure evidence for the plan slice: SHA `0188154c1bdd6983c53fa9ad54ee1d88359116ad` · `behavior-system-quality` #183 ✅ · `quality` #612 ✅ · `e2e` #588 ✅. The browser belt now covers plan creation, field updates, lifecycle and exercise membership across the real UI and Atal IA invocation surfaces. The plan-create E2E also verifies that the test intentionally enters agentic action mode rather than the separate structured-draft flow; no product behavior was changed merely to make the test pass.
+The fix moves the start side effect into the user event handler and leaves the `setDraft` updater pure. The E2E now explicitly requires exactly one matching `session_started` both immediately after starting and after session completion, preventing recurrence.
 
-Closure evidence for the exercise slice: SHA `eb611640038e3454947123e5c5e8a322c9a256ad` · `behavior-system-quality` #184 ✅ · `quality` #613 ✅ · `e2e` #589 ✅. `playwright.config.mjs` runs the complete `./e2e` directory and `e2e.yml` invokes `npx playwright test`, so the dedicated exercise parity suite is part of the green browser belt rather than an unexecuted fixture.
+## Closure evidence
 
-## Cross-cutting evidence already green
+- Patient slice: SHA `8e77379da5f52a6155f4b3ad696940f28a524977` · `behavior-system-quality` #171 ✅ · `quality` #600 ✅ · `e2e` #576 ✅.
+- Clinical-record slice: SHA `ba57a9c9aa34222915a13694eab8be7dace1cf6b` · `behavior-system-quality` #174 ✅ · `quality` #603 ✅ · `e2e` #579 ✅.
+- Plan slice: SHA `0188154c1bdd6983c53fa9ad54ee1d88359116ad` · `behavior-system-quality` #183 ✅ · `quality` #612 ✅ · `e2e` #588 ✅.
+- Exercise slice: SHA `eb611640038e3454947123e5c5e8a322c9a256ad` · `behavior-system-quality` #184 ✅ · `quality` #613 ✅ · `e2e` #589 ✅.
+- Guided-session/review slice and Phase 6.1 final closure: SHA `936c7e405b614f04ad482cb2a1394a607ce03d38` · `behavior-system-quality` #193 ✅ · `quality` #622 ✅ · `e2e` #598 ✅.
 
-These tests do not replace the ten rows, but protect the system around them:
+`playwright.config.mjs` runs the complete `./e2e` directory and `e2e.yml` invokes `npx playwright test`, so every dedicated Phase 6 parity spec is part of the green browser belt rather than an unexecuted fixture.
+
+## Cross-cutting evidence green at closure
 
 - `block-4-2-contextual-propagation.spec.mjs`: a contextual AI mutation is visible in normal patient UI, survives reload, and does not contaminate global conversation history.
 - `block-4-1-critical.spec.mjs`: read-only AI leaves the clinical store untouched; reversible AI note is audited and Undo restores exactly; stale sensitive actions are blocked.
 - `behavior-phase-5-interaction.spec.mjs`: edit cancellation, mobile overlays, focus, Escape behavior, dock suppression and scroll continuity.
-- full `quality`, Behavior System and Playwright E2E belts are required on every closure SHA.
+- `behavior-phase-6-session-review.spec.mjs`: guided-session start side effects are single-shot; completion persists historical plan state; clinician review is equivalent across UI and Atal IA.
+- full `quality`, Behavior System and Playwright E2E belts are green on the Phase 6 closure SHA.
 
-## Next implementation slice
+## Phase 6 result
 
-Close the final Phase 6.1 gap without inventing product behavior:
-
-1. source-audit existing guided-session start/completion browser coverage;
-2. source-audit clinician review and add only the missing real browser route, if any;
-3. verify persisted `atal:store:v2` state and AI audit/transaction semantics only where an AI invocation surface actually exists.
-
-Do not change product code merely to make a test easier. If a new E2E exposes a real behavior defect, switch back to RED → minimal product fix → full regression.
+The ten fundamental behaviors now have real browser evidence for every invocation surface that actually exists. No artificial AI pathway was created for patient-side guided-session start/completion. The Action Core, UI adapters, Atal IA adapters, persistence, audit and Undo contracts can now move to final architecture documentation and QC rather than further behavioral expansion.
