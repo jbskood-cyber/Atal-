@@ -8,6 +8,7 @@ if (!apiKey) {
 }
 
 const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
+const stage = process.env.ATAL_AI_LIVE_STAGE?.trim() || 'all';
 const ai = new GoogleGenAI({ apiKey });
 const functionDeclaration = {
   name: 'atal_app_read',
@@ -27,47 +28,67 @@ const functionDeclaration = {
   },
 };
 
-const conceptual = await ai.models.generateContent({
-  model,
-  contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
-  config: {
-    systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
-    maxOutputTokens: 256,
-  },
-});
-assert.equal(conceptual.functionCalls?.length ?? 0, 0, 'Gemini called a tool for a conceptual question.');
-assert.ok(conceptual.text?.trim(), 'Gemini did not answer the conceptual question.');
+async function conceptual() {
+  const response = await ai.models.generateContent({
+    model,
+    contents: [{ role: 'user', parts: [{ text: '¿Qué es un recurso de lectura compatible? Respóndeme de forma natural.' }] }],
+    config: {
+      systemInstruction: 'Eres Atal IA. Responde directamente las preguntas conceptuales. No llames herramientas cuando no necesitas datos reales de Atal.',
+      maxOutputTokens: 256,
+    },
+  });
+  assert.equal(response.functionCalls?.length ?? 0, 0, 'Gemini called a tool for a conceptual question.');
+  assert.ok(response.text?.trim(), 'Gemini did not answer the conceptual question.');
+  console.log(`ATAL_AI_LIVE_STAGE=conceptual PASS model=${model}`);
+}
 
-const read = await ai.models.generateContent({
-  model,
-  contents: [{ role: 'user', parts: [{ text: 'Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.' }] }],
-  config: {
-    systemInstruction: 'Eres Atal IA. Cuando una respuesta dependa del estado real de Atal, solicita la función precisa y espera su resultado.',
-    tools: [{ functionDeclarations: [functionDeclaration] }],
-    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
-    maxOutputTokens: 256,
-  },
-});
+async function forcedCall(prompt) {
+  const response = await ai.models.generateContent({
+    model,
+    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    config: {
+      systemInstruction: 'Eres Atal IA. Cuando una respuesta dependa del estado real de Atal, solicita la función precisa y espera su resultado.',
+      tools: [{ functionDeclarations: [functionDeclaration] }],
+      toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
+      maxOutputTokens: 256,
+    },
+  });
+  const call = response.functionCalls?.[0];
+  assert.ok(call, 'Gemini did not produce a direct function call.');
+  assert.equal(call.name, 'atal_app_read');
+  console.log(`ATAL_AI_LIVE_CALL name=${call.name} resource=${String(call.args?.resource ?? '')}`);
+  return call;
+}
 
-const call = read.functionCalls?.[0];
-assert.ok(call, 'Gemini did not produce a direct function call.');
-assert.equal(call.name, 'atal_app_read');
-assert.equal(call.args?.resource, 'settings');
+async function callPresence() {
+  await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
+  console.log(`ATAL_AI_LIVE_STAGE=call-presence PASS model=${model}`);
+}
 
-const patientCount = await ai.models.generateContent({
-  model,
-  contents: [{ role: 'user', parts: [{ text: 'Dime cuantos pacientes tengo por favor. Debes consultar Atal antes de responder.' }] }],
-  config: {
-    systemInstruction: 'Eres Atal IA. Para preguntas sobre datos reales de la aplicación, usa la herramienta disponible y no inventes cifras.',
-    tools: [{ functionDeclarations: [functionDeclaration] }],
-    toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: ['atal_app_read'] } },
-    maxOutputTokens: 256,
-  },
-});
+async function settingsArgs() {
+  const call = await forcedCall('Consulta los ajustes actuales de Atal usando la función disponible. No inventes el resultado.');
+  assert.equal(call.args?.resource, 'settings');
+  console.log(`ATAL_AI_LIVE_STAGE=settings PASS model=${model}`);
+}
 
-const patientCall = patientCount.functionCalls?.[0];
-assert.ok(patientCall, 'Gemini did not request Atal data for the patient-count question.');
-assert.equal(patientCall.name, 'atal_app_read');
-assert.equal(patientCall.args?.resource, 'patients');
+async function patientsArgs() {
+  const call = await forcedCall('Dime cuantos pacientes tengo por favor. Debes consultar Atal antes de responder.');
+  assert.equal(call.args?.resource, 'patients');
+  console.log(`ATAL_AI_LIVE_STAGE=patients PASS model=${model}`);
+}
 
-console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model} conceptual=direct settings=atal_app_read patients=atal_app_read`);
+const stages = {
+  conceptual,
+  'call-presence': callPresence,
+  settings: settingsArgs,
+  patients: patientsArgs,
+};
+
+if (stage === 'all') {
+  for (const run of Object.values(stages)) await run();
+  console.log(`ATAL_AI_LIVE_SMOKE=PASS model=${model}`);
+} else {
+  const run = stages[stage];
+  if (!run) throw new Error(`Unknown live smoke stage: ${stage}`);
+  await run();
+}
