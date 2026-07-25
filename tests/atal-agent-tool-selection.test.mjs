@@ -61,6 +61,14 @@ test('natural save confirmation for a new patient exposes only the composite pat
   assert.deepEqual(tools, ['app.read', 'patient.search', 'patient.create']);
 });
 
+test('compound patient maintenance exposes only the three requested mutations', () => {
+  const tools = selection(
+    'Para el paciente seleccionado, cambia su teléfono a 4441112233, añade una nota que diga exactamente “Mejora tolerancia al movimiento” y archiva al paciente. Haz las tres acciones ahora.',
+    'update_patient_record',
+  );
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'patient.update', 'patient.lifecycle', 'patient_note.add']);
+});
+
 test('archiving a patient does not expose unrelated plan lifecycle tools', () => {
   const tools = selection('Archiva al paciente seleccionado.', 'update_patient_record');
   assert.ok(tools.includes('patient.lifecycle'));
