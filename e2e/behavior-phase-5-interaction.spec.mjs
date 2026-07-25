@@ -138,7 +138,7 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await expect(dock).not.toHaveClass(/is-hidden/);
   });
 
-  test('mobile search overlay focuses its input, closes with Escape and preserves background scroll', async ({ page }) => {
+  test('mobile search overlay focuses its input, locks background scroll, closes with Escape and preserves scroll position', async ({ page }) => {
     const state = createState();
     const template = state.patients[0];
     state.patients.push(...Array.from({ length: 24 }, (_, index) => ({
@@ -163,6 +163,12 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await expect(dialog).toBeVisible();
     await expect(input).toBeFocused();
     await expect(page.locator('.atal-mobile-dock')).toHaveClass(/is-hidden/);
+
+    await page.mouse.move(20, 20);
+    await page.mouse.wheel(0, 700);
+    await page.waitForTimeout(100);
+    const duringOverlayScroll = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(duringOverlayScroll - beforeScroll)).toBeLessThanOrEqual(1);
 
     await page.keyboard.press('Escape');
     await expect(dialog).toBeHidden();
