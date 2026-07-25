@@ -86,6 +86,20 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
   return selected;
 }
 
+function selectPlanLifecycleTools(rawText: string, intent: string): string[] {
+  if (intent === 'archive_plan') return ['plan.archive'];
+  if (intent === 'restore_plan') return ['plan.restore'];
+  if (intent === 'replace_active_plan') return ['plan.replace_active'];
+
+  if (intent === 'update_plan_status') {
+    if (includesAny(rawText, ['activa', 'activar', 'activar el plan'])) return ['plan.activate'];
+    if (includesAny(rawText, ['pausa', 'pausar', 'suspende', 'suspender'])) return ['plan.pause'];
+    if (includesAny(rawText, ['completa', 'completar', 'finaliza', 'finalizar', 'termina', 'terminar'])) return ['plan.complete'];
+  }
+
+  return [];
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -116,6 +130,14 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
     const maintenanceTools = selectPlanMaintenanceTools(rawText);
     append(selected, maintenanceTools.length > 0 ? maintenanceTools : ['plan.update_fields']);
     return scopeTools(selected, input.contextSurface);
+  }
+
+  if (allowMutations && PLAN_INTENTS.has(intent)) {
+    const lifecycleTools = selectPlanLifecycleTools(rawText, intent);
+    if (lifecycleTools.length > 0) {
+      append(selected, lifecycleTools);
+      return scopeTools(selected, input.contextSurface);
+    }
   }
 
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
