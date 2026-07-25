@@ -21,6 +21,26 @@ function message(id, role, text, offsetSeconds) {
   };
 }
 
+async function seed(page, state, conversation) {
+  await page.goto('/');
+  await page.evaluate(({ stateValue, conversationValue, keys }) => {
+    localStorage.clear();
+    localStorage.setItem(keys.store, JSON.stringify(stateValue));
+    localStorage.setItem(keys.conversations, JSON.stringify([conversationValue]));
+    localStorage.setItem(keys.drafts, JSON.stringify([]));
+    localStorage.setItem(keys.theme, 'light');
+  }, {
+    stateValue: state,
+    conversationValue: conversation,
+    keys: {
+      store: STORE_KEY,
+      conversations: CONVERSATIONS_KEY,
+      drafts: DRAFTS_KEY,
+      theme: THEME_KEY,
+    },
+  });
+}
+
 async function seedLiveConversation(page) {
   const state = createState();
   const conversation = createConversation({
@@ -39,24 +59,37 @@ async function seedLiveConversation(page) {
       message('live-assistant-2', 'assistant', 'Tengo los datos para registrar a Nicolás Morales con expediente inicial. ¿Quieres que lo guarde ahora?', 3),
     ],
   });
+  await seed(page, state, conversation);
+}
 
-  await page.goto('/');
-  await page.evaluate(({ stateValue, conversationValue, keys }) => {
-    localStorage.clear();
-    localStorage.setItem(keys.store, JSON.stringify(stateValue));
-    localStorage.setItem(keys.conversations, JSON.stringify([conversationValue]));
-    localStorage.setItem(keys.drafts, JSON.stringify([]));
-    localStorage.setItem(keys.theme, 'light');
-  }, {
-    stateValue: state,
-    conversationValue: conversation,
-    keys: {
-      store: STORE_KEY,
-      conversations: CONVERSATIONS_KEY,
-      drafts: DRAFTS_KEY,
-      theme: THEME_KEY,
-    },
+async function seedExistingPatientConversation(page) {
+  const state = createState();
+  const conversation = createConversation({
+    id: 'conversation-live-gemini-patient-update',
+    draftId: 'draft-live-gemini-patient-update',
+    intent: 'update_patient_record',
+    patientMode: 'existing',
+    selectedPatientId: 'patient-e2e',
+    selectedPlanId: 'plan-active-e2e',
+    selectedExerciseId: '',
+    status: 'empty',
+    messages: [
+      message('update-assistant-1', 'assistant', 'Estoy trabajando con Paciente E2E y su expediente actual.', 0),
+    ],
   });
+  await seed(page, state, conversation);
+}
+
+async function waitForPatientDomainMutation(page) {
+  await page.waitForFunction((storeKey) => {
+    const raw = localStorage.getItem(storeKey);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    const patient = state.patients?.find((item) => item.id === 'patient-e2e');
+    const record = state.clinicalRecords?.find((item) => item.patientId === 'patient-e2e');
+    const hasNote = state.notes?.some((item) => item.patientId === 'patient-e2e' && /evoluciona favorablemente/i.test(item.content ?? ''));
+    return patient?.contact?.phone === '4441112233' && record?.painLevel === 6 && hasNote;
+  }, STORE_KEY, { timeout: 120_000 });
 }
 
 test.describe('Live Gemini browser certification', () => {
@@ -90,5 +123,41 @@ test.describe('Live Gemini browser certification', () => {
     const persisted = stored.patients.find((item) => item.name === 'Nicolás Morales');
     expect(persisted).toBeTruthy();
     expect(stored.clinicalRecords.some((item) => item.patientId === persisted.id)).toBe(true);
+  });
+
+  test('one natural request updates patient data, adds a note and updates the clinical record through Gemini real', async ({ page }) => {
+    test.setTimeout(180_000);
+    await seedExistingPatientConversation(page);
+    await page.goto('/assistant');
+
+    const before = await readStore(page);
+    const beforeRecord = before.clinicalRecords.find((item) => item.patientId === 'patient-e2e');
+    expect(before.patients.find((item) => item.id === 'patient-e2e')?.contact.phone).toBe('4440000000');
+    expect(beforeRecord?.painLevel).toBe(4);
+    expect(before.notes).toHaveLength(0);
+
+    await page.getByLabel('Mensaje para Atal IA').fill('Actualiza el teléfono de este paciente a 4441112233, añade una nota que diga “Evoluciona favorablemente con ejercicios en casa” y cambia el dolor del expediente a 6 de 10.');
+    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+    await waitForPatientDomainMutation(page);
+    await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
+
+    let stored = await readStore(page);
+    const patient = stored.patients.find((item) => item.id === 'patient-e2e');
+    const record = stored.clinicalRecords.find((item) => item.patientId === 'patient-e2e');
+    expect(patient.contact.phone).toBe('4441112233');
+    expect(record.painLevel).toBe(6);
+    expect(record.version).toBeGreaterThan(beforeRecord.version);
+    expect(stored.clinicalRecordVersions.length).toBeGreaterThan(0);
+    expect(stored.notes.some((item) => item.patientId === 'patient-e2e' && /evoluciona favorablemente/i.test(item.content))).toBe(true);
+    expect(stored.events.some((event) => event.toolName === 'patient.update' && event.outcome === 'success')).toBe(true);
+    expect(stored.events.some((event) => event.toolName === 'patient_note.add' && event.outcome === 'success')).toBe(true);
+    expect(stored.events.some((event) => event.toolName === 'clinical_record.upsert' && event.outcome === 'success')).toBe(true);
+
+    await page.reload();
+    stored = await readStore(page);
+    expect(stored.patients.find((item) => item.id === 'patient-e2e')?.contact.phone).toBe('4441112233');
+    expect(stored.clinicalRecords.find((item) => item.patientId === 'patient-e2e')?.painLevel).toBe(6);
+    expect(stored.notes.some((item) => item.patientId === 'patient-e2e' && /evoluciona favorablemente/i.test(item.content))).toBe(true);
   });
 });
