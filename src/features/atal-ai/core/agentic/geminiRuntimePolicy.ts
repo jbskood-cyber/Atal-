@@ -37,6 +37,39 @@ export function agentGenerationConfigForModel(model: string): {
   return { maxOutputTokens: AGENT_MAX_OUTPUT_TOKENS };
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined;
+}
+
+function finiteNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+export function geminiTurnDiagnosticsFromResponse(response: unknown): GeminiTurnDiagnostics {
+  const root = asRecord(response);
+  const candidates = Array.isArray(root?.candidates) ? root.candidates : [];
+  const firstCandidate = asRecord(candidates[0]);
+  const usage = asRecord(root?.usageMetadata);
+  return {
+    finishReason: typeof firstCandidate?.finishReason === 'string' ? firstCandidate.finishReason : undefined,
+    thoughtsTokenCount: finiteNumber(usage?.thoughtsTokenCount),
+    candidatesTokenCount: finiteNumber(usage?.candidatesTokenCount),
+  };
+}
+
+export function mergeGeminiTurnDiagnostics(
+  current: GeminiTurnDiagnostics,
+  next: GeminiTurnDiagnostics,
+): GeminiTurnDiagnostics {
+  return {
+    finishReason: next.finishReason ?? current.finishReason,
+    thoughtsTokenCount: next.thoughtsTokenCount ?? current.thoughtsTokenCount,
+    candidatesTokenCount: next.candidatesTokenCount ?? current.candidatesTokenCount,
+  };
+}
+
 function safeDiagnosticValue(value: unknown): string {
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (typeof value !== 'string') return 'unknown';
