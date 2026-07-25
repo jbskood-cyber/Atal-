@@ -70,6 +70,22 @@ const exerciseFields = {
   repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Tiempo de ejecución.'), rest: text('Descanso.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
 };
+const sessionPatchSchema = object({
+  stage: enumText(['prepare', 'exercise', 'close', 'summary'], 'Etapa de la sesión cuando el usuario la especifica.'),
+  currentExerciseIndex: integer('Índice del ejercicio actual.', 0, 999),
+  startPain: number('Dolor inicial entre 0 y 10.', 0, 10),
+  startEnergy: number('Energía inicial entre 0 y 10.', 0, 10),
+  startComment: text('Comentario inicial de la sesión.', 2_000),
+  endPain: number('Dolor final entre 0 y 10.', 0, 10),
+  endEnergy: number('Energía final entre 0 y 10.', 0, 10),
+  effort: number('Esfuerzo final entre 0 y 10.', 0, 10),
+  symptoms: stringArray('Síntomas finales reportados.'),
+  endComment: text('Comentario final de la sesión.', 2_000),
+  easiest: text('Qué fue lo más fácil.', 2_000),
+  hardest: text('Qué fue lo más difícil.', 2_000),
+  discomfort: text('Molestia o incomodidad reportada.', 2_000),
+  exercises: object({}, [], true),
+});
 const settingsPatchSchema = object({
   notifications: { type: 'boolean', description: 'Activa o desactiva las notificaciones.' },
   haptics: { type: 'boolean', description: 'Activa o desactiva la vibración háptica.' },
@@ -148,9 +164,9 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   entry('session.start_or_resume', 'action', 'Inicia o recupera una sesión guiada.', object({
     patient: patientRef, plan: planRef, startPain: number('Dolor inicial entre 0 y 10.', 0, 10), startEnergy: number('Energía inicial entre 0 y 10.', 0, 10), comment: text('Comentario inicial.'),
   }, ['patient', 'plan'])),
-  entry('session.update_draft', 'action', 'Actualiza el borrador de sesión.', object({ patient: patientRef, plan: planRef, patch: object({}, [], true) }, ['patient', 'plan', 'patch'])),
-  entry('session.complete', 'action', 'Completa o guarda como parcial una sesión.', object({
-    patient: patientRef, plan: planRef, status: enumText(['completed', 'partial'], 'Estado final.'), patch: object({}, [], true),
+  entry('session.update_draft', 'action', 'Actualiza el borrador de sesión. Incluye en patch cada dato de sesión proporcionado por el usuario.', object({ patient: patientRef, plan: planRef, patch: sessionPatchSchema }, ['patient', 'plan', 'patch'])),
+  entry('session.complete', 'action', 'Completa o guarda como parcial una sesión. Incluye en patch cada dato final proporcionado por el usuario, usando endPain, endEnergy, effort y endComment cuando correspondan.', object({
+    patient: patientRef, plan: planRef, status: enumText(['completed', 'partial'], 'Estado final.'), patch: sessionPatchSchema,
   }, ['patient', 'plan', 'status'])),
   entry('report.review', 'action', 'Guarda una observación clínica en el reporte.', object({ session: sessionRef, observation: text('Observación clínica.', 10_000) }, ['session', 'observation'])),
 
