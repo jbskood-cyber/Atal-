@@ -55,7 +55,7 @@ async function exerciseSnapshot(page) {
     region: exercise?.region,
     sets: exercise?.sets,
     repetitions: exercise?.repetitions,
-    createEvents: state.events.filter((event) => event.toolName === 'exercise.create_simple' && event.outcome === 'success').length,
+    createEvents: state.events.filter((event) => event.toolName === 'exercise.create' && event.outcome === 'success').length,
   };
 }
 
