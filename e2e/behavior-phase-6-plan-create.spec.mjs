@@ -41,8 +41,8 @@ test.describe('Behavior System Phase 6 — plan creation parity', () => {
 
   test('Atal IA creates a plan through the canonical audited tool', async ({ page }) => {
     // Use an explicit commit-style action phrase. “Crea/prepara/diseña un plan” is
-    // intentionally classified as structured-draft mode, while “Registra un plan”
-    // exercises the agentic action path that owns canonical audited tool execution.
+    // intentionally classified as structured-draft mode. Avoid “nuevo … paciente” too,
+    // because that phrase intentionally arms the structured patient/exercise draft path.
     const conversation = createConversation({
       intent: 'update_plan',
       selectedPatientId: 'patient-e2e',
@@ -81,7 +81,7 @@ test.describe('Behavior System Phase 6 — plan creation parity', () => {
     ]);
 
     await page.goto('/assistant');
-    await sendMessage(page, 'Registra un plan nuevo para el paciente seleccionado.');
+    await sendMessage(page, 'Registra el plan para el paciente seleccionado.');
     await expect(page.getByText('Listo. Creé el plan.')).toBeVisible();
 
     const after = await readStore(page);
