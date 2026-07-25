@@ -1,2 +1,2 @@
-Live Gemini plan lifecycle checkpoint.
-Target: selected active plan -> precise Gemini tool set (plan.pause) -> canonical pause event -> atal:store:v2 -> reload persistence.
+Live Gemini exercise create checkpoint.
+Target: natural create-exercise prompt -> precise exercise.create_simple tool -> canonical exercise Action Core -> atal:store:v2 -> reload persistence.
