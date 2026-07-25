@@ -144,7 +144,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   }, ['patient', 'plan', 'status'])),
   entry('report.review', 'action', 'Guarda una observación clínica en el reporte.', object({ session: sessionRef, observation: text('Observación clínica.', 10_000) }, ['session', 'observation'])),
 
-  entry('settings.update', 'action', 'Actualiza preferencias compatibles.', object({ settings: ref('settings', 'Referencia a ajustes.'), patch: object({}, [], true) }, ['settings', 'patch'])),
+  entry('settings.update', 'action', 'Actualiza preferencias compatibles.', object({ patch: object({}, [], true) }, ['patch'])),
   entry('settings.profile_update', 'action', 'Actualiza el perfil profesional.', object({
     professionalName: text('Nombre profesional.', 180), specialty: text('Especialidad.', 180), clinic: text('Clínica.', 300),
   })),
@@ -157,4 +157,3 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 ];
 
 export const agentToolCatalogByName = new Map(agentToolCatalog.map((item) => [item.name, item]));
-export const agentToolCatalogByFunctionName = new Map(agentToolCatalog.map((item) => [item.functionName, item]));
