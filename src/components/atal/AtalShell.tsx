@@ -153,7 +153,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         </section>
       </>}
 
-      {!workspaceOpen && <div className={`atal-mobile-dock${menuOpen?' is-hidden':''}`}>
+      {!workspaceOpen && <div className={`atal-mobile-dock${shellOverlayOpen?' is-hidden':''}`}>
         <div className="atal-nav-slot">
           <nav aria-label="Navegación principal" className="atal-primary-nav">
             {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
