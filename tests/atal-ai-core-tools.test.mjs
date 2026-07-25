@@ -121,19 +121,21 @@ test('replace active changes two plans atomically and undo restores both', () =>
   assert.deepEqual(port.read().plans.map((item) => [item.id, item.status]), [['plan-1', 'active'], ['plan-2', 'draft']]);
 });
 
-test('settings rejects unknown keys and export returns a client descriptor without DOM or network', () => {
+test('settings rejects unknown keys and export returns a client descriptor without DOM or network after explicit confirmation', () => {
   const port = memoryPort();
   const invalidSettings = invocation('settings.update', { patch: { professionalName: 'No permitido' } }, [{ type: 'settings' }]);
   const invalid = execute(port, invalidSettings, proof(invalidSettings));
   assert.equal(invalid.status, 'error');
   assert.equal(invalid.code, 'CORE_INPUT_INVALID');
 
-  const exportInvocation = invocation('data.export_local', { kind: 'patients' });
+  const exportInvocation = invocation('data.export_local', { exportType: 'patients' });
   const originalFetch = globalThis.fetch;
   let networkCalls = 0;
   globalThis.fetch = () => { networkCalls += 1; throw new Error('network forbidden'); };
   try {
-    const result = execute(port, exportInvocation, proof(exportInvocation, 'explicit'));
+    const gate = execute(port, exportInvocation);
+    assert.equal(gate.status, 'confirmation-required');
+    const result = execute(port, gate.invocation, proof(gate.invocation, 'explicit'));
     assert.equal(result.status, 'success');
     assert.equal(result.clientEffect.type, 'download');
     assert.match(result.clientEffect.filename, /atal-pacientes/);
