@@ -52,6 +52,9 @@ jobs:
       - name: Install Playwright test runner without changing the lockfile
         if: steps.gate.outputs.enabled == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
+      - name: Install Chromium and system dependencies
+        if: steps.gate.outputs.enabled == 'true'
+        run: npx playwright install --with-deps chromium
       - name: Verify live Gemini patient update, note and lifecycle persistence
         if: steps.gate.outputs.enabled == 'true'
         env:
