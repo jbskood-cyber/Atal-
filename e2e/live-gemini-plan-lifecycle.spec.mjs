@@ -14,7 +14,7 @@ async function seedPlanLifecycleConversation(page) {
   const conversation = createConversation({
     id: 'conversation-live-plan-lifecycle',
     draftId: 'draft-live-plan-lifecycle',
-    intent: 'archive_plan',
+    intent: 'update_plan_status',
     patientMode: 'existing',
     selectedPatientId: 'patient-e2e',
     selectedPlanId: 'plan-active-e2e',
@@ -52,24 +52,24 @@ async function planLifecycleSnapshot(page) {
   const plan = state.plans.find((item) => item.id === 'plan-active-e2e');
   return {
     status: plan?.status,
-    archiveEvents: state.events.filter((event) => event.toolName === 'plan.archive' && event.outcome === 'success').length,
+    pauseEvents: state.events.filter((event) => event.toolName === 'plan.pause' && event.outcome === 'success').length,
   };
 }
 
 test.describe('Live Gemini plan lifecycle', () => {
-  test('archives the selected plan only after sensitive confirmation and persists after reload', async ({ page }) => {
+  test('pauses the selected active plan only after sensitive confirmation and persists after reload', async ({ page }) => {
     test.setTimeout(180_000);
     await seedPlanLifecycleConversation(page);
     await page.goto('/assistant');
 
     await page.getByLabel('Mensaje para Atal IA').fill(
-      'Archiva el plan seleccionado. Hazlo ahora.',
+      'Pausa el plan seleccionado. Hazlo ahora.',
     );
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 
     await expect.poll(() => planLifecycleSnapshot(page), { timeout: 90_000 }).toMatchObject({
       status: 'active',
-      archiveEvents: 0,
+      pauseEvents: 0,
     });
 
     const confirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
@@ -77,16 +77,16 @@ test.describe('Live Gemini plan lifecycle', () => {
     await confirmation.getByRole('button', { name: 'Continuar' }).click();
 
     await expect.poll(() => planLifecycleSnapshot(page), { timeout: 60_000 }).toMatchObject({
-      status: 'archived',
-      archiveEvents: 1,
+      status: 'paused',
+      pauseEvents: 1,
     });
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
 
     await page.reload();
     await expect.poll(() => planLifecycleSnapshot(page), { timeout: 20_000 }).toMatchObject({
-      status: 'archived',
-      archiveEvents: 1,
+      status: 'paused',
+      pauseEvents: 1,
     });
   });
 });
