@@ -1,2 +1,2 @@
-Final live Gemini regression — require explicit session completion metrics at provider schema boundary.
-Target: natural session completion with explicit dolor final 3, energía final 6, esfuerzo 5 y comentario must reach session.complete patch exactly, persist through client effect/Action Core, survive reload, while patient and contextual isolation regressions remain green.
+Final live Gemini regression — current head after normalized session completion fix.
+Target: patient create/update/clinical-record persistence + guided session start/complete preserving exact endPain=3, endEnergy=6, effort=5 and endComment + two-patient contextual isolation/global history, all through real Gemini on the latest branch head.
