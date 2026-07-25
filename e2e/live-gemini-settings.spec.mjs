@@ -68,9 +68,9 @@ test.describe('Live Gemini settings flow', () => {
     await seedSettingsConversation(page);
     await page.goto('/assistant');
 
-    await send(page, 'Desactiva la vibración y las sugerencias de IA. Hazlo ahora.');
+    await send(page, 'Activa la vibración y desactiva las sugerencias de IA. Hazlo ahora.');
     await expect.poll(() => settingsSnapshot(page), { timeout: 60_000 }).toMatchObject({
-      haptics: false,
+      haptics: true,
       aiSuggestions: false,
       updateAudits: 1,
     });
@@ -95,7 +95,7 @@ test.describe('Live Gemini settings flow', () => {
 
     await page.reload();
     await expect.poll(() => settingsSnapshot(page), { timeout: 20_000 }).toMatchObject({
-      haptics: false,
+      haptics: true,
       aiSuggestions: false,
       professionalName: 'Dra. Ana E2E',
       specialty: 'Fisioterapia deportiva',
