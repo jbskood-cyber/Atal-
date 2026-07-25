@@ -1,2 +1,2 @@
-Live Gemini report review checkpoint — persistent browser seed.
-Target: natural review request -> Gemini real -> report.review -> canonical session review action + audit/event -> atal:store:v2 -> reload without fixture reseed.
+Live Gemini settings checkpoint — preferences, professional profile and appearance.
+Target: natural settings requests -> Gemini real -> settings.update + settings.profile_update + settings.appearance -> canonical store/theme persistence -> reload.
