@@ -55,3 +55,8 @@ test('Gemini-facing catalog never emits non-string enum values', () => {
 
   assert.deepEqual(invalid, [], `Gemini function declarations only accept string enum values: ${invalid.join(', ')}`);
 });
+
+test('natural save confirmation for a new patient exposes only the composite patient create mutation', () => {
+  const tools = selection('Por favor guárdalo.', 'create_patient_plan');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'patient.create']);
+});
