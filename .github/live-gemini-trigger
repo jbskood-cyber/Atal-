@@ -1,2 +1,2 @@
-Live Gemini settings checkpoint — canonical preference keys + stable composer send.
-Target: natural requests -> Gemini real -> settings.update canonical patch + settings.profile_update + settings.appearance -> canonical store/theme persistence -> reload.
+Live Gemini settings checkpoint — canonical schema + explicit natural-language preference mapping.
+Target: combined preference request -> exact canonical patch; then profile + appearance -> canonical store/theme persistence -> reload.
