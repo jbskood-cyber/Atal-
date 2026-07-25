@@ -120,7 +120,7 @@ function providerFailureMessage(error: unknown): string {
     : 'Atal IA no pudo continuar la tarea. No se perdió ningún cambio.';
 }
 
-function lastSuccessfulResult(task: AgentTaskState): ToolExecutionResult | undefined {
+function lastSuccessfulResult(task: AgentTaskState): Extract<ToolExecutionResult, { status: 'success' }> | undefined {
   for (let index = task.completed.length - 1; index >= 0; index -= 1) {
     const result = task.completed[index]?.result;
     if (result?.status === 'success') return result;
@@ -167,7 +167,7 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
         const successfulResult = lastSuccessfulResult(task);
         if (successfulResult) {
           task.status = 'completed';
-          task.error = undefined;
+          delete task.error;
           task.finalText = successfulResult.message;
           break;
         }
