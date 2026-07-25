@@ -45,6 +45,9 @@ async function seedSettingsConversation(page) {
 }
 
 async function send(page, text) {
+  // Wait until the previous agent turn has fully left processing state. The
+  // composer intentionally shows the microphone only when it is idle+empty.
+  await expect(page.getByRole('button', { name: 'Grabar audio' })).toBeVisible({ timeout: 60_000 });
   const composer = page.getByLabel('Mensaje para Atal IA');
   await composer.click();
   await composer.fill('');
