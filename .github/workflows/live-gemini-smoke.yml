@@ -3,13 +3,7 @@ name: live-gemini-smoke
 on:
   pull_request:
     paths:
-      - 'tests/atal-ai-live-smoke.mjs'
-      - 'e2e/live-gemini-patient-create.spec.mjs'
-      - 'server/atalAIAgent.ts'
-      - 'src/features/atal-ai/api/agentPrompt.ts'
-      - 'src/features/atal-ai/api/agentToolCatalog.ts'
-      - 'src/features/atal-ai/core/agentic/agentLoop.ts'
-      - 'src/features/atal-ai/core/agentic/toolSelection.ts'
+      - '.github/live-gemini-trigger'
   workflow_dispatch:
 
 permissions:
