@@ -1,0 +1,11 @@
+/* Keep review actions inside the scrollable interaction area.
+   Live browser validation showed that the draft footer could sit at the
+   clipped edge of the conversation while the composer intercepted taps. */
+.atal-command-thread {
+  padding-bottom: max(88px, calc(16px + env(safe-area-inset-bottom))) !important;
+  scroll-padding-bottom: max(88px, calc(16px + env(safe-area-inset-bottom))) !important;
+}
+
+.atal-draft-card {
+  scroll-margin-bottom: 72px !important;
+}
