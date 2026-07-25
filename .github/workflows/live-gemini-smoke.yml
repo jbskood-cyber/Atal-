@@ -58,14 +58,14 @@ jobs:
       - name: Install Chromium and system dependencies
         if: steps.gate.outputs.enabled == 'true'
         run: npx playwright install --with-deps chromium
-      - name: Verify current live Gemini capability checkpoint
+      - name: Verify final live Gemini regression
         if: steps.gate.outputs.enabled == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
           ATAL_LIVE_GEMINI_E2E: '1'
-        run: npx playwright test e2e/live-gemini-delivery-open.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
+        run: npx playwright test e2e/live-gemini-patient-create.spec.mjs e2e/live-gemini-session-flow.spec.mjs e2e/live-gemini-contextual-isolation.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
         uses: actions/upload-artifact@v4
