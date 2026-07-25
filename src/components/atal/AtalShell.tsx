@@ -172,7 +172,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
 }
 
 function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
+  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
 }
 
 function SearchPanel({ onClose }: { onClose: () => void }) {
