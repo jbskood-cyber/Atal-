@@ -1,0 +1,108 @@
+import { expect, test } from '@playwright/test';
+import {
+  CONVERSATIONS_KEY,
+  DRAFTS_KEY,
+  STORE_KEY,
+  THEME_KEY,
+  createConversation,
+  createState,
+  readStore,
+} from './fixtures.mjs';
+
+async function seedSettingsConversation(page) {
+  const state = createState();
+  const conversation = createConversation({
+    id: 'conversation-live-settings',
+    draftId: 'draft-live-settings',
+    intent: 'update_settings',
+    status: 'ready_for_review',
+    messages: [{
+      id: 'settings-assistant-1',
+      role: 'assistant',
+      text: 'Puedo actualizar preferencias, perfil profesional y apariencia de Atal.',
+      createdAt: '2026-07-25T14:00:00.000Z',
+      attachments: [],
+    }],
+  });
+
+  await page.goto('/');
+  await page.evaluate(({ stateValue, conversationValue, keys }) => {
+    localStorage.clear();
+    localStorage.setItem(keys.store, JSON.stringify(stateValue));
+    localStorage.setItem(keys.conversations, JSON.stringify([conversationValue]));
+    localStorage.setItem(keys.drafts, JSON.stringify([]));
+    localStorage.setItem(keys.theme, 'light');
+  }, {
+    stateValue: state,
+    conversationValue: conversation,
+    keys: {
+      store: STORE_KEY,
+      conversations: CONVERSATIONS_KEY,
+      drafts: DRAFTS_KEY,
+      theme: THEME_KEY,
+    },
+  });
+}
+
+async function send(page, text) {
+  await page.getByLabel('Mensaje para Atal IA').fill(text);
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+}
+
+async function settingsSnapshot(page) {
+  const state = await readStore(page);
+  return {
+    haptics: state.settings.haptics,
+    aiSuggestions: state.settings.aiSuggestions,
+    professionalName: state.settings.professionalName,
+    specialty: state.settings.specialty,
+    clinic: state.settings.clinic,
+    updateAudits: state.events.filter((event) => event.toolName === 'settings.update' && event.outcome === 'success').length,
+    profileAudits: state.events.filter((event) => event.toolName === 'settings.profile_update' && event.outcome === 'success').length,
+  };
+}
+
+test.describe('Live Gemini settings flow', () => {
+  test('updates preferences, profile and appearance through Gemini real and persists them', async ({ page }) => {
+    test.setTimeout(180_000);
+    await seedSettingsConversation(page);
+    await page.goto('/assistant');
+
+    await send(page, 'Desactiva la vibración y las sugerencias de IA. Hazlo ahora.');
+    await expect.poll(() => settingsSnapshot(page), { timeout: 60_000 }).toMatchObject({
+      haptics: false,
+      aiSuggestions: false,
+      updateAudits: 1,
+    });
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
+    await send(page, 'Actualiza mi perfil profesional: nombre “Dra. Ana E2E”, especialidad “Fisioterapia deportiva” y clínica “Norte E2E”. Hazlo ahora.');
+    await expect.poll(() => settingsSnapshot(page), { timeout: 60_000 }).toMatchObject({
+      professionalName: 'Dra. Ana E2E',
+      specialty: 'Fisioterapia deportiva',
+      clinic: 'Norte E2E',
+      profileAudits: 1,
+    });
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
+    await send(page, 'Cambia la apariencia de Atal a modo oscuro. Hazlo ahora.');
+    await expect.poll(async () => page.evaluate((key) => ({
+      stored: localStorage.getItem(key),
+      resolved: document.documentElement.dataset.theme,
+    }), THEME_KEY), { timeout: 60_000 }).toEqual({ stored: 'dark', resolved: 'dark' });
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
+
+    await page.reload();
+    await expect.poll(() => settingsSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      haptics: false,
+      aiSuggestions: false,
+      professionalName: 'Dra. Ana E2E',
+      specialty: 'Fisioterapia deportiva',
+      clinic: 'Norte E2E',
+      updateAudits: 1,
+      profileAudits: 1,
+    });
+    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), THEME_KEY), { timeout: 20_000 }).toBe('dark');
+  });
+});
