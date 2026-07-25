@@ -78,6 +78,31 @@ test.describe('Behavior System Phase 6 — plan runtime parity', () => {
     expect(after.events.some((event) => event.planId === 'plan-active-e2e' && /paus/i.test(`${event.title} ${event.detail}`))).toBe(true);
   });
 
+  test('direct UI persists plan exercise membership only after explicit save', async ({ page }) => {
+    const state = createState();
+    state.exercises.push({
+      ...state.exercises[0],
+      id: 'exercise-extra-e2e',
+      name: 'Control escapular E2E',
+    });
+    await seedBrowser(page, { state });
+    await page.goto('/plans/plan-active-e2e');
+
+    await page.getByRole('button', { name: 'Agregar ejercicio' }).click();
+    const search = page.getByPlaceholder('Buscar ejercicios');
+    await search.fill('Control escapular E2E');
+    await page.getByRole('button', { name: /Control escapular E2E/ }).click();
+    await page.getByRole('button', { name: 'Agregar al plan' }).click();
+
+    const staged = await readStore(page);
+    expect(staged.plans.find((item) => item.id === 'plan-active-e2e').exerciseIds).toEqual(['exercise-e2e']);
+
+    await page.getByRole('button', { name: 'Guardar cambios' }).click();
+    await expect(page.getByRole('status')).toHaveText('Plan guardado');
+    const after = await readStore(page);
+    expect(after.plans.find((item) => item.id === 'plan-active-e2e').exerciseIds).toEqual(['exercise-e2e', 'exercise-extra-e2e']);
+  });
+
   test('Atal IA adds an exercise to a plan through canonical membership and audits the write', async ({ page }) => {
     const state = createState();
     const extra = {
