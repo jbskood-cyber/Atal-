@@ -211,4 +211,57 @@ test.describe('Behavior System Phase 6 — patient browser parity', () => {
     expect(stored.events.some((event) => event.kind === 'plan_paused' && event.planId === activePlan.id)).toBe(true);
     expect(stored.events.some((event) => event.toolName === 'patient.lifecycle' && event.outcome === 'success')).toBe(true);
   });
+
+  test('Atal IA versions and updates clinical record through canonical reversible write', async ({ page }) => {
+    const state = createState();
+    const beforeRecord = structuredClone(state.clinicalRecords.find((item) => item.patientId === 'patient-e2e'));
+    expect(beforeRecord).toBeTruthy();
+    const beforeVersionCount = state.clinicalRecordVersions.filter((item) => item.recordId === beforeRecord.id).length;
+    const conversation = createConversation({ intent: 'update_clinical_record', selectedPatientId: 'patient-e2e' });
+    await seedBrowser(page, { state, conversations: [conversation] });
+    await mockAgent(page, [
+      {
+        text: '',
+        modelContent: agentModelContent('update-record', 'atal_action'),
+        calls: [{
+          id: 'update-record',
+          bridge: 'atal_action',
+          tool: 'clinical_record.upsert',
+          input: {
+            patient: { type: 'patient', id: 'patient-e2e' },
+            patch: { clinicalNotes: 'Nota clínica actualizada por IA', painLevel: 4 },
+          },
+          references: [{ type: 'patient', id: 'patient-e2e' }],
+        }],
+      },
+      {
+        text: 'Listo. Actualicé el expediente clínico.',
+        modelContent: { role: 'model', parts: [{ text: 'Listo.' }] },
+        calls: [],
+      },
+    ]);
+
+    await page.goto('/assistant');
+    await sendMessage(page, 'Actualiza el expediente clínico del paciente seleccionado.');
+    await expect(page.getByText('Listo. Actualicé el expediente clínico.')).toBeVisible();
+
+    const after = await readStore(page);
+    const record = after.clinicalRecords.find((item) => item.id === beforeRecord.id);
+    expect(record).toBeTruthy();
+    expect(record.clinicalNotes).toBe('Nota clínica actualizada por IA');
+    expect(record.painLevel).toBe(4);
+    expect(record.version).toBe(beforeRecord.version + 1);
+
+    const versions = after.clinicalRecordVersions.filter((item) => item.recordId === beforeRecord.id);
+    expect(versions).toHaveLength(beforeVersionCount + 1);
+    const snapshot = versions.at(-1)?.snapshot;
+    expect(snapshot?.version).toBe(beforeRecord.version);
+    expect(snapshot?.clinicalNotes).toBe(beforeRecord.clinicalNotes);
+
+    const audit = after.events.find((event) => event.toolName === 'clinical_record.upsert' && event.outcome === 'success');
+    expect(audit).toBeTruthy();
+    expect(audit.riskLevel).toBe('reversible-write');
+    expect(audit.transactionId).toBeTruthy();
+    expect(audit.affectedEntities).toEqual([{ type: 'clinical-record', id: record.id }]);
+  });
 });
