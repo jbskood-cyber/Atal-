@@ -4,6 +4,11 @@ import { GoogleGenAI } from '@google/genai';
 import { ATAL_AI_SYSTEM_PROMPT, ATAL_AI_TRANSCRIPTION_PROMPT } from '../src/features/atal-ai/api/prompts';
 import { atalAIDraftJsonSchema } from '../src/features/atal-ai/api/schemas';
 import {
+  agentGenerationConfigForModel,
+  emptyModelTurnError,
+  geminiTurnDiagnosticsFromResponse,
+} from '../src/features/atal-ai/core/agentic/geminiRuntimePolicy';
+import {
   DEFAULT_GEMINI_MODEL_CASCADE,
   resolveGeminiModelCascade,
   runWithGeminiFallback,
@@ -54,6 +59,7 @@ function safeMessage(error: unknown) {
   if (/quota|429|RESOURCE_EXHAUSTED|503|UNAVAILABLE|overload|timed? out|timeout|fetch failed|network/i.test(message)) {
     return 'Atal IA está temporalmente ocupada. Conservamos tu borrador; vuelve a intentarlo en unos segundos.';
   }
+  if (/MODEL_EMPTY_RESPONSE/i.test(message)) return 'Gemini terminó el turno sin una respuesta utilizable. Conservamos tu entrada y probamos modelos alternativos automáticamente; vuelve a intentarlo.';
   if (/JSON|schema|response/i.test(message)) return 'Gemini devolvió una respuesta que no pudimos validar. Tu entrada sigue intacta; vuelve a intentarlo o edítala.';
   return message || 'Gemini no pudo procesar la solicitud. Tu contenido no se perdió.';
 }
@@ -99,8 +105,11 @@ async function analyze(payload: AtalAIPayload) {
         const response = await ai.models.generateContent({
           model,
           contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.type, data: cleanDataUrl(audio.data) } }, { text: ATAL_AI_TRANSCRIPTION_PROMPT }] }],
+          config: agentGenerationConfigForModel(model),
         });
-        return { transcript: response.text?.trim() ?? '' };
+        const transcript = response.text?.trim() ?? '';
+        if (!transcript) throw emptyModelTurnError(model, geminiTurnDiagnosticsFromResponse(response));
+        return { transcript };
       },
     });
   }
@@ -116,13 +125,14 @@ async function analyze(payload: AtalAIPayload) {
         model,
         contents: [{ role: 'user', parts }],
         config: {
+          ...agentGenerationConfigForModel(model),
           systemInstruction: ATAL_AI_SYSTEM_PROMPT,
           responseMimeType: 'application/json',
           responseJsonSchema: atalAIDraftJsonSchema,
         },
       });
-      const text = response.text;
-      if (!text) throw new Error('Gemini devolvió una respuesta vacía.');
+      const text = response.text?.trim() ?? '';
+      if (!text) throw emptyModelTurnError(model, geminiTurnDiagnosticsFromResponse(response));
       return { draft: JSON.parse(text) as unknown };
     },
   });
