@@ -10,6 +10,7 @@ const EXERCISE_TOOLS = ['exercise.create_simple', 'exercise.update_fields', 'exe
 const SESSION_TOOLS = ['session.start_or_resume', 'session.update_draft', 'session.complete', 'report.review'];
 const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.appearance'];
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
+const DRAFT_COMMIT_PATTERN = /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b|\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i;
 
 function includesAny(value: string, terms: string[]): boolean {
   return terms.some((term) => value.includes(term));
@@ -31,13 +32,23 @@ export type ToolSelectionInput = {
   contextSurface?: ContextualAgentSurface;
 };
 
+function scopeTools(tools: string[], surface?: ContextualAgentSurface): string[] {
+  const scoped = surface ? tools.filter((tool) => isContextualToolAllowed(surface, tool)) : tools;
+  return scoped.slice(0, MAX_ACTIVE_TOOLS);
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const value = `${input.text} ${input.route} ${input.intent ?? ''} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
   const selected = classification.allowedToolKinds.includes('read') ? [...READ_BASE] : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
-  const navigationRequested = includesAny(value, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
 
+  if (allowMutations && input.intent === 'create_patient_plan' && DRAFT_COMMIT_PATTERN.test(input.text)) {
+    append(selected, ['patient.create']);
+    return scopeTools(selected, input.contextSurface);
+  }
+
+  const navigationRequested = includesAny(value, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
   const patient = includesAny(value, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
   const exercise = includesAny(value, ['ejercicio', 'exercise', 'rutina', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'secuencia', '/exercises']);
@@ -53,10 +64,7 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && settings) append(selected, SETTINGS_TOOLS);
   if (allowMutations && delivery) append(selected, DELIVERY_TOOLS);
 
-  const scoped = input.contextSurface
-    ? selected.filter((tool) => isContextualToolAllowed(input.contextSurface!, tool))
-    : selected;
-  return scoped.slice(0, MAX_ACTIVE_TOOLS);
+  return scopeTools(selected, input.contextSurface);
 }
 
 export const AGENT_MAX_ACTIVE_TOOLS = MAX_ACTIVE_TOOLS;
