@@ -1,2 +1,2 @@
-Live Gemini clinical record checkpoint.
-Target: selected patient -> update pain + evolution -> clinical_record.upsert -> version snapshot -> atal:store:v2 -> reload persistence.
+Live Gemini plan creation checkpoint.
+Target: selected patient -> plan.create_simple -> draft plan -> atal:store:v2 -> reload persistence.
