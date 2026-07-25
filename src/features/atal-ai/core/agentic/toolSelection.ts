@@ -12,6 +12,13 @@ const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
 const DRAFT_COMMIT_PATTERN = /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b|\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i;
 
+const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
+const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
+const EXERCISE_INTENTS = new Set(['create_exercise', 'update_existing_exercise']);
+const SESSION_INTENTS = new Set(['summarize_sessions', 'create_report']);
+const SETTINGS_INTENTS = new Set(['update_settings']);
+const DELIVERY_INTENTS = new Set(['export_data']);
+
 function includesAny(value: string, terms: string[]): boolean {
   return terms.some((term) => value.includes(term));
 }
@@ -39,22 +46,24 @@ function scopeTools(tools: string[], surface?: ContextualAgentSurface): string[]
 
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
-  const value = `${input.text} ${input.route} ${input.intent ?? ''} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
+  const rawText = input.text.toLocaleLowerCase('es-MX');
+  const routeAndHints = `${input.route} ${input.selectionHints ?? ''}`.toLocaleLowerCase('es-MX');
+  const intent = input.intent ?? '';
   const selected = classification.allowedToolKinds.includes('read') ? [...READ_BASE] : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
 
-  if (allowMutations && input.intent === 'create_patient_plan' && DRAFT_COMMIT_PATTERN.test(input.text)) {
+  if (allowMutations && intent === 'create_patient_plan' && DRAFT_COMMIT_PATTERN.test(input.text)) {
     append(selected, ['patient.create']);
     return scopeTools(selected, input.contextSurface);
   }
 
-  const navigationRequested = includesAny(value, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
-  const patient = includesAny(value, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
-  const plan = includesAny(value, ['plan', 'tratamiento', 'activar', 'pausar', 'completar', 'archivar', 'progresión', 'progresion', '/plans']);
-  const exercise = includesAny(value, ['ejercicio', 'exercise', 'rutina', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'secuencia', '/exercises']);
-  const session = includesAny(value, ['sesión', 'sesion', 'session', 'dolor', 'energía', 'energia', 'esfuerzo', 'síntoma', 'sintoma', 'reporte', 'actividad', '/activity']);
-  const settings = includesAny(value, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
-  const delivery = includesAny(value, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
+  const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
+  const patient = PATIENT_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
+  const plan = PLAN_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['plan', 'tratamiento', 'progresión', 'progresion', '/plans']);
+  const exercise = EXERCISE_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['ejercicio', 'exercise', 'rutina', 'serie', 'repetición', 'repeticion', 'movilidad', 'fuerza', 'multimedia', 'secuencia', '/exercises']);
+  const session = SESSION_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['sesión', 'sesion', 'session', 'reporte', 'actividad', '/activity']);
+  const settings = SETTINGS_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['ajuste', 'setting', 'preferencia', 'perfil profesional', 'profile', 'tema', 'oscuro', 'claro', 'privacidad', '/settings']);
+  const delivery = DELIVERY_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['entrega', 'delivery', 'pdf', 'imprimir', 'descargar', 'compartir', 'exportar', 'export', 'respaldo', '/exports', '/delivery']);
 
   if (navigationRequested && classification.kind !== 'conversation') append(selected, ['navigation.open']);
   if (allowMutations && patient) append(selected, PATIENT_TOOLS);
