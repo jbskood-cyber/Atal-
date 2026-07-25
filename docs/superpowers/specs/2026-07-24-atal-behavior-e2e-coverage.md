@@ -26,7 +26,7 @@ The architecture matrix proves that UI and Atal IA adapters delegate to the same
 | 6 | Update plan fields | `behavior-plan-edit-undo.spec.mjs`: browser edit saves through canonical transaction and Undo restores prior state. | `behavior-phase-6-plan-runtime.spec.mjs`: `plan.update_fields` changes frequency through the general assistant and emits a reversible-write audit tied to the transaction. | **Covered** |
 | 7 | Plan lifecycle | `behavior-phase-6-plan-runtime.spec.mjs`: real plan-detail actions pause an active plan and emit lifecycle activity. | `block-4-1-critical.spec.mjs`: `plan.activate` confirmation, cancel/no-mutation and confirmed activation are exercised. | **Covered** |
 | 8 | Plan exercise membership | `behavior-phase-6-plan-runtime.spec.mjs`: adding an exercise remains staged until explicit Save, then persists the canonical membership set. | `behavior-phase-6-plan-runtime.spec.mjs`: `plan.membership` adds the exercise and records the audited reversible write. | **Covered** |
-| 9 | Exercise create / update / lifecycle | Not yet verified. | Not yet verified. | Gap |
+| 9 | Exercise create / update / lifecycle | `behavior-phase-6-exercise.spec.mjs`: the real local builder creates an active local exercise; the real detail screen persists a field edit and archives the same exercise. | `behavior-phase-6-exercise.spec.mjs`: `exercise.create_simple`, `exercise.update_fields` and `exercise.lifecycle` persist the canonical state and emit successful audited transactions. | **Covered** |
 | 10 | Guided session start / complete + clinician review | Existing repository E2E must be source-audited before credit is assigned. | Clinician-review path must be source-audited; no AI start/complete path should be invented. | Audit pending |
 
 ## Defect exposed by Phase 6.1
@@ -41,6 +41,8 @@ Closure evidence for the clinical-record slice: SHA `ba57a9c9aa34222915a13694eab
 
 Closure evidence for the plan slice: SHA `0188154c1bdd6983c53fa9ad54ee1d88359116ad` · `behavior-system-quality` #183 ✅ · `quality` #612 ✅ · `e2e` #588 ✅. The browser belt now covers plan creation, field updates, lifecycle and exercise membership across the real UI and Atal IA invocation surfaces. The plan-create E2E also verifies that the test intentionally enters agentic action mode rather than the separate structured-draft flow; no product behavior was changed merely to make the test pass.
 
+Closure evidence for the exercise slice: SHA `eb611640038e3454947123e5c5e8a322c9a256ad` · `behavior-system-quality` #184 ✅ · `quality` #613 ✅ · `e2e` #589 ✅. `playwright.config.mjs` runs the complete `./e2e` directory and `e2e.yml` invokes `npx playwright test`, so the dedicated exercise parity suite is part of the green browser belt rather than an unexecuted fixture.
+
 ## Cross-cutting evidence already green
 
 These tests do not replace the ten rows, but protect the system around them:
@@ -52,11 +54,10 @@ These tests do not replace the ten rows, but protect the system around them:
 
 ## Next implementation slice
 
-Close the remaining gaps in bounded groups rather than one brittle mega-test:
+Close the final Phase 6.1 gap without inventing product behavior:
 
-1. exercise: representative create/update/lifecycle on UI and IA;
-2. session: source-audit existing guided-session E2E, then add only the missing clinician-review browser route.
-
-Each new test should verify persisted `atal:store:v2` state and, for AI writes, the corresponding audit/transaction semantics where relevant.
+1. source-audit existing guided-session start/completion browser coverage;
+2. source-audit clinician review and add only the missing real browser route, if any;
+3. verify persisted `atal:store:v2` state and AI audit/transaction semantics only where an AI invocation surface actually exists.
 
 Do not change product code merely to make a test easier. If a new E2E exposes a real behavior defect, switch back to RED → minimal product fix → full regression.
