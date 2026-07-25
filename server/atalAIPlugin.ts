@@ -106,7 +106,7 @@ async function analyze(payload: AtalAIPayload) {
           model,
           contents: [{ role: 'user', parts: [{ inlineData: { mimeType: audio.type, data: cleanDataUrl(audio.data) } }, { text: ATAL_AI_TRANSCRIPTION_PROMPT }] }],
           config: agentGenerationConfigForModel(model),
-        });
+        } as never);
         const transcript = response.text?.trim() ?? '';
         if (!transcript) throw emptyModelTurnError(model, geminiTurnDiagnosticsFromResponse(response));
         return { transcript };
@@ -130,7 +130,7 @@ async function analyze(payload: AtalAIPayload) {
           responseMimeType: 'application/json',
           responseJsonSchema: atalAIDraftJsonSchema,
         },
-      });
+      } as never);
       const text = response.text?.trim() ?? '';
       if (!text) throw emptyModelTurnError(model, geminiTurnDiagnosticsFromResponse(response));
       return { draft: JSON.parse(text) as unknown };
