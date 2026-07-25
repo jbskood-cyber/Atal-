@@ -20,28 +20,7 @@ jobs:
       - name: Install application dependencies
         run: npm ci
       - name: Install Playwright test runner without changing the lockfile
-        shell: bash
-        run: |
-          set -o pipefail
-          : > /tmp/playwright-install.log
-          for attempt in 1 2 3; do
-            echo "=== attempt $attempt ===" | tee -a /tmp/playwright-install.log
-            if npm install --no-save --no-package-lock @playwright/test@1.61.1 2>&1 | tee -a /tmp/playwright-install.log; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              sleep $((attempt * 5))
-            fi
-          done
-          exit 1
-      - name: Upload Playwright install diagnostics
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v5
-        with:
-          name: playwright-install-diagnostics
-          path: /tmp/playwright-install.log
-          if-no-files-found: warn
-          retention-days: 3
+        run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Run deterministic Atal AI E2E suite
