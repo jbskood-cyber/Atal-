@@ -120,6 +120,14 @@ function providerFailureMessage(error: unknown): string {
     : 'Atal IA no pudo continuar la tarea. No se perdió ningún cambio.';
 }
 
+function lastSuccessfulResult(task: AgentTaskState): ToolExecutionResult | undefined {
+  for (let index = task.completed.length - 1; index >= 0; index -= 1) {
+    const result = task.completed[index]?.result;
+    if (result?.status === 'success') return result;
+  }
+  return undefined;
+}
+
 export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutcome> {
   let task = structuredClone(input.task);
   const lastResults: AgentStepResult[] = [];
@@ -156,6 +164,13 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     if (!turn.calls.length) {
       const finalText = turn.text.trim();
       if (!finalText) {
+        const successfulResult = lastSuccessfulResult(task);
+        if (successfulResult) {
+          task.status = 'completed';
+          task.error = undefined;
+          task.finalText = successfulResult.message;
+          break;
+        }
         task.status = 'failed';
         task.error = 'EMPTY_MODEL_TURN';
         task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
