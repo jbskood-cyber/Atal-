@@ -1,2 +1,2 @@
-AI Studio runtime recovery checkpoint — fresh conversational and patient-intake turns.
-Target: reproduce the exact user-visible EMPTY_MODEL_TURN failure paths with real Gemini, using constrained thinking, larger visible-output budget, safe finish diagnostics, full browser runtime, canonical patient persistence and reload verification.
+AI Studio runtime recovery final checkpoint — latest typed HEAD.
+Target: on the exact latest branch state, execute real Gemini from a fresh conversation for “¿En qué me puedes ayudar?” and “Me ayudas a registrar un paciente nuevo?”, then retain the existing patient-create persistence/readback, session, contextual isolation, export and delivery regression. This checkpoint must not be gate-skipped.
