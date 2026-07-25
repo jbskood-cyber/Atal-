@@ -1,2 +1,2 @@
-Live Gemini settings checkpoint — function catalog index restored after RED web-server compile.
-Target: natural requests -> Gemini real -> settings.update + settings.profile_update + settings.appearance -> canonical store/theme persistence -> reload.
+Live Gemini settings checkpoint — canonical preference keys + stable composer send.
+Target: natural requests -> Gemini real -> settings.update canonical patch + settings.profile_update + settings.appearance -> canonical store/theme persistence -> reload.
