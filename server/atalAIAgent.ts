@@ -13,6 +13,7 @@ import {
   resolveGeminiModelCascade,
   runWithGeminiFallback,
 } from '../src/features/atal-ai/core/agentic/modelFallback';
+import { createStreamModelContentCollector } from '../src/features/atal-ai/core/agentic/streamModelContent';
 import { shouldRequireAgentToolCall } from '../src/features/atal-ai/core/agentic/toolCallingPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
@@ -95,7 +96,7 @@ function toolDeclaration(entry: AgentToolCatalogEntry) {
   return {
     name: entry.functionName,
     description: `${entry.contract} Atal validará los datos, el riesgo, la persistencia, la auditoría y Deshacer.`,
-    parametersJsonSchema: entry.inputSchema,
+    parameters: entry.inputSchema,
   };
 }
 
@@ -229,9 +230,11 @@ export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta:
       let emittedText = false;
       let text = '';
       const calls = new Map<string, AgentFunctionCall>();
+      const modelContentCollector = createStreamModelContentCollector();
       try {
         const stream = await prepared.ai.models.generateContentStream({ ...prepared.request, model } as never);
         for await (const chunk of stream) {
+          modelContentCollector.addContent(chunk.candidates?.[0]?.content as AgentHistoryContent | undefined);
           const delta = chunk.text ?? '';
           if (delta) {
             emittedText = true;
@@ -252,7 +255,11 @@ export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta:
       }
       const values = [...calls.values()];
       assertNonEmptyTurn(text, values);
-      return { text: text.trim(), calls: values, modelContent: modelContentFor(text, values) };
+      return {
+        text: text.trim(),
+        calls: values,
+        modelContent: modelContentCollector.content() ?? modelContentFor(text, values),
+      };
     },
   });
 }
