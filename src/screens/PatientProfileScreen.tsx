@@ -44,6 +44,23 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
 
   if (!patient) return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><FileText /><h1>Paciente no encontrado</h1><button type="button" onClick={() => router.push('/patients')}>Volver</button></div></main></AtalShell>;
 
+  const resetPatientForm = () => {
+    setForm({
+      name: patient.name, diagnosis: patient.diagnosis, age: patient.age?.toString() ?? '', birthDate: patient.birthDate, sex: patient.sex, affectedArea: patient.affectedArea,
+      phone: patient.contact.phone, email: patient.contact.email, address: patient.contact.address, emergencyContact: patient.contact.emergencyContact,
+    });
+  };
+  const startPatientEditing = () => {
+    resetPatientForm();
+    setMessage('');
+    setEditing(true);
+  };
+  const cancelPatientEditing = () => {
+    resetPatientForm();
+    setMessage('');
+    setEditing(false);
+  };
+
   const activePlan = state.plans.find((item) => item.status === 'active') ?? null;
   const archived = patient.status === 'archived';
   const savePatient = () => {
@@ -80,10 +97,10 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
     {message && <p className="atal-action-message" role="status">{message}</p>}
     {tab === 'summary' && <div className="atal-profile-body">
       <button type="button" disabled={archived} className="atal-patient-preview-cta" onClick={() => router.push(`/patients/${patient.id}/portal-preview`)}><Eye /><span><b>Vista del paciente</b><small>{archived ? 'Restaura al paciente para abrir su plan' : activePlan ? 'Consulta su plan activo y sesión guiada' : 'No tiene un plan activo'}</small></span><ChevronRight /></button>
-      <section className="atal-profile-section"><div className="atal-section-title"><h2>Datos clínicos y contacto</h2><button type="button" onClick={() => setEditing((value) => !value)}><Pencil /></button></div>{editing ? <div className="atal-settings-form">
+      <section className="atal-profile-section"><div className="atal-section-title"><h2>Datos clínicos y contacto</h2><button type="button" aria-label="Editar datos del paciente" onClick={startPatientEditing}><Pencil /></button></div>{editing ? <div className="atal-settings-form">
         <label><span>Nombre</span><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label><label><span>Edad</span><input type="number" value={form.age} onChange={(event) => setForm({ ...form, age: event.target.value })} /></label><label><span>Fecha de nacimiento</span><input type="date" value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: event.target.value })} /></label><label><span>Sexo</span><input value={form.sex} onChange={(event) => setForm({ ...form, sex: event.target.value })} /></label><label><span>Motivo / diagnóstico</span><textarea value={form.diagnosis} onChange={(event) => setForm({ ...form, diagnosis: event.target.value })} /></label><label><span>Zona afectada</span><input value={form.affectedArea} onChange={(event) => setForm({ ...form, affectedArea: event.target.value })} /></label>
         <label><span>Teléfono</span><input type="tel" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label><label><span>Correo</span><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></label><label><span>Dirección</span><input value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} /></label><label><span>Contacto de emergencia</span><input value={form.emergencyContact} onChange={(event) => setForm({ ...form, emergencyContact: event.target.value })} /></label>
-        <button type="button" className="atal-settings-save" onClick={savePatient}><Save />Guardar datos</button>
+        <div className="atal-profile-actions"><button type="button" onClick={cancelPatientEditing}>Cancelar edición</button><button type="button" className="is-primary" onClick={savePatient}><Save />Guardar datos</button></div>
       </div> : <><p className="atal-profile-lead">{patient.diagnosis || 'Motivo por completar'}</p><small>{patient.affectedArea || 'Zona afectada por completar'}</small><p>{patient.contact.phone || patient.contact.email ? [patient.contact.phone, patient.contact.email].filter(Boolean).join(' · ') : 'Contacto por completar'}</p></>}</section>
       <section className="atal-profile-section"><h2>Plan activo</h2>{activePlan ? <button type="button" className="atal-active-plan" onClick={() => router.push(`/plans/${activePlan.id}`)}><span><CalendarDays /></span><span><b>{activePlan.title}</b><small>{activePlan.duration} · {activePlan.frequency}</small></span><em>Activo</em><ChevronRight /></button> : <div className="atal-empty"><p>{archived ? 'El paciente está archivado.' : 'Este paciente no tiene un plan activo.'}</p>{!archived && <button type="button" onClick={() => router.push(`/plans/new?patientId=${patient.id}`)}><Plus />Crear plan</button>}</div>}</section>
       <section className="atal-profile-section"><div className="atal-section-title"><h2>Reportes recientes</h2><button type="button" onClick={() => router.push(`/activity?view=reports&patientId=${patient.id}`)}>Ver todo</button></div>{recentSessions.map((session) => <button type="button" className="atal-report-row" key={session.id} onClick={() => router.push(`/activity/${session.id}`)}><span><FileText /></span><span><b>{session.status === 'completed' ? 'Sesión completada' : 'Sesión parcial'}</b><small>{new Date(session.completedAt).toLocaleString('es-MX')} · {session.reviewedAt ? 'Revisado' : 'Pendiente'}</small></span><ChevronRight /></button>)}{!recentSessions.length && <p>Sin sesiones registradas.</p>}</section>
