@@ -1,5 +1,49 @@
 import { expect, test } from '@playwright/test';
-import { createConversation, createState, readStore, seedBrowser } from './fixtures.mjs';
+import {
+  CONVERSATIONS_KEY,
+  DRAFTS_KEY,
+  STORE_KEY,
+  THEME_KEY,
+  createConversation,
+  createState,
+  readStore,
+} from './fixtures.mjs';
+
+async function seedReportConversation(page) {
+  const state = createState();
+  const conversation = createConversation({
+    id: 'conversation-live-report-review',
+    draftId: 'draft-live-report-review',
+    intent: 'create_report',
+    selectedPatientId: 'patient-e2e',
+    status: 'ready_for_review',
+    messages: [{
+      id: 'report-review-assistant-1',
+      role: 'assistant',
+      text: 'Estoy revisando las sesiones completadas de Paciente E2E.',
+      createdAt: '2026-07-25T13:35:00.000Z',
+      attachments: [],
+    }],
+  });
+
+  await page.goto('/');
+  await page.evaluate(({ stateValue, conversationValue, keys }) => {
+    localStorage.clear();
+    localStorage.setItem(keys.store, JSON.stringify(stateValue));
+    localStorage.setItem(keys.conversations, JSON.stringify([conversationValue]));
+    localStorage.setItem(keys.drafts, JSON.stringify([]));
+    localStorage.setItem(keys.theme, 'light');
+  }, {
+    stateValue: state,
+    conversationValue: conversation,
+    keys: {
+      store: STORE_KEY,
+      conversations: CONVERSATIONS_KEY,
+      drafts: DRAFTS_KEY,
+      theme: THEME_KEY,
+    },
+  });
+}
 
 async function send(page, text) {
   await page.getByLabel('Mensaje para Atal IA').fill(text);
@@ -20,23 +64,7 @@ async function reviewSnapshot(page) {
 test.describe('Live Gemini report review flow', () => {
   test('reviews a completed session through Gemini real and persists the canonical report review', async ({ page }) => {
     test.setTimeout(180_000);
-    const state = createState();
-    const conversation = createConversation({
-      id: 'conversation-live-report-review',
-      draftId: 'draft-live-report-review',
-      intent: 'create_report',
-      selectedPatientId: 'patient-e2e',
-      status: 'ready_for_review',
-      messages: [{
-        id: 'report-review-assistant-1',
-        role: 'assistant',
-        text: 'Estoy revisando las sesiones completadas de Paciente E2E.',
-        createdAt: '2026-07-25T13:35:00.000Z',
-        attachments: [],
-      }],
-    });
-
-    await seedBrowser(page, { state, conversations: [conversation] });
+    await seedReportConversation(page);
     await page.goto('/assistant');
 
     await send(page, 'Revisa el reporte de la sesión completada del paciente seleccionado del 21 de julio de 2026 y guarda esta observación clínica: “Buena tolerancia, continuar progresión gradual”. Hazlo ahora.');
