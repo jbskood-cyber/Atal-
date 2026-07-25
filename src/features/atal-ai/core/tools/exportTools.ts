@@ -13,31 +13,31 @@ export const exportTools: ToolDefinition[] = [{
   requiredEntities: [],
   validateInput(input) {
     const value = input && typeof input === 'object' ? input as Record<string, unknown> : {};
-    const exportType = value.exportType ?? value.kind;
-    if (!['patients', 'progress', 'plans', 'backup'].includes(String(exportType))) throw coreError('CORE_INPUT_INVALID', 'Selecciona un tipo de exportación válido.');
-    return { exportType: exportType as 'patients' | 'progress' | 'plans' | 'backup' };
+    const kind = value.exportType ?? value.kind;
+    if (!['patients', 'progress', 'plans', 'backup'].includes(String(kind))) throw coreError('CORE_INPUT_INVALID', 'Selecciona un tipo de exportación válido.');
+    return { kind: kind as 'patients' | 'progress' | 'plans' | 'backup' };
   },
   preconditions() {},
   execute(environment, input) {
-    const { exportType } = input as { exportType: 'patients' | 'progress' | 'plans' | 'backup' };
+    const { kind } = input as { kind: 'patients' | 'progress' | 'plans' | 'backup' };
     const date = environment.context.now.slice(0, 10);
     let filename: string;
     let mimeType: string;
     let content: string;
     let message: string;
-    if (exportType === 'patients') {
+    if (kind === 'patients') {
       const rows = [['ID', 'Paciente', 'Motivo clínico', 'Estado', 'Última actualización'], ...environment.state.patients.map((item) => [item.id, item.name, item.diagnosis, item.status, item.updatedAt])];
       filename = `atal-pacientes-${date}.csv`;
       mimeType = 'text/csv;charset=utf-8';
       content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\n')}`;
       message = 'Directorio de pacientes preparado.';
-    } else if (exportType === 'progress') {
+    } else if (kind === 'progress') {
       const rows = [['Sesión', 'Paciente', 'Plan', 'Estado', 'Dolor inicial', 'Dolor final', 'Duración (min)', 'Fecha'], ...environment.state.sessions.map((item) => [item.id, item.patientId, item.planId, item.status, item.startPain, item.endPain, item.durationMinutes, item.completedAt])];
       filename = `atal-progreso-${date}.csv`;
       mimeType = 'text/csv;charset=utf-8';
       content = `\uFEFF${rows.map((row) => row.map(csvCell).join(',')).join('\n')}`;
       message = 'Progreso clínico preparado.';
-    } else if (exportType === 'plans') {
+    } else if (kind === 'plans') {
       filename = `atal-planes-${date}.json`;
       mimeType = 'application/json';
       content = JSON.stringify(environment.state.plans, null, 2);
