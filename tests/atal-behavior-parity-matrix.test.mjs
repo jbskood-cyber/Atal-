@@ -6,6 +6,7 @@ const source = (path) => readFileSync(path, 'utf8');
 
 const files = {
   patientsUi: source('src/data/localPatients.ts'),
+  newPatientUi: source('src/screens/NewPatientScreen.tsx'),
   recordsUi: source('src/features/clinical-record/clinicalRecordRepository.ts'),
   plansUi: source('src/data/localPlans.ts'),
   exercisesUi: source('src/data/localExercises.ts'),
@@ -23,6 +24,7 @@ const contracts = [
     name: 'create patient',
     checks: [
       [files.patientsUi, /applyCreatePatient/],
+      [files.newPatientUi, /createLocalPatientWithRecord/],
       [files.patientsAi, /applyCreatePatient/],
     ],
   },
@@ -121,6 +123,10 @@ for (const contract of contracts) {
     for (const [text, pattern] of contract.checks) assert.match(text, pattern);
   });
 }
+
+test('new patient screen cannot bypass canonical patient + clinical-record adapter', () => {
+  assert.doesNotMatch(files.newPatientUi, /createPatientWithRecord/);
+});
 
 test('patient.create composite cannot bypass canonical plan creation', () => {
   assert.doesNotMatch(files.patientsAi, /environment\.state\.plans\.push\(/);
