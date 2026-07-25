@@ -1,2 +1,2 @@
-Live Gemini guided session checkpoint — resume assistant after start navigation.
-Target: session.start_or_resume navigates into guided flow -> return to assistant -> session.complete -> canonical guided-session persistence + Atal IA audits -> reload.
+Live Gemini report review checkpoint — completed session clinical review.
+Target: natural review request -> Gemini real -> report.review -> canonical session review action + audit/event -> atal:store:v2 -> reload persistence.
