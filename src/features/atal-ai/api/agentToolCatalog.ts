@@ -157,3 +157,4 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 ];
 
 export const agentToolCatalogByName = new Map(agentToolCatalog.map((item) => [item.name, item]));
+export const agentToolCatalogByFunctionName = new Map(agentToolCatalog.map((item) => [item.functionName, item]));
