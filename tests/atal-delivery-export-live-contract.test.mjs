@@ -5,13 +5,13 @@ import { loadCore } from './helpers/core-modules.mjs';
 const catalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 const selection = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
 
-test('data.export_local exposes the canonical exportType input used by the public agent contract', () => {
+test('data.export_local exposes the canonical kind input used by the executor', () => {
   const { agentToolCatalogByName } = catalog();
   const tool = agentToolCatalogByName.get('data.export_local');
   assert.ok(tool);
-  assert.deepEqual(Object.keys(tool.inputSchema.properties), ['exportType']);
-  assert.deepEqual(tool.inputSchema.required, ['exportType']);
-  assert.deepEqual(tool.inputSchema.properties.exportType.enum, ['patients', 'progress', 'plans', 'backup']);
+  assert.deepEqual(Object.keys(tool.inputSchema.properties), ['kind']);
+  assert.deepEqual(tool.inputSchema.required, ['kind']);
+  assert.deepEqual(tool.inputSchema.properties.kind.enum, ['patients', 'progress', 'plans', 'backup']);
 });
 
 test('export_data intent exposes only data.export_local plus read helpers', () => {
