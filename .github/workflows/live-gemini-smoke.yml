@@ -4,6 +4,12 @@ on:
   pull_request:
     paths:
       - 'tests/atal-ai-live-smoke.mjs'
+      - 'e2e/live-gemini-patient-create.spec.mjs'
+      - 'server/atalAIAgent.ts'
+      - 'src/features/atal-ai/api/agentPrompt.ts'
+      - 'src/features/atal-ai/api/agentToolCatalog.ts'
+      - 'src/features/atal-ai/core/agentic/agentLoop.ts'
+      - 'src/features/atal-ai/core/agentic/toolSelection.ts'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +18,7 @@ permissions:
 jobs:
   live-gemini-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -33,12 +39,27 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
         run: npm run test:ai-live > live-agent-e2e.log 2>&1
+      - name: Install Playwright test runner without changing the lockfile
+        run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Verify live Gemini persists patient through the real browser app
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          GEMINI_MODEL_CASCADE: ${{ vars.GEMINI_MODEL_CASCADE }}
+        run: npx playwright test e2e/live-gemini-patient-create.spec.mjs --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: live-gemini-diagnostics
-          path: live-agent-e2e.log
+          path: |
+            live-agent-e2e.log
+            live-browser-e2e.log
+            playwright-report/
+            test-results/
           if-no-files-found: warn
           retention-days: 1
