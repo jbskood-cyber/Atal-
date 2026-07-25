@@ -14,6 +14,7 @@ import {
   runWithGeminiFallback,
 } from '../src/features/atal-ai/core/agentic/modelFallback';
 import { createStreamModelContentCollector } from '../src/features/atal-ai/core/agentic/streamModelContent';
+import { selectSettingsPreferenceKeys } from '../src/features/atal-ai/core/agentic/settingsPreferenceSelection';
 import { shouldRequireAgentToolCall } from '../src/features/atal-ai/core/agentic/toolCallingPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
@@ -92,11 +93,44 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   return { ...payload, allowedTools, conversationHistory };
 }
 
-function toolDeclaration(entry: AgentToolCatalogEntry) {
+function requestScopedInputSchema(entry: AgentToolCatalogEntry, text: string): AgentToolCatalogEntry['inputSchema'] {
+  if (entry.name !== 'settings.update') return entry.inputSchema;
+  const requestedKeys = selectSettingsPreferenceKeys(text);
+  if (!requestedKeys.length) return entry.inputSchema;
+
+  const patch = entry.inputSchema.properties.patch;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return entry.inputSchema;
+  const patchSchema = patch as { type?: unknown; properties?: unknown; required?: unknown; additionalProperties?: unknown; description?: unknown };
+  if (!patchSchema.properties || typeof patchSchema.properties !== 'object' || Array.isArray(patchSchema.properties)) return entry.inputSchema;
+  const sourceProperties = patchSchema.properties as Record<string, unknown>;
+  const scopedProperties = Object.fromEntries(
+    requestedKeys
+      .filter((key) => Object.prototype.hasOwnProperty.call(sourceProperties, key))
+      .map((key) => [key, sourceProperties[key]]),
+  );
+  const required = Object.keys(scopedProperties);
+  if (!required.length) return entry.inputSchema;
+
+  return {
+    ...entry.inputSchema,
+    properties: {
+      ...entry.inputSchema.properties,
+      patch: {
+        ...patchSchema,
+        type: 'object',
+        properties: scopedProperties,
+        required,
+        additionalProperties: false,
+      },
+    },
+  };
+}
+
+function toolDeclaration(entry: AgentToolCatalogEntry, text: string) {
   return {
     name: entry.functionName,
     description: `${entry.contract} Atal validará los datos, el riesgo, la persistencia, la auditoría y Deshacer.`,
-    parameters: entry.inputSchema,
+    parameters: requestScopedInputSchema(entry, text),
   };
 }
 
@@ -185,7 +219,7 @@ function prepareModel(rawPayload: AgentTurnRequest) {
   };
   if (entries.length) {
     const requireTool = shouldRequireAgentToolCall(payload.allowedTools, payload.history);
-    config.tools = [{ functionDeclarations: entries.map(toolDeclaration) }];
+    config.tools = [{ functionDeclarations: entries.map((entry) => toolDeclaration(entry, payload.text)) }];
     config.toolConfig = {
       functionCallingConfig: requireTool
         ? { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: entries.map((entry) => entry.functionName) }
