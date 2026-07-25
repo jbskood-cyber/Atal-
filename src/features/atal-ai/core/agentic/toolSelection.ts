@@ -136,6 +136,23 @@ function selectSessionActionTools(rawText: string): string[] {
   return [];
 }
 
+function selectSettingsActionTools(rawText: string): string[] {
+  if (includesAny(rawText, ['modo oscuro', 'modo claro', 'apariencia', 'tema', 'dark mode', 'light mode'])) {
+    return ['settings.appearance'];
+  }
+  if (includesAny(rawText, ['perfil profesional', 'nombre profesional', 'especialidad', 'clínica', 'clinica'])) {
+    return ['settings.profile_update'];
+  }
+  if (includesAny(rawText, [
+    'vibración', 'vibracion', 'háptica', 'haptica', 'haptics', 'sugerencias de ia', 'sugerencias ia',
+    'notificaciones', 'compacto', 'bloqueo de sesión', 'bloqueo de sesion', 'privacidad', 'alertas de ia',
+    'alertas ia', 'instrucciones de atal', 'preferencia', 'preferencias',
+  ])) {
+    return ['settings.update'];
+  }
+  return [];
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -190,6 +207,14 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
     const sessionTools = selectSessionActionTools(rawText);
     if (sessionTools.length > 0) {
       append(selected, sessionTools);
+      return scopeTools(selected, input.contextSurface);
+    }
+  }
+
+  if (allowMutations && SETTINGS_INTENTS.has(intent)) {
+    const settingsTools = selectSettingsActionTools(rawText);
+    if (settingsTools.length > 0) {
+      append(selected, settingsTools);
       return scopeTools(selected, input.contextSurface);
     }
   }
