@@ -1,2 +1,2 @@
-Live Gemini report review checkpoint — completed session clinical review.
-Target: natural review request -> Gemini real -> report.review -> canonical session review action + audit/event -> atal:store:v2 -> reload persistence.
+Live Gemini report review checkpoint — persistent browser seed.
+Target: natural review request -> Gemini real -> report.review -> canonical session review action + audit/event -> atal:store:v2 -> reload without fixture reseed.
