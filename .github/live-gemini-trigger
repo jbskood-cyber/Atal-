@@ -1,2 +1,2 @@
-Live Gemini contextual isolation checkpoint — two patient contexts plus global assistant.
-Target: Patient A contextual note -> canonical state A only; Patient B contextual note -> canonical state B only; distinct contextual conversations; global history remains isolated; reload preserves all state.
+Live Gemini local export checkpoint — real provider plus browser download.
+Target: export_data → data.export_local → sensitive confirmation → client download effect → backup JSON contains canonical Atal state.
