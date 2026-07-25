@@ -14,6 +14,7 @@ import {
   runWithGeminiFallback,
 } from '../src/features/atal-ai/core/agentic/modelFallback';
 import { createStreamModelContentCollector } from '../src/features/atal-ai/core/agentic/streamModelContent';
+import { selectSessionPatchKeys } from '../src/features/atal-ai/core/agentic/sessionPatchSelection';
 import { selectSettingsPreferenceKeys } from '../src/features/atal-ai/core/agentic/settingsPreferenceSelection';
 import { shouldRequireAgentToolCall } from '../src/features/atal-ai/core/agentic/toolCallingPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
@@ -94,8 +95,11 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
 }
 
 function requestScopedInputSchema(entry: AgentToolCatalogEntry, text: string): AgentToolCatalogEntry['inputSchema'] {
-  if (entry.name !== 'settings.update') return entry.inputSchema;
-  const requestedKeys = selectSettingsPreferenceKeys(text);
+  const requestedKeys = entry.name === 'settings.update'
+    ? selectSettingsPreferenceKeys(text)
+    : entry.name === 'session.complete'
+      ? selectSessionPatchKeys(text)
+      : [];
   if (!requestedKeys.length) return entry.inputSchema;
 
   const patch = entry.inputSchema.properties.patch;
@@ -111,8 +115,13 @@ function requestScopedInputSchema(entry: AgentToolCatalogEntry, text: string): A
   const required = Object.keys(scopedProperties);
   if (!required.length) return entry.inputSchema;
 
+  const topLevelRequired = [...new Set([
+    ...(entry.inputSchema.required ?? []),
+    ...(entry.name === 'session.complete' ? ['patch'] : []),
+  ])];
   return {
     ...entry.inputSchema,
+    required: topLevelRequired,
     properties: {
       ...entry.inputSchema.properties,
       patch: {
