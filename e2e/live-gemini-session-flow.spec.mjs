@@ -85,6 +85,8 @@ test.describe('Live Gemini guided session flow', () => {
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
 
+    await page.goto('/assistant');
+    await expect(page.getByLabel('Mensaje para Atal IA')).toBeVisible({ timeout: 20_000 });
     await send(page, 'Completa la sesión del paciente y plan seleccionados como completada con dolor final 3, energía final 6, esfuerzo 5 y comentario “Sesión IA completada”. Hazlo ahora.');
 
     await expect.poll(() => sessionSnapshot(page), { timeout: 60_000 }).toMatchObject({
