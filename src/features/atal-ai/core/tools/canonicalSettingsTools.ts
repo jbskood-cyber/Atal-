@@ -52,7 +52,7 @@ function profilePatch(input: unknown): Partial<AppSettings> & Record<string, unk
   return patch;
 }
 
-export const canonicalSettingsToolNames = new Set(['settings.update', 'settings.profile_update']);
+export const canonicalSettingsToolNames = new Set(['settings.profile_update', 'settings.update']);
 
 export const canonicalSettingsTools: ToolDefinition<any>[] = [
   {
@@ -63,7 +63,7 @@ export const canonicalSettingsTools: ToolDefinition<any>[] = [
     mutates: true,
     supportsUndo: true,
     undoTtlMs: 30_000,
-    requiredEntities: ['settings'],
+    requiredEntities: [],
     validateInput(input) {
       return { patch: preferencePatch(input) };
     },
@@ -87,7 +87,7 @@ export const canonicalSettingsTools: ToolDefinition<any>[] = [
     mutates: true,
     supportsUndo: true,
     undoTtlMs: 30_000,
-    requiredEntities: ['settings'],
+    requiredEntities: [],
     validateInput(input) {
       return { patch: profilePatch(input) };
     },
