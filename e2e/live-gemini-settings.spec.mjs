@@ -45,8 +45,12 @@ async function seedSettingsConversation(page) {
 }
 
 async function send(page, text) {
-  await page.getByLabel('Mensaje para Atal IA').fill(text);
-  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await composer.fill(text);
+  await expect(composer).toHaveValue(text);
+  const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
+  await expect(sendButton).toBeVisible({ timeout: 20_000 });
+  await sendButton.click();
 }
 
 async function settingsSnapshot(page) {
