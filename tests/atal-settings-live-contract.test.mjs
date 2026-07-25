@@ -4,6 +4,7 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const catalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 const selection = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
+const preferenceSelection = () => loadCore('src/features/atal-ai/core/agentic/settingsPreferenceSelection.js');
 
 test('settings.update exposes the exact canonical preference keys to Gemini', () => {
   const { agentToolCatalogByName } = catalog();
@@ -24,6 +25,14 @@ test('settings.update exposes the exact canonical preference keys to Gemini', ()
   ]);
   assert.equal(patch.properties.haptics.type, 'boolean');
   assert.equal(patch.properties.aiSuggestions.type, 'boolean');
+});
+
+test('combined natural preference request resolves the exact canonical settings keys', () => {
+  const { selectSettingsPreferenceKeys } = preferenceSelection();
+  assert.deepEqual(
+    selectSettingsPreferenceKeys('Activa la vibración y desactiva las sugerencias de IA. Hazlo ahora.'),
+    ['haptics', 'aiSuggestions'],
+  );
 });
 
 test('natural preference request exposes only settings.update plus read helpers', () => {
