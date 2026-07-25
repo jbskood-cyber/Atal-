@@ -1,2 +1,2 @@
-Live Gemini settings checkpoint — canonical schema + explicit natural-language preference mapping.
-Target: combined preference request -> exact canonical patch; then profile + appearance -> canonical store/theme persistence -> reload.
+Live Gemini settings checkpoint — provider may split a requested patch into multiple valid calls.
+Target: final requested preference state + audit, then profile + appearance, all persisted across reload; do not require exactly one settings.update call.
