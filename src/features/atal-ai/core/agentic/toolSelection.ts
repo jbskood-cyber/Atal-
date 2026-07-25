@@ -44,6 +44,28 @@ function scopeTools(tools: string[], surface?: ContextualAgentSurface): string[]
   return scoped.slice(0, MAX_ACTIVE_TOOLS);
 }
 
+function selectPatientMaintenanceTools(rawText: string): string[] {
+  const selected: string[] = [];
+
+  if (includesAny(rawText, ['teléfono', 'telefono', 'correo', 'email', 'contacto', 'nombre', 'nacimiento', 'dirección', 'direccion', 'emergencia'])) {
+    append(selected, ['patient.update']);
+  }
+  if (includesAny(rawText, ['archiva', 'archivar', 'archivo', 'restaura', 'restaurar', 'reactiva', 'reactivar'])) {
+    append(selected, ['patient.lifecycle']);
+  }
+  if (includesAny(rawText, ['añade una nota', 'anade una nota', 'agrega una nota', 'agregar una nota', 'nueva nota'])) {
+    append(selected, ['patient_note.add']);
+  }
+  if (includesAny(rawText, ['edita la nota', 'editar la nota', 'actualiza la nota', 'actualizar la nota', 'cambia la nota'])) {
+    append(selected, ['patient_note.update']);
+  }
+  if (includesAny(rawText, ['dolor', 'diagnóstico', 'diagnostico', 'expediente', 'clinical record', 'registro clínico', 'registro clinico'])) {
+    append(selected, ['clinical_record.upsert']);
+  }
+
+  return selected;
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -55,6 +77,14 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && intent === 'create_patient_plan' && DRAFT_COMMIT_PATTERN.test(input.text)) {
     append(selected, ['patient.create']);
     return scopeTools(selected, input.contextSurface);
+  }
+
+  if (allowMutations && intent === 'update_patient_record') {
+    const maintenanceTools = selectPatientMaintenanceTools(rawText);
+    if (maintenanceTools.length > 0) {
+      append(selected, maintenanceTools);
+      return scopeTools(selected, input.contextSurface);
+    }
   }
 
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
