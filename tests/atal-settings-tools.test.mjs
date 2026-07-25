@@ -45,7 +45,7 @@ test('canonical settings tool bundle owns both preferences and professional prof
   for (const tool of canonicalSettingsTools) {
     assert.equal(tool.mutates, true);
     assert.equal(tool.supportsUndo, true);
-    assert.deepEqual(tool.requiredEntities, ['settings']);
+    assert.deepEqual(tool.requiredEntities, [], 'singleton settings actions must not require Gemini to resolve a settings entity');
   }
 });
 
