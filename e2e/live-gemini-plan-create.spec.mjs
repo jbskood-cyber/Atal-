@@ -72,7 +72,12 @@ test.describe('Live Gemini plan creation', () => {
     const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
     await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
     await expect.poll(() => planSnapshot(page), { timeout: 5_000 }).toMatchObject({ exists: false, createEvents: 0 });
-    await preparedDraft.getByRole('button', { name: 'Aplicar cambios' }).click();
+
+    const thread = page.locator('.atal-command-thread');
+    await thread.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: 'instant' }));
+    const apply = preparedDraft.getByRole('button', { name: 'Aplicar cambios' });
+    await expect(apply).toBeVisible();
+    await apply.click();
 
     await expect.poll(() => planSnapshot(page), { timeout: 60_000 }).toMatchObject({
       exists: true,
