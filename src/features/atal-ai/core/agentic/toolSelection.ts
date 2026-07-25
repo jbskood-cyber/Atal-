@@ -66,6 +66,26 @@ function selectPatientMaintenanceTools(rawText: string): string[] {
   return selected;
 }
 
+function selectPlanMaintenanceTools(rawText: string): string[] {
+  const selected: string[] = [];
+
+  if (includesAny(rawText, [
+    'frecuencia', 'título', 'titulo', 'nombre del plan', 'objetivo', 'enfoque', 'duración', 'duracion',
+    'progresión', 'progresion', 'criterio', 'instrucciones',
+  ])) {
+    append(selected, ['plan.update_fields']);
+  }
+  if (includesAny(rawText, [
+    'añade el ejercicio', 'anade el ejercicio', 'agrega el ejercicio', 'agregar el ejercicio',
+    'quita el ejercicio', 'quitar el ejercicio', 'elimina el ejercicio', 'eliminar el ejercicio',
+    'reordena', 'reordenar', 'ordena los ejercicios', 'ordenar los ejercicios',
+  ])) {
+    append(selected, ['plan.membership']);
+  }
+
+  return selected;
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -93,7 +113,8 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   }
 
   if (allowMutations && intent === 'update_existing_plan') {
-    append(selected, ['plan.update_fields']);
+    const maintenanceTools = selectPlanMaintenanceTools(rawText);
+    append(selected, maintenanceTools.length > 0 ? maintenanceTools : ['plan.update_fields']);
     return scopeTools(selected, input.contextSurface);
   }
 
