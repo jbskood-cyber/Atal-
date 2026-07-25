@@ -121,7 +121,11 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   entry('plan.complete', 'action', 'Completa un plan.', object({ plan: planRef }, ['plan'])),
   entry('plan.archive', 'action', 'Archiva un plan.', object({ plan: planRef }, ['plan'])),
   entry('plan.restore', 'action', 'Restaura un plan archivado.', object({ plan: planRef }, ['plan'])),
-  entry('plan.replace_active', 'action', 'Reemplaza el plan activo del paciente.', object({ patient: patientRef, targetPlan: planRef, replaceCurrent: { type: 'boolean', enum: [true] } }, ['patient', 'targetPlan', 'replaceCurrent'])),
+  entry('plan.replace_active', 'action', 'Reemplaza el plan activo del paciente.', object({
+    patient: patientRef,
+    targetPlan: planRef,
+    replaceCurrent: { type: 'boolean', description: 'Debe ser true para confirmar que se desea reemplazar el plan activo.' },
+  }, ['patient', 'targetPlan', 'replaceCurrent'])),
 
   entry('exercise.create_simple', 'action', 'Crea un ejercicio canónico.', object(exerciseFields, ['name'])),
   entry('exercise.update_fields', 'action', 'Actualiza un ejercicio.', object({ exercise: exerciseRef, patch: object(exerciseFields) }, ['exercise', 'patch'])),
