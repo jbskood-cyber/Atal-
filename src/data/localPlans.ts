@@ -9,6 +9,9 @@ import {
   type PlanEntity,
   type PlanStatus,
 } from './atalStore';
+import { executeActionTransaction } from '../domain/actions/actionTransaction';
+import { executeActionUndo } from '../domain/actions/actionUndo';
+import type { ActionUndoReceipt } from '../domain/actions/contracts';
 import { applyCreatePlan, applyPlanLifecycle, applyUpdatePlan, type PlanConflictResolution, type PlanUpdatePatch } from '../domain/actions/planActions';
 import { syncClinicalRecordPlanAssociation } from '@/src/domain/planAssociation';
 
@@ -16,6 +19,8 @@ export const LOCAL_PLANS_KEY='atal:local-plans:v1';
 export type LocalPlanStatus=PlanStatus;
 export type LocalPlan=PlanEntity;
 export type NewLocalPlan={patientId:string;title:string;focus:string;duration:string;frequency:string;goal:string;exerciseIds:string[];status:PlanStatus;progression?:string;reportCriteria?:string;generalInstructions?:string};
+
+const localPlanPort={read:getAtalState,mutate:mutateAtalStore};
 
 function resyncPatient(patientId:string,preferredPlanId=''){
   mutateAtalStore((draft)=>{syncClinicalRecordPlanAssociation(draft,patientId,preferredPlanId);});
@@ -42,6 +47,36 @@ export function updateLocalPlan(id:string,patch:PlanUpdatePatch){
   const holder:{result?:ReturnType<typeof applyUpdatePlan>}={};
   mutateAtalStore((draft)=>{holder.result=applyUpdatePlan(draft,{planId:id,patch,now,createEventId:()=>createEntityId('event'),createRecordVersionId:()=>createEntityId('record-version')});});
   return holder.result?.plan??null;
+}
+export function updateLocalPlanWithUndo(id:string,patch:PlanUpdatePatch){
+  const now=new Date().toISOString();
+  return executeActionTransaction({
+    action:'plan.update',
+    now,
+    origin:{type:'manual-ui'},
+    supportsUndo:true,
+    mutate(draft,transactionId){
+      let eventIndex=0;
+      let recordVersionIndex=0;
+      const result=applyUpdatePlan(draft,{
+        planId:id,
+        patch,
+        now,
+        createEventId:()=>`${transactionId}-event-${eventIndex++}`,
+        createRecordVersionId:()=>`${transactionId}-record-version-${recordVersionIndex++}`,
+      });
+      return {
+        status:'success' as const,
+        message:'Plan actualizado.',
+        summary:['Plan actualizado.'],
+        data:{planId:result.plan.id},
+        affected:[{type:'plan' as const,id:result.plan.id}],
+      };
+    },
+  },localPlanPort);
+}
+export function undoLocalPlanChange(receipt:ActionUndoReceipt){
+  return executeActionUndo(receipt,new Date().toISOString(),{type:'manual-ui'},localPlanPort);
 }
 export const activatePlan=(id:string,resolution?:PlanConflictResolution)=>transitionPlan(id,'active',resolution);
 export const pausePlan=(id:string)=>transitionPlan(id,'paused');
