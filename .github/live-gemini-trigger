@@ -1,2 +1,2 @@
-Live Gemini guided session checkpoint.
-Target: precise session.start_or_resume -> session.complete tool selection -> Action Core/session actions -> atal:store:v2 + audit -> reload persistence.
+Live Gemini guided session checkpoint — audited client-effect flow.
+Target: precise session.start_or_resume -> session.complete -> canonical guided-session repository/domain actions + Atal IA audit -> atal:store:v2 -> reload persistence.
