@@ -40,8 +40,9 @@ test.describe('Behavior System Phase 6 — plan creation parity', () => {
   });
 
   test('Atal IA creates a plan through the canonical audited tool', async ({ page }) => {
-    // Use the normal agentic plan workspace. The legacy create_patient_plan/existing
-    // branch intentionally uses the structured-draft analyzer rather than agent-turn.
+    // Use an explicit commit-style action phrase. “Crea/prepara/diseña un plan” is
+    // intentionally classified as structured-draft mode, while “Registra un plan”
+    // exercises the agentic action path that owns canonical audited tool execution.
     const conversation = createConversation({
       intent: 'update_plan',
       selectedPatientId: 'patient-e2e',
@@ -80,7 +81,7 @@ test.describe('Behavior System Phase 6 — plan creation parity', () => {
     ]);
 
     await page.goto('/assistant');
-    await sendMessage(page, 'Crea un plan nuevo para el paciente seleccionado.');
+    await sendMessage(page, 'Registra un plan nuevo para el paciente seleccionado.');
     await expect(page.getByText('Listo. Creé el plan.')).toBeVisible();
 
     const after = await readStore(page);
