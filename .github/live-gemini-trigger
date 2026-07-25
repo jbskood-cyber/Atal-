@@ -1,2 +1,2 @@
-Live Gemini settings checkpoint — preferences, professional profile and appearance.
-Target: natural settings requests -> Gemini real -> settings.update + settings.profile_update + settings.appearance -> canonical store/theme persistence -> reload.
+Live Gemini settings checkpoint — singleton settings actions fixed.
+Target: natural requests -> Gemini real -> settings.update + settings.profile_update + settings.appearance without singleton entity resolution -> canonical store/theme persistence -> reload.
