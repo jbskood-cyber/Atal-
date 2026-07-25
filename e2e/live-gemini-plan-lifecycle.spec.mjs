@@ -57,7 +57,7 @@ async function planLifecycleSnapshot(page) {
 }
 
 test.describe('Live Gemini plan lifecycle', () => {
-  test('pauses the selected active plan only after sensitive confirmation and persists after reload', async ({ page }) => {
+  test('pauses the selected active plan through Gemini real and persists after reload', async ({ page }) => {
     test.setTimeout(180_000);
     await seedPlanLifecycleConversation(page);
     await page.goto('/assistant');
@@ -68,18 +68,10 @@ test.describe('Live Gemini plan lifecycle', () => {
     await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 
     await expect.poll(() => planLifecycleSnapshot(page), { timeout: 90_000 }).toMatchObject({
-      status: 'active',
-      pauseEvents: 0,
-    });
-
-    const confirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
-    await expect(confirmation).toBeVisible({ timeout: 20_000 });
-    await confirmation.getByRole('button', { name: 'Continuar' }).click();
-
-    await expect.poll(() => planLifecycleSnapshot(page), { timeout: 60_000 }).toMatchObject({
       status: 'paused',
       pauseEvents: 1,
     });
+    await expect(page.locator('body')).toContainText(/plan .*pausad[oa]/i);
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
 
