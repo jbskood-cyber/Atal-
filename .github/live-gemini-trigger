@@ -1,2 +1,2 @@
-Live Gemini delivery checkpoint — execute provider certification now.
-Target: natural request to open the selected plan delivery → Gemini real → delivery.open only → client delivery effect → canonical /plans/:id/delivery navigation; no clinical mutation and no EMPTY_MODEL_TURN.
+Live Gemini delivery checkpoint — rerun with canonical navigation assertion.
+Target: natural request to open the selected plan delivery → Gemini real → delivery.open only → client delivery effect → canonical /plans/:id/delivery route; no unrelated plan mutation, no alert and no EMPTY_MODEL_TURN.
