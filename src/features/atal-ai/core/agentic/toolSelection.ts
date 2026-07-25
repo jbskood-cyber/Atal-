@@ -92,6 +92,11 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
     return scopeTools(selected, input.contextSurface);
   }
 
+  if (allowMutations && intent === 'update_existing_plan') {
+    append(selected, ['plan.update_fields']);
+    return scopeTools(selected, input.contextSurface);
+  }
+
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
   const patient = PATIENT_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = PLAN_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['plan', 'tratamiento', 'progresión', 'progresion', '/plans']);
