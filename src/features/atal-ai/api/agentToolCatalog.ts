@@ -163,7 +163,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   entry('delivery.action', 'action', 'Descarga, comparte o imprime una entrega.', object({
     plan: planRef, action: enumText(['download', 'share', 'print'], 'Acción local.'), options: object({}, [], true),
   }, ['plan', 'action'])),
-  entry('data.export_local', 'action', 'Genera una exportación local.', object({ exportType: enumText(['patients', 'progress', 'plans', 'backup'], 'Tipo de exportación.') }, ['exportType'])),
+  entry('data.export_local', 'action', 'Genera una exportación local.', object({ kind: enumText(['patients', 'progress', 'plans', 'backup'], 'Tipo de exportación.') }, ['kind'])),
 ];
 
 export const agentToolCatalogByName = new Map(agentToolCatalog.map((item) => [item.name, item]));
