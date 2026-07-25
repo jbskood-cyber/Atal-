@@ -54,7 +54,7 @@ async function planSnapshot(page) {
     patientId: plan?.patientId,
     frequency: plan?.frequency,
     status: plan?.status,
-    createEvents: state.events.filter((event) => event.toolName === 'plan.create_simple' && event.outcome === 'success').length,
+    createEvents: state.events.filter((event) => event.kind === 'plan_created' && event.planId === plan?.id).length,
   };
 }
 
@@ -99,6 +99,7 @@ test.describe('Live Gemini plan creation', () => {
       patientId: 'patient-e2e',
       frequency: '4 días por semana',
       status: 'draft',
+      createEvents: 1,
     });
   });
 });
