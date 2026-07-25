@@ -1,4 +1,5 @@
 import type { PlanEntity } from '@/src/data/atalStore';
+import { applyCreatePlan } from '../../../../domain/actions/planActions';
 import { coreError, type EntityRef, type ToolDefinition, type ToolRisk } from '../contracts';
 import { materializeExercises, validateDraftInput, type DraftToolInput } from './exerciseTools';
 import { checkVersion, durationText, frequencyText } from './patientTools';
@@ -78,22 +79,31 @@ export const planTools: ToolDefinition[] = [
       const patient = environment.state.patients.find((item) => item.id === environment.resolved.patient?.id)!;
       const exercises = materializeExercises(environment, draft.exercises);
       if (draft.plan.status === 'active' && !exercises.exerciseIds.length) throw coreError('CORE_PRECONDITION_FAILED', 'Un plan activo requiere ejercicios.');
-      const plan = {
-        id: `${environment.transactionId}-plan`, patientId: patient.id, title: draft.plan.title.trim(), focus: draft.plan.focus,
-        duration: durationText(draft), frequency: frequencyText(draft), goal: draft.plan.goal,
-        exerciseIds: exercises.exerciseIds, status: draft.plan.status, progression: draft.plan.phases.join('\n'),
-        reportCriteria: draft.plan.progressCriteria || 'Reportar dolor elevado, síntomas o imposibilidad para completar.',
-        generalInstructions: draft.plan.generalInstructions, createdAt: environment.context.now, updatedAt: environment.context.now,
-      };
-      environment.state.plans.push(plan);
-      const affected = [...exercises.affected, { type: 'plan' as const, id: plan.id }];
+
       const record = environment.state.clinicalRecords.find((item) => item.patientId === patient.id);
-      if (record && record.planId !== plan.id) {
-        const before = structuredClone(record);
-        environment.state.clinicalRecordVersions.push({ id: `${environment.transactionId}-record-version`, recordId: before.id, patientId: patient.id, version: before.version, snapshot: before, createdAt: environment.context.now });
-        record.planId = plan.id; record.version += 1; record.updatedAt = environment.context.now;
-        affected.push({ type: 'clinical-record', id: record.id });
-      }
+      const previousRecordPlanId = record?.planId;
+      const { plan } = applyCreatePlan(environment.state, {
+        patientId: patient.id,
+        planId: `${environment.transactionId}-plan`,
+        plan: {
+          title: draft.plan.title.trim(),
+          focus: draft.plan.focus,
+          duration: durationText(draft),
+          frequency: frequencyText(draft),
+          goal: draft.plan.goal,
+          exerciseIds: exercises.exerciseIds,
+          status: draft.plan.status,
+          progression: draft.plan.phases.join('\n'),
+          reportCriteria: draft.plan.progressCriteria || 'Reportar dolor elevado, síntomas o imposibilidad para completar.',
+          generalInstructions: draft.plan.generalInstructions,
+        },
+        now: environment.context.now,
+        createEventId: () => `${environment.transactionId}-event-plan-created`,
+        createRecordVersionId: () => `${environment.transactionId}-record-version`,
+      });
+
+      const affected = [...exercises.affected, { type: 'plan' as const, id: plan.id }];
+      if (record && record.planId !== previousRecordPlanId) affected.push({ type: 'clinical-record', id: record.id });
       const summary = [...exercises.summary, `Plan creado como ${plan.status === 'active' ? 'activo' : 'borrador'}.`];
       return { status: 'success', message: summary.join(' '), summary, data: { patientId: patient.id, planId: plan.id, exerciseId: exercises.firstCreatedId }, href: `/plans/${plan.id}`, affected };
     },
