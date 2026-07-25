@@ -73,4 +73,41 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await expect(composer).toHaveValue('Nota original E2E');
     expect(await readStore(page)).toEqual(before);
   });
+
+  test('professional profile settings can cancel an abandoned draft without mutating the store', async ({ page }) => {
+    const state = createState();
+    state.settings.professionalName = 'Profesional original E2E';
+    state.settings.specialty = 'Fisioterapia deportiva';
+    state.settings.clinic = 'Clínica original';
+
+    await seed(page, state);
+    await page.goto('/settings/profile');
+
+    const before = await readStore(page);
+    await page.getByLabel('Nombre profesional').fill('Nombre descartable E2E');
+    await page.getByLabel('Especialidad').fill('Especialidad descartable');
+    await page.getByLabel('Centro o clínica').fill('Clínica descartable');
+
+    await page.getByRole('button', { name: 'Cancelar cambios' }).click();
+    expect(await readStore(page)).toEqual(before);
+    await expect(page.getByLabel('Nombre profesional')).toHaveValue('Profesional original E2E');
+    await expect(page.getByLabel('Especialidad')).toHaveValue('Fisioterapia deportiva');
+    await expect(page.getByLabel('Centro o clínica')).toHaveValue('Clínica original');
+  });
+
+  test('AI instructions settings can cancel an abandoned draft without mutating the store', async ({ page }) => {
+    const state = createState();
+    state.settings.aiInstructions = 'Instrucción original E2E';
+
+    await seed(page, state);
+    await page.goto('/settings/ai');
+
+    const before = await readStore(page);
+    const instructions = page.getByLabel('Indicaciones para las respuestas');
+    await instructions.fill('Instrucción descartable E2E');
+
+    await page.getByRole('button', { name: 'Cancelar cambios' }).click();
+    expect(await readStore(page)).toEqual(before);
+    await expect(instructions).toHaveValue('Instrucción original E2E');
+  });
 });
