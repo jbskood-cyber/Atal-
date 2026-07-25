@@ -12,7 +12,7 @@ const ai = new GoogleGenAI({ apiKey });
 const functionDeclaration = {
   name: 'atal_app_read',
   description: 'Consulta información canónica mínima de Atal. Úsala solo cuando la respuesta dependa de datos reales de la aplicación.',
-  parametersJsonSchema: {
+  parameters: {
     type: 'object',
     properties: {
       resource: {
@@ -24,7 +24,6 @@ const functionDeclaration = {
       limit: { type: 'integer', minimum: 1, maximum: 50 },
     },
     required: ['resource'],
-    additionalProperties: false,
   },
 };
 
