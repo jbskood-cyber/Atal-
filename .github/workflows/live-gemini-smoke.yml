@@ -49,13 +49,27 @@ jobs:
             process.exit(1);
           }
           NODE
-      - name: Verify real Gemini function calling
-        shell: bash
+      - name: Verify conceptual turn stays conversational
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
-        run: |
-          set -euo pipefail
-          output="$(npm run test:ai-live)"
-          printf '%s\n' "$output"
-          printf '%s\n' "$output" | grep -q 'ATAL_AI_LIVE_SMOKE=PASS'
+          ATAL_AI_LIVE_STAGE: conceptual
+        run: npm run test:ai-live
+      - name: Verify forced function call is emitted
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          ATAL_AI_LIVE_STAGE: call-presence
+        run: npm run test:ai-live
+      - name: Verify settings function arguments
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          ATAL_AI_LIVE_STAGE: settings
+        run: npm run test:ai-live
+      - name: Verify patient-count function arguments
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          ATAL_AI_LIVE_STAGE: patients
+        run: npm run test:ai-live
