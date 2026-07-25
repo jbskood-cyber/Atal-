@@ -60,3 +60,16 @@ test('natural save confirmation for a new patient exposes only the composite pat
   const tools = selection('Por favor guárdalo.', 'create_patient_plan');
   assert.deepEqual(tools, ['app.read', 'patient.search', 'patient.create']);
 });
+
+test('archiving a patient does not expose unrelated plan lifecycle tools', () => {
+  const tools = selection('Archiva al paciente seleccionado.', 'update_patient_record');
+  assert.ok(tools.includes('patient.lifecycle'));
+  assert.equal(tools.some((tool) => tool.startsWith('plan.')), false);
+});
+
+test('updating patient pain does not expose session mutations without a session request', () => {
+  const tools = selection('Actualiza el dolor del paciente a 5 de 10.', 'update_patient_record');
+  assert.ok(tools.includes('clinical_record.upsert'));
+  assert.equal(tools.some((tool) => tool.startsWith('session.')), false);
+  assert.equal(tools.includes('report.review'), false);
+});
