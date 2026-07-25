@@ -130,9 +130,25 @@ function History({ events }: { events: ActivityEvent[] }) {
 }
 
 function Notes({ patientId, notes, professional }: { patientId: string; notes: PatientNote[]; professional: string }) {
-  const [value, setValue] = useState(''); const [editing, setEditing] = useState<string | null>(null); const [pendingDelete, setPendingDelete] = useState<string | null>(null);
-  const save = () => { if (!value.trim()) return; if (editing) updateClinicalPatientNote(editing, value); else addPatientNote(patientId, value, professional); setValue(''); setEditing(null); };
-  return <section className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea maxLength={1000} value={value} onChange={(event) => setValue(event.target.value)} placeholder="Escribe una observación clínica…" /><small>{value.length}/1000</small><button type="button" disabled={!value.trim()} onClick={save}><Save />{editing ? 'Actualizar nota' : 'Guardar nota'}</button><div className="atal-note-history">{[...notes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((note) => <article key={note.id}><p>{note.content}</p><small>{note.professional} · {new Date(note.updatedAt).toLocaleString('es-MX')}</small><div><button type="button" onClick={() => { setEditing(note.id); setValue(note.content); }}><Pencil />Editar</button>{pendingDelete === note.id ? <><button type="button" onClick={() => { deletePatientNote(note.id); setPendingDelete(null); }}><Trash2 />Confirmar</button><button type="button" onClick={() => setPendingDelete(null)}>Cancelar</button></> : <button type="button" onClick={() => setPendingDelete(note.id)}><Trash2 />Eliminar</button>}</div></article>)}{!notes.length && <p>No hay notas todavía.</p>}</div></section>;
+  const [value, setValue] = useState('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const save = () => {
+    if (!value.trim()) return;
+    if (editing) updateClinicalPatientNote(editing, value);
+    else addPatientNote(patientId, value, professional);
+    setValue('');
+    setEditing(null);
+  };
+  const startEditing = (note: PatientNote) => {
+    setEditing(note.id);
+    setValue(note.content);
+  };
+  const cancelEditing = () => {
+    setEditing(null);
+    setValue('');
+  };
+  return <section className="atal-profile-section atal-notes-panel"><h2>Notas clínicas</h2><textarea maxLength={1000} value={value} onChange={(event) => setValue(event.target.value)} placeholder="Escribe una observación clínica…" /><small>{value.length}/1000</small><div className="atal-profile-actions">{editing && <button type="button" onClick={cancelEditing}>Cancelar edición de nota</button>}<button type="button" className={editing ? 'is-primary' : ''} disabled={!value.trim()} onClick={save}><Save />{editing ? 'Actualizar nota' : 'Guardar nota'}</button></div><div className="atal-note-history">{[...notes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map((note) => <article key={note.id}><p>{note.content}</p><small>{note.professional} · {new Date(note.updatedAt).toLocaleString('es-MX')}</small><div><button type="button" onClick={() => startEditing(note)}><Pencil />Editar</button>{pendingDelete === note.id ? <><button type="button" onClick={() => { deletePatientNote(note.id); setPendingDelete(null); }}><Trash2 />Confirmar</button><button type="button" onClick={() => setPendingDelete(null)}>Cancelar</button></> : <button type="button" onClick={() => setPendingDelete(note.id)}><Trash2 />Eliminar</button>}</div></article>)}{!notes.length && <p>No hay notas todavía.</p>}</div></section>;
 }
 
 function Metrics({ sessions, planId }: { sessions: SessionRecord[]; planId?: string }) {
