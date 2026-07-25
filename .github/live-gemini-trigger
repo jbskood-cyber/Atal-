@@ -1,2 +1,2 @@
 Live Gemini plan lifecycle checkpoint.
-Target: selected active plan -> precise Gemini tool set (plan.pause) -> sensitive confirmation -> canonical pause event -> atal:store:v2 -> reload persistence.
+Target: selected active plan -> precise Gemini tool set (plan.pause) -> canonical pause event -> atal:store:v2 -> reload persistence.
