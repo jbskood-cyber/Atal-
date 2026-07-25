@@ -1,3 +1,3 @@
 Live Gemini patient maintenance checkpoint.
-Target: selected patient -> update phone + add note + archive -> atal:store:v2 -> reload persistence.
-Retry after enabling live-only Playwright specs in the gated workflow.
+Target: selected patient -> update phone + add note + confirm archive -> atal:store:v2 -> reload persistence.
+Checkpoint after minimal tool scoping and confirmation-aware browser validation.
