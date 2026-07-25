@@ -1,3 +1,2 @@
-Live Gemini patient maintenance checkpoint.
-Target: selected patient -> update phone + add note + confirm archive -> atal:store:v2 -> reload persistence.
-Checkpoint after minimal tool scoping and confirmation-aware browser validation.
+Live Gemini clinical record checkpoint.
+Target: selected patient -> update pain + evolution -> clinical_record.upsert -> version snapshot -> atal:store:v2 -> reload persistence.
