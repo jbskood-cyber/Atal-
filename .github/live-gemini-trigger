@@ -1,2 +1,2 @@
-Final live Gemini regression — rerun after guided-session metric schema repair.
-Target: patient create/update/record persistence + guided session start/complete with exact end metrics/comment + two-patient contextual isolation/global history, all through real Gemini on current head.
+Final live Gemini regression — certify normalized session completion contract on latest product code.
+Target: patient create/update/record persistence + guided session start/complete preserving exact end metrics/comment + two-patient contextual isolation/global history through real Gemini.
