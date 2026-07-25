@@ -137,4 +137,37 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await page.getByRole('button', { name: 'Cerrar' }).click();
     await expect(dock).not.toHaveClass(/is-hidden/);
   });
+
+  test('mobile search overlay focuses its input, closes with Escape and preserves background scroll', async ({ page }) => {
+    const state = createState();
+    const template = state.patients[0];
+    state.patients.push(...Array.from({ length: 24 }, (_, index) => ({
+      ...template,
+      id: `patient-scroll-${index}`,
+      name: `Paciente scroll ${String(index + 1).padStart(2, '0')}`,
+    })));
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await seed(page, state);
+    await page.goto('/patients');
+
+    const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+    expect(maxScroll).toBeGreaterThan(0);
+    await page.evaluate(() => window.scrollTo(0, Math.min(500, document.documentElement.scrollHeight - window.innerHeight)));
+    const beforeScroll = await page.evaluate(() => window.scrollY);
+    expect(beforeScroll).toBeGreaterThan(0);
+
+    await page.getByRole('button', { name: 'Buscar en Atal' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+    const input = page.getByPlaceholder('Paciente, plan o ejercicio');
+    await expect(dialog).toBeVisible();
+    await expect(input).toBeFocused();
+    await expect(page.locator('.atal-mobile-dock')).toHaveClass(/is-hidden/);
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('.atal-mobile-dock')).not.toHaveClass(/is-hidden/);
+    const afterScroll = await page.evaluate(() => window.scrollY);
+    expect(Math.abs(afterScroll - beforeScroll)).toBeLessThanOrEqual(1);
+  });
 });
