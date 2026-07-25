@@ -12,6 +12,7 @@ const patientAPath = '/patients/patient-e2e';
 const patientBPath = '/patients/patient-b-e2e';
 const globalConversationId = 'global-conversation-e2e';
 const globalComposerText = 'Borrador global intacto';
+const updatedGlobalComposerText = 'Borrador global actualizado';
 
 function createTwoPatientState() {
   const state = createState();
@@ -81,7 +82,7 @@ async function storedConversation(page, conversationId) {
   }, { key: CONVERSATIONS_KEY, id: conversationId });
 }
 
-test('patient A and patient B keep isolated contextual conversations without contaminating global conversation', async ({ page }) => {
+test('global and patient contextual assistants keep independent persistent instances', async ({ page }) => {
   await seedPersistentBrowser(page);
 
   let workspace = await openPatientWorkspace(page, patientAPath, 'Paciente E2E');
@@ -108,26 +109,49 @@ test('patient A and patient B keep isolated contextual conversations without con
   await expect(workspace).toHaveAttribute('data-conversation-id', conversationA);
   await expect(workspace.getByLabel('Mensaje para Atal IA contextual')).toHaveValue('Borrador privado del paciente A');
 
-  const conversations = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);
+  let conversations = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);
   expect(conversations).toHaveLength(3);
 
-  const global = conversations.find((conversation) => conversation.id === globalConversationId);
+  let global = conversations.find((conversation) => conversation.id === globalConversationId);
   expect(global).toBeTruthy();
   expect(global.scope ?? 'global').toBe('global');
   expect(global.contextKey).toBeUndefined();
   expect(global.composerText).toBe(globalComposerText);
 
-  const contextual = conversations.filter((conversation) => conversation.scope === 'contextual');
+  let contextual = conversations.filter((conversation) => conversation.scope === 'contextual');
   expect(contextual).toHaveLength(2);
   expect(contextual.some((conversation) => conversation.id === globalConversationId)).toBe(false);
 
-  const storedA = contextual.find((conversation) => conversation.id === conversationA);
-  const storedB = contextual.find((conversation) => conversation.id === conversationB);
+  let storedA = contextual.find((conversation) => conversation.id === conversationA);
+  let storedB = contextual.find((conversation) => conversation.id === conversationB);
   expect(storedA.contextKey).not.toBe(storedB.contextKey);
   expect(storedA.contextKey).toMatch(/^contextual:patient:patient-e2e:/);
   expect(storedB.contextKey).toMatch(/^contextual:patient:patient-b-e2e:/);
   expect(storedA.workContext.selectedPatientId).toBe('patient-e2e');
   expect(storedB.workContext.selectedPatientId).toBe('patient-b-e2e');
+  expect(storedA.composerText).toBe('Borrador privado del paciente A');
+  expect(storedB.composerText).toBe('Borrador privado del paciente B');
+
+  await page.getByRole('button', { name: 'Cerrar asistente' }).click();
+  await page.goto('/assistant');
+
+  const globalComposer = page.getByLabel('Mensaje para Atal IA');
+  await expect(globalComposer).toHaveValue(globalComposerText);
+  await expect(page.locator('body')).not.toContainText('Borrador privado del paciente A');
+  await expect(page.locator('body')).not.toContainText('Borrador privado del paciente B');
+
+  await globalComposer.fill(updatedGlobalComposerText);
+  await expect.poll(async () => (await storedConversation(page, globalConversationId))?.composerText ?? '')
+    .toBe(updatedGlobalComposerText);
+
+  conversations = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) ?? '[]'), CONVERSATIONS_KEY);
+  global = conversations.find((conversation) => conversation.id === globalConversationId);
+  contextual = conversations.filter((conversation) => conversation.scope === 'contextual');
+  storedA = contextual.find((conversation) => conversation.id === conversationA);
+  storedB = contextual.find((conversation) => conversation.id === conversationB);
+
+  expect(global.composerText).toBe(updatedGlobalComposerText);
+  expect(contextual).toHaveLength(2);
   expect(storedA.composerText).toBe('Borrador privado del paciente A');
   expect(storedB.composerText).toBe('Borrador privado del paciente B');
 });
