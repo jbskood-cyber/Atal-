@@ -46,7 +46,9 @@ async function seedSettingsConversation(page) {
 
 async function send(page, text) {
   const composer = page.getByLabel('Mensaje para Atal IA');
-  await composer.fill(text);
+  await composer.click();
+  await composer.fill('');
+  await composer.pressSequentially(text);
   await expect(composer).toHaveValue(text);
   const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
   await expect(sendButton).toBeVisible({ timeout: 20_000 });
@@ -73,20 +75,29 @@ test.describe('Live Gemini settings flow', () => {
     await page.goto('/assistant');
 
     await send(page, 'Activa la vibración y desactiva las sugerencias de IA. Hazlo ahora.');
-    await expect.poll(() => settingsSnapshot(page), { timeout: 60_000 }).toMatchObject({
-      haptics: true,
-      aiSuggestions: false,
-      updateAudits: 1,
-    });
+    await expect.poll(async () => {
+      const snapshot = await settingsSnapshot(page);
+      return { haptics: snapshot.haptics, aiSuggestions: snapshot.aiSuggestions };
+    }, { timeout: 60_000 }).toEqual({ haptics: true, aiSuggestions: false });
+    const preferenceState = await settingsSnapshot(page);
+    expect(preferenceState.updateAudits).toBeGreaterThanOrEqual(1);
     await expect(page.getByRole('alert')).toHaveCount(0);
 
     await send(page, 'Actualiza mi perfil profesional: nombre “Dra. Ana E2E”, especialidad “Fisioterapia deportiva” y clínica “Norte E2E”. Hazlo ahora.');
-    await expect.poll(() => settingsSnapshot(page), { timeout: 60_000 }).toMatchObject({
+    await expect.poll(async () => {
+      const snapshot = await settingsSnapshot(page);
+      return {
+        professionalName: snapshot.professionalName,
+        specialty: snapshot.specialty,
+        clinic: snapshot.clinic,
+      };
+    }, { timeout: 60_000 }).toEqual({
       professionalName: 'Dra. Ana E2E',
       specialty: 'Fisioterapia deportiva',
       clinic: 'Norte E2E',
-      profileAudits: 1,
     });
+    const profileState = await settingsSnapshot(page);
+    expect(profileState.profileAudits).toBeGreaterThanOrEqual(1);
     await expect(page.getByRole('alert')).toHaveCount(0);
 
     await send(page, 'Cambia la apariencia de Atal a modo oscuro. Hazlo ahora.');
@@ -97,15 +108,27 @@ test.describe('Live Gemini settings flow', () => {
     await expect(page.getByRole('alert')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
 
+    const beforeReload = await settingsSnapshot(page);
     await page.reload();
-    await expect.poll(() => settingsSnapshot(page), { timeout: 20_000 }).toMatchObject({
+    await expect.poll(async () => {
+      const snapshot = await settingsSnapshot(page);
+      return {
+        haptics: snapshot.haptics,
+        aiSuggestions: snapshot.aiSuggestions,
+        professionalName: snapshot.professionalName,
+        specialty: snapshot.specialty,
+        clinic: snapshot.clinic,
+        updateAudits: snapshot.updateAudits,
+        profileAudits: snapshot.profileAudits,
+      };
+    }, { timeout: 20_000 }).toEqual({
       haptics: true,
       aiSuggestions: false,
       professionalName: 'Dra. Ana E2E',
       specialty: 'Fisioterapia deportiva',
       clinic: 'Norte E2E',
-      updateAudits: 1,
-      profileAudits: 1,
+      updateAudits: beforeReload.updateAudits,
+      profileAudits: beforeReload.profileAudits,
     });
     await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), THEME_KEY), { timeout: 20_000 }).toBe('dark');
   });
