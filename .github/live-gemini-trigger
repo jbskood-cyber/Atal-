@@ -1,2 +1,2 @@
-Live Gemini plan maintenance checkpoint.
-Target: selected plan -> precise Gemini tool set (plan.update_fields + plan.membership) -> canonical audit events -> atal:store:v2 -> reload persistence.
+Live Gemini plan lifecycle checkpoint.
+Target: selected active plan -> precise Gemini tool set (plan.archive) -> sensitive confirmation -> canonical archive event -> atal:store:v2 -> reload persistence.
