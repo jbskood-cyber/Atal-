@@ -7,7 +7,7 @@ if (!apiKey) {
   process.exit(0);
 }
 
-const model = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
+const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.6-flash';
 const stage = process.env.ATAL_AI_LIVE_STAGE?.trim() || 'all';
 const ai = new GoogleGenAI({ apiKey });
 const functionDeclaration = {
