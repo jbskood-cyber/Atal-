@@ -79,6 +79,10 @@ test.describe('Live Gemini plan creation', () => {
     await expect(apply).toBeVisible();
     await apply.click();
 
+    const confirmation = page.getByRole('dialog', { name: '¿Aplicar este borrador?' });
+    await expect(confirmation).toBeVisible({ timeout: 20_000 });
+    await confirmation.getByRole('button', { name: 'Confirmar y aplicar' }).click();
+
     await expect.poll(() => planSnapshot(page), { timeout: 60_000 }).toMatchObject({
       exists: true,
       patientId: 'patient-e2e',
