@@ -32,8 +32,9 @@ test.describe('Behavior System Phase 6 — guided session and clinician review',
 
     await page.getByRole('button', { name: /Comenzar ejercicios/ }).click();
     let after = await readStore(page);
-    const started = after.events.find((event) => event.kind === 'session_started' && event.patientId === patient.id && event.planId === activePlan.id);
-    expect(started).toBeTruthy();
+    const startEvents = after.events.filter((event) => event.kind === 'session_started' && event.patientId === patient.id && event.planId === activePlan.id);
+    expect(startEvents).toHaveLength(1);
+    const [started] = startEvents;
 
     await page.getByRole('button', { name: 'Finalizar sesión' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
@@ -47,6 +48,7 @@ test.describe('Behavior System Phase 6 — guided session and clinician review',
     expect(completed).toBeTruthy();
     expect(completed.status).toBe('partial');
     expect(completed.planSnapshot).toBeTruthy();
+    expect(after.events.filter((event) => event.kind === 'session_started' && event.patientId === patient.id && event.planId === activePlan.id)).toHaveLength(1);
     expect(after.events.some((event) => event.kind === 'session_partial' && event.patientId === patient.id && event.planId === activePlan.id)).toBe(true);
     expect(after.notifications.some((notification) => notification.href === `/activity/${completed.id}`)).toBe(true);
   });
