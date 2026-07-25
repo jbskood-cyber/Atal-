@@ -87,6 +87,11 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
     }
   }
 
+  if (allowMutations && intent === 'create_plan_for_existing_patient') {
+    append(selected, ['plan.create_simple']);
+    return scopeTools(selected, input.contextSurface);
+  }
+
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
   const patient = PATIENT_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['paciente', 'patient', 'expediente', 'record', 'diagnóstico', 'diagnostico', 'nota', 'note', 'teléfono', 'telefono', 'correo', 'contacto', '/patients']);
   const plan = PLAN_INTENTS.has(intent) || includesAny(`${rawText} ${routeAndHints}`, ['plan', 'tratamiento', 'progresión', 'progresion', '/plans']);
