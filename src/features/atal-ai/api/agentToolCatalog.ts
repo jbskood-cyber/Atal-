@@ -70,6 +70,16 @@ const exerciseFields = {
   repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Tiempo de ejecución.'), rest: text('Descanso.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
 };
+const settingsPatchSchema = object({
+  notifications: { type: 'boolean', description: 'Activa o desactiva las notificaciones.' },
+  haptics: { type: 'boolean', description: 'Activa o desactiva la vibración háptica.' },
+  compact: { type: 'boolean', description: 'Activa o desactiva el modo compacto.' },
+  sessionLock: { type: 'boolean', description: 'Activa o desactiva el bloqueo de sesión.' },
+  clinicalPrivacy: { type: 'boolean', description: 'Activa o desactiva la privacidad clínica.' },
+  aiSuggestions: { type: 'boolean', description: 'Activa o desactiva las sugerencias de Atal IA.' },
+  aiAlerts: { type: 'boolean', description: 'Activa o desactiva las alertas de Atal IA.' },
+  aiInstructions: text('Instrucciones personalizadas para Atal IA.'),
+});
 
 function entry(name: string, kind: AgentToolCatalogEntry['kind'], contract: string, inputSchema: AgentJsonSchema): AgentToolCatalogEntry {
   return { name, functionName: `atal_${name.replaceAll('.', '_')}`, kind, contract, inputSchema };
@@ -144,7 +154,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   }, ['patient', 'plan', 'status'])),
   entry('report.review', 'action', 'Guarda una observación clínica en el reporte.', object({ session: sessionRef, observation: text('Observación clínica.', 10_000) }, ['session', 'observation'])),
 
-  entry('settings.update', 'action', 'Actualiza preferencias compatibles.', object({ patch: object({}, [], true) }, ['patch'])),
+  entry('settings.update', 'action', 'Actualiza preferencias compatibles usando únicamente las claves canónicas indicadas en patch.', object({ patch: settingsPatchSchema }, ['patch'])),
   entry('settings.profile_update', 'action', 'Actualiza el perfil profesional.', object({
     professionalName: text('Nombre profesional.', 180), specialty: text('Especialidad.', 180), clinic: text('Clínica.', 300),
   })),
