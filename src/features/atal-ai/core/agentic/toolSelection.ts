@@ -120,6 +120,22 @@ function selectExerciseMaintenanceTools(rawText: string): string[] {
   return ['exercise.update_fields'];
 }
 
+function selectSessionActionTools(rawText: string): string[] {
+  if (includesAny(rawText, ['inicia una sesión', 'inicia una sesion', 'iniciar una sesión', 'iniciar una sesion', 'reanuda la sesión', 'reanuda la sesion', 'reanudar la sesión', 'reanudar la sesion'])) {
+    return ['session.start_or_resume'];
+  }
+  if (includesAny(rawText, ['actualiza el borrador', 'actualizar el borrador', 'borrador de la sesión', 'borrador de la sesion'])) {
+    return ['session.update_draft'];
+  }
+  if (includesAny(rawText, ['completa la sesión', 'completa la sesion', 'completar la sesión', 'completar la sesion', 'finaliza la sesión', 'finaliza la sesion', 'guárdala como completada', 'guardala como completada', 'guarda como parcial'])) {
+    return ['session.complete'];
+  }
+  if (includesAny(rawText, ['revisa el reporte', 'revisar el reporte', 'observación clínica', 'observacion clinica', 'guarda la observación', 'guarda la observacion'])) {
+    return ['report.review'];
+  }
+  return [];
+}
+
 export function selectAgentTools(input: ToolSelectionInput): string[] {
   const classification = classifyAgentTurn(input.text);
   const rawText = input.text.toLocaleLowerCase('es-MX');
@@ -168,6 +184,14 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && intent === 'update_existing_exercise') {
     append(selected, selectExerciseMaintenanceTools(rawText));
     return scopeTools(selected, input.contextSurface);
+  }
+
+  if (allowMutations) {
+    const sessionTools = selectSessionActionTools(rawText);
+    if (sessionTools.length > 0) {
+      append(selected, sessionTools);
+      return scopeTools(selected, input.contextSurface);
+    }
   }
 
   const navigationRequested = includesAny(`${rawText} ${routeAndHints}`, ['abre ', 'abrir ', 'navega', 've a ', 'llévame', 'llevame', 'muéstrame la pantalla', 'muestrame la pantalla']);
