@@ -97,3 +97,11 @@ test('updating a selected plan field exposes only canonical field update', () =>
   );
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields']);
 });
+
+test('compound plan maintenance exposes only field update and membership mutations', () => {
+  const tools = selection(
+    'En el plan seleccionado, cambia la frecuencia a 5 veces por semana y añade el ejercicio Control escapular IA. Haz ambos cambios ahora.',
+    'update_existing_plan',
+  );
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields', 'plan.membership']);
+});
