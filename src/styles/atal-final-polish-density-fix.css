@@ -1,0 +1,62 @@
+/* Block 9 density guard — loaded last so older closeout layers cannot re-expand the chat controls. */
+
+.atal-command-page .atal-command-composer {
+  box-sizing: border-box !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 2px 3px !important;
+  align-items: center !important;
+}
+
+.atal-command-page .atal-command-composer > button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+.atal-command-page .atal-command-composer .atal-command-dynamic,
+.atal-command-page .atal-command-composer .atal-command-dynamic > button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+.atal-command-page .atal-command-composer textarea {
+  box-sizing: border-box !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 6px 4px !important;
+  line-height: 1.35 !important;
+}
+
+.atal-command-page .atal-command-composer:focus-within textarea,
+.atal-command-page .atal-command-composer textarea:not(:placeholder-shown) {
+  height: auto !important;
+  max-height: 92px !important;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer {
+  box-sizing: border-box !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 3px !important;
+  align-items: center !important;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer > button,
+.atal-contextual-workspace--linear .atal-contextual-composer .is-mic {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer textarea {
+  box-sizing: border-box !important;
+  min-height: 34px !important;
+  height: 34px !important;
+  padding: 6px 3px !important;
+  line-height: 1.35 !important;
+}
