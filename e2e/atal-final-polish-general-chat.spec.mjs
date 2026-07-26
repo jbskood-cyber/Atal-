@@ -67,3 +67,45 @@ test('general Atal IA keeps draft safety while presenting a compact text-first c
   expect(sendBox?.width ?? 999).toBeLessThanOrEqual(40);
   expect(sendBox?.height ?? 999).toBeLessThanOrEqual(40);
 });
+
+test('typing the next message while Atal is streaming never loses the user draft', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const conversation = createConversation({
+    id: 'conversation-streaming-composer',
+    draftId: 'draft-streaming-composer',
+    status: 'empty',
+    messages: [],
+  });
+  await seedBrowser(page, { state: createState(), conversations: [conversation], drafts: [] });
+
+  await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/x-ndjson; charset=utf-8',
+      body: `${JSON.stringify({ type: 'done', turn: { text: 'Respuesta completada.', calls: [] } })}\n`,
+    });
+  });
+  await page.route('**/api/atal-ai/agent-turn', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ text: 'Respuesta completada.', calls: [] }),
+    });
+  });
+
+  await page.goto('/assistant');
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await composer.fill('Primer mensaje');
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  await expect(page.getByRole('button', { name: 'Detener respuesta' })).toBeVisible();
+
+  const queuedText = 'Siguiente mensaje mientras respondes';
+  await composer.fill(queuedText);
+  await expect(composer).toHaveValue(queuedText);
+
+  await expect(page.getByText('Respuesta completada.', { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Detener respuesta' })).toHaveCount(0);
+  await expect(composer).toHaveValue(queuedText);
+  await expect(page.getByRole('button', { name: 'Enviar mensaje' })).toBeVisible();
+});
