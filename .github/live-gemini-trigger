@@ -1,2 +1,2 @@
-AI Studio runtime recovery final checkpoint — latest typed HEAD.
-Target: on the exact latest branch state, execute real Gemini from a fresh conversation for “¿En qué me puedes ayudar?” and “Me ayudas a registrar un paciente nuevo?”, then retain the existing patient-create persistence/readback, session, contextual isolation, export and delivery regression. This checkpoint must not be gate-skipped.
+AI Studio invalid GEMINI_MODEL recovery checkpoint — sanitize opaque platform overrides.
+Target: execute the real Gemini browser regression on the latest branch state after modelFallback rejects non-Gemini environment values, then retain fresh conversation, patient-create persistence/readback, session, contextual isolation, export and delivery coverage. This checkpoint must not be gate-skipped.
