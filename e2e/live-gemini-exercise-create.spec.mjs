@@ -60,7 +60,7 @@ async function exerciseSnapshot(page) {
 }
 
 test.describe('Live Gemini exercise create', () => {
-  test('prepares, reviews, applies and persists an exercise through Gemini real', async ({ page }) => {
+  test('prepares, applies and persists an exercise through the compact Gemini flow', async ({ page }) => {
     test.setTimeout(180_000);
     await seedExerciseConversation(page);
     await page.goto('/assistant');
@@ -72,9 +72,9 @@ test.describe('Live Gemini exercise create', () => {
 
     const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
     await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
-    const exerciseSection = preparedDraft.getByRole('button', { name: /Ejercicios 1 ejercicio/ });
-    await exerciseSection.click();
-    await expect(preparedDraft).toContainText('Remo escapular IA');
+    await expect(preparedDraft.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await expect(page.locator('body')).not.toContainText('Acción preparada');
+    await expect(page.locator('body')).not.toContainText('Revisar todo');
     await expect.poll(() => exerciseSnapshot(page), { timeout: 5_000 }).toMatchObject({
       exists: false,
       createEvents: 0,
@@ -82,9 +82,7 @@ test.describe('Live Gemini exercise create', () => {
 
     const thread = page.locator('.atal-command-thread');
     await thread.evaluate((element) => element.scrollTo({ top: element.scrollHeight, behavior: 'instant' }));
-    const apply = preparedDraft.getByRole('button', { name: 'Aplicar cambios' });
-    await expect(apply).toBeVisible();
-    await apply.click();
+    await preparedDraft.getByRole('button', { name: 'Aplicar cambios' }).click();
 
     const confirmation = page.getByRole('dialog', { name: '¿Aplicar este borrador?' });
     await expect(confirmation).toBeVisible({ timeout: 20_000 });
