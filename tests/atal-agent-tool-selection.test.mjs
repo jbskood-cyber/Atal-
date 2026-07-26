@@ -4,6 +4,7 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const generalTurnMode = () => loadCore('src/features/atal-ai/core/agentic/generalTurnMode.js');
 const toolSelection = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
+const freshClarification = () => loadCore('src/features/atal-ai/core/agentic/freshRequestClarification.js');
 const toolCatalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 
 function selection(text, intent = '', overrides = {}) {
@@ -113,7 +114,7 @@ test('underspecified treatment update stays read-only so Gemini must clarify bef
 });
 
 test('fresh underspecified treatment update has a deterministic clarification instead of relying on Gemini to infer one', () => {
-  const { freshRequestClarification } = toolSelection();
+  const { freshRequestClarification } = freshClarification();
   assert.equal(
     freshRequestClarification('Actualiza el tratamiento de Paciente E2E.', false),
     '¿Qué quieres modificar del tratamiento de Paciente E2E?',
