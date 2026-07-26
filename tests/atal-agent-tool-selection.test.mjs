@@ -6,7 +6,7 @@ const generalTurnMode = () => loadCore('src/features/atal-ai/core/agentic/genera
 const toolSelection = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
 const toolCatalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 
-function selection(text, intent = '') {
+function selection(text, intent = '', overrides = {}) {
   return toolSelection().selectAgentTools({
     text,
     route: '/assistant',
@@ -14,6 +14,7 @@ function selection(text, intent = '') {
     selectionHints: '',
     hasImageOrPdf: false,
     hasAudio: false,
+    ...overrides,
   });
 }
 
@@ -122,4 +123,9 @@ test('accented conceptual question with inverted punctuation remains conversatio
   const classification = generalTurnMode().classifyAgentTurn('¿Qué es una contracción isométrica?');
   assert.equal(classification.kind, 'conversation');
   assert.deepEqual(selection('¿Qué es una contracción isométrica?'), []);
+});
+
+test('bare confirmation without prior conversational context never exposes mutation tools', () => {
+  const tools = selection('Hazlo.', 'summarize_patient', { hasConversationContext: false });
+  assert.deepEqual(tools, ['app.read', 'patient.search']);
 });
