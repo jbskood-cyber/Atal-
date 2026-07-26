@@ -1,0 +1,363 @@
+/* Block 9 — final agent polish.
+   Presentation-only overrides: the certified Action Core, draft state, confirmation,
+   contextual scope and Undo semantics remain unchanged. */
+
+.atal-contextual-workspace--linear {
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  max-height: min(76dvh, 680px);
+  border-radius: 20px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header {
+  grid-template-columns: 34px minmax(0, 1fr) 38px 38px;
+  gap: 6px;
+  padding: 9px 10px 8px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-mark svg {
+  width: 19px;
+  height: 19px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header h2 {
+  font-size: 13px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header div > span {
+  margin-top: 1px;
+  gap: 5px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header div > span b {
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header div > span small {
+  font-size: 8px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-workspace-header > button {
+  width: 38px;
+  height: 38px;
+}
+
+/* Historical action/suggestion/draft chrome is deliberately not part of the
+   Block 9 surface. Keep this defensive rule in case old markup is reintroduced. */
+.atal-contextual-workspace--linear .atal-contextual-workspace-actions,
+.atal-contextual-workspace--linear .atal-contextual-suggestions,
+.atal-contextual-workspace--linear .atal-contextual-pane-tabs,
+.atal-contextual-workspace--linear .atal-contextual-draft-pane {
+  display: none !important;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-work-area {
+  min-height: 180px;
+  overflow: hidden;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-conversation {
+  display: block;
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 12px 10px;
+  overscroll-behavior: contain;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-conversation article {
+  margin: 0 0 13px;
+  gap: 0;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-conversation article.is-assistant {
+  display: block;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-assistant-copy {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.62;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-assistant-copy .atal-assistant-rich-text {
+  width: 100%;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-conversation article.is-user {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-user-bubble {
+  width: fit-content;
+  max-width: min(86%, 540px);
+  padding: 8px 11px;
+  border: 1px solid color-mix(in srgb, #77b995 70%, #fff 30%);
+  border-radius: 16px 7px 16px 16px;
+  background: #7fbb99;
+  color: #fff;
+  box-shadow: 0 4px 14px rgb(46 111 78 / 9%);
+}
+
+.atal-contextual-workspace--linear .atal-contextual-user-bubble p {
+  margin: 0;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-empty {
+  min-height: 150px;
+  padding: 16px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-empty > svg {
+  width: 25px;
+  height: 25px;
+  margin-bottom: 7px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-empty b {
+  font-size: 11px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-empty p {
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.atal-contextual-pending-change {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 13px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface) 94%, var(--canvas) 6%);
+}
+
+.atal-contextual-pending-change p,
+.atal-contextual-pending-change small {
+  margin: 0;
+}
+
+.atal-contextual-pending-change p {
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.atal-contextual-pending-change small {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.atal-contextual-pending-change > button {
+  min-height: 38px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--green);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.atal-contextual-pending-change > button:disabled {
+  opacity: .45;
+}
+
+.atal-contextual-conflict-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.atal-contextual-conflict-actions button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 8px;
+}
+
+.atal-contextual-result--compact {
+  display: block;
+  margin: 0 10px 6px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--green) 22%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--mint) 36%, var(--surface));
+}
+
+.atal-contextual-result--compact summary {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--green-dark);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.atal-contextual-result--compact summary::-webkit-details-marker {
+  display: none;
+}
+
+.atal-contextual-result--compact summary svg {
+  width: 15px;
+  height: 15px;
+}
+
+.atal-contextual-result--compact > div {
+  padding: 0 10px 9px;
+}
+
+.atal-contextual-result--compact ul {
+  margin: 0 0 7px;
+  padding-left: 16px;
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.atal-contextual-result--compact button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--green-dark);
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-compose-zone {
+  padding: 6px 8px calc(7px + env(safe-area-inset-bottom));
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer {
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 14px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer > button,
+.atal-contextual-workspace--linear .atal-contextual-composer > .is-mic {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-composer textarea {
+  min-height: 36px;
+  max-height: 112px;
+  padding: 8px 2px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-notice {
+  grid-template-columns: minmax(0, 1fr) 34px;
+  min-height: 36px;
+  padding: 5px 6px 5px 9px;
+  font-size: 8px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-notice button {
+  width: 34px;
+  height: 34px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-processing {
+  display: flex;
+  gap: 7px;
+  margin: 2px 0 11px;
+  padding: 0;
+  background: transparent;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-processing > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-processing b {
+  font-size: 9px;
+  font-weight: 550;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-confirm-layer > section {
+  padding: 14px;
+  border-radius: 16px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-confirm-layer h3 {
+  margin-top: 0;
+  font-size: 14px;
+}
+
+.atal-contextual-workspace--linear .atal-contextual-confirm-layer button {
+  min-height: 40px;
+}
+
+@media (min-width: 768px) {
+  .atal-contextual-workspace--linear {
+    width: min(620px, calc(100vw - 48px));
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+  }
+
+  .atal-contextual-workspace--linear .atal-contextual-work-area {
+    display: block;
+    min-height: 300px;
+    border-top: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .atal-contextual-workspace--linear {
+    right: 7px;
+    bottom: max(7px, env(safe-area-inset-bottom));
+    left: 7px;
+    max-height: min(77dvh, 650px);
+    border-radius: 19px;
+  }
+
+  .atal-contextual-workspace--linear .atal-contextual-conversation {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .atal-contextual-user-bubble {
+    max-width: 88%;
+  }
+}
+
+[data-theme='dark'] .atal-contextual-workspace--linear .atal-contextual-user-bubble,
+.dark .atal-contextual-workspace--linear .atal-contextual-user-bubble {
+  border-color: color-mix(in srgb, #7fbb99 78%, #fff 22%);
+  background: #4f896b;
+}
