@@ -20,6 +20,12 @@ test('patient count questions are grounded workspace reads', () => {
   assert.deepEqual(result.allowedToolKinds, ['read']);
 });
 
+test('direct what-patients questions are grounded workspace reads', () => {
+  const result = modeModule().classifyAgentTurn('¿Qué pacientes tengo registrados? Dime los nombres usando únicamente la información guardada en Atal.');
+  assert.equal(result.kind, 'read');
+  assert.deepEqual(result.allowedToolKinds, ['read']);
+});
+
 test('workspace questions authorize read tools without authorizing writes', () => {
   const result = modeModule().classifyAgentTurn('¿Cuál fue la última sesión de Laura?');
   assert.equal(result.kind, 'read');
