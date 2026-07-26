@@ -46,12 +46,12 @@ const draftCommitPatterns = [
 ];
 
 const explicitActionPatterns = [
-  /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|ajusta|corrige|edita|quita|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
+  /\b(?:añade|anade|añádele|anadele|agrega|agrégale|agregale|guarda|registra|actualiza|actualízale|actualizale|modifica|modifícale|modificale|cambia|cámbiale|cambiale|ajusta|ajústale|ajustale|corrige|corrígele|corrigele|edita|edítale|editale|quita|quítale|quitale|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
   ...draftCommitPatterns,
 ];
 
 const draftEditPatterns = [
-  /\b(?:cambia|modifica|ajusta|corrige|edita|añade|anade|agrega|quita|elimina|reordena)\b.{0,80}\b(?:borrador|paciente|expediente|plan|tratamiento|ejercicio|frecuencia|duración|duracion|objetivo|enfoque|progresión|progresion|indicaciones|series|repeticiones|tiempo|descanso|precauciones)\b/i,
+  /\b(?:cambia|cámbiale|cambiale|modifica|modifícale|modificale|ajusta|ajústale|ajustale|corrige|corrígele|corrigele|edita|edítale|editale|añade|anade|añádele|anadele|agrega|agrégale|agregale|quita|quítale|quitale|elimina|reordena)\b.{0,80}\b(?:borrador|paciente|expediente|plan|tratamiento|ejercicio|frecuencia|duración|duracion|objetivo|enfoque|progresión|progresion|indicaciones|series|repeticiones|tiempo|descanso|precauciones)\b/i,
   /\b(?:en el|del|al)\s+borrador\b/i,
 ];
 
