@@ -105,3 +105,8 @@ test('compound plan maintenance exposes only field update and membership mutatio
   );
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields', 'plan.membership']);
 });
+
+test('underspecified treatment update stays read-only so Gemini must clarify before any mutation', () => {
+  const tools = selection('Actualiza el tratamiento de Paciente E2E.', 'summarize_patient');
+  assert.deepEqual(tools, ['app.read', 'patient.search']);
+});
