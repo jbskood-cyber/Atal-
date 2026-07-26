@@ -126,6 +126,19 @@ test('fresh underspecified treatment update has a deterministic clarification in
   );
 });
 
+test('fresh standalone confirmation requires deterministic conversational context before touching Gemini', () => {
+  const { freshRequestClarification } = freshClarification();
+  assert.equal(
+    freshRequestClarification('Hazlo.', false),
+    'Necesito que me indiques qué acción quieres realizar antes de poder hacerlo.',
+  );
+  assert.equal(
+    freshRequestClarification('Hazlo.', true),
+    undefined,
+    'a confirmation may be meaningful when a prior conversational turn exists',
+  );
+});
+
 test('accented Spanish workspace question with inverted punctuation is classified as a real read', () => {
   const text = '¿Qué pacientes tengo registrados? Dime los nombres usando únicamente la información guardada en Atal.';
   const classification = generalTurnMode().classifyAgentTurn(text);
