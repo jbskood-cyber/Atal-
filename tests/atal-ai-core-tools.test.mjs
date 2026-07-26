@@ -54,6 +54,21 @@ test('patient search is bounded and leaves all state unchanged', () => {
   assert.equal(port.mutationCount(), 0);
 });
 
+test('universal patient list returns concrete patient names in the canonical success message', () => {
+  const state = validState();
+  state.patients[0].name = 'Paciente E2E';
+  state.patients.push({ ...state.patients[0], id: 'patient-2', name: 'Paciente Segunda' });
+  const port = memoryPort(state);
+  const before = structuredClone(port.read());
+  const result = execute(port, invocation('app.read', { resource: 'patients', limit: 10 }));
+  assert.equal(result.status, 'success');
+  assert.match(result.message, /Paciente E2E/);
+  assert.match(result.message, /Paciente Segunda/);
+  assert.equal(result.data.total, 2);
+  assert.deepEqual(port.read(), before);
+  assert.equal(port.mutationCount(), 0);
+});
+
 test('patient and session summaries require and use uniquely resolved patient', () => {
   const port = memoryPort();
   const patientSummary = execute(port, invocation('patient.summarize', { patient: { type: 'patient', id: 'patient-1' } }, [{ type: 'patient', id: 'patient-1' }]));
