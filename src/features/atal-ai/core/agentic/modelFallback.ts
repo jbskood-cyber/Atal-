@@ -2,7 +2,6 @@ export const DEFAULT_GEMINI_MODEL_CASCADE = [
   'gemini-3.6-flash',
   'gemini-3.5-flash-lite',
   'gemini-3.1-flash-lite',
-  'gemini-2.5-flash-lite',
 ] as const;
 
 const DEFAULT_FALLBACK_DELAY_MS = 250;
@@ -29,6 +28,12 @@ function errorMessage(error: unknown): string {
 
 export function isTransientGeminiFailure(error: unknown): boolean {
   const message = errorMessage(error);
+  // A syntactically valid model can be retired or unavailable for the current
+  // project even when it remains in an older configured cascade. No action has
+  // executed at this point, so continuing to the next declared model is safe.
+  if (/\b404\b|NOT_FOUND/i.test(message) && /model/i.test(message) && /no longer available|not available|not found|unsupported|not supported/i.test(message)) {
+    return true;
+  }
   // Some Gemini variants can emit a function name that was never declared even
   // under restricted function-calling mode. No action has executed at this
   // point, so the safe recovery is to reject that output and retry the next
