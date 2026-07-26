@@ -58,5 +58,5 @@ test('textual pseudo-tool JSON is repaired into a declared tool call instead of 
   assert.equal(outcome.task.completed.length, 1);
   assert.equal(outcome.task.completed[0].invocation.tool, 'app.read');
   assert.equal(requests.length, 3);
-  assert.equal(requests[1].history.some((content) => content.parts?.some((part) => typeof part.text === 'string' && /función declarada|herramienta declarada/i.test(part.text))), true);
+  assert.equal(requests[1].history.some((content) => content.parts?.some((part) => typeof part.text === 'string' && part.text.includes('[ATAL_TOOL_CALL_REPAIR]'))), true);
 });
