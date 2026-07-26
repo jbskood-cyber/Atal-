@@ -84,6 +84,14 @@ function newestFirst<T extends { updatedAt?: string; createdAt?: string }>(items
   );
 }
 
+function concreteCollectionMessage(noun: string, total: number, labels: string[]): string {
+  if (total === 0) return `No encontré ${noun}.`;
+  const visible = labels.filter(Boolean);
+  const detail = visible.length ? `: ${visible.join(', ')}` : '';
+  const omitted = total > visible.length ? ` y ${total - visible.length} más` : '';
+  return `Encontré ${total} ${noun}${detail}${omitted}.`;
+}
+
 function readTool(): ToolDefinition<AppReadInput> {
   return {
     name: 'app.read',
@@ -121,7 +129,7 @@ function readTool(): ToolDefinition<AppReadInput> {
         const patients = matching.slice(0, limit);
         return {
           status: 'success',
-          message: `Encontré ${matching.length} pacientes.`,
+          message: concreteCollectionMessage('pacientes', matching.length, patients.map((item) => item.name)),
           summary: [`${matching.length} pacientes coinciden.`, ...patients.map((item) => `${item.name} · ${item.status}`)],
           data: { patients, total: matching.length },
           href: '/patients',
