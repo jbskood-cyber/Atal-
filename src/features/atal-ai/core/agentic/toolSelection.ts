@@ -81,7 +81,9 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
   }
   if (includesAny(rawText, [
     'añade el ejercicio', 'anade el ejercicio', 'agrega el ejercicio', 'agregar el ejercicio',
+    'añádele', 'anadele', 'agrégale', 'agregale',
     'quita el ejercicio', 'quitar el ejercicio', 'elimina el ejercicio', 'eliminar el ejercicio',
+    'quítale', 'quitale',
     'reordena', 'reordenar', 'ordena los ejercicios', 'ordenar los ejercicios',
   ])) {
     append(selected, ['plan.membership']);
