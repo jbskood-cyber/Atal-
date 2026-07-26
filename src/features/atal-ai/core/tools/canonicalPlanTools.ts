@@ -57,7 +57,7 @@ type PlanUpdateInput = {
   };
 };
 
-type MembershipInput = { plan: EntityRef; operation: 'add' | 'remove' | 'reorder'; exerciseIds: string[] };
+type MembershipInput = { plan: EntityRef; operation: 'add' | 'remove' | 'reorder' | 'replace'; exerciseIds: string[] };
 
 function validatePlanCreate(input: unknown): PlanCreateInput {
   const value = objectInput(input, 'Los datos del plan no son válidos.');
@@ -139,12 +139,14 @@ const planUpdateTool: ToolDefinition<PlanUpdateInput> = {
 };
 
 const planMembershipTool: ToolDefinition<MembershipInput> = {
-  name: 'plan.membership', version: 1, description: 'Añade, retira o reordena ejercicios de un plan.',
+  name: 'plan.membership', version: 1, description: 'Añade, retira, reordena o reemplaza ejercicios de un plan.',
   risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['plan'],
   validateInput(input) {
     const value = objectInput(input, 'La membresía del plan no es válida.');
     const operation = value.operation;
-    if (operation !== 'add' && operation !== 'remove' && operation !== 'reorder') throw coreError('CORE_INPUT_INVALID', 'Selecciona añadir, retirar o reordenar.');
+    if (operation !== 'add' && operation !== 'remove' && operation !== 'reorder' && operation !== 'replace') {
+      throw coreError('CORE_INPUT_INVALID', 'Selecciona añadir, retirar, reordenar o reemplazar.');
+    }
     const exerciseIds = stringList(value.exerciseIds) ?? [];
     if (!exerciseIds.length) throw coreError('CORE_INPUT_INVALID', 'Indica al menos un ejercicio.');
     return { plan: entityRef(value.plan, 'plan'), operation, exerciseIds };
@@ -153,14 +155,15 @@ const planMembershipTool: ToolDefinition<MembershipInput> = {
   execute(environment, input) {
     let eventIndex = 0;
     let recordVersionIndex = 0;
-    const result = applyPlanMembership(environment.state, {
+    const common = {
       planId: environment.resolved.plan!.id,
-      operation: input.operation,
-      exerciseIds: input.exerciseIds,
       now: environment.context.now,
       createEventId: () => `${environment.transactionId}-event-${eventIndex++}`,
       createRecordVersionId: () => `${environment.transactionId}-record-version-${recordVersionIndex++}`,
-    });
+    };
+    const result = input.operation === 'replace'
+      ? applyUpdatePlan(environment.state, { ...common, patch: { exerciseIds: input.exerciseIds } })
+      : applyPlanMembership(environment.state, { ...common, operation: input.operation, exerciseIds: input.exerciseIds });
     return {
       status: 'success', message: 'Ejercicios del plan actualizados.', summary: [`Membresía del plan: ${input.operation}.`],
       data: { patientId: result.plan.patientId, planId: result.plan.id, exerciseIds: result.plan.exerciseIds },
