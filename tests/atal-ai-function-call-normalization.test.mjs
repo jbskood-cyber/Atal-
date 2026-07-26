@@ -2,31 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
-const normalization = () => loadCore('src/features/atal-ai/core/agentic/functionCallNormalization.js');
+const fallback = () => loadCore('src/features/atal-ai/core/agentic/modelFallback.js');
 
-const allowedReads = ['atal_app_read', 'atal_patient_search'];
-
-test('maps get_patients hallucination to canonical app.read patients when that read is allowed', () => {
-  const result = normalization().normalizeAgentFunctionCall({ name: 'get_patients', args: {} }, allowedReads);
-  assert.deepEqual(result, { name: 'atal_app_read', args: { resource: 'patients' } });
+test('an undeclared Gemini tool name is retryable across the configured model cascade', () => {
+  assert.equal(
+    fallback().isTransientGeminiFailure(new Error('Gemini solicitó una herramienta no permitida: get_patients')),
+    true,
+  );
+  assert.equal(
+    fallback().isTransientGeminiFailure(new Error('Gemini solicitó una herramienta no permitida: patient.list')),
+    true,
+  );
 });
 
-test('maps patient.list hallucination to canonical app.read patients when that read is allowed', () => {
-  const result = normalization().normalizeAgentFunctionCall({ name: 'patient.list', args: {} }, allowedReads);
-  assert.deepEqual(result, { name: 'atal_app_read', args: { resource: 'patients' } });
-});
-
-test('does not normalize a safe read alias when app.read is not allowed for the turn', () => {
-  const result = normalization().normalizeAgentFunctionCall({ name: 'get_patients', args: {} }, ['atal_patient_search']);
-  assert.deepEqual(result, { name: 'get_patients', args: {} });
-});
-
-test('never aliases an unknown mutation-like function name', () => {
-  const result = normalization().normalizeAgentFunctionCall({ name: 'delete_patient', args: { id: 'patient-e2e' } }, allowedReads);
-  assert.deepEqual(result, { name: 'delete_patient', args: { id: 'patient-e2e' } });
-});
-
-test('keeps declared function names and arguments unchanged', () => {
-  const call = { name: 'atal_app_read', args: { resource: 'patients', limit: 5 } };
-  assert.deepEqual(normalization().normalizeAgentFunctionCall(call, allowedReads), call);
+test('provider schema and invalid-argument failures remain non-transient', () => {
+  assert.equal(fallback().isTransientGeminiFailure(new Error('INVALID_ARGUMENT: schema rejected')), false);
+  assert.equal(fallback().isTransientGeminiFailure(new Error('400 invalid argument')), false);
 });
