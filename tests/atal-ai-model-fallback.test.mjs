@@ -4,13 +4,12 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const fallbackModule = () => loadCore('src/features/atal-ai/core/agentic/modelFallback.js');
 
-test('default Gemini cascade prefers capability before progressively cheaper fallbacks', () => {
+test('default Gemini cascade prefers current stable capability before progressively cheaper fallbacks', () => {
   const { DEFAULT_GEMINI_MODEL_CASCADE } = fallbackModule();
   assert.deepEqual(DEFAULT_GEMINI_MODEL_CASCADE, [
     'gemini-3.6-flash',
     'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
-    'gemini-2.5-flash-lite',
   ]);
 });
 
@@ -23,7 +22,7 @@ test('configured cascade is trimmed deduplicated and falls back to safe defaults
   assert.deepEqual(resolveGeminiModelCascade(''), fallbackModule().DEFAULT_GEMINI_MODEL_CASCADE);
 });
 
-test('only transient provider or empty-model failures authorize another model', () => {
+test('only recoverable provider/model or empty-model failures authorize another model', () => {
   const { isTransientGeminiFailure } = fallbackModule();
   for (const message of [
     '429 RESOURCE_EXHAUSTED quota exceeded',
@@ -31,6 +30,7 @@ test('only transient provider or empty-model failures authorize another model', 
     'The request timed out',
     'fetch failed ECONNRESET',
     'MODEL_EMPTY_RESPONSE',
+    '404 NOT_FOUND This model models/gemini-retired is no longer available to new users',
   ]) assert.equal(isTransientGeminiFailure(new Error(message)), true, message);
 
   for (const message of [
