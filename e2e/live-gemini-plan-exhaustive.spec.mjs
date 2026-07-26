@@ -68,9 +68,19 @@ async function seedNaturalPlanConversation(page) {
   });
 }
 
+async function waitForSettledAgent(page) {
+  await expect(page.locator('.atal-command-processing')).toHaveCount(0, { timeout: 90_000 });
+  await expect(page.getByLabel('Mensaje para Atal IA')).toBeEnabled({ timeout: 20_000 });
+}
+
 async function send(page, text) {
-  await page.getByLabel('Mensaje para Atal IA').fill(text);
-  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  await waitForSettledAgent(page);
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await composer.fill(text);
+  await expect(composer).toHaveValue(text);
+  const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
+  await expect(sendButton).toBeVisible();
+  await sendButton.click();
 }
 
 async function naturalPlanSnapshot(page) {
@@ -108,6 +118,7 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
       exerciseUpdateSuccesses: 1,
       planUpdateSuccesses: 0,
     });
+    await waitForSettledAgent(page);
     await expect(page.getByRole('alert')).toHaveCount(0);
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
 
@@ -131,6 +142,8 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
       exerciseIds: expect.arrayContaining(['exercise-e2e', 'exercise-control-live', 'exercise-rotation-live']),
       membershipSuccesses: 1,
     });
+    await expect(page.getByText('Cambios aplicados', { exact: true })).toBeVisible({ timeout: 90_000 });
+    await waitForSettledAgent(page);
 
     await send(page, 'Quítale al plan el ejercicio Movilidad asistida E2E.');
     await expect.poll(async () => {
@@ -148,6 +161,7 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
       membershipSuccesses: 2,
     });
 
+    await waitForSettledAgent(page);
     await expect(page.getByRole('alert')).toHaveCount(0);
     await page.reload();
     await expect.poll(async () => {
