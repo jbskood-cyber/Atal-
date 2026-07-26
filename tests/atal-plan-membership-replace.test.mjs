@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
-const planActions = () => loadCore('src/domain/actions/planActions.js');
 const canonicalPlanTools = () => loadCore('src/features/atal-ai/core/tools/canonicalPlanTools.js');
 const toolCatalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 
@@ -25,23 +24,25 @@ function baseState() {
   };
 }
 
-function idFactory(...ids) {
-  let index = 0;
-  return () => ids[index++] ?? `event-${index}`;
-}
-
 test('canonical membership supports atomic exercise replacement without abusing reorder semantics', () => {
   const state = baseState();
-  const { applyPlanMembership } = planActions();
-  const result = applyPlanMembership(state, {
-    planId: 'plan-1',
+  const { canonicalPlanTools: tools } = canonicalPlanTools();
+  const membershipTool = tools.find((tool) => tool.name === 'plan.membership');
+  assert.ok(membershipTool);
+  const input = membershipTool.validateInput({
+    plan: { type: 'plan', id: 'plan-1' },
     operation: 'replace',
     exerciseIds: ['exercise-a', 'exercise-c'],
-    now: '2026-07-26T17:31:00.000Z',
-    createEventId: idFactory('event-replace'),
   });
+  const result = membershipTool.execute({
+    state,
+    resolved: { plan: state.plans[0] },
+    transactionId: 'tx-replace',
+    context: { now: '2026-07-26T17:31:00.000Z' },
+  }, input);
 
-  assert.deepEqual(result.plan.exerciseIds, ['exercise-a', 'exercise-c']);
+  assert.deepEqual(result.data.exerciseIds, ['exercise-a', 'exercise-c']);
+  assert.deepEqual(state.plans[0].exerciseIds, ['exercise-a', 'exercise-c']);
   assert.equal(state.events[0].kind, 'plan_updated');
   assert.equal(state.events.length, 1);
 });
@@ -51,14 +52,4 @@ test('plan.membership public contract exposes replace as a first-class operation
   const catalogEntry = agentToolCatalog.find((entry) => entry.name === 'plan.membership');
   assert.ok(catalogEntry);
   assert.deepEqual(catalogEntry.inputSchema.properties.operation.enum, ['add', 'remove', 'reorder', 'replace']);
-
-  const { canonicalPlanTools: tools } = canonicalPlanTools();
-  const membershipTool = tools.find((tool) => tool.name === 'plan.membership');
-  assert.ok(membershipTool);
-  const input = membershipTool.validateInput({
-    plan: { type: 'plan', id: 'plan-1' },
-    operation: 'replace',
-    exerciseIds: ['exercise-a', 'exercise-c'],
-  });
-  assert.equal(input.operation, 'replace');
 });
