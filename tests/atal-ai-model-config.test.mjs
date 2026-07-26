@@ -27,3 +27,10 @@ test('models/ prefix is normalized to the SDK-friendly Gemini model name', () =>
 
   assert.deepEqual(result, ['gemini-2.5-flash-lite']);
 });
+
+test('a retired Gemini model is recoverable so the cascade can continue to a supported model', () => {
+  const { isTransientGeminiFailure } = modelModule();
+  const error = new Error('{"error":{"code":404,"message":"This model models/gemini-2.5-flash-lite is no longer available to new users. Please update your code to use a newer model for the latest features and improvements.","status":"NOT_FOUND"}}');
+
+  assert.equal(isTransientGeminiFailure(error), true);
+});
