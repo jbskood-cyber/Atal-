@@ -1,0 +1,23 @@
+/* Keep review actions inside the scrollable interaction area.
+   Live browser validation showed that the historical flex bottom-alignment
+   could make a prepared draft exist semantically while its footer remained
+   outside the reachable pointer area. */
+.atal-command-thread {
+  padding-bottom: max(88px, calc(16px + env(safe-area-inset-bottom))) !important;
+  scroll-padding-bottom: max(88px, calc(16px + env(safe-area-inset-bottom))) !important;
+}
+
+/* Once a reviewable draft exists, use ordinary block scrolling. This avoids
+   flex auto-margin overflow behavior and keeps the draft footer reachable by
+   touch without changing the empty-conversation visual alignment. */
+.atal-command-thread:has(.atal-draft-card) {
+  display: block !important;
+}
+
+.atal-command-thread:has(.atal-draft-card) > :first-child {
+  margin-top: 0 !important;
+}
+
+.atal-draft-card {
+  scroll-margin-bottom: 72px !important;
+}

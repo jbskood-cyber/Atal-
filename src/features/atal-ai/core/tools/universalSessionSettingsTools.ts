@@ -1,3 +1,4 @@
+import { applyReviewSession } from '../../../../domain/actions/sessionActions';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 
 function objectInput(input: unknown, message: string): Record<string, unknown> {
@@ -24,19 +25,20 @@ export const universalSessionSettingsTools: ToolDefinition<any>[] = [
     risk: 'reversible-write', mutates: true, supportsUndo: true, undoTtlMs: 30_000, requiredEntities: ['session'],
     validateInput(input) {
       const value = objectInput(input, 'La revisión del reporte no es válida.');
-      const observation = text(value.observation) ?? '';
-      if (!observation) throw coreError('CORE_INPUT_INVALID', 'Escribe la observación clínica.');
+      const observation = text(value.observation, 2_000) ?? '';
       return { session: ref(value.session, 'session'), observation };
     },
     preconditions(environment) {
       if (!environment.state.sessions.some((item) => item.id === environment.resolved.session?.id)) throw coreError('CORE_PRECONDITION_FAILED', 'La sesión ya no existe.');
     },
     execute(environment, input) {
-      const session = environment.state.sessions.find((item) => item.id === environment.resolved.session?.id)!;
-      session.clinicalObservation = input.observation;
-      session.reviewedAt = environment.context.now;
-      session.updatedAt = environment.context.now;
-      environment.state.notifications = environment.state.notifications.map((item) => item.href === `/activity/${session.id}` ? { ...item, read: true } : item);
+      let eventIndex = 0;
+      const { session } = applyReviewSession(environment.state, {
+        sessionId: environment.resolved.session!.id,
+        observation: input.observation,
+        now: environment.context.now,
+        createEventId: () => `${environment.transactionId}-review-event-${eventIndex++}`,
+      });
       return {
         status: 'success', message: 'Revisión clínica guardada.', summary: ['Reporte revisado.'],
         data: { sessionId: session.id, patientId: session.patientId, planId: session.planId }, href: `/activity/${session.id}`,

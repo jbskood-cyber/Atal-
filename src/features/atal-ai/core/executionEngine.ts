@@ -24,19 +24,36 @@ import { exerciseTools } from './tools/exerciseTools';
 import { universalReadTools } from './tools/universalReadTools';
 import { universalPatientTools } from './tools/universalPatientTools';
 import { universalPlanExerciseTools } from './tools/universalPlanExerciseTools';
+import { canonicalPlanToolNames, canonicalPlanTools } from './tools/canonicalPlanTools';
+import { canonicalPlanLifecycleToolNames, canonicalPlanLifecycleTools } from './tools/canonicalPlanLifecycleTools';
+import { canonicalUniversalExerciseToolNames, canonicalUniversalExerciseTools } from './tools/canonicalUniversalExerciseTools';
+import { canonicalPatientNoteToolNames, canonicalPatientNoteTools } from './tools/canonicalPatientNoteTools';
+import { canonicalSettingsToolNames, canonicalSettingsTools } from './tools/canonicalSettingsTools';
 import { universalSessionSettingsTools } from './tools/universalSessionSettingsTools';
 import { clientEffectTools } from './tools/clientEffectTools';
+
+const nonCanonicalPlanExerciseTools = universalPlanExerciseTools.filter((tool) =>
+  !canonicalPlanToolNames.has(tool.name) && !canonicalUniversalExerciseToolNames.has(tool.name));
+const nonCanonicalPlanTools = planTools.filter((tool) => !canonicalPlanLifecycleToolNames.has(tool.name));
+const nonCanonicalUniversalPatientTools = universalPatientTools.filter((tool) => !canonicalPatientNoteToolNames.has(tool.name));
+const nonCanonicalSettingsTools = settingsTools.filter((tool) => !canonicalSettingsToolNames.has(tool.name));
+const nonCanonicalUniversalSessionSettingsTools = universalSessionSettingsTools.filter((tool) => !canonicalSettingsToolNames.has(tool.name));
 
 export const atalAIToolRegistry = createToolRegistry([
   ...queryTools,
   ...universalReadTools,
   ...patientTools,
-  ...universalPatientTools,
+  ...nonCanonicalUniversalPatientTools,
+  ...canonicalPatientNoteTools,
   ...exerciseTools,
-  ...planTools,
-  ...universalPlanExerciseTools,
-  ...settingsTools,
-  ...universalSessionSettingsTools,
+  ...canonicalUniversalExerciseTools,
+  ...nonCanonicalPlanTools,
+  ...canonicalPlanLifecycleTools,
+  ...nonCanonicalPlanExerciseTools,
+  ...canonicalPlanTools,
+  ...nonCanonicalSettingsTools,
+  ...nonCanonicalUniversalSessionSettingsTools,
+  ...canonicalSettingsTools,
   ...clientEffectTools,
   ...exportTools,
   ...blockedTools,
@@ -97,6 +114,7 @@ export function executeToolInvocation(
       request.context,
       request.invocation.tool,
       request.invocation.references,
+      request.invocation.input,
     );
     if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
 

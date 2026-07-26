@@ -1,0 +1,107 @@
+name: live-gemini-smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/live-gemini-trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-gemini-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Resolve live checkpoint gate
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          git fetch origin "$head_sha" --depth=2
+          if git rev-parse "${head_sha}^" >/dev/null 2>&1 && ! git diff --quiet "${head_sha}^" "$head_sha" -- .github/live-gemini-trigger; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+        if: steps.gate.outputs.enabled == 'true'
+      - name: Verify Gemini secret is configured
+        if: steps.gate.outputs.enabled == 'true'
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "${GEMINI_API_KEY:-}"
+      - name: Compile Action Core harness
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm run test:core:compile
+      - name: Probe Gemini provider before browser matrix
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ''
+          GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite'
+        run: timeout 180s npm run test:ai-live
+      - name: Install Playwright test runner without changing the lockfile
+        if: steps.gate.outputs.enabled == 'true'
+        run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
+      - name: Install Chromium and system dependencies
+        if: steps.gate.outputs.enabled == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Verify final live Gemini regression
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: 'AQ.synthetic-ai-studio-platform-resource-token'
+          GEMINI_MODEL_CASCADE: ''
+          ATAL_LIVE_GEMINI_E2E: '1'
+        run: >-
+          npx playwright test
+          e2e/live-gemini-patient-create.spec.mjs
+          e2e/live-gemini-patient-maintenance.spec.mjs
+          e2e/live-gemini-clinical-record.spec.mjs
+          e2e/live-gemini-plan-create.spec.mjs
+          e2e/live-gemini-plan-update.spec.mjs
+          e2e/live-gemini-plan-maintenance.spec.mjs
+          e2e/live-gemini-plan-lifecycle.spec.mjs
+          e2e/live-gemini-exercise-create.spec.mjs
+          e2e/live-gemini-exercise-maintenance.spec.mjs
+          e2e/live-gemini-session-flow.spec.mjs
+          e2e/live-gemini-report-review.spec.mjs
+          e2e/live-gemini-settings.spec.mjs
+          e2e/live-gemini-contextual-isolation.spec.mjs
+          e2e/live-gemini-export.spec.mjs
+          e2e/live-gemini-delivery-open.spec.mjs
+          e2e/live-gemini-delivery-export.spec.mjs
+          e2e/live-gemini-delivery-action.spec.mjs
+          e2e/live-gemini-adversarial-agent.spec.mjs
+          e2e/live-gemini-contextless-confirmation.spec.mjs
+          --workers=1 > live-browser-e2e.log 2>&1
+      - name: Upload live Gemini diagnostics
+        if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-gemini-diagnostics
+          path: |
+            live-browser-e2e.log
+            playwright-report/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 1

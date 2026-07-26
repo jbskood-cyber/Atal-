@@ -53,6 +53,19 @@ export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
     setMessage('');
     setEditing(true);
   };
+  const cancelEditing = () => {
+    if (baseline) {
+      const restored = JSON.parse(baseline) as ClinicalRecord;
+      setRecord(restored);
+      setPainInput(formatPainLevel(restored.painLevel));
+    } else if (stored) {
+      setRecord(stored);
+      setPainInput(formatPainLevel(stored.painLevel));
+    }
+    setBaseline('');
+    setMessage('');
+    setEditing(false);
+  };
   const save = () => {
     if (!current.reasonForVisit.trim()) { setMessage('El motivo de consulta es obligatorio.'); return; }
     const parsedPain = parsePainLevelInput(painInput);
@@ -77,7 +90,7 @@ export function ClinicalRecordScreen({ patientId }: { patientId: string }) {
   const print = () => window.print();
 
   return <AtalShell><main className={`atal-content atal-clinical-record${printPreview ? ' is-print-preview' : ''}`}>
-    <div className="atal-record-toolbar no-print"><button type="button" onClick={() => guard.requestNavigation(() => router.back())}><ArrowLeft /> Volver</button><div><button type="button" onClick={() => setPrintPreview((value) => !value)}><FileDown /> Vista previa</button><button type="button" onClick={print}><Printer /> Imprimir / PDF</button><button type="button" className="is-primary" onClick={() => editing ? save() : startEditing()}>{editing ? <Save /> : <Edit3 />} {editing ? 'Guardar cambios' : 'Editar expediente'}</button></div></div>
+    <div className="atal-record-toolbar no-print"><button type="button" onClick={() => guard.requestNavigation(() => router.back())}><ArrowLeft /> Volver</button><div><button type="button" onClick={() => setPrintPreview((value) => !value)}><FileDown /> Vista previa</button><button type="button" onClick={print}><Printer /> Imprimir / PDF</button>{editing && <button type="button" onClick={cancelEditing}>Cancelar edición</button>}<button type="button" className="is-primary" onClick={() => editing ? save() : startEditing()}>{editing ? <Save /> : <Edit3 />} {editing ? 'Guardar cambios' : 'Editar expediente'}</button></div></div>
     {message && <p className="atal-action-message no-print" role="status">{message}</p>}
     <article className="atal-record-paper">
       <header><AtalLogo /><div><small>Expediente clínico</small><h1>{patient.name}</h1><p>{new Date(current.date).toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' })} · Versión {current.version}</p></div><span>Atal Fisioterapia</span></header>

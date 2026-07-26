@@ -1,40 +1,207 @@
 'use client';
-import{useEffect,useRef,useState}from'react';
-import{useRouter}from'next/navigation';
-import{Archive,ArrowLeft,CalendarDays,Check,Copy,FileDown,MoreHorizontal,Pause,Play,Plus,Save,SlidersHorizontal,Target,Trash2}from'lucide-react';
-import{AtalShell}from'@/src/components/atal/AtalShell';
-import{Avatar}from'@/src/components/atal/Avatar';
-import{ExerciseSelector}from'@/src/components/atal/ExerciseSelector';
-import{SafePlanExerciseList}from'@/src/features/plan-closeout/SafePlanExerciseList';
-import{activatePlan,archivePlan,completePlan,deletePlan,duplicatePlan,findActivePlanConflict,pausePlan,restorePlan,updateLocalPlan,useLocalPlans}from'@/src/data/localPlans';
-import{deleteExerciseWithMedia}from'@/src/data/localExercises';
-import{usePatientCatalog}from'@/src/data/localPatients';
-import{useAtalStore}from'@/src/data/atalStore';
-import{createPlanEditSession,discardPlanEditSession,promotePlanEditSession,stagePlanExercise}from'@/src/features/plan-closeout/planEditSession';
-import{validatePlanInput}from'@/src/domain/validation';
-import{useUnsavedChangesGuard}from'@/src/hooks/useUnsavedChangesGuard';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Archive, ArrowLeft, CalendarDays, Check, Copy, FileDown, MoreHorizontal, Pause, Play, Plus, Save, SlidersHorizontal, Target, Trash2 } from 'lucide-react';
+import { AtalShell } from '@/src/components/atal/AtalShell';
+import { Avatar } from '@/src/components/atal/Avatar';
+import { ExerciseSelector } from '@/src/components/atal/ExerciseSelector';
+import { SafePlanExerciseList } from '@/src/features/plan-closeout/SafePlanExerciseList';
+import { activatePlan, archivePlan, completePlan, deletePlan, duplicatePlan, findActivePlanConflict, getLocalPlanById, pausePlan, restorePlan, undoLocalPlanChange, updateLocalPlanWithUndo, useLocalPlans } from '@/src/data/localPlans';
+import { deleteExerciseWithMedia } from '@/src/data/localExercises';
+import { usePatientCatalog } from '@/src/data/localPatients';
+import { useAtalStore } from '@/src/data/atalStore';
+import type { ActionUndoReceipt } from '@/src/domain/actions/contracts';
+import { createPlanEditSession, discardPlanEditSession, promotePlanEditSession, stagePlanExercise } from '@/src/features/plan-closeout/planEditSession';
+import { validatePlanInput } from '@/src/domain/validation';
+import { useUnsavedChangesGuard } from '@/src/hooks/useUnsavedChangesGuard';
 
-type Tab='summary'|'exercises'|'progress'|'review';
-type StatusAction='activate'|'pause'|'complete'|'archive'|'restore';
+type Tab = 'summary' | 'exercises' | 'progress' | 'review';
+type StatusAction = 'activate' | 'pause' | 'complete' | 'archive' | 'restore';
 
-export function PlanDetailCloseoutScreen({planId}:{planId:string}){
-  const router=useRouter(),plans=useLocalPlans(),patients=usePatientCatalog(),sessions=useAtalStore(s=>s.sessions.filter(i=>i.planId===planId)),plan=plans.find(i=>i.id===planId),patient=patients.find(i=>i.id===plan?.patientId),[tab,setTab]=useState<Tab>('exercises'),[selecting,setSelecting]=useState(false),[menu,setMenu]=useState(false),[message,setMessage]=useState(''),[confirmArchive,setConfirmArchive]=useState(false),[conflict,setConflict]=useState(false),[title,setTitle]=useState(plan?.title??''),[focus,setFocus]=useState(plan?.focus??''),[goal,setGoal]=useState(plan?.goal??''),[duration,setDuration]=useState(plan?.duration??''),[frequency,setFrequency]=useState(plan?.frequency??''),[progression,setProgression]=useState(plan?.progression??''),[criterion,setCriterion]=useState(plan?.reportCriteria??''),[instructions,setInstructions]=useState(plan?.generalInstructions??''),[exerciseIds,setExerciseIds]=useState(plan?.exerciseIds??[]),editSession=useRef(createPlanEditSession());
+export function PlanDetailCloseoutScreen({ planId }: { planId: string }) {
+  const router = useRouter();
+  const plans = useLocalPlans();
+  const patients = usePatientCatalog();
+  const sessions = useAtalStore((state) => state.sessions.filter((item) => item.planId === planId));
+  const plan = plans.find((item) => item.id === planId);
+  const patient = patients.find((item) => item.id === plan?.patientId);
+  const [tab, setTab] = useState<Tab>('exercises');
+  const [selecting, setSelecting] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [message, setMessage] = useState('');
+  const [confirmArchive, setConfirmArchive] = useState(false);
+  const [conflict, setConflict] = useState(false);
+  const [title, setTitle] = useState(plan?.title ?? '');
+  const [focus, setFocus] = useState(plan?.focus ?? '');
+  const [goal, setGoal] = useState(plan?.goal ?? '');
+  const [duration, setDuration] = useState(plan?.duration ?? '');
+  const [frequency, setFrequency] = useState(plan?.frequency ?? '');
+  const [progression, setProgression] = useState(plan?.progression ?? '');
+  const [criterion, setCriterion] = useState(plan?.reportCriteria ?? '');
+  const [instructions, setInstructions] = useState(plan?.generalInstructions ?? '');
+  const [exerciseIds, setExerciseIds] = useState(plan?.exerciseIds ?? []);
+  const [undoReceipt, setUndoReceipt] = useState<ActionUndoReceipt | null>(null);
+  const editSession = useRef(createPlanEditSession());
 
-  useEffect(()=>{if(!plan)return;setTitle(plan.title);setFocus(plan.focus);setGoal(plan.goal);setDuration(plan.duration);setFrequency(plan.frequency);setProgression(plan.progression);setCriterion(plan.reportCriteria);setInstructions(plan.generalInstructions);setExerciseIds(plan.exerciseIds);editSession.current=createPlanEditSession()},[plan?.id]);
-  useEffect(()=>()=>{for(const id of discardPlanEditSession(editSession.current))void deleteExerciseWithMedia(id)},[]);
+  const resetForm = (source = plan) => {
+    if (!source) return;
+    setTitle(source.title);
+    setFocus(source.focus);
+    setGoal(source.goal);
+    setDuration(source.duration);
+    setFrequency(source.frequency);
+    setProgression(source.progression);
+    setCriterion(source.reportCriteria);
+    setInstructions(source.generalInstructions);
+    setExerciseIds(source.exerciseIds);
+  };
 
-  const dirty=Boolean(plan)&&(title!==plan!.title||focus!==plan!.focus||goal!==plan!.goal||duration!==plan!.duration||frequency!==plan!.frequency||progression!==plan!.progression||criterion!==plan!.reportCriteria||instructions!==plan!.generalInstructions||exerciseIds.join('|')!==plan!.exerciseIds.join('|'));
-  const guard=useUnsavedChangesGuard(dirty);
+  useEffect(() => {
+    if (!plan) return;
+    resetForm(plan);
+    setUndoReceipt(null);
+    editSession.current = createPlanEditSession();
+  }, [plan?.id]);
 
-  if(!plan)return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><CalendarDays/><h1>Plan no encontrado</h1><p>El plan solicitado no existe o fue eliminado.</p><button type="button" onClick={()=>router.push('/plans')}>Volver a planes</button></div></main></AtalShell>;
+  useEffect(() => () => {
+    for (const id of discardPlanEditSession(editSession.current)) void deleteExerciseWithMedia(id);
+  }, []);
 
-  const save=()=>{try{const validation=validatePlanInput({title,status:plan.status,exerciseIds});if(!validation.valid){setMessage(Object.values(validation.errors)[0]);return;}updateLocalPlan(plan.id,{title:title.trim(),focus:focus.trim(),goal:goal.trim(),duration:duration.trim(),frequency:frequency.trim(),progression:progression.trim(),reportCriteria:criterion.trim(),generalInstructions:instructions.trim(),exerciseIds});promotePlanEditSession(editSession.current);setMessage('Plan guardado')}catch(error){setMessage(error instanceof Error?error.message:'No pudimos guardar el plan.')}};
-  const performStatusChange=(action:StatusAction)=>{try{if(action==='activate'){const validation=validatePlanInput({title,status:'active',exerciseIds});if(!validation.valid){setMessage(Object.values(validation.errors)[0]);return;}if(findActivePlanConflict(plan.id)){setConflict(true);setMenu(false);return}}if(action==='activate')activatePlan(plan.id);if(action==='pause')pausePlan(plan.id);if(action==='complete')completePlan(plan.id);if(action==='archive')archivePlan(plan.id);if(action==='restore')restorePlan(plan.id);setMessage('Estado actualizado');setMenu(false);setConfirmArchive(false)}catch(error){setMessage(error instanceof Error?error.message:'No pudimos actualizar el plan.')}};
-  const changeStatus=(action:StatusAction)=>{if(dirty){guard.requestNavigation(()=>performStatusChange(action));return;}performStatusChange(action)};
-  const resolveConflict=(resolution:'pause'|'complete'|'archive')=>{try{activatePlan(plan.id,resolution);setConflict(false);setMessage('Plan activado y plan anterior actualizado.')}catch(error){setMessage(error instanceof Error?error.message:'No pudimos activar el plan.')}};
-  const completed=sessions.filter(i=>i.status==='completed').length,adherence=sessions.length?Math.round(completed/sessions.length*100):null,updatedLabel=new Intl.DateTimeFormat('es-MX',{day:'numeric',month:'short'}).format(new Date(plan.updatedAt));
+  const dirty = Boolean(plan) && (
+    title !== plan!.title
+    || focus !== plan!.focus
+    || goal !== plan!.goal
+    || duration !== plan!.duration
+    || frequency !== plan!.frequency
+    || progression !== plan!.progression
+    || criterion !== plan!.reportCriteria
+    || instructions !== plan!.generalInstructions
+    || exerciseIds.join('|') !== plan!.exerciseIds.join('|')
+  );
+  const guard = useUnsavedChangesGuard(dirty);
 
-  return <AtalShell>{selecting?<main className="atal-content atal-flow-page"><ExerciseSelector initialIds={exerciseIds} onBack={()=>setSelecting(false)} onConfirm={ids=>{setExerciseIds(ids);setSelecting(false)}}/></main>:<main className="atal-content atal-flow-page atal-plan-detail"><div className="atal-flow-topbar"><button type="button" onClick={()=>guard.requestNavigation(()=>router.push('/plans'))}><ArrowLeft/></button><span>Plan clínico</span><button type="button" aria-label="Acciones del plan" onClick={()=>setMenu(true)}><MoreHorizontal/></button></div><section className="atal-plan-identity"><Avatar name={patient?.name??'Paciente'}/><div><h1>{plan.title}</h1><b>{patient?.name??'Paciente no disponible'}</b><small>{statusLabel(plan.status)} · Actualizado el {updatedLabel}</small></div></section><nav className="atal-tabbar">{([['summary','Resumen'],['exercises','Ejercicios'],['progress','Progreso'],['review','Estado']]as const).map(([value,label])=><button type="button" key={value} className={tab===value?'is-active':''} onClick={()=>setTab(value)}>{label}</button>)}</nav>{tab==='summary'&&<div className="atal-clinical-form"><fieldset><legend>Información del plan</legend><label className="atal-field"><span>Título</span><input value={title} onChange={e=>setTitle(e.target.value)}/></label><label className="atal-field"><span>Enfoque</span><input value={focus} onChange={e=>setFocus(e.target.value)}/></label><label className="atal-field"><span>Objetivo</span><textarea value={goal} onChange={e=>setGoal(e.target.value)}/></label><div className="atal-field-grid"><label className="atal-field"><span>Duración</span><input value={duration} onChange={e=>setDuration(e.target.value)}/></label><label className="atal-field"><span>Frecuencia</span><input value={frequency} onChange={e=>setFrequency(e.target.value)}/></label></div><label className="atal-field"><span>Indicaciones</span><textarea value={instructions} onChange={e=>setInstructions(e.target.value)}/></label></fieldset></div>}{tab==='exercises'&&<div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration||'Por definir'}</b></span><span><small>Frecuencia</small><b>{frequency||'Por definir'}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={()=>setSelecting(true)}><Plus/> Agregar ejercicio</button></div><SafePlanExerciseList exerciseIds={exerciseIds} onChange={setExerciseIds} onMessage={setMessage} onDuplicateCreated={id=>stagePlanExercise(editSession.current,id)}/><section className="atal-plan-settings"><h2>Ajustes del plan</h2><label className="atal-field"><span><SlidersHorizontal/> Progresión</span><textarea value={progression} onChange={e=>setProgression(e.target.value)}/></label><label className="atal-field"><span><Target/> Criterio de reporte</span><textarea value={criterion} onChange={e=>setCriterion(e.target.value)}/></label></section></div>}{tab==='progress'&&<div className="atal-panel-placeholder"><Target/><h2>Progreso real</h2>{sessions.length?<><p>{completed} de {sessions.length} sesiones completadas.</p><strong>{adherence}% adherencia</strong><button type="button" onClick={()=>guard.requestNavigation(()=>router.push(`/activity?patientId=${plan.patientId}`))}>Ver actividad</button></>:<p>Todavía no existen sesiones para este plan.</p>}</div>}{tab==='review'&&<div className="atal-panel-placeholder"><Check/><h2>{statusLabel(plan.status)}</h2><p>{plan.status==='active'?'El paciente puede consultar e iniciar este plan.':plan.status==='paused'?'El paciente puede verlo, pero no iniciar una sesión.':'El historial se conserva y el plan no se ejecuta.'}</p><button type="button" onClick={()=>setMenu(true)}>Administrar estado</button></div>}{message&&<p className="atal-action-message" role="status">{message}</p>}<button type="button" className={`atal-submit-button atal-sticky-save${dirty?'':' is-neutral'}`} disabled={!dirty} onClick={save}>{dirty?<><Save/>Guardar cambios</>:<><Check/>Todo guardado</>}</button>{menu&&<div className="atal-overlay" onMouseDown={()=>setMenu(false)}><section className="atal-native-sheet" onMouseDown={e=>e.stopPropagation()}><header><h2>Acciones del plan</h2><button type="button" onClick={()=>setMenu(false)}>×</button></header><div className="atal-plan-action-menu">{plan.status!=='active'&&<button type="button" onClick={()=>changeStatus('activate')}><Play/>Activar</button>}{plan.status==='active'&&<button type="button" onClick={()=>changeStatus('pause')}><Pause/>Pausar</button>}{!['completed','archived'].includes(plan.status)&&<button type="button" onClick={()=>changeStatus('complete')}><Check/>Completar</button>}{plan.status!=='archived'&&<button type="button" onClick={()=>{setMenu(false);setConfirmArchive(true)}}><Archive/>Archivar</button>}{plan.status==='archived'&&<button type="button" onClick={()=>changeStatus('restore')}><Play/>Restaurar como borrador</button>}<button type="button" onClick={()=>guard.requestNavigation(()=>router.push(`/plans/${plan.id}/delivery`))}><FileDown/>Entregar al paciente</button><button type="button" onClick={()=>guard.requestNavigation(()=>{const copy=duplicatePlan(plan.id);router.push(`/plans/${copy.id}`)})}><Copy/>Duplicar</button><button type="button" className="is-danger" onClick={()=>guard.requestNavigation(()=>{try{deletePlan(plan.id);router.push('/plans')}catch(error){setMessage(error instanceof Error?error.message:'No se puede eliminar.');setMenu(false)}})}><Trash2/>Eliminar si es seguro</button></div></section></div>}{guard.hasPendingNavigation&&<Confirm title="¿Descartar cambios sin guardar?" text="Los cambios pendientes de este plan se perderán." confirm="Descartar cambios" onConfirm={guard.confirmDiscard} onCancel={guard.cancelDiscard}/>} {confirmArchive&&<Confirm title="¿Archivar este plan?" text="El paciente dejará de verlo como plan activo. Sus sesiones, reportes e historial se conservarán." confirm="Archivar plan" onConfirm={()=>changeStatus('archive')} onCancel={()=>setConfirmArchive(false)}/>} {conflict&&<div className="atal-overlay"><section className="atal-native-sheet"><header><h2>Ya existe un plan activo</h2></header><p>Elige qué hacer con el plan activo anterior antes de activar este.</p><div className="atal-plan-action-menu"><button type="button" onClick={()=>resolveConflict('pause')}>Pausar anterior</button><button type="button" onClick={()=>resolveConflict('complete')}>Completar anterior</button><button type="button" onClick={()=>resolveConflict('archive')}>Archivar anterior</button><button type="button" onClick={()=>setConflict(false)}>Cancelar</button></div></section></div>}</main>}</AtalShell>}
+  if (!plan) {
+    return <AtalShell><main className="atal-content atal-flow-page"><div className="atal-panel-placeholder"><CalendarDays /><h1>Plan no encontrado</h1><p>El plan solicitado no existe o fue eliminado.</p><button type="button" onClick={() => router.push('/plans')}>Volver a planes</button></div></main></AtalShell>;
+  }
 
-function statusLabel(status:string){return status==='active'?'Activo':status==='draft'?'Borrador':status==='paused'?'Pausado':status==='completed'?'Completado':'Archivado'}
-function Confirm({title,text,confirm,onConfirm,onCancel}:{title:string;text:string;confirm:string;onConfirm:()=>void;onCancel:()=>void}){return <div className="atal-overlay" onMouseDown={onCancel}><section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}><header><h2>{title}</h2></header><p>{text}</p><button type="button" className="atal-submit-button" onClick={onConfirm}>{confirm}</button><button type="button" onClick={onCancel}>Cancelar</button></section></div>}
+  const cancelChanges = () => {
+    for (const id of discardPlanEditSession(editSession.current)) void deleteExerciseWithMedia(id);
+    editSession.current = createPlanEditSession();
+    resetForm(plan);
+    setMessage('Cambios descartados');
+  };
+
+  const save = () => {
+    try {
+      const validation = validatePlanInput({ title, status: plan.status, exerciseIds });
+      if (!validation.valid) {
+        setMessage(Object.values(validation.errors)[0]);
+        return;
+      }
+      const outcome = updateLocalPlanWithUndo(plan.id, {
+        title: title.trim(),
+        focus: focus.trim(),
+        goal: goal.trim(),
+        duration: duration.trim(),
+        frequency: frequency.trim(),
+        progression: progression.trim(),
+        reportCriteria: criterion.trim(),
+        generalInstructions: instructions.trim(),
+        exerciseIds,
+      });
+      promotePlanEditSession(editSession.current);
+      setUndoReceipt(outcome.undo ?? null);
+      setMessage('Plan guardado');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No pudimos guardar el plan.');
+    }
+  };
+
+  const undoChange = () => {
+    if (!undoReceipt) return;
+    try {
+      undoLocalPlanChange(undoReceipt);
+      setUndoReceipt(null);
+      const restored = getLocalPlanById(plan.id);
+      if (restored) resetForm(restored);
+      setMessage('Cambio deshecho');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No pudimos deshacer el cambio.');
+    }
+  };
+
+  const performStatusChange = (action: StatusAction) => {
+    try {
+      if (action === 'activate') {
+        const validation = validatePlanInput({ title, status: 'active', exerciseIds });
+        if (!validation.valid) {
+          setMessage(Object.values(validation.errors)[0]);
+          return;
+        }
+        if (findActivePlanConflict(plan.id)) {
+          setConflict(true);
+          setMenu(false);
+          return;
+        }
+      }
+      if (action === 'activate') activatePlan(plan.id);
+      if (action === 'pause') pausePlan(plan.id);
+      if (action === 'complete') completePlan(plan.id);
+      if (action === 'archive') archivePlan(plan.id);
+      if (action === 'restore') restorePlan(plan.id);
+      setMessage('Estado actualizado');
+      setMenu(false);
+      setConfirmArchive(false);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No pudimos actualizar el plan.');
+    }
+  };
+
+  const changeStatus = (action: StatusAction) => {
+    if (dirty) {
+      guard.requestNavigation(() => performStatusChange(action));
+      return;
+    }
+    performStatusChange(action);
+  };
+
+  const resolveConflict = (resolution: 'pause' | 'complete' | 'archive') => {
+    try {
+      activatePlan(plan.id, resolution);
+      setConflict(false);
+      setMessage('Plan activado y plan anterior actualizado.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No pudimos activar el plan.');
+    }
+  };
+
+  const completed = sessions.filter((item) => item.status === 'completed').length;
+  const adherence = sessions.length ? Math.round(completed / sessions.length * 100) : null;
+  const updatedLabel = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short' }).format(new Date(plan.updatedAt));
+
+  return <AtalShell>{selecting ? <main className="atal-content atal-flow-page"><ExerciseSelector initialIds={exerciseIds} onBack={() => setSelecting(false)} onConfirm={(ids) => { setExerciseIds(ids); setSelecting(false); }} /></main> : <main className="atal-content atal-flow-page atal-plan-detail">
+    <div className="atal-flow-topbar"><button type="button" onClick={() => guard.requestNavigation(() => router.push('/plans'))}><ArrowLeft /></button><span>Plan clínico</span><button type="button" aria-label="Acciones del plan" onClick={() => setMenu(true)}><MoreHorizontal /></button></div>
+    <section className="atal-plan-identity"><Avatar name={patient?.name ?? 'Paciente'} /><div><h1>{plan.title}</h1><b>{patient?.name ?? 'Paciente no disponible'}</b><small>{statusLabel(plan.status)} · Actualizado el {updatedLabel}</small></div></section>
+    <nav className="atal-tabbar">{([['summary', 'Resumen'], ['exercises', 'Ejercicios'], ['progress', 'Progreso'], ['review', 'Estado']] as const).map(([value, label]) => <button type="button" key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>)}</nav>
+    {tab === 'summary' && <div className="atal-clinical-form"><fieldset><legend>Información del plan</legend><label className="atal-field"><span>Título</span><input value={title} onChange={(event) => setTitle(event.target.value)} /></label><label className="atal-field"><span>Enfoque</span><input value={focus} onChange={(event) => setFocus(event.target.value)} /></label><label className="atal-field"><span>Objetivo</span><textarea value={goal} onChange={(event) => setGoal(event.target.value)} /></label><div className="atal-field-grid"><label className="atal-field"><span>Duración</span><input value={duration} onChange={(event) => setDuration(event.target.value)} /></label><label className="atal-field"><span>Frecuencia</span><input value={frequency} onChange={(event) => setFrequency(event.target.value)} /></label></div><label className="atal-field"><span>Indicaciones</span><textarea value={instructions} onChange={(event) => setInstructions(event.target.value)} /></label></fieldset></div>}
+    {tab === 'exercises' && <div className="atal-plan-editor"><div className="atal-plan-facts"><span><small>Duración</small><b>{duration || 'Por definir'}</b></span><span><small>Frecuencia</small><b>{frequency || 'Por definir'}</b></span></div><div className="atal-section-title"><h2>Ejercicios</h2><button type="button" onClick={() => setSelecting(true)}><Plus /> Agregar ejercicio</button></div><SafePlanExerciseList exerciseIds={exerciseIds} onChange={setExerciseIds} onMessage={setMessage} onDuplicateCreated={(id) => stagePlanExercise(editSession.current, id)} /><section className="atal-plan-settings"><h2>Ajustes del plan</h2><label className="atal-field"><span><SlidersHorizontal /> Progresión</span><textarea value={progression} onChange={(event) => setProgression(event.target.value)} /></label><label className="atal-field"><span><Target /> Criterio de reporte</span><textarea value={criterion} onChange={(event) => setCriterion(event.target.value)} /></label></section></div>}
+    {tab === 'progress' && <div className="atal-panel-placeholder"><Target /><h2>Progreso real</h2>{sessions.length ? <><p>{completed} de {sessions.length} sesiones completadas.</p><strong>{adherence}% adherencia</strong><button type="button" onClick={() => guard.requestNavigation(() => router.push(`/activity?patientId=${plan.patientId}`))}>Ver actividad</button></> : <p>Todavía no existen sesiones para este plan.</p>}</div>}
+    {tab === 'review' && <div className="atal-panel-placeholder"><Check /><h2>{statusLabel(plan.status)}</h2><p>{plan.status === 'active' ? 'El paciente puede consultar e iniciar este plan.' : plan.status === 'paused' ? 'El paciente puede verlo, pero no iniciar una sesión.' : 'El historial se conserva y el plan no se ejecuta.'}</p><button type="button" onClick={() => setMenu(true)}>Administrar estado</button></div>}
+    {message && <p className="atal-action-message" role="status">{message}</p>}
+    {dirty && <button type="button" className="atal-submit-button is-neutral" onClick={cancelChanges}>Cancelar cambios</button>}
+    {undoReceipt && !dirty && <button type="button" className="atal-submit-button is-neutral" onClick={undoChange}>Deshacer cambio</button>}
+    <button type="button" className={`atal-submit-button atal-sticky-save${dirty ? '' : ' is-neutral'}`} disabled={!dirty} onClick={save}>{dirty ? <><Save />Guardar cambios</> : <><Check />Todo guardado</>}</button>
+    {menu && <div className="atal-overlay" onMouseDown={() => setMenu(false)}><section className="atal-native-sheet" onMouseDown={(event) => event.stopPropagation()}><header><h2>Acciones del plan</h2><button type="button" onClick={() => setMenu(false)}>×</button></header><div className="atal-plan-action-menu">{plan.status !== 'active' && <button type="button" onClick={() => changeStatus('activate')}><Play />Activar</button>}{plan.status === 'active' && <button type="button" onClick={() => changeStatus('pause')}><Pause />Pausar</button>}{!['completed', 'archived'].includes(plan.status) && <button type="button" onClick={() => changeStatus('complete')}><Check />Completar</button>}{plan.status !== 'archived' && <button type="button" onClick={() => { setMenu(false); setConfirmArchive(true); }}><Archive />Archivar</button>}{plan.status === 'archived' && <button type="button" onClick={() => changeStatus('restore')}><Play />Restaurar como borrador</button>}<button type="button" onClick={() => guard.requestNavigation(() => router.push(`/plans/${plan.id}/delivery`))}><FileDown />Entregar al paciente</button><button type="button" onClick={() => guard.requestNavigation(() => { const copy = duplicatePlan(plan.id); router.push(`/plans/${copy.id}`); })}><Copy />Duplicar</button><button type="button" className="is-danger" onClick={() => guard.requestNavigation(() => { try { deletePlan(plan.id); router.push('/plans'); } catch (error) { setMessage(error instanceof Error ? error.message : 'No se puede eliminar.'); setMenu(false); } })}><Trash2 />Eliminar si es seguro</button></div></section></div>}
+    {guard.hasPendingNavigation && <Confirm title="¿Descartar cambios sin guardar?" text="Los cambios pendientes de este plan se perderán." confirm="Descartar cambios" onConfirm={guard.confirmDiscard} onCancel={guard.cancelDiscard} />}
+    {confirmArchive && <Confirm title="¿Archivar este plan?" text="El paciente dejará de verlo como plan activo. Sus sesiones, reportes e historial se conservarán." confirm="Archivar plan" onConfirm={() => changeStatus('archive')} onCancel={() => setConfirmArchive(false)} />}
+    {conflict && <div className="atal-overlay"><section className="atal-native-sheet"><header><h2>Ya existe un plan activo</h2></header><p>Elige qué hacer con el plan activo anterior antes de activar este.</p><div className="atal-plan-action-menu"><button type="button" onClick={() => resolveConflict('pause')}>Pausar anterior</button><button type="button" onClick={() => resolveConflict('complete')}>Completar anterior</button><button type="button" onClick={() => resolveConflict('archive')}>Archivar anterior</button><button type="button" onClick={() => setConflict(false)}>Cancelar</button></div></section></div>}
+  </main>}</AtalShell>;
+}
+
+function statusLabel(status: string) {
+  return status === 'active' ? 'Activo' : status === 'draft' ? 'Borrador' : status === 'paused' ? 'Pausado' : status === 'completed' ? 'Completado' : 'Archivado';
+}
+
+function Confirm({ title, text, confirm, onConfirm, onCancel }: { title: string; text: string; confirm: string; onConfirm: () => void; onCancel: () => void }) {
+  return <div className="atal-overlay" onMouseDown={onCancel}><section className="atal-native-sheet" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2></header><p>{text}</p><button type="button" className="atal-submit-button" onClick={onConfirm}>{confirm}</button><button type="button" onClick={onCancel}>Cancelar</button></section></div>;
+}

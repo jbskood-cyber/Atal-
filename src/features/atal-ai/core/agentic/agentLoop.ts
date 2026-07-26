@@ -8,10 +8,12 @@ import type {
   AgentStepResult,
   AgentTaskState,
 } from './contracts';
+import { AGENT_TOOL_CALL_REPAIR_MARKER } from './toolCallingPolicy';
 
 const DEFAULT_MAX_STEPS = 8;
 const MAX_RESULT_CHARS = 40_000;
 const MAX_REPAIRABLE_FAILURES = 1;
+const MAX_PSEUDO_TOOL_REPAIRS = 1;
 
 function now(): string {
   return new Date().toISOString();
@@ -120,6 +122,41 @@ function providerFailureMessage(error: unknown): string {
     : 'Atal IA no pudo continuar la tarea. No se perdió ningún cambio.';
 }
 
+function lastSuccessfulResult(task: AgentTaskState): Extract<ToolExecutionResult, { status: 'success' }> | undefined {
+  for (let index = task.completed.length - 1; index >= 0; index -= 1) {
+    const result = task.completed[index]?.result;
+    if (result?.status === 'success') return result;
+  }
+  return undefined;
+}
+
+function looksLikePseudoToolText(text: string): boolean {
+  const candidate = text.trim();
+  if (!candidate.startsWith('{') || !candidate.endsWith('}')) return false;
+  try {
+    const parsed = JSON.parse(candidate) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    return ['action', 'tool', 'function', 'functionName'].some((key) => typeof parsed[key] === 'string' && Boolean((parsed[key] as string).trim()));
+  } catch {
+    return false;
+  }
+}
+
+function pseudoToolRepairs(task: AgentTaskState): number {
+  return task.history.reduce((count, content) => count + content.parts.filter(
+    (part) => typeof part.text === 'string' && part.text.includes(AGENT_TOOL_CALL_REPAIR_MARKER),
+  ).length, 0);
+}
+
+function pseudoToolRepairContent(): AgentHistoryContent {
+  return {
+    role: 'user',
+    parts: [{
+      text: `${AGENT_TOOL_CALL_REPAIR_MARKER} La respuesta anterior describió una acción como JSON de texto, pero eso no ejecuta nada. Usa exclusivamente una de las funciones declaradas disponibles en este turno. No inventes nombres de herramientas y no respondas con JSON que simule una llamada.`,
+    }],
+  };
+}
+
 export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutcome> {
   let task = structuredClone(input.task);
   const lastResults: AgentStepResult[] = [];
@@ -143,7 +180,18 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       if (input.signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
         task = { ...task, status: 'cancelled', finalText: 'Procesamiento cancelado. El trabajo completado se conservó.', updatedAt: now() };
       } else {
-        task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+        const successfulResult = lastSuccessfulResult(task);
+        if (successfulResult) {
+          task = {
+            ...task,
+            status: 'completed',
+            finalText: successfulResult.message,
+            error: undefined,
+            updatedAt: now(),
+          };
+        } else {
+          task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+        }
       }
       break;
     }
@@ -156,9 +204,26 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     if (!turn.calls.length) {
       const finalText = turn.text.trim();
       if (!finalText) {
+        const successfulResult = lastSuccessfulResult(task);
+        if (successfulResult) {
+          task.status = 'completed';
+          delete task.error;
+          task.finalText = successfulResult.message;
+          break;
+        }
         task.status = 'failed';
         task.error = 'EMPTY_MODEL_TURN';
         task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+        break;
+      }
+      if (task.allowedTools.length > 0 && looksLikePseudoToolText(finalText) && pseudoToolRepairs(task) < MAX_PSEUDO_TOOL_REPAIRS) {
+        task.history.push(pseudoToolRepairContent());
+        continue;
+      }
+      if (task.allowedTools.length > 0 && looksLikePseudoToolText(finalText)) {
+        task.status = 'failed';
+        task.error = 'MALFORMED_TOOL_OUTPUT';
+        task.finalText = 'Atal IA no recibió una llamada de herramienta válida. No se aplicó ningún cambio; vuelve a intentarlo.';
         break;
       }
       task.status = 'completed';

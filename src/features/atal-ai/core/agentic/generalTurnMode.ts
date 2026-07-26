@@ -46,7 +46,7 @@ const draftCommitPatterns = [
 ];
 
 const explicitActionPatterns = [
-  /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
+  /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|ajusta|corrige|edita|quita|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
   ...draftCommitPatterns,
 ];
 
@@ -56,18 +56,27 @@ const draftEditPatterns = [
 ];
 
 const workspaceReadPatterns = [
+  /(?:^|[^\p{L}\p{N}_])(?:qué|que)\s+(?:pacientes|planes|ejercicios|sesiones|reportes|expedientes)\b.{0,72}\b(?:tengo|tienes|tenemos|hay|existen|registrad[oa]s?|guardad[oa]s?|activ[oa]s?|recientes?)\b/iu,
   /\b(?:cuántos|cuantos|cuántas|cuantas|cuál|cual|cuáles|cuales|resume|resúmeme|muestra|dime|revisa|consulta|busca|encuentra|abre|abrir|navega)\b.{0,72}\b(?:paciente|pacientes|expediente|plan|planes|ejercicio|ejercicios|sesión|sesion|sesiones|reporte|reportes|actividad|ajustes|entrega)\b/i,
   /\b(?:último|ultima|última|anterior|actual|activo|activa|reciente|recientes)\b.{0,48}\b(?:plan|sesión|sesion|reporte|expediente|paciente)\b/i,
   /\b(?:de|del|para)\s+[A-ZÁÉÍÓÚÑ][\p{L}]+/u,
   /\b(?:este|esta|ese|esa|aquel|aquella|su)\s+(?:paciente|plan|sesión|sesion|expediente|reporte)\b/i,
-  /\b(?:qué|que)\s+cambi(?:ó|o|a)\b.{0,48}\b(?:anterior|última|ultima|previa|previo)\b/i,
+  /(?:^|[^\p{L}\p{N}_])(?:qué|que)\s+cambi(?:ó|o|a)\b.{0,48}\b(?:anterior|última|ultima|previa|previo)\b/iu,
   /\b(?:respecto a|comparad[oa] con|frente a)\s+(?:la|el)\s+(?:anterior|últim[oa]|previ[oa])\b/i,
 ];
 
 const conceptualPatterns = [
-  /^\s*(?:qué|que|cómo|como|por qué|por que|para qué|para que|cuándo|cuando)\b/i,
+  /^(?:qué|que|cómo|como|por qué|por que|para qué|para que|cuándo|cuando)(?=\s|[?¡!,:;.]|$)/i,
   /\b(?:significa|definición|definicion|explica|explícame|explicame|cómo funciona|como funciona|para qué sirve|para que sirve|qué puede hacer|que puede hacer)\b/i,
 ];
+
+function classificationText(text: string): string {
+  // Spanish users naturally start questions with ¿/¡. JavaScript \b is ASCII
+  // oriented and is unreliable at boundaries that end in accented letters
+  // such as “qué”. Strip only leading inverted punctuation; preserve the rest
+  // of the original text for intent semantics.
+  return text.trim().replace(/^[¿¡]+\s*/, '');
+}
 
 /**
  * Safety classification used only to authorize tool categories.
@@ -75,7 +84,7 @@ const conceptualPatterns = [
  * the tools that Atal makes available for the current turn.
  */
 export function classifyAgentTurn(text: string): AgentTurnClassification {
-  const value = text.trim();
+  const value = classificationText(text);
   if (!value) return { kind: 'conversation', allowedToolKinds: [] };
 
   if (deferredMutationPatterns.some((pattern) => pattern.test(value))) {

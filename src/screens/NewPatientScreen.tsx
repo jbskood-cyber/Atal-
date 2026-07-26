@@ -4,7 +4,8 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Camera, Check, Clock3, RefreshCw, Save } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
-import { createPatientWithRecord,useAtalStore } from '@/src/data/atalStore';
+import { useAtalStore } from '@/src/data/atalStore';
+import { createLocalPatientWithRecord } from '@/src/data/localPatients';
 import { validatePatientInput } from '@/src/domain/validation';
 
 export function NewPatientScreen() {
@@ -24,8 +25,15 @@ export function NewPatientScreen() {
     const validation=validatePatientInput({name,diagnosis,age:ageValue});
     if(!validation.valid){setError(Object.values(validation.errors)[0]);return;}
     setError('');
-    const {patient}=createPatientWithRecord({name:name.trim(),diagnosis:diagnosis.trim(),age:ageValue,birthDate:'',sex:'',affectedArea:'',status:'active',visitType:visit,contact:{phone:phone.trim(),email:'',address:'',emergencyContact:''}},{date:new Date().toISOString(),reasonForVisit:diagnosis.trim(),evolution:'',affectedArea:'',symptoms:[],painLevel:null,providedDiagnosis:diagnosis.trim(),functionalLimitations:[],goals:[],relevantHistory:[],precautions:[],clinicalNotes:notes.trim(),planId:'',professional});
-    router.push(`/patients/${patient.id}`);
+    try {
+      const result=createLocalPatientWithRecord(
+        {name:name.trim(),diagnosis:diagnosis.trim(),age:ageValue,birthDate:'',sex:'',affectedArea:'',status:'active',visitType:visit,contact:{phone:phone.trim(),email:'',address:'',emergencyContact:''}},
+        {date:new Date().toISOString(),reasonForVisit:diagnosis.trim(),evolution:'',affectedArea:'',symptoms:[],painLevel:null,providedDiagnosis:diagnosis.trim(),functionalLimitations:[],goals:[],relevantHistory:[],precautions:[],clinicalNotes:notes.trim(),planId:'',professional},
+      );
+      router.push(`/patients/${result.data.patientId}`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No pudimos guardar el paciente.');
+    }
   };
 
   return <AtalShell>

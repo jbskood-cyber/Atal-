@@ -20,7 +20,7 @@ jobs:
       - name: Install application dependencies
         run: npm ci
       - name: Install Playwright test runner without changing the lockfile
-        run: npm install --no-save --no-package-lock @playwright/test@1.61.1
+        run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
         run: npx playwright install --with-deps chromium
       - name: Run deterministic Atal AI E2E suite

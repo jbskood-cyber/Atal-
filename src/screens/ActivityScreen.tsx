@@ -7,6 +7,7 @@ import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { useAtalStore, type ActivityEvent } from '@/src/data/atalStore';
 import { sessionNeedsAttention, summarizeClinicalSessions } from '@/src/domain/clinicalMetrics';
+import { buildActivityIndex, filterActivityTimeline } from '@/src/domain/queries/activityIndex';
 
 type View = 'tracking' | 'reports';
 
@@ -26,26 +27,20 @@ export function ActivityScreen() {
   const [query, setQuery] = useState('');
   const [pendingOnly, setPendingOnly] = useState(false);
   const state = useAtalStore((store) => ({ sessions: store.sessions, patients: store.patients, plans: store.plans, events: store.events }));
+  const activityIndex = useMemo(() => buildActivityIndex(state), [state.patients, state.plans]);
   const summary = useMemo(() => summarizeClinicalSessions(patientFilter ? state.sessions.filter((session) => session.patientId === patientFilter) : state.sessions), [state.sessions, patientFilter]);
   const normalizedQuery = query.trim().toLowerCase();
 
   useEffect(() => setView(requestedView), [requestedView]);
 
   const reports = useMemo(() => summary.sessions.filter((session) => {
-    const patient = state.patients.find((item) => item.id === session.patientId);
-    const plan = state.plans.find((item) => item.id === session.planId);
+    const patient = activityIndex.patientById.get(session.patientId);
+    const plan = activityIndex.planById.get(session.planId);
     const text = `${patient?.name ?? ''} ${patient?.diagnosis ?? ''} ${plan?.title ?? ''}`.toLowerCase();
     return (!pendingOnly || !session.reviewedAt) && text.includes(normalizedQuery);
-  }), [summary.sessions, state.patients, state.plans, pendingOnly, normalizedQuery]);
+  }), [summary.sessions, activityIndex, pendingOnly, normalizedQuery]);
 
-  const timeline = useMemo(() => [...state.events]
-    .filter((event) => !patientFilter || event.patientId === patientFilter)
-    .filter((event) => {
-      const patient = state.patients.find((item) => item.id === event.patientId);
-      const plan = state.plans.find((item) => item.id === event.planId);
-      return `${event.title} ${event.detail} ${patient?.name ?? ''} ${plan?.title ?? ''}`.toLowerCase().includes(normalizedQuery);
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [state.events, state.patients, state.plans, patientFilter, normalizedQuery]);
+  const timeline = useMemo(() => filterActivityTimeline(state.events, activityIndex, patientFilter, normalizedQuery), [state.events, activityIndex, patientFilter, normalizedQuery]);
 
   const changeView = (next: View) => {
     setView(next);
@@ -61,12 +56,12 @@ export function ActivityScreen() {
     <div className="atal-list-meta"><b>{view === 'tracking' ? 'Historial clínico' : 'Reportes de sesión'}</b><span>{view === 'tracking' ? timeline.length : reports.length} resultados</span></div>
     <div className="atal-activity-feed">
       {view === 'tracking' ? timeline.map((event) => {
-        const patient = state.patients.find((item) => item.id === event.patientId);
-        const plan = state.plans.find((item) => item.id === event.planId);
+        const patient = event.patientId ? activityIndex.patientById.get(event.patientId) : undefined;
+        const plan = event.planId ? activityIndex.planById.get(event.planId) : undefined;
         return <button type="button" key={event.id} onClick={() => router.push(eventDestination(event))}><Avatar name={patient?.name ?? 'Atal'} /><span><b>{event.title}</b><small>{patient?.name ?? 'Actividad general'}{plan ? ` · ${plan.title}` : ''}</small><em>{event.detail}{event.origin === 'atal-ai' ? ' · Atal IA' : ''}</em></span><time><CalendarDays />{new Date(event.createdAt).toLocaleDateString('es-MX')}</time><i /><ChevronRight /></button>;
       }) : reports.map((session) => {
-        const patient = state.patients.find((item) => item.id === session.patientId);
-        const plan = state.plans.find((item) => item.id === session.planId);
+        const patient = activityIndex.patientById.get(session.patientId);
+        const plan = activityIndex.planById.get(session.planId);
         const attention = sessionNeedsAttention(session);
         return <button type="button" key={session.id} onClick={() => router.push(`/activity/${session.id}`)}><Avatar name={patient?.name ?? 'Paciente'} /><span><b>{patient?.name ?? 'Paciente no disponible'}</b><small>{plan?.title ?? 'Plan histórico'} · {session.status === 'completed' ? 'Completada' : 'Parcial'}</small><em>Dolor {session.startPain}/10 → {session.endPain}/10 · {session.reviewedAt ? 'Revisado' : 'Pendiente'}</em></span><time><CalendarDays />{new Date(session.completedAt).toLocaleDateString('es-MX')}</time><i className={attention ? 'is-attention' : ''} /><ChevronRight /></button>;
       })}

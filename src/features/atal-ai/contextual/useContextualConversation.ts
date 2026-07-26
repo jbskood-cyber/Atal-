@@ -14,7 +14,7 @@ import { executeUndo } from '../core/undoEngine';
 import { getAIDraft, saveAIConversation, saveAIDraft } from '../data/aiRepository';
 import type { AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest } from '../types';
 import type { ContextualAIAction } from './actions';
-import { workContextForContext } from './conversationAdapter';
+import { contextualConversationKey, workContextForContext } from './conversationAdapter';
 import { readConversationById } from './repository';
 import type { ContextualAIContext } from './types';
 
@@ -95,7 +95,11 @@ export function useContextualConversation({
   onDraftReady,
 }: UseContextualConversationInput) {
   const navigate = useNavigate();
-  const initial = useMemo(() => conversationId ? readConversationById(conversationId) : null, [conversationId]);
+  const contextKey = useMemo(() => context ? contextualConversationKey(context) : '', [context]);
+  const initial = useMemo(
+    () => conversationId && contextKey ? readConversationById(conversationId, contextKey) : null,
+    [conversationId, contextKey],
+  );
   const [conversation, setConversation] = useState<AIConversation | null>(initial);
   const [draft, setDraft] = useState<AtalAIDraft | null>(() => draftId ? getAIDraft(draftId) : null);
   const [notice, setNotice] = useState('');
@@ -108,7 +112,7 @@ export function useContextualConversation({
   const store = useAtalStore((state) => state);
 
   useEffect(() => {
-    const next = conversationId ? readConversationById(conversationId) : null;
+    const next = conversationId && contextKey ? readConversationById(conversationId, contextKey) : null;
     setConversation(next);
     setDraft(next ? getAIDraft(next.draftId) : null);
     setNotice('');
@@ -116,7 +120,7 @@ export function useContextualConversation({
     setPendingConfirmation(null);
     setConfirmationOpen(next?.agentTask?.status === 'needs-confirmation');
     setForceApply(false);
-  }, [conversationId]);
+  }, [conversationId, contextKey]);
 
   useEffect(() => {
     if (conversation) saveAIConversation(conversation);

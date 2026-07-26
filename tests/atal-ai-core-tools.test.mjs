@@ -54,6 +54,50 @@ test('patient search is bounded and leaves all state unchanged', () => {
   assert.equal(port.mutationCount(), 0);
 });
 
+test('universal patient list returns concrete patient names in the canonical success message', () => {
+  const state = validState();
+  state.patients[0].name = 'Paciente E2E';
+  state.patients.push({ ...state.patients[0], id: 'patient-2', name: 'Paciente Segunda' });
+  const port = memoryPort(state);
+  const before = structuredClone(port.read());
+  const result = execute(port, invocation('app.read', { resource: 'patients', limit: 10 }));
+  assert.equal(result.status, 'success');
+  assert.match(result.message, /Paciente E2E/);
+  assert.match(result.message, /Paciente Segunda/);
+  assert.equal(result.data.total, 2);
+  assert.deepEqual(port.read(), before);
+  assert.equal(port.mutationCount(), 0);
+});
+
+test('universal collection reads keep canonical labels in the success message for provider-failure fallback', () => {
+  const state = validState();
+  state.plans[0].title = 'Plan Hombro QA';
+  state.exercises[0].name = 'Rotación externa QA';
+  state.events[0].title = 'Sesión QA completada';
+  state.sessions[0].completedAt = '2026-07-21T18:10:00.000Z';
+  const port = memoryPort(state);
+  const before = structuredClone(port.read());
+
+  const plans = execute(port, invocation('app.read', { resource: 'plans', limit: 10 }));
+  assert.equal(plans.status, 'success');
+  assert.match(plans.message, /Plan Hombro QA/);
+
+  const exercises = execute(port, invocation('app.read', { resource: 'exercises', limit: 10 }));
+  assert.equal(exercises.status, 'success');
+  assert.match(exercises.message, /Rotación externa QA/);
+
+  const sessions = execute(port, invocation('app.read', { resource: 'sessions', limit: 10 }));
+  assert.equal(sessions.status, 'success');
+  assert.match(sessions.message, /2026-07-21T18:10:00\.000Z/);
+
+  const activity = execute(port, invocation('app.read', { resource: 'activity', limit: 10 }));
+  assert.equal(activity.status, 'success');
+  assert.match(activity.message, /Sesión QA completada/);
+
+  assert.deepEqual(port.read(), before);
+  assert.equal(port.mutationCount(), 0);
+});
+
 test('patient and session summaries require and use uniquely resolved patient', () => {
   const port = memoryPort();
   const patientSummary = execute(port, invocation('patient.summarize', { patient: { type: 'patient', id: 'patient-1' } }, [{ type: 'patient', id: 'patient-1' }]));
@@ -115,13 +159,13 @@ test('replace active changes two plans atomically and undo restores both', () =>
     { type: 'plan', id: 'plan-2' },
   ]);
   const result = execute(port, current, proof(current, 'explicit'));
-  assert.equal(result.status, 'success');
+  assert.equal(result.status, 'success', JSON.stringify(result));
   assert.deepEqual(port.read().plans.map((item) => [item.id, item.status]), [['plan-1', 'paused'], ['plan-2', 'active']]);
   executeUndo(result.undo, context({ now: '2026-07-21T18:00:20.000Z' }), port);
   assert.deepEqual(port.read().plans.map((item) => [item.id, item.status]), [['plan-1', 'active'], ['plan-2', 'draft']]);
 });
 
-test('settings rejects unknown keys and export returns a client descriptor without DOM or network', () => {
+test('settings rejects unknown keys and export returns a client descriptor without DOM or network after explicit confirmation', () => {
   const port = memoryPort();
   const invalidSettings = invocation('settings.update', { patch: { professionalName: 'No permitido' } }, [{ type: 'settings' }]);
   const invalid = execute(port, invalidSettings, proof(invalidSettings));
@@ -133,7 +177,9 @@ test('settings rejects unknown keys and export returns a client descriptor witho
   let networkCalls = 0;
   globalThis.fetch = () => { networkCalls += 1; throw new Error('network forbidden'); };
   try {
-    const result = execute(port, exportInvocation, proof(exportInvocation, 'explicit'));
+    const gate = execute(port, exportInvocation);
+    assert.equal(gate.status, 'confirmation-required');
+    const result = execute(port, gate.invocation, proof(gate.invocation, 'explicit'));
     assert.equal(result.status, 'success');
     assert.equal(result.clientEffect.type, 'download');
     assert.match(result.clientEffect.filename, /atal-pacientes/);

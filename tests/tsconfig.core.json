@@ -15,9 +15,13 @@
     "../src/features/atal-ai/core/**/*.ts",
     "../src/features/atal-ai/contextual/**/*.ts",
     "../src/features/atal-ai/api/agentToolCatalog.ts",
+    "../src/features/atal-ai/api/agentPrompt.ts",
     "../src/features/atal-ai/types.ts",
     "../src/data/atalStore.ts",
     "../src/data/atal-demo.ts",
+    "../src/domain/actions/**/*.ts",
+    "../src/domain/queries/activityIndex.ts",
+    "../src/domain/queries/**/*.ts",
     "../src/domain/planAssociation.ts",
     "../src/features/clinical-record/types.ts",
     "../src/features/guided-session/types.ts"

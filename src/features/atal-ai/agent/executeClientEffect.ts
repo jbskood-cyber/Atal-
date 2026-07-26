@@ -58,6 +58,39 @@ function currentSession(patientId: string, planId: string) {
   return readSessionDraft(patientId, plan).draft ?? createSessionDraft(patientId, plan);
 }
 
+function recordSessionAIEvent(
+  environment: ClientEffectEnvironment,
+  input: {
+    toolName: 'session.start_or_resume' | 'session.update_draft' | 'session.complete';
+    riskLevel: 'reversible-write' | 'sensitive-write';
+    title: string;
+    detail: string;
+    patientId: string;
+    planId: string;
+    sessionId?: string;
+    changedFields: string[];
+  },
+) {
+  recordAtalAIEvent({
+    title: input.title,
+    detail: input.detail,
+    entity: input.sessionId ? 'session' : 'patient',
+    entityId: input.sessionId ?? input.patientId,
+    changedFields: input.changedFields,
+    conversationId: environment.conversationId,
+    draftId: environment.draftId,
+    toolName: input.toolName,
+    toolVersion: 1,
+    riskLevel: input.riskLevel,
+    affectedEntities: [
+      { type: 'patient', id: input.patientId },
+      { type: 'plan', id: input.planId },
+      ...(input.sessionId ? [{ type: 'session' as const, id: input.sessionId }] : []),
+    ],
+    outcome: 'success',
+  });
+}
+
 async function sessionEffect(effect: Extract<ClientEffect, { type: 'session-draft' }>, environment: ClientEffectEnvironment): Promise<ClientEffectOutcome> {
   let draft = applySessionPatch(currentSession(effect.patientId, effect.planId), effect.draft);
   if (effect.operation === 'start') {
@@ -65,17 +98,45 @@ async function sessionEffect(effect: Extract<ClientEffect, { type: 'session-draf
     draft = { ...draft, startedAt, stage: draft.stage === 'prepare' ? 'exercise' : draft.stage, status: 'in_progress' };
     writeSessionDraft(draft);
     recordClinicalSessionStarted(effect.patientId, effect.planId, startedAt);
+    recordSessionAIEvent(environment, {
+      toolName: 'session.start_or_resume',
+      riskLevel: 'reversible-write',
+      title: 'Atal IA inició una sesión guiada',
+      detail: 'Sesión guiada preparada o recuperada.',
+      patientId: effect.patientId,
+      planId: effect.planId,
+      changedFields: ['sessionDraft', 'startedAt', 'status'],
+    });
     const href = `/patients/${effect.patientId}/session`;
     environment.navigate(href);
     return { message: 'Sesión guiada preparada.', href };
   }
   if (effect.operation === 'update') {
     writeSessionDraft(draft);
+    recordSessionAIEvent(environment, {
+      toolName: 'session.update_draft',
+      riskLevel: 'reversible-write',
+      title: 'Atal IA actualizó una sesión guiada',
+      detail: 'Progreso de sesión guardado.',
+      patientId: effect.patientId,
+      planId: effect.planId,
+      changedFields: Object.keys(effect.draft),
+    });
     return { message: 'Progreso de sesión guardado.', href: `/patients/${effect.patientId}/session` };
   }
   draft = { ...draft, status: effect.draft.status === 'completed' ? 'completed' : 'partial', completedAt: new Date().toISOString(), stage: 'summary' };
   const session = saveCompletedClinicalSession(effect.patientId, effect.planId, draft);
   clearSessionDraft(effect.patientId, effect.planId);
+  recordSessionAIEvent(environment, {
+    toolName: 'session.complete',
+    riskLevel: 'sensitive-write',
+    title: 'Atal IA completó una sesión guiada',
+    detail: draft.status === 'completed' ? 'Sesión completada y guardada.' : 'Sesión parcial guardada.',
+    patientId: effect.patientId,
+    planId: effect.planId,
+    sessionId: session.id,
+    changedFields: ['status', 'completedAt', ...Object.keys(effect.draft)],
+  });
   const href = `/activity/${session.id}`;
   environment.navigate(href);
   return { message: draft.status === 'completed' ? 'Sesión completada y guardada.' : 'Sesión parcial guardada.', href, data: { sessionId: session.id } };
@@ -91,7 +152,7 @@ async function mediaEffect(effect: Extract<ClientEffect, { type: 'exercise-media
   updateExercise(effect.exerciseId, { media: { type: effect.mediaType, mediaId: media.id } });
   await Promise.all(artifacts.map((artifact) => updateAIArtifact(artifact!.id, {
     status: 'applied',
-    linkedResult: { entityType: 'exercise', entityId: effect.exerciseId, href: `/exercises/${effect.exerciseId}` },
+    linkedResult: { entityType: 'exercise', entityId: effect.exerciseId, href: `/exercises/${exercise.id}` },
   })));
   recordAtalAIEvent({
     title: 'Multimedia de ejercicio actualizada', detail: exercise.name, entity: 'exercise', entityId: exercise.id,

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Bell, ChevronRight, CircleUserRound, HelpCircle, LockKeyhole, Moon, Palette, Smartphone, Sparkles } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
-import { updateSettings, useAtalStore } from '@/src/data/atalStore';
+import { useAtalStore } from '@/src/data/atalStore';
+import { updateLocalSettings } from '@/src/data/settingsRepository';
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -32,9 +33,9 @@ export function SettingsScreen() {
         </button>
 
         <SettingsGroup title="Experiencia">
-          <ToggleRow icon={<Bell />} title="Notificaciones" detail="Alertas de sesiones y pacientes" value={settings.notifications} onChange={(notifications) => updateSettings({ notifications })} />
-          <ToggleRow icon={<Smartphone />} title="Vibración al guardar" detail="Confirma acciones compatibles en tu dispositivo" value={settings.haptics} onChange={(haptics) => updateSettings({ haptics })} />
-          <ToggleRow icon={<Palette />} title="Vista compacta" detail="Reduce espacios para mostrar más información" value={settings.compact} onChange={(compact) => updateSettings({ compact })} />
+          <ToggleRow icon={<Bell />} title="Notificaciones" detail="Alertas de sesiones y pacientes" value={settings.notifications} onChange={(notifications) => updateLocalSettings({ notifications })} />
+          <ToggleRow icon={<Smartphone />} title="Vibración al guardar" detail="Confirma acciones compatibles en tu dispositivo" value={settings.haptics} onChange={(haptics) => updateLocalSettings({ haptics })} />
+          <ToggleRow icon={<Palette />} title="Vista compacta" detail="Reduce espacios para mostrar más información" value={settings.compact} onChange={(compact) => updateLocalSettings({ compact })} />
         </SettingsGroup>
 
         <SettingsGroup title="Cuenta y seguridad">

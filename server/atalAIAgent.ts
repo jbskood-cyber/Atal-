@@ -8,11 +8,21 @@ import {
 } from '../src/features/atal-ai/api/agentToolCatalog';
 import type { AgentFunctionCall, AgentHistoryContent, AgentModelTurn, AgentTurnRequest } from '../src/features/atal-ai/core/agentic/contracts';
 import {
+  agentGenerationConfigForModel,
+  emptyModelTurnError,
+  geminiTurnDiagnosticsFromResponse,
+  mergeGeminiTurnDiagnostics,
+  type GeminiTurnDiagnostics,
+} from '../src/features/atal-ai/core/agentic/geminiRuntimePolicy';
+import {
   DEFAULT_GEMINI_MODEL_CASCADE,
   isTransientGeminiFailure,
   resolveGeminiModelCascade,
   runWithGeminiFallback,
 } from '../src/features/atal-ai/core/agentic/modelFallback';
+import { createStreamModelContentCollector } from '../src/features/atal-ai/core/agentic/streamModelContent';
+import { selectSessionPatchKeys } from '../src/features/atal-ai/core/agentic/sessionPatchSelection';
+import { selectSettingsPreferenceKeys } from '../src/features/atal-ai/core/agentic/settingsPreferenceSelection';
 import { shouldRequireAgentToolCall } from '../src/features/atal-ai/core/agentic/toolCallingPolicy';
 import { AGENT_MAX_ACTIVE_TOOLS } from '../src/features/atal-ai/core/agentic/toolSelection';
 import { MAX_AI_REQUEST_BODY_BYTES } from '../src/features/atal-ai/domain/attachmentLimits';
@@ -53,13 +63,18 @@ function rawMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error ?? '');
 }
 
+function logSafeProviderFailure(error: unknown): void {
+  const message = rawMessage(error);
+  if (message.startsWith('MODEL_EMPTY_RESPONSE')) console.warn(`[AtalAI] ${message}`);
+}
+
 function safeMessage(error: unknown): string {
   const message = rawMessage(error);
   if (/API key|GEMINI_API_KEY|403|401/i.test(message)) return 'Atal IA no está configurada todavía. Añade GEMINI_API_KEY como secreto del proyecto.';
   if (/quota|429|RESOURCE_EXHAUSTED|503|UNAVAILABLE|overload|timed? out|timeout|fetch failed|network/i.test(message)) {
     return 'Atal IA está temporalmente ocupada. No se perdió ningún cambio; vuelve a intentarlo en unos segundos.';
   }
-  if (/MODEL_EMPTY_RESPONSE/i.test(message)) return 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+  if (/MODEL_EMPTY_RESPONSE/i.test(message)) return 'Atal IA no recibió una respuesta utilizable del modelo. Probamos modelos alternativos automáticamente; vuelve a intentarlo.';
   if (/CORE_INPUT_INVALID|schema|function call|response|JSON/i.test(message)) return 'No pude completar esa consulta con la información disponible. Puedes reformularla o decirme qué necesitas revisar.';
   if (/CORE_ENTITY_NOT_FOUND/i.test(message)) return 'No encontré una entidad que coincida con la solicitud.';
   if (/TOOL_NOT_ALLOWED/i.test(message)) return 'Esa acción no está disponible desde este contexto.';
@@ -91,11 +106,52 @@ function validatePayload(payload: AgentTurnRequest): AgentTurnRequest {
   return { ...payload, allowedTools, conversationHistory };
 }
 
-function toolDeclaration(entry: AgentToolCatalogEntry) {
+function requestScopedInputSchema(entry: AgentToolCatalogEntry, text: string): AgentToolCatalogEntry['inputSchema'] {
+  const requestedKeys = entry.name === 'settings.update'
+    ? selectSettingsPreferenceKeys(text)
+    : entry.name === 'session.complete'
+      ? selectSessionPatchKeys(text)
+      : [];
+  if (!requestedKeys.length) return entry.inputSchema;
+
+  const patch = entry.inputSchema.properties.patch;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return entry.inputSchema;
+  const patchSchema = patch as { type?: unknown; properties?: unknown; required?: unknown; additionalProperties?: unknown; description?: unknown };
+  if (!patchSchema.properties || typeof patchSchema.properties !== 'object' || Array.isArray(patchSchema.properties)) return entry.inputSchema;
+  const sourceProperties = patchSchema.properties as Record<string, unknown>;
+  const scopedProperties = Object.fromEntries(
+    requestedKeys
+      .filter((key) => Object.prototype.hasOwnProperty.call(sourceProperties, key))
+      .map((key) => [key, sourceProperties[key]]),
+  );
+  const required = Object.keys(scopedProperties);
+  if (!required.length) return entry.inputSchema;
+
+  const topLevelRequired = [...new Set([
+    ...(entry.inputSchema.required ?? []),
+    ...(entry.name === 'session.complete' ? ['patch'] : []),
+  ])];
+  return {
+    ...entry.inputSchema,
+    required: topLevelRequired,
+    properties: {
+      ...entry.inputSchema.properties,
+      patch: {
+        ...patchSchema,
+        type: 'object',
+        properties: scopedProperties,
+        required,
+        additionalProperties: false,
+      },
+    },
+  };
+}
+
+function toolDeclaration(entry: AgentToolCatalogEntry, text: string) {
   return {
     name: entry.functionName,
     description: `${entry.contract} Atal validará los datos, el riesgo, la persistencia, la auditoría y Deshacer.`,
-    parametersJsonSchema: entry.inputSchema,
+    parameters: requestScopedInputSchema(entry, text),
   };
 }
 
@@ -180,11 +236,10 @@ function prepareModel(rawPayload: AgentTurnRequest) {
   const allowedFunctions = new Map(entries.map((entry) => [entry.functionName, entry]));
   const config: Record<string, unknown> = {
     systemInstruction: ATAL_AGENT_SYSTEM_PROMPT,
-    maxOutputTokens: 2_048,
   };
   if (entries.length) {
     const requireTool = shouldRequireAgentToolCall(payload.allowedTools, payload.history);
-    config.tools = [{ functionDeclarations: entries.map(toolDeclaration) }];
+    config.tools = [{ functionDeclarations: entries.map((entry) => toolDeclaration(entry, payload.text)) }];
     config.toolConfig = {
       functionCallingConfig: requireTool
         ? { mode: FunctionCallingConfigMode.ANY, allowedFunctionNames: entries.map((entry) => entry.functionName) }
@@ -197,13 +252,29 @@ function prepareModel(rawPayload: AgentTurnRequest) {
     models: configuredModels(),
     request: {
       contents: [...payload.conversationHistory, initialUserContent(payload), ...payload.history] as never,
-      config: config as never,
+      config,
     },
   };
 }
 
-function assertNonEmptyTurn(text: string, calls: AgentFunctionCall[]): void {
-  if (!text.trim() && calls.length === 0) throw new Error('MODEL_EMPTY_RESPONSE');
+function requestForModel(prepared: ReturnType<typeof prepareModel>, model: string) {
+  return {
+    ...prepared.request,
+    model,
+    config: {
+      ...prepared.request.config,
+      ...agentGenerationConfigForModel(model),
+    },
+  };
+}
+
+function assertNonEmptyTurn(
+  text: string,
+  calls: AgentFunctionCall[],
+  model: string,
+  diagnostics: GeminiTurnDiagnostics,
+): void {
+  if (!text.trim() && calls.length === 0) throw emptyModelTurnError(model, diagnostics);
 }
 
 export async function analyzeAgentTurn(rawPayload: AgentTurnRequest): Promise<AgentModelTurn> {
@@ -211,10 +282,10 @@ export async function analyzeAgentTurn(rawPayload: AgentTurnRequest): Promise<Ag
   return runWithGeminiFallback({
     models: prepared.models,
     operation: async (model) => {
-      const response = await prepared.ai.models.generateContent({ ...prepared.request, model } as never);
+      const response = await prepared.ai.models.generateContent(requestForModel(prepared, model) as never);
       const calls = (response.functionCalls ?? []).map((call) => modelCall(call as { id?: string; name?: string; args?: Record<string, unknown> }, prepared.allowedFunctions));
       const text = response.text?.trim() ?? '';
-      assertNonEmptyTurn(text, calls);
+      assertNonEmptyTurn(text, calls, model, geminiTurnDiagnosticsFromResponse(response));
       const modelContent = response.candidates?.[0]?.content as AgentHistoryContent | undefined;
       return { text, calls, modelContent: modelContent ?? modelContentFor(text, calls) };
     },
@@ -228,10 +299,14 @@ export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta:
     operation: async (model) => {
       let emittedText = false;
       let text = '';
+      let diagnostics: GeminiTurnDiagnostics = {};
       const calls = new Map<string, AgentFunctionCall>();
+      const modelContentCollector = createStreamModelContentCollector();
       try {
-        const stream = await prepared.ai.models.generateContentStream({ ...prepared.request, model } as never);
+        const stream = await prepared.ai.models.generateContentStream(requestForModel(prepared, model) as never);
         for await (const chunk of stream) {
+          diagnostics = mergeGeminiTurnDiagnostics(diagnostics, geminiTurnDiagnosticsFromResponse(chunk));
+          modelContentCollector.addContent(chunk.candidates?.[0]?.content as AgentHistoryContent | undefined);
           const delta = chunk.text ?? '';
           if (delta) {
             emittedText = true;
@@ -251,8 +326,12 @@ export async function streamAgentTurn(rawPayload: AgentTurnRequest, onTextDelta:
         throw error;
       }
       const values = [...calls.values()];
-      assertNonEmptyTurn(text, values);
-      return { text: text.trim(), calls: values, modelContent: modelContentFor(text, values) };
+      assertNonEmptyTurn(text, values, model, diagnostics);
+      return {
+        text: text.trim(),
+        calls: values,
+        modelContent: modelContentCollector.content() ?? modelContentFor(text, values),
+      };
     },
   });
 }
@@ -262,6 +341,7 @@ export async function atalAIAgentHandler(request: IncomingMessage, response: Ser
   try {
     sendJson(response, 200, await analyzeAgentTurn(await readJson(request)));
   } catch (error) {
+    logSafeProviderFailure(error);
     sendJson(response, errorStatus(error), { error: safeMessage(error) });
   }
 }
@@ -277,6 +357,7 @@ export async function atalAIAgentStreamHandler(request: IncomingMessage, respons
     const turn = await streamAgentTurn(await readJson(request), (text) => writeNdjson(response, { type: 'text_delta', text }));
     writeNdjson(response, { type: 'done', turn });
   } catch (error) {
+    logSafeProviderFailure(error);
     writeNdjson(response, { type: 'error', error: safeMessage(error) });
   } finally {
     response.end();

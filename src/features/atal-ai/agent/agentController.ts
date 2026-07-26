@@ -4,6 +4,7 @@ import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
 import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
 import type { ContextualAgentSurface } from '../core/agentic/contextualToolPolicy';
+import { freshRequestClarification } from '../core/agentic/freshRequestClarification';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
 import { readAIConversations } from '../data/aiRepository';
@@ -106,6 +107,24 @@ function requestShape(input: AtalAgentControllerInput) {
 }
 
 export async function runAtalAgentRequest(input: AtalAgentControllerInput): Promise<AgentLoopOutcome> {
+  const visibleHistory = visibleConversationHistory(input);
+  const hasConversationContext = visibleHistory.length > 0
+    || Boolean(input.draftContext)
+    || Boolean(input.task && ['running', 'needs-confirmation', 'needs-clarification'].includes(input.task.status));
+  const deterministicClarification = freshRequestClarification(input.text, hasConversationContext);
+  if (deterministicClarification) {
+    const createdAt = new Date().toISOString();
+    const task = createAgentTask(input.conversationId, input.text, [], createdAt);
+    return {
+      task: {
+        ...task,
+        status: 'needs-clarification',
+        finalText: deterministicClarification,
+        updatedAt: createdAt,
+      },
+      lastResults: [],
+    };
+  }
   const allowedTools = selectAgentTools({
     text: input.text,
     route: input.route,
@@ -114,6 +133,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
     contextSurface: input.contextSurface,
+    hasConversationContext,
   });
   const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
   const task = input.task?.status === 'running'

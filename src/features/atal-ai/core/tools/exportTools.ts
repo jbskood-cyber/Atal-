@@ -12,7 +12,8 @@ export const exportTools: ToolDefinition[] = [{
   supportsUndo: false,
   requiredEntities: [],
   validateInput(input) {
-    const kind = input && typeof input === 'object' ? (input as Record<string, unknown>).kind : undefined;
+    const value = input && typeof input === 'object' ? input as Record<string, unknown> : {};
+    const kind = value.exportType ?? value.kind;
     if (!['patients', 'progress', 'plans', 'backup'].includes(String(kind))) throw coreError('CORE_INPUT_INVALID', 'Selecciona un tipo de exportación válido.');
     return { kind: kind as 'patients' | 'progress' | 'plans' | 'backup' };
   },

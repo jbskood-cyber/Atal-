@@ -84,6 +84,14 @@ function newestFirst<T extends { updatedAt?: string; createdAt?: string }>(items
   );
 }
 
+function concreteCollectionMessage(noun: string, total: number, labels: string[]): string {
+  if (total === 0) return `No encontré ${noun}.`;
+  const visible = labels.filter(Boolean);
+  const detail = visible.length ? `: ${visible.join(', ')}` : '';
+  const omitted = total > visible.length ? ` y ${total - visible.length} más` : '';
+  return `Encontré ${total} ${noun}${detail}${omitted}.`;
+}
+
 function readTool(): ToolDefinition<AppReadInput> {
   return {
     name: 'app.read',
@@ -121,7 +129,7 @@ function readTool(): ToolDefinition<AppReadInput> {
         const patients = matching.slice(0, limit);
         return {
           status: 'success',
-          message: `Encontré ${matching.length} pacientes.`,
+          message: concreteCollectionMessage('pacientes', matching.length, patients.map((item) => item.name)),
           summary: [`${matching.length} pacientes coinciden.`, ...patients.map((item) => `${item.name} · ${item.status}`)],
           data: { patients, total: matching.length },
           href: '/patients',
@@ -160,24 +168,27 @@ function readTool(): ToolDefinition<AppReadInput> {
       if (resource === 'clinical_record_versions') {
         const patient = environment.resolved.patient;
         const record = environment.resolved.clinicalRecord;
-        const versions = newestFirst(environment.state.clinicalRecordVersions
-          .filter((item) => (!patient || item.patientId === patient.id) && (!record || item.recordId === record.id)))
-          .slice(0, limit);
+        const matching = newestFirst(environment.state.clinicalRecordVersions
+          .filter((item) => (!patient || item.patientId === patient.id) && (!record || item.recordId === record.id)));
+        const versions = matching.slice(0, limit);
         return {
-          status: 'success', message: `Encontré ${versions.length} versiones anteriores.`,
+          status: 'success',
+          message: concreteCollectionMessage('versiones anteriores', matching.length, versions.map((item) => `v${item.version} (${item.createdAt})`)),
           summary: versions.map((item) => `Versión ${item.version} · ${item.createdAt}`), data: { versions }, affected: [],
         };
       }
 
       if (resource === 'plans') {
         const patient = environment.resolved.patient;
-        const plans = newestFirst(environment.state.plans.filter((item) =>
+        const matching = newestFirst(environment.state.plans.filter((item) =>
           (!patient || item.patientId === patient.id)
           && (!status || item.status === status)
           && (!normalizedQuery || normalizeEntityLabel(`${item.title} ${item.focus} ${item.goal}`).includes(normalizedQuery)),
-        )).slice(0, limit);
+        ));
+        const plans = matching.slice(0, limit);
         return {
-          status: 'success', message: `Encontré ${plans.length} planes.`,
+          status: 'success',
+          message: concreteCollectionMessage('planes', matching.length, plans.map((item) => item.title)),
           summary: plans.map((item) => `${item.title} · ${item.status}`), data: { plans }, href: '/plans', affected: [],
         };
       }
@@ -196,12 +207,14 @@ function readTool(): ToolDefinition<AppReadInput> {
       }
 
       if (resource === 'exercises') {
-        const exercises = newestFirst(environment.state.exercises.filter((item) =>
+        const matching = newestFirst(environment.state.exercises.filter((item) =>
           (!status || item.status === status)
           && (!normalizedQuery || normalizeEntityLabel(`${item.name} ${item.region} ${item.category} ${item.objective} ${item.tags.join(' ')}`).includes(normalizedQuery)),
-        )).slice(0, limit);
+        ));
+        const exercises = matching.slice(0, limit);
         return {
-          status: 'success', message: `Encontré ${exercises.length} ejercicios.`,
+          status: 'success',
+          message: concreteCollectionMessage('ejercicios', matching.length, exercises.map((item) => item.name)),
           summary: exercises.map((item) => `${item.name} · ${item.region}`), data: { exercises }, href: '/exercises', affected: [],
         };
       }
@@ -235,11 +248,13 @@ function readTool(): ToolDefinition<AppReadInput> {
       if (resource === 'sessions') {
         const patient = environment.resolved.patient;
         const plan = environment.resolved.plan;
-        const sessions = newestFirst(environment.state.sessions.filter((item) =>
+        const matching = newestFirst(environment.state.sessions.filter((item) =>
           (!patient || item.patientId === patient.id) && (!plan || item.planId === plan.id) && (!status || item.status === status),
-        )).slice(0, limit);
+        ));
+        const sessions = matching.slice(0, limit);
         return {
-          status: 'success', message: `Encontré ${sessions.length} sesiones.`,
+          status: 'success',
+          message: concreteCollectionMessage('sesiones', matching.length, sessions.map((item) => `${item.completedAt || item.startedAt} · ${item.status}`)),
           summary: sessions.map((item) => `${item.completedAt} · dolor ${item.endPain}/10 · ${item.status}`), data: { sessions }, affected: [],
         };
       }
@@ -257,12 +272,13 @@ function readTool(): ToolDefinition<AppReadInput> {
 
       if (resource === 'activity') {
         const patient = environment.resolved.patient;
-        const events = environment.state.events
+        const matching = environment.state.events
           .filter((item) => (!patient || item.patientId === patient.id)
-            && (!normalizedQuery || normalizeEntityLabel(`${item.title} ${item.detail} ${item.toolName ?? ''}`).includes(normalizedQuery)))
-          .slice(0, limit);
+            && (!normalizedQuery || normalizeEntityLabel(`${item.title} ${item.detail} ${item.toolName ?? ''}`).includes(normalizedQuery)));
+        const events = matching.slice(0, limit);
         return {
-          status: 'success', message: `Encontré ${events.length} eventos.`,
+          status: 'success',
+          message: concreteCollectionMessage('eventos', matching.length, events.map((item) => item.title)),
           summary: events.map((item) => `${item.title} · ${item.detail}`), data: { events }, href: '/activity', affected: [],
         };
       }

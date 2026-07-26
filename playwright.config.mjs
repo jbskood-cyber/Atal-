@@ -1,7 +1,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const liveGemini = process.env.ATAL_LIVE_GEMINI_E2E === '1';
+
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: liveGemini ? [] : ['**/live-gemini-*.spec.mjs'],
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

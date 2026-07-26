@@ -1,5 +1,5 @@
 import { createAIConversation, readAIConversations, saveAIConversation } from '../data/aiRepository';
-import { selectContextualConversation } from '../core/agentic/conversationScope';
+import { selectContextualConversation, selectContextualConversationById } from '../core/agentic/conversationScope';
 import type { AIConversation } from '../types';
 import { contextualConversationKey, workContextForContext } from './conversationAdapter';
 import type { ContextualAIContext } from './types';
@@ -33,6 +33,7 @@ export function ensureContextualConversation(context: ContextualAIContext): AICo
   return conversation;
 }
 
-export function readConversationById(id: string): AIConversation | null {
-  return readAIConversations().find((conversation) => conversation.id === id) ?? null;
+export function readConversationById(id: string, contextKey: string): AIConversation | null {
+  if (!id || !contextKey) return null;
+  return selectContextualConversationById(readAIConversations(), id, contextKey);
 }

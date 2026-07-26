@@ -40,6 +40,18 @@ function routeFor(value: Record<string, unknown>): string {
   return route;
 }
 
+function sessionCompletionPatch(value: Record<string, unknown>): Record<string, unknown> {
+  const patch = value.patch === undefined
+    ? {}
+    : { ...objectInput(value.patch, 'Los datos finales de la sesión no son válidos.') };
+  const directKeys = ['endPain', 'endEnergy', 'effort', 'symptoms', 'endComment', 'easiest', 'hardest', 'discomfort'] as const;
+  for (const key of directKeys) {
+    if (value[key] !== undefined) patch[key] = value[key];
+  }
+  if (value.comment !== undefined && patch.endComment === undefined) patch.endComment = value.comment;
+  return patch;
+}
+
 export const clientEffectTools: ToolDefinition<any>[] = [
   {
     name: 'navigation.open', version: 1, description: 'Abre una pantalla interna segura de Atal.',
@@ -118,7 +130,7 @@ export const clientEffectTools: ToolDefinition<any>[] = [
     validateInput(input) {
       const value = objectInput(input, 'El cierre de la sesión no es válido.');
       const status = value.status === 'completed' ? 'completed' as const : 'partial' as const;
-      const patch = value.patch === undefined ? {} : objectInput(value.patch, 'Los datos finales de la sesión no son válidos.');
+      const patch = sessionCompletionPatch(value);
       return { patient: ref(value.patient, 'patient'), plan: ref(value.plan, 'plan'), status, patch };
     },
     preconditions(environment) {

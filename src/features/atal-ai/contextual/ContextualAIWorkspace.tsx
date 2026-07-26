@@ -20,6 +20,7 @@ import { useAtalStore } from '@/src/data/atalStore';
 import { AssistantMessageContent } from '../components/AssistantMessageContent';
 import { ConversationalDraftCard } from '../components/ConversationalDraftCard';
 import { contextualActionsFor } from './actions';
+import { contextualConversationKey } from './conversationAdapter';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
 import { ContextualModal } from './ContextualModal';
@@ -70,6 +71,7 @@ export function ContextualAIWorkspace() {
   }, [controller, controller.session.activePane, model.draft]);
 
   if (controller.session.mode !== 'open' || !context || !model.conversation) return <RouteContextualAISurface />;
+  if (model.conversation.contextKey !== contextualConversationKey(context)) return <RouteContextualAISurface />;
 
   const processing = model.conversation.status === 'processing';
   const hasText = Boolean(model.conversation.composerText.trim());
