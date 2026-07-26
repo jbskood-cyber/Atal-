@@ -57,7 +57,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ''
-          GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite'
+          GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite'
         run: timeout 180s npm run test:ai-live
       - name: Install Playwright test runner without changing the lockfile
         if: steps.gate.outputs.enabled == 'true'
@@ -81,6 +81,7 @@ jobs:
           e2e/live-gemini-plan-update.spec.mjs
           e2e/live-gemini-plan-maintenance.spec.mjs
           e2e/live-gemini-plan-lifecycle.spec.mjs
+          e2e/live-gemini-plan-exhaustive.spec.mjs
           e2e/live-gemini-exercise-create.spec.mjs
           e2e/live-gemini-exercise-maintenance.spec.mjs
           e2e/live-gemini-session-flow.spec.mjs
