@@ -69,6 +69,35 @@ test('universal patient list returns concrete patient names in the canonical suc
   assert.equal(port.mutationCount(), 0);
 });
 
+test('universal collection reads keep canonical labels in the success message for provider-failure fallback', () => {
+  const state = validState();
+  state.plans[0].title = 'Plan Hombro QA';
+  state.exercises[0].name = 'Rotación externa QA';
+  state.events[0].title = 'Sesión QA completada';
+  state.sessions[0].completedAt = '2026-07-21T18:10:00.000Z';
+  const port = memoryPort(state);
+  const before = structuredClone(port.read());
+
+  const plans = execute(port, invocation('app.read', { resource: 'plans', limit: 10 }));
+  assert.equal(plans.status, 'success');
+  assert.match(plans.message, /Plan Hombro QA/);
+
+  const exercises = execute(port, invocation('app.read', { resource: 'exercises', limit: 10 }));
+  assert.equal(exercises.status, 'success');
+  assert.match(exercises.message, /Rotación externa QA/);
+
+  const sessions = execute(port, invocation('app.read', { resource: 'sessions', limit: 10 }));
+  assert.equal(sessions.status, 'success');
+  assert.match(sessions.message, /2026-07-21T18:10:00\.000Z/);
+
+  const activity = execute(port, invocation('app.read', { resource: 'activity', limit: 10 }));
+  assert.equal(activity.status, 'success');
+  assert.match(activity.message, /Sesión QA completada/);
+
+  assert.deepEqual(port.read(), before);
+  assert.equal(port.mutationCount(), 0);
+});
+
 test('patient and session summaries require and use uniquely resolved patient', () => {
   const port = memoryPort();
   const patientSummary = execute(port, invocation('patient.summarize', { patient: { type: 'patient', id: 'patient-1' } }, [{ type: 'patient', id: 'patient-1' }]));
