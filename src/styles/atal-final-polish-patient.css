@@ -1,0 +1,50 @@
+/* Block 9 — patient empty-state cleanup. */
+
+.atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) > .atal-profile-actions > .is-primary:last-child {
+  display: none;
+}
+
+.atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) .atal-profile-section > .atal-empty {
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 2px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) .atal-profile-section > .atal-empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) .atal-profile-section > .atal-empty button {
+  display: inline-flex;
+  min-height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--green-dark);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) .atal-profile-section > .atal-empty button svg {
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 420px) {
+  .atal-patient-profile .atal-profile-body:not(:has(.atal-active-plan)) .atal-profile-section > .atal-empty {
+    align-items: flex-start;
+  }
+}
