@@ -110,3 +110,16 @@ test('underspecified treatment update stays read-only so Gemini must clarify bef
   const tools = selection('Actualiza el tratamiento de Paciente E2E.', 'summarize_patient');
   assert.deepEqual(tools, ['app.read', 'patient.search']);
 });
+
+test('accented Spanish workspace question with inverted punctuation is classified as a real read', () => {
+  const text = '¿Qué pacientes tengo registrados? Dime los nombres usando únicamente la información guardada en Atal.';
+  const classification = generalTurnMode().classifyAgentTurn(text);
+  assert.equal(classification.kind, 'read');
+  assert.deepEqual(selection(text, 'summarize_patient'), ['app.read', 'patient.search']);
+});
+
+test('accented conceptual question with inverted punctuation remains conversation-only', () => {
+  const classification = generalTurnMode().classifyAgentTurn('¿Qué es una contracción isométrica?');
+  assert.equal(classification.kind, 'conversation');
+  assert.deepEqual(selection('¿Qué es una contracción isométrica?'), []);
+});
