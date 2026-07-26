@@ -11,6 +11,7 @@ const SESSION_TOOLS = ['session.start_or_resume', 'session.update_draft', 'sessi
 const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.appearance'];
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
 const DRAFT_COMMIT_PATTERN = /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b|\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i;
+const BARE_CONFIRMATION_PATTERN = /^\s*(?:(?:por favor|ahora s[ií])[,\s]*)?(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)[.!?¡¿]*\s*$/i;
 const GENERIC_PLAN_MUTATION_PATTERN = /\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b.{0,64}\b(?:tratamiento|plan)\b|\b(?:tratamiento|plan)\b.{0,64}\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b/i;
 const EXPLICIT_EXERCISE_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar|crea|crear|duplica|duplicar)\b.{0,40}\bejercicios?\b/i;
 
@@ -39,6 +40,7 @@ export type ToolSelectionInput = {
   hasImageOrPdf: boolean;
   hasAudio: boolean;
   contextSurface?: ContextualAgentSurface;
+  hasConversationContext?: boolean;
 };
 
 function scopeTools(tools: string[], surface?: ContextualAgentSurface): string[] {
@@ -182,6 +184,10 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   const intent = input.intent ?? '';
   const selected = classification.allowedToolKinds.includes('read') ? [...READ_BASE] : [];
   const allowMutations = classification.allowedToolKinds.includes('action');
+
+  if (allowMutations && input.hasConversationContext === false && BARE_CONFIRMATION_PATTERN.test(input.text)) {
+    return scopeTools(selected, input.contextSurface);
+  }
 
   if (allowMutations && intent === 'export_data') {
     append(selected, ['data.export_local']);
