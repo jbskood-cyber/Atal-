@@ -6,12 +6,18 @@ export const DEFAULT_GEMINI_MODEL_CASCADE = [
 ] as const;
 
 const DEFAULT_FALLBACK_DELAY_MS = 250;
+const GEMINI_MODEL_NAME_PATTERN = /^gemini-[a-z0-9][a-z0-9._-]*$/i;
+
+function normalizeConfiguredGeminiModel(model: string): string | null {
+  const normalized = model.trim().replace(/^models\//i, '');
+  return GEMINI_MODEL_NAME_PATTERN.test(normalized) ? normalized : null;
+}
 
 export function resolveGeminiModelCascade(configured?: string | null): string[] {
   const requested = configured
     ?.split(',')
-    .map((model) => model.trim())
-    .filter(Boolean) ?? [];
+    .map((model) => normalizeConfiguredGeminiModel(model))
+    .filter((model): model is string => Boolean(model)) ?? [];
   const source = requested.length ? requested : [...DEFAULT_GEMINI_MODEL_CASCADE];
   return [...new Set(source)];
 }
