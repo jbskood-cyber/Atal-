@@ -180,7 +180,18 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       if (input.signal?.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
         task = { ...task, status: 'cancelled', finalText: 'Procesamiento cancelado. El trabajo completado se conservó.', updatedAt: now() };
       } else {
-        task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+        const successfulResult = lastSuccessfulResult(task);
+        if (successfulResult) {
+          task = {
+            ...task,
+            status: 'completed',
+            finalText: successfulResult.message,
+            error: undefined,
+            updatedAt: now(),
+          };
+        } else {
+          task = { ...task, status: 'failed', finalText: '', error: providerFailureMessage(error), updatedAt: now() };
+        }
       }
       break;
     }
