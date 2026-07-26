@@ -90,9 +90,27 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
   return selected;
 }
 
+function selectPlanExerciseMutationTools(rawText: string): string[] {
+  if (!includesAny(rawText, ['ejercicio', 'ejercicios'])) return [];
+
+  if (includesAny(rawText, [
+    'dosis', 'serie', 'series', 'repetición', 'repeticion', 'repeticiones', 'tiempo', 'descanso',
+    'instrucciones', 'precauciones', 'dolor', 'equipo', 'dificultad',
+  ])) {
+    return ['exercise.update_fields'];
+  }
+
+  if (/\b(?:sustituye|sustituir|reemplaza|reemplazar|cambia|cambiar)\b.{0,48}\bejercicios?\b.{0,40}\bpor\b/i.test(rawText)) {
+    return ['plan.membership'];
+  }
+
+  return [];
+}
+
 function isUnderspecifiedPlanMutation(rawText: string): boolean {
   if (!GENERIC_PLAN_MUTATION_PATTERN.test(rawText)) return false;
   if (selectPlanMaintenanceTools(rawText).length > 0) return false;
+  if (selectPlanExerciseMutationTools(rawText).length > 0) return false;
   if (EXPLICIT_EXERCISE_ACTION_PATTERN.test(rawText)) return false;
   return !includesAny(rawText, [
     'activa', 'activar', 'pausa', 'pausar', 'suspende', 'suspender', 'completa', 'completar',
@@ -228,7 +246,9 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
 
   if (allowMutations && intent === 'update_existing_plan') {
     const maintenanceTools = selectPlanMaintenanceTools(rawText);
-    append(selected, maintenanceTools.length > 0 ? maintenanceTools : ['plan.update_fields']);
+    const exerciseTools = selectPlanExerciseMutationTools(rawText);
+    const requestedTools = [...maintenanceTools, ...exerciseTools];
+    append(selected, requestedTools.length > 0 ? requestedTools : ['plan.update_fields']);
     return scopeTools(selected, input.contextSurface);
   }
 
