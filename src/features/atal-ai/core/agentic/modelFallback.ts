@@ -29,6 +29,11 @@ function errorMessage(error: unknown): string {
 
 export function isTransientGeminiFailure(error: unknown): boolean {
   const message = errorMessage(error);
+  // Some Gemini variants can emit a function name that was never declared even
+  // under restricted function-calling mode. No action has executed at this
+  // point, so the safe recovery is to reject that output and retry the next
+  // configured model rather than accepting/aliasing an undeclared capability.
+  if (/Gemini solicitó una herramienta no permitida:/i.test(message)) return true;
   if (/\b(?:401|403)\b|API key|permission denied|PERMISSION_DENIED|schema|function call|INVALID_ARGUMENT|invalid argument/i.test(message)) {
     return false;
   }
