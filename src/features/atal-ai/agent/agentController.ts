@@ -106,6 +106,10 @@ function requestShape(input: AtalAgentControllerInput) {
 }
 
 export async function runAtalAgentRequest(input: AtalAgentControllerInput): Promise<AgentLoopOutcome> {
+  const visibleHistory = visibleConversationHistory(input);
+  const hasConversationContext = visibleHistory.length > 0
+    || Boolean(input.draftContext)
+    || Boolean(input.task && ['running', 'needs-confirmation', 'needs-clarification'].includes(input.task.status));
   const allowedTools = selectAgentTools({
     text: input.text,
     route: input.route,
@@ -114,6 +118,7 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
     hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
     hasAudio: input.attachments.some((item) => item.kind === 'audio'),
     contextSurface: input.contextSurface,
+    hasConversationContext,
   });
   const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
   const task = input.task?.status === 'running'
