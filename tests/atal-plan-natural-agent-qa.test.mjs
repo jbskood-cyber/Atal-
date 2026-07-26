@@ -27,6 +27,21 @@ test('natural plan exercise replacement exposes membership operations instead of
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
 });
 
+test('natural clitic add exercise request exposes plan membership', () => {
+  const tools = select('Agrégale al plan el ejercicio Control escapular E2E.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
+});
+
+test('natural clitic remove exercise request exposes plan membership', () => {
+  const tools = select('Quítale al plan el ejercicio Puente lumbar E2E.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
+});
+
+test('compound natural plan and exercise edit exposes both canonical tools and nothing broader', () => {
+  const tools = select('Cámbiale la frecuencia a cuatro sesiones por semana y al segundo ejercicio ponle 4 series de 10 repeticiones.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields', 'exercise.update_fields']);
+});
+
 test('explicit plan field edit remains scoped to plan.update_fields', () => {
   const tools = select('Cámbiale la frecuencia del plan a cuatro sesiones por semana.');
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields']);
