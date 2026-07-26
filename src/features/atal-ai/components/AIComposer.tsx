@@ -9,9 +9,11 @@ export function AIComposer({ textareaRef,value,hasReadyContent,processing,record
 
   useEffect(() => {
     if(processing||queuedValue===null)return;
-    const next=queuedValue;
+    if(value!==queuedValue){
+      onChange(queuedValue);
+      return;
+    }
     setQueuedValue(null);
-    if(next!==value)onChange(next);
   },[processing,queuedValue,value,onChange]);
 
   useEffect(() => {
