@@ -52,6 +52,13 @@ jobs:
       - name: Compile Action Core harness
         if: steps.gate.outputs.enabled == 'true'
         run: npm run test:core:compile
+      - name: Probe Gemini provider before browser matrix
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ''
+          GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash-lite'
+        run: timeout 180s npm run test:ai-live
       - name: Install Playwright test runner without changing the lockfile
         if: steps.gate.outputs.enabled == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
