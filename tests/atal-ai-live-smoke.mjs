@@ -13,7 +13,7 @@ const configuredCascade = process.env.GEMINI_MODEL_CASCADE?.trim();
 const preferredModel = process.env.GEMINI_MODEL?.trim();
 const models = [...new Set((configuredCascade
   ? configuredCascade.split(',')
-  : [preferredModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'])
+  : [preferredModel, 'gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite'])
   .map((value) => value?.trim())
   .filter(Boolean))];
 
@@ -33,6 +33,7 @@ const functionDeclaration = {
 
 function isTransient(error) {
   const message = error instanceof Error ? `${error.name} ${error.message}` : String(error ?? '');
+  if (/\b404\b|NOT_FOUND/i.test(message) && /model/i.test(message) && /no longer available|not available|not found|unsupported|not supported/i.test(message)) return true;
   if (/\b(?:401|403)\b|API key|permission denied|PERMISSION_DENIED|INVALID_ARGUMENT|invalid argument/i.test(message)) return false;
   return /\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|fetch failed|network/i.test(message);
 }
