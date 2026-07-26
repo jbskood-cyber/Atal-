@@ -8,10 +8,12 @@ import type {
   AgentStepResult,
   AgentTaskState,
 } from './contracts';
+import { AGENT_TOOL_CALL_REPAIR_MARKER } from './toolCallingPolicy';
 
 const DEFAULT_MAX_STEPS = 8;
 const MAX_RESULT_CHARS = 40_000;
 const MAX_REPAIRABLE_FAILURES = 1;
+const MAX_PSEUDO_TOOL_REPAIRS = 1;
 
 function now(): string {
   return new Date().toISOString();
@@ -128,6 +130,33 @@ function lastSuccessfulResult(task: AgentTaskState): Extract<ToolExecutionResult
   return undefined;
 }
 
+function looksLikePseudoToolText(text: string): boolean {
+  const candidate = text.trim();
+  if (!candidate.startsWith('{') || !candidate.endsWith('}')) return false;
+  try {
+    const parsed = JSON.parse(candidate) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
+    return ['action', 'tool', 'function', 'functionName'].some((key) => typeof parsed[key] === 'string' && Boolean((parsed[key] as string).trim()));
+  } catch {
+    return false;
+  }
+}
+
+function pseudoToolRepairs(task: AgentTaskState): number {
+  return task.history.reduce((count, content) => count + content.parts.filter(
+    (part) => typeof part.text === 'string' && part.text.includes(AGENT_TOOL_CALL_REPAIR_MARKER),
+  ).length, 0);
+}
+
+function pseudoToolRepairContent(): AgentHistoryContent {
+  return {
+    role: 'user',
+    parts: [{
+      text: `${AGENT_TOOL_CALL_REPAIR_MARKER} La respuesta anterior describió una acción como JSON de texto, pero eso no ejecuta nada. Usa exclusivamente una de las funciones declaradas disponibles en este turno. No inventes nombres de herramientas y no respondas con JSON que simule una llamada.`,
+    }],
+  };
+}
+
 export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutcome> {
   let task = structuredClone(input.task);
   const lastResults: AgentStepResult[] = [];
@@ -174,6 +203,16 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
         task.status = 'failed';
         task.error = 'EMPTY_MODEL_TURN';
         task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+        break;
+      }
+      if (task.allowedTools.length > 0 && looksLikePseudoToolText(finalText) && pseudoToolRepairs(task) < MAX_PSEUDO_TOOL_REPAIRS) {
+        task.history.push(pseudoToolRepairContent());
+        continue;
+      }
+      if (task.allowedTools.length > 0 && looksLikePseudoToolText(finalText)) {
+        task.status = 'failed';
+        task.error = 'MALFORMED_TOOL_OUTPUT';
+        task.finalText = 'Atal IA no recibió una llamada de herramienta válida. No se aplicó ningún cambio; vuelve a intentarlo.';
         break;
       }
       task.status = 'completed';
