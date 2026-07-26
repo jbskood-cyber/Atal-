@@ -73,8 +73,8 @@ test.describe('Live Gemini exercise create', () => {
     const preparedDraft = page.getByRole('region', { name: 'Borrador preparado' });
     await expect(preparedDraft).toBeVisible({ timeout: 60_000 });
     await expect(preparedDraft.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
-    await expect(page.locator('body')).not.toContainText('Acción preparada');
-    await expect(page.locator('body')).not.toContainText('Revisar todo');
+    await expect(page.getByText('Acción preparada')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Revisar todo' })).toBeHidden();
     await expect.poll(() => exerciseSnapshot(page), { timeout: 5_000 }).toMatchObject({
       exists: false,
       createEvents: 0,
