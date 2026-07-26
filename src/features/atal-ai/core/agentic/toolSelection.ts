@@ -12,6 +12,7 @@ const SETTINGS_TOOLS = ['settings.update', 'settings.profile_update', 'settings.
 const DELIVERY_TOOLS = ['delivery.open', 'delivery.action', 'data.export_local'];
 const DRAFT_COMMIT_PATTERN = /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b|\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i;
 const GENERIC_PLAN_MUTATION_PATTERN = /\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b.{0,64}\b(?:tratamiento|plan)\b|\b(?:tratamiento|plan)\b.{0,64}\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b/i;
+const EXPLICIT_EXERCISE_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar|crea|crear|duplica|duplicar)\b.{0,40}\bejercicios?\b/i;
 
 const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
 const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
@@ -90,6 +91,7 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
 function isUnderspecifiedPlanMutation(rawText: string): boolean {
   if (!GENERIC_PLAN_MUTATION_PATTERN.test(rawText)) return false;
   if (selectPlanMaintenanceTools(rawText).length > 0) return false;
+  if (EXPLICIT_EXERCISE_ACTION_PATTERN.test(rawText)) return false;
   return !includesAny(rawText, [
     'activa', 'activar', 'pausa', 'pausar', 'suspende', 'suspender', 'completa', 'completar',
     'finaliza', 'finalizar', 'termina', 'terminar', 'archiva', 'archivar', 'restaura', 'restaurar',
