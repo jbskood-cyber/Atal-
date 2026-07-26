@@ -61,13 +61,17 @@ async function exerciseSnapshot(page) {
 }
 
 async function send(page, text) {
-  await page.getByLabel('Mensaje para Atal IA').fill(text);
-  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await expect(page.getByRole('button', { name: 'Grabar audio' })).toBeVisible({ timeout: 120_000 });
+  await composer.fill(text);
+  const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
+  await expect(sendButton).toBeVisible({ timeout: 10_000 });
+  await sendButton.click();
 }
 
 test.describe('Live Gemini exercise maintenance', () => {
   test('updates and archives the selected exercise through Gemini real and persists after reload', async ({ page }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(240_000);
     await seedExerciseMaintenanceConversation(page);
     await page.goto('/assistant');
 
