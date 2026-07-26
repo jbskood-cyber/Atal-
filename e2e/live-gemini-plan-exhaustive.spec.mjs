@@ -178,4 +178,62 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
       exerciseIds: ['exercise-control-live', 'exercise-rotation-live'],
     });
   });
+
+  test('replaces one exercise naturally and reads back the exact canonical membership', async ({ page }) => {
+    test.setTimeout(240_000);
+    await seedNaturalPlanConversation(page);
+    await page.goto('/assistant');
+
+    await send(page, 'Sustituye el segundo ejercicio, Control escapular Natural QA, por Rotación externa Natural QA.');
+    await expect.poll(() => naturalPlanSnapshot(page), { timeout: 90_000 }).toMatchObject({
+      exerciseIds: ['exercise-e2e', 'exercise-rotation-live'],
+      membershipSuccesses: 1,
+      exerciseUpdateSuccesses: 0,
+      planUpdateSuccesses: 0,
+    });
+    await waitForSettledAgent(page);
+
+    await send(page, '¿Qué ejercicios tiene este plan? Dime los nombres exactos usando únicamente lo guardado en Atal.');
+    await waitForSettledAgent(page);
+    const assistantMessages = page.locator('.atal-command-message.is-assistant');
+    await expect(assistantMessages.last()).toContainText('Movilidad asistida E2E', { timeout: 90_000 });
+    await expect(assistantMessages.last()).toContainText('Rotación externa Natural QA');
+    await expect(assistantMessages.last()).not.toContainText('Control escapular Natural QA');
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
+    await page.reload();
+    await expect.poll(() => naturalPlanSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      exerciseIds: ['exercise-e2e', 'exercise-rotation-live'],
+      membershipSuccesses: 1,
+    });
+  });
+
+  test('executes a compound natural plan edit without contaminating exercise instructions', async ({ page }) => {
+    test.setTimeout(240_000);
+    await seedNaturalPlanConversation(page);
+    await page.goto('/assistant');
+
+    await send(page, 'Cámbiale al plan la frecuencia a 4 veces por semana y al segundo ejercicio ponle 5 series de 8 repeticiones.');
+    await expect.poll(() => naturalPlanSnapshot(page), { timeout: 120_000 }).toMatchObject({
+      frequency: '4 veces por semana',
+      controlSets: 5,
+      controlRepetitions: 8,
+      controlInstructions: ['Retrae suavemente las escápulas'],
+      controlPrecautions: 'Sin dolor agudo',
+      exerciseUpdateSuccesses: 1,
+      planUpdateSuccesses: 1,
+      membershipSuccesses: 0,
+    });
+    await waitForSettledAgent(page);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
+    await page.reload();
+    await expect.poll(() => naturalPlanSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      frequency: '4 veces por semana',
+      controlSets: 5,
+      controlRepetitions: 8,
+      controlInstructions: ['Retrae suavemente las escápulas'],
+      controlPrecautions: 'Sin dolor agudo',
+    });
+  });
 });
