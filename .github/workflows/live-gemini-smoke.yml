@@ -85,6 +85,7 @@ jobs:
           e2e/live-gemini-delivery-export.spec.mjs
           e2e/live-gemini-delivery-action.spec.mjs
           e2e/live-gemini-adversarial-agent.spec.mjs
+          e2e/live-gemini-contextless-confirmation.spec.mjs
           --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
