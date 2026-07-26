@@ -1,2 +1,2 @@
-AI Studio invalid GEMINI_MODEL recovery checkpoint — sanitize opaque platform overrides.
-Target: execute the real Gemini browser regression on the latest branch state after modelFallback rejects non-Gemini environment values, then retain fresh conversation, patient-create persistence/readback, session, contextual isolation, export and delivery coverage. This checkpoint must not be gate-skipped.
+AI Studio opaque GEMINI_MODEL exact-runtime checkpoint.
+Target: run the real Gemini + Chromium suite while GEMINI_MODEL is deliberately set to an opaque AI Studio-style value and GEMINI_MODEL_CASCADE is empty. The shared resolver must discard the invalid override, restore the canonical Gemini cascade, and still pass fresh general conversation, fresh patient intake, patient.create persistence/readback, session, contextual isolation, export and delivery. This checkpoint must not be gate-skipped.
