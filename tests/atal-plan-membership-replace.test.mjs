@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const planActions = () => loadCore('src/domain/actions/planActions.js');
-const planExerciseTools = () => loadCore('src/features/atal-ai/core/tools/universalPlanExerciseTools.js');
+const canonicalPlanTools = () => loadCore('src/features/atal-ai/core/tools/canonicalPlanTools.js');
 const toolCatalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js');
 
 function baseState() {
@@ -52,8 +52,8 @@ test('plan.membership public contract exposes replace as a first-class operation
   assert.ok(catalogEntry);
   assert.deepEqual(catalogEntry.inputSchema.properties.operation.enum, ['add', 'remove', 'reorder', 'replace']);
 
-  const { universalPlanExerciseTools } = planExerciseTools();
-  const membershipTool = universalPlanExerciseTools.find((tool) => tool.name === 'plan.membership');
+  const { canonicalPlanTools: tools } = canonicalPlanTools();
+  const membershipTool = tools.find((tool) => tool.name === 'plan.membership');
   assert.ok(membershipTool);
   const input = membershipTool.validateInput({
     plan: { type: 'plan', id: 'plan-1' },
