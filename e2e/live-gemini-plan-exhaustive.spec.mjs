@@ -83,6 +83,8 @@ async function naturalPlanSnapshot(page) {
     exerciseIds: plan?.exerciseIds ?? [],
     controlSets: control?.sets,
     controlRepetitions: control?.repetitions,
+    controlInstructions: control?.instructions ?? [],
+    controlPrecautions: control?.precautions,
     exerciseUpdateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
     membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success').length,
     planUpdateSuccesses: state.events.filter((event) => event.toolName === 'plan.update_fields' && event.outcome === 'success').length,
@@ -101,6 +103,8 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
       frequency: '3 veces por semana',
       controlSets: 4,
       controlRepetitions: 10,
+      controlInstructions: ['Retrae suavemente las escápulas'],
+      controlPrecautions: 'Sin dolor agudo',
       exerciseUpdateSuccesses: 1,
       planUpdateSuccesses: 0,
     });
@@ -111,6 +115,8 @@ test.describe('Live Gemini exhaustive natural plan QA', () => {
     await expect.poll(() => naturalPlanSnapshot(page), { timeout: 20_000 }).toMatchObject({
       controlSets: 4,
       controlRepetitions: 10,
+      controlInstructions: ['Retrae suavemente las escápulas'],
+      controlPrecautions: 'Sin dolor agudo',
       exerciseUpdateSuccesses: 1,
     });
   });
