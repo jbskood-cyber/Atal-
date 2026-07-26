@@ -187,7 +187,7 @@ test.describe('Live Gemini adversarial agent QA', () => {
     await expect.poll(async () => (await readStore(page)).patients.find((patient) => patient.id === 'patient-e2e')?.contact?.phone, { timeout: 120_000 }).toBe('4442223344');
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
 
-    const undo = page.getByRole('button', { name: /Deshacer cambio/i });
+    const undo = page.getByRole('button', { name: /Deshacer último cambio/i });
     await expect(undo).toBeVisible({ timeout: 30_000 });
     await undo.click();
 
