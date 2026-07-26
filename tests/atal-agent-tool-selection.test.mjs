@@ -112,6 +112,19 @@ test('underspecified treatment update stays read-only so Gemini must clarify bef
   assert.deepEqual(tools, ['app.read', 'patient.search']);
 });
 
+test('fresh underspecified treatment update has a deterministic clarification instead of relying on Gemini to infer one', () => {
+  const { freshRequestClarification } = toolSelection();
+  assert.equal(
+    freshRequestClarification('Actualiza el tratamiento de Paciente E2E.', false),
+    '¿Qué quieres modificar del tratamiento de Paciente E2E?',
+  );
+  assert.equal(
+    freshRequestClarification('Actualiza el tratamiento de Paciente E2E.', true),
+    undefined,
+    'existing conversation context may already contain the missing requested change',
+  );
+});
+
 test('accented Spanish workspace question with inverted punctuation is classified as a real read', () => {
   const text = '¿Qué pacientes tengo registrados? Dime los nombres usando únicamente la información guardada en Atal.';
   const classification = generalTurnMode().classifyAgentTurn(text);
