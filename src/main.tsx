@@ -30,6 +30,7 @@ import '@/src/styles/atal-ai-agentic-chat.css';
 import '@/src/styles/atal-ai-draft-interaction-fix.css';
 import '@/src/styles/atal-final-polish-agent.css';
 import '@/src/styles/atal-final-polish-patient.css';
+import '@/src/styles/atal-final-polish-density-fix.css';
 import { App } from './App';
 import { bootstrapRealWorkspace } from './data/workspaceBootstrap';
 
