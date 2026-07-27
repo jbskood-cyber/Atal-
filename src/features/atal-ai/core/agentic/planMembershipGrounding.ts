@@ -1,4 +1,5 @@
 import type { AgentFunctionCall, AgentStepResult } from './contracts';
+import { groundReportReviewCall } from './reportReviewGrounding';
 
 type RecordValue = Record<string, unknown>;
 type ExerciseEvidence = { id: string; name: string };
@@ -65,17 +66,18 @@ export function groundPlanMembershipCall(
   completed: AgentStepResult[],
   call: AgentFunctionCall,
 ): AgentFunctionCall {
-  if (call.tool !== 'plan.membership' || !looksLikeSingularExerciseRemoval(goal)) return call;
-  const input = recordValue(call.input);
-  if (!input || input.operation !== 'remove') return call;
+  const groundedCall = groundReportReviewCall(completed, call);
+  if (groundedCall.tool !== 'plan.membership' || !looksLikeSingularExerciseRemoval(goal)) return groundedCall;
+  const input = recordValue(groundedCall.input);
+  if (!input || input.operation !== 'remove') return groundedCall;
   const exerciseIds = stringArray(input.exerciseIds);
-  if (!exerciseIds?.length) return call;
+  if (!exerciseIds?.length) return groundedCall;
 
   const groundedExerciseId = groundedExerciseForGoal(goal, completed);
-  if (!groundedExerciseId || (exerciseIds.length === 1 && exerciseIds[0] === groundedExerciseId)) return call;
+  if (!groundedExerciseId || (exerciseIds.length === 1 && exerciseIds[0] === groundedExerciseId)) return groundedCall;
 
   return {
-    ...call,
+    ...groundedCall,
     input: {
       ...input,
       exerciseIds: [groundedExerciseId],
