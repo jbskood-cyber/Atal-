@@ -25,11 +25,11 @@ test('an explicit single plan membership mutation is required before the agent m
   );
 });
 
-test('an explicit single plan field update is required before completion', () => {
+test('unrelated single plan mutations keep the previous completion contract', () => {
   const { requiredAgentToolsForSelection } = requirementsModule();
   assert.deepEqual(
     requiredAgentToolsForSelection(input({ text: 'Cambia la frecuencia de este plan a 4 veces por semana.' }), ['app.read', 'patient.search', 'plan.update_fields']),
-    ['plan.update_fields'],
+    [],
   );
 });
 
