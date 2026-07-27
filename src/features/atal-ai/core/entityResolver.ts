@@ -181,7 +181,7 @@ export function resolveEntities(
 
     if (reference.id?.trim()) {
       selected = candidatesFor(state, type, {}).find((candidate) => candidate.id === reference.id);
-      if (!selected && reference.label?.trim()) {
+      if (!selected && type === 'exercise' && reference.label?.trim()) {
         const matches = exactLabelMatches(allCandidates, type, reference.label);
         if (matches.length > 1) {
           return clarification(
