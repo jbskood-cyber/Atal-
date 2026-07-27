@@ -15,6 +15,8 @@ const BARE_CONFIRMATION_PATTERN = /^\s*(?:(?:por favor|ahora s[ií])[,\s]*)?(?:g
 const GENERIC_PLAN_MUTATION_PATTERN = /\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b.{0,64}\b(?:tratamiento|plan)\b|\b(?:tratamiento|plan)\b.{0,64}\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b/i;
 const EXPLICIT_EXERCISE_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar|crea|crear|duplica|duplicar)\b.{0,40}\bejercicios?\b/i;
 const PLAN_MEMBERSHIP_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar)\b.{0,64}\bejercicios?\b/i;
+const PLAN_COMPLETE_ACTION_PATTERN = /\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b|\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i;
+const PLAN_REPLACE_ACTIVE_PATTERN = /\b(?:reemplaza|reemplazar|sustituye|sustituir)\b.{0,64}\bplan activo\b/i;
 
 const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
 const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
@@ -76,10 +78,11 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
 
   if (/\b(?:duplica|duplicar|copia|copiar)\b/i.test(rawText)) append(selected, ['plan.duplicate']);
   if (/\b(?:pausa|pausar|suspende|suspender)\b/i.test(rawText)) append(selected, ['plan.pause']);
-  if (/\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b/i.test(rawText)) append(selected, ['plan.complete']);
+  if (PLAN_COMPLETE_ACTION_PATTERN.test(rawText)) append(selected, ['plan.complete']);
   if (/\b(?:archiva|archivar)\b/i.test(rawText)) append(selected, ['plan.archive']);
   if (/\b(?:restaura|restaurar|reactiva|reactivar)\b/i.test(rawText)) append(selected, ['plan.restore']);
   if (/\b(?:activa|activar)\b/i.test(rawText)) append(selected, ['plan.activate']);
+  if (PLAN_REPLACE_ACTIVE_PATTERN.test(rawText)) append(selected, ['plan.replace_active']);
 
   if (includesAny(rawText, [
     'frecuencia', 'título', 'titulo', 'nombre del plan', 'objetivo', 'enfoque', 'duración', 'duracion',
@@ -134,7 +137,7 @@ function selectPlanLifecycleTools(rawText: string, intent: string): string[] {
   if (intent === 'update_plan_status') {
     if (includesAny(rawText, ['activa', 'activar', 'activar el plan'])) return ['plan.activate'];
     if (includesAny(rawText, ['pausa', 'pausar', 'suspende', 'suspender'])) return ['plan.pause'];
-    if (includesAny(rawText, ['completa', 'completar', 'finaliza', 'finalizar', 'termina', 'terminar'])) return ['plan.complete'];
+    if (PLAN_COMPLETE_ACTION_PATTERN.test(rawText)) return ['plan.complete'];
   }
 
   return [];
