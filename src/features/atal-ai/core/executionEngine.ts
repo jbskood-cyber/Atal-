@@ -99,6 +99,41 @@ function safeResult(error: unknown): ToolExecutionResult {
   return { status: 'error', code: core.code, message: core.message };
 }
 
+function normalizedEntityLabel(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('es-MX')
+    .replace(/\s+/g, ' ');
+}
+
+function normalizeInvocationInput(
+  tool: string,
+  input: unknown,
+  state: ReturnType<StorePort['read']>,
+): unknown {
+  if (tool !== 'plan.membership' || !input || typeof input !== 'object' || Array.isArray(input)) return input;
+  const value = input as Record<string, unknown>;
+  if (!Array.isArray(value.exerciseIds) || value.exerciseIds.some((item) => typeof item !== 'string')) return input;
+
+  const canonicalIds = value.exerciseIds.map((rawValue) => {
+    const token = rawValue.trim();
+    const byId = state.exercises.find((exercise) => exercise.id === token);
+    if (byId) return byId.id;
+
+    const normalized = normalizedEntityLabel(token);
+    const matches = state.exercises.filter((exercise) => normalizedEntityLabel(exercise.name) === normalized);
+    if (matches.length === 1) return matches[0].id;
+    if (matches.length > 1) {
+      throw coreError('CORE_ENTITY_AMBIGUOUS', `Hay varios ejercicios llamados “${token}”. Aclara cuál quieres usar.`);
+    }
+    throw coreError('CORE_ENTITY_NOT_FOUND', `No se encontró el ejercicio “${token}”.`);
+  });
+
+  return { ...value, exerciseIds: [...new Set(canonicalIds)] };
+}
+
 export function executeToolInvocation(
   request: ExecuteToolRequest,
   options: ExecuteToolOptions = {},
@@ -119,9 +154,10 @@ export function executeToolInvocation(
     if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
 
     const definition = registry.get(request.invocation.tool);
-    const validatedInput = definition.validateInput(request.invocation.input);
-    const invocation = { ...request.invocation, input: validatedInput };
     const snapshot = structuredClone(port.read());
+    const normalizedInput = normalizeInvocationInput(request.invocation.tool, request.invocation.input, snapshot);
+    const validatedInput = definition.validateInput(normalizedInput);
+    const invocation = { ...request.invocation, input: validatedInput };
     const resolution = resolveEntities(snapshot, invocation, request.context);
     if (resolution.status === 'clarification') return resolution;
     for (const required of definition.requiredEntities) {
