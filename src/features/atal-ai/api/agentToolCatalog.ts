@@ -53,7 +53,7 @@ const contactSchema = object({
 });
 const patientPatchSchema = object({
   name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Solo el diagnóstico proporcionado, sin frases introductorias.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
-  birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género registrado.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
+  birthDate: text('Solo la fecha de nacimiento, sin etiquetas ni explicación adicional.'), sex: text('Solo el sexo o género registrado, sin etiquetas ni explicación adicional.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
   visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), contact: contactSchema,
 });
 const recordPatchSchema = object({
@@ -69,7 +69,7 @@ const planFields = {
 const exerciseFields = {
   name: text('Solo el nombre del ejercicio, sin frases introductorias ni etiquetas narrativas.', 220), region: text('Solo la región corporal del ejercicio.'), category: text('Solo la categoría del ejercicio.'), objective: text('Solo el objetivo del ejercicio, sin instrucciones ni dosis.'),
   startingPosition: text('Solo la posición inicial del ejercicio, sin instrucciones de ejecución ni dosis.'), instructions: stringArray('Solo pasos o instrucciones de ejecución; no incluyas series, repeticiones, frecuencia, descanso ni precauciones.'), precautions: text('Solo precauciones del ejercicio; no mezcles instrucciones ni dosis.'),
-  equipment: text('Equipo necesario.'), difficulty: text('Dificultad.'), sets: integer('Series, entre 1 y 100.', 1, 100),
+  equipment: text('Solo el equipo necesario, sin instrucciones, dosis ni explicación adicional.'), difficulty: text('Solo la dificultad del ejercicio, sin etiquetas ni explicación adicional.'), sets: integer('Series, entre 1 y 100.', 1, 100),
   repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Solo el tiempo de ejecución, sin series, repeticiones, descanso ni instrucciones.'), rest: text('Solo el descanso entre series o repeticiones, sin instrucciones ni otras dosis.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
 };
@@ -124,7 +124,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   entry('patient.create', 'action', 'Crea paciente, expediente inicial y plan opcional.', object({
     patient: object({
       name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Solo el diagnóstico proporcionado, sin frases introductorias.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
-      birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
+      birthDate: text('Solo la fecha de nacimiento, sin etiquetas ni explicación adicional.'), sex: text('Solo el sexo o género registrado, sin etiquetas ni explicación adicional.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
       visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), phone: text('Solo el teléfono, sin etiquetas ni explicación adicional.'), email: text('Solo el correo electrónico, sin etiquetas ni explicación adicional.'),
       address: text('Solo la dirección, sin etiquetas ni explicación adicional.'), emergencyContact: text('Solo el contacto de emergencia, sin etiquetas ni explicación adicional.'),
     }, ['name']),
