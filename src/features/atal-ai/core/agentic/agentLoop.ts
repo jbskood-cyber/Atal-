@@ -360,6 +360,25 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     task.error = 'MAX_AGENT_STEPS';
     task.finalText = 'Detuve el proceso al alcanzar el límite seguro de pasos. Los cambios completados se conservaron.';
   }
-
+  task.updatedAt = now();
   return { task, lastResults };
+}
+
+export function appendConfirmedResult(
+  task: AgentTaskState,
+  call: AgentFunctionCall,
+  invocation: ToolInvocation,
+  result: ToolExecutionResult,
+): AgentTaskState {
+  const next = structuredClone(task);
+  next.pendingInvocation = undefined;
+  next.pendingCall = undefined;
+  next.completed.push({ callId: call.id, invocation, result });
+  next.history.push(functionResponseContent(call, result));
+  next.status = result.status === 'success' ? 'running'
+    : result.status === 'clarification' ? 'needs-clarification'
+      : result.status === 'blocked' ? 'blocked' : 'failed';
+  next.finalText = result.status === 'success' ? '' : result.status === 'error' ? visibleFailureMessage(result) : resultMessage(result);
+  next.updatedAt = now();
+  return next;
 }
