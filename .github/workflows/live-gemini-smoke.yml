@@ -78,6 +78,7 @@ jobs:
           e2e/live-gemini-patient-maintenance.spec.mjs
           e2e/live-gemini-clinical-record.spec.mjs
           e2e/live-gemini-plan-create.spec.mjs
+          e2e/live-gemini-plan-fresh-conversation.spec.mjs
           e2e/live-gemini-plan-update.spec.mjs
           e2e/live-gemini-plan-maintenance.spec.mjs
           e2e/live-gemini-plan-lifecycle.spec.mjs
