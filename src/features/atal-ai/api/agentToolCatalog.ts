@@ -139,8 +139,10 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   }, ['patient', 'title'])),
   entry('plan.update_fields', 'action', 'Actualiza campos de un plan.', object({ plan: planRef, patch: object(planFields) }, ['plan', 'patch'])),
   entry('plan.duplicate', 'action', 'Duplica un plan.', object({ plan: planRef, title: text('Título opcional para la copia.', 220) }, ['plan'])),
-  entry('plan.membership', 'action', 'Añade, retira o reordena ejercicios de un plan.', object({
-    plan: planRef, operation: enumText(['add', 'remove', 'reorder'], 'Operación de membresía.'), exerciseIds: stringArray('IDs de ejercicios.'),
+  entry('plan.membership', 'action', 'Añade, retira, reordena o reemplaza ejercicios de un plan.', object({
+    plan: planRef,
+    operation: enumText(['add', 'remove', 'reorder', 'replace'], 'Usa replace cuando el usuario sustituya un ejercicio; exerciseIds debe ser la lista final completa en el orden deseado.'),
+    exerciseIds: stringArray('IDs de ejercicios. Para replace, envía la membresía final completa del plan.'),
   }, ['plan', 'operation', 'exerciseIds'])),
   entry('plan.activate', 'action', 'Activa un plan.', object({ plan: planRef }, ['plan'])),
   entry('plan.pause', 'action', 'Pausa un plan.', object({ plan: planRef }, ['plan'])),
