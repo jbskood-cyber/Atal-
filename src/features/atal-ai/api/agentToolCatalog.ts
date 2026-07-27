@@ -49,7 +49,7 @@ const contactSchema = object({
   phone: text('Teléfono.'), email: text('Correo electrónico.'), address: text('Dirección.'), emergencyContact: text('Contacto de emergencia.'),
 });
 const patientPatchSchema = object({
-  name: text('Nombre del paciente.', 180), diagnosis: text('Diagnóstico proporcionado.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
+  name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Diagnóstico proporcionado.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
   birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género registrado.'), affectedArea: text('Zona afectada.'),
   visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), contact: contactSchema,
 });
@@ -60,12 +60,12 @@ const recordPatchSchema = object({
   precautions: stringArray('Precauciones.'), clinicalNotes: text('Notas clínicas.', 10_000), planId: text('ID del plan relacionado.'),
 });
 const planFields = {
-  title: text('Título del plan.', 220), focus: text('Enfoque del plan.'), duration: text('Duración.'), frequency: text('Frecuencia.'),
-  goal: text('Objetivo.'), progression: text('Progresión.'), reportCriteria: text('Criterios de reporte.'), generalInstructions: text('Indicaciones generales.'),
+  title: text('Título del plan.', 220), focus: text('Enfoque del plan.'), duration: text('Duración.'), frequency: text('Solo la frecuencia del plan, sin objetivo, duración ni explicación adicional.'),
+  goal: text('Objetivo.'), progression: text('Progresión.'), reportCriteria: text('Criterios de reporte.'), generalInstructions: text('Solo indicaciones generales del plan; no mezcles dosis específicas de ejercicios, frecuencia ni precauciones.'),
 };
 const exerciseFields = {
-  name: text('Nombre del ejercicio.', 220), region: text('Región corporal.'), category: text('Categoría.'), objective: text('Objetivo.'),
-  startingPosition: text('Posición inicial.'), instructions: stringArray('Pasos o indicaciones.'), precautions: text('Precauciones.'),
+  name: text('Solo el nombre del ejercicio, sin frases introductorias ni etiquetas narrativas.', 220), region: text('Región corporal.'), category: text('Categoría.'), objective: text('Objetivo.'),
+  startingPosition: text('Posición inicial.'), instructions: stringArray('Solo pasos o instrucciones de ejecución; no incluyas series, repeticiones, frecuencia, descanso ni precauciones.'), precautions: text('Solo precauciones del ejercicio; no mezcles instrucciones ni dosis.'),
   equipment: text('Equipo necesario.'), difficulty: text('Dificultad.'), sets: integer('Series, entre 1 y 100.', 1, 100),
   repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Tiempo de ejecución.'), rest: text('Descanso.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
@@ -120,7 +120,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 
   entry('patient.create', 'action', 'Crea paciente, expediente inicial y plan opcional.', object({
     patient: object({
-      name: text('Nombre del paciente.', 180), diagnosis: text('Diagnóstico.'), age: number('Edad entre 0 y 130.', 0, 130),
+      name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Diagnóstico.'), age: number('Edad entre 0 y 130.', 0, 130),
       birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género.'), affectedArea: text('Zona afectada.'),
       visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), phone: text('Teléfono.'), email: text('Correo.'),
       address: text('Dirección.'), emergencyContact: text('Contacto de emergencia.'),
