@@ -4,8 +4,9 @@ import { executeToolInvocation } from '../core/executionEngine';
 import { appendConfirmedResult, createAgentTask, runAgentLoop } from '../core/agentic/agentLoop';
 import type { AgentHistoryContent, AgentLoopOutcome, AgentTaskState } from '../core/agentic/contracts';
 import type { ContextualAgentSurface } from '../core/agentic/contextualToolPolicy';
+import { requiredAgentToolsForSelection } from '../core/agentic/compoundActionRequirements';
 import { freshRequestClarification } from '../core/agentic/freshRequestClarification';
-import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools } from '../core/agentic/toolSelection';
+import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools, type ToolSelectionInput } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
 import { readAIConversations } from '../data/aiRepository';
 
@@ -106,6 +107,19 @@ function requestShape(input: AtalAgentControllerInput) {
   };
 }
 
+function toolSelectionInput(input: AtalAgentControllerInput, hasConversationContext: boolean): ToolSelectionInput {
+  return {
+    text: input.text,
+    route: input.route,
+    intent: input.workContext.intent,
+    selectionHints: draftSelectionHints(input.draftContext),
+    hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
+    hasAudio: input.attachments.some((item) => item.kind === 'audio'),
+    contextSurface: input.contextSurface,
+    hasConversationContext,
+  };
+}
+
 export async function runAtalAgentRequest(input: AtalAgentControllerInput): Promise<AgentLoopOutcome> {
   const visibleHistory = visibleConversationHistory(input);
   const hasConversationContext = visibleHistory.length > 0
@@ -125,21 +139,15 @@ export async function runAtalAgentRequest(input: AtalAgentControllerInput): Prom
       lastResults: [],
     };
   }
-  const allowedTools = selectAgentTools({
-    text: input.text,
-    route: input.route,
-    intent: input.workContext.intent,
-    selectionHints: draftSelectionHints(input.draftContext),
-    hasImageOrPdf: input.attachments.some((item) => item.kind === 'image' || item.kind === 'pdf'),
-    hasAudio: input.attachments.some((item) => item.kind === 'audio'),
-    contextSurface: input.contextSurface,
-    hasConversationContext,
-  });
-  const freshTask = createAgentTask(input.conversationId, input.text, allowedTools);
+  const selectionInput = toolSelectionInput(input, hasConversationContext);
+  const allowedTools = selectAgentTools(selectionInput);
+  const requiredTools = requiredAgentToolsForSelection(selectionInput, allowedTools);
+  const freshTask = createAgentTask(input.conversationId, input.text, allowedTools, undefined, requiredTools);
   const task = input.task?.status === 'running'
     ? {
         ...input.task,
         allowedTools: [...new Set([...input.task.allowedTools, ...allowedTools])].slice(0, AGENT_MAX_ACTIVE_TOOLS),
+        requiredTools: [...new Set([...(input.task.requiredTools ?? []), ...requiredTools])],
       }
     : {
         ...freshTask,
