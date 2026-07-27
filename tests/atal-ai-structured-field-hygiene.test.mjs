@@ -3,6 +3,13 @@ import assert from 'node:assert/strict';
 import { loadCore } from './helpers/core-modules.mjs';
 
 const prompt = () => loadCore('src/features/atal-ai/api/agentPrompt.js').ATAL_AGENT_SYSTEM_PROMPT;
+const catalog = () => loadCore('src/features/atal-ai/api/agentToolCatalog.js').agentToolCatalog;
+
+const tool = (name) => {
+  const entry = catalog().find((item) => item.name === name);
+  assert.ok(entry, `missing tool ${name}`);
+  return entry;
+};
 
 test('agent prompt requires field-pure structured values', () => {
   const value = prompt();
@@ -20,4 +27,23 @@ test('agent prompt explicitly rejects narrative wrappers in structured fields', 
   assert.match(value, /Francisco/);
   assert.match(value, /El nombre del paciente es Francisco/);
   assert.match(value, /no guardes/i);
+});
+
+test('tool schemas reinforce field purity at the function-calling boundary', () => {
+  const patientCreate = tool('patient.create');
+  const patient = patientCreate.inputSchema.properties.patient;
+  assert.match(patient.properties.name.description, /solo el nombre/i);
+  assert.match(patient.properties.name.description, /sin frases/i);
+
+  const exerciseCreate = tool('exercise.create_simple');
+  assert.match(exerciseCreate.inputSchema.properties.name.description, /solo el nombre/i);
+  assert.match(exerciseCreate.inputSchema.properties.instructions.description, /solo pasos|solo instrucciones/i);
+  assert.match(exerciseCreate.inputSchema.properties.instructions.description, /no incluyas series/i);
+  assert.match(exerciseCreate.inputSchema.properties.instructions.description, /repeticiones/i);
+  assert.match(exerciseCreate.inputSchema.properties.instructions.description, /precauciones/i);
+  assert.match(exerciseCreate.inputSchema.properties.precautions.description, /solo precauciones/i);
+
+  const planCreate = tool('plan.create_simple');
+  assert.match(planCreate.inputSchema.properties.frequency.description, /solo la frecuencia/i);
+  assert.match(planCreate.inputSchema.properties.generalInstructions.description, /solo indicaciones generales/i);
 });
