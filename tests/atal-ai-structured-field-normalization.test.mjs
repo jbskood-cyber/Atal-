@@ -78,3 +78,30 @@ test('normalizes exercise, duplicate and professional-profile wrappers without t
   assert.equal(profile.specialty, 'fisioterapia deportiva');
   assert.equal(profile.clinic, 'Centro Movimiento');
 });
+
+test('keeps structured dose fields out of exercise instructions when Gemini repeats the dose in prose', () => {
+  const { normalizeStructuredToolInput } = hygiene();
+
+  const created = normalizeStructuredToolInput('exercise.create_simple', {
+    name: 'Rotación externa con banda',
+    sets: 4,
+    repetitions: 10,
+    instructions: ['4 series de 10 repeticiones. Mantén el codo pegado al cuerpo'],
+  });
+  assert.equal(created.sets, 4);
+  assert.equal(created.repetitions, 10);
+  assert.deepEqual(created.instructions, ['Mantén el codo pegado al cuerpo']);
+
+  const updated = normalizeStructuredToolInput('exercise.update_fields', {
+    exercise: { type: 'exercise', id: 'exercise-e2e', label: 'Rotación externa con banda' },
+    patch: {
+      sets: 5,
+      repetitions: 8,
+      instructions: ['5 series de 8 repeticiones; rota sin compensar el tronco'],
+    },
+  });
+  assert.deepEqual(updated.exercise, { type: 'exercise', id: 'exercise-e2e', label: 'Rotación externa con banda' });
+  assert.equal(updated.patch.sets, 5);
+  assert.equal(updated.patch.repetitions, 8);
+  assert.deepEqual(updated.patch.instructions, ['rota sin compensar el tronco']);
+});
