@@ -47,6 +47,26 @@ test('explicit plan field edit remains scoped to plan.update_fields', () => {
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields']);
 });
 
+test('natural duplicate request in an existing plan conversation exposes plan.duplicate', () => {
+  const tools = select('Duplica este plan y llama a la copia Plan retorno QA.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.duplicate']);
+});
+
+test('natural pause request in an existing plan conversation exposes plan.pause', () => {
+  const tools = select('Pausa este plan por ahora.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.pause']);
+});
+
+test('natural archive request in an existing plan conversation exposes plan.archive instead of a field update', () => {
+  const tools = select('Archiva este plan.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.archive']);
+});
+
+test('natural restore request in an existing plan conversation exposes plan.restore', () => {
+  const tools = select('Restaura este plan archivado.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.restore']);
+});
+
 test('fresh underspecified treatment mutation is clarified without exposing write tools', () => {
   const text = 'Actualiza el tratamiento de Paciente E2E.';
   const tools = select(text, 'update_existing_plan', false);
