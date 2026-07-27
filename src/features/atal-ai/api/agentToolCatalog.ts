@@ -46,7 +46,10 @@ const exerciseRef = ref('exercise', 'Referencia al ejercicio objetivo.');
 const sessionRef = ref('session', 'Referencia a la sesión objetivo.');
 
 const contactSchema = object({
-  phone: text('Teléfono.'), email: text('Correo electrónico.'), address: text('Dirección.'), emergencyContact: text('Contacto de emergencia.'),
+  phone: text('Solo el teléfono, sin etiquetas ni explicación adicional.'),
+  email: text('Solo el correo electrónico, sin etiquetas ni explicación adicional.'),
+  address: text('Solo la dirección, sin etiquetas ni explicación adicional.'),
+  emergencyContact: text('Solo el contacto de emergencia, sin etiquetas ni explicación adicional.'),
 });
 const patientPatchSchema = object({
   name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Solo el diagnóstico proporcionado, sin frases introductorias.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
@@ -120,10 +123,10 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 
   entry('patient.create', 'action', 'Crea paciente, expediente inicial y plan opcional.', object({
     patient: object({
-      name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Diagnóstico.'), age: number('Edad entre 0 y 130.', 0, 130),
-      birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género.'), affectedArea: text('Zona afectada.'),
-      visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), phone: text('Teléfono.'), email: text('Correo.'),
-      address: text('Dirección.'), emergencyContact: text('Contacto de emergencia.'),
+      name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Solo el diagnóstico proporcionado, sin frases introductorias.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
+      birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
+      visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), phone: text('Solo el teléfono, sin etiquetas ni explicación adicional.'), email: text('Solo el correo electrónico, sin etiquetas ni explicación adicional.'),
+      address: text('Solo la dirección, sin etiquetas ni explicación adicional.'), emergencyContact: text('Solo el contacto de emergencia, sin etiquetas ni explicación adicional.'),
     }, ['name']),
     record: recordPatchSchema,
     plan: object({ ...planFields, exerciseIds: stringArray('IDs de ejercicios existentes.'), status: enumText(['draft', 'active'], 'Estado inicial.') }, ['title']),
@@ -138,7 +141,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
     patient: patientRef, ...planFields, exerciseIds: stringArray('IDs de ejercicios existentes.'), status: enumText(['draft', 'active'], 'Estado inicial.'),
   }, ['patient', 'title'])),
   entry('plan.update_fields', 'action', 'Actualiza campos de un plan.', object({ plan: planRef, patch: object(planFields) }, ['plan', 'patch'])),
-  entry('plan.duplicate', 'action', 'Duplica un plan.', object({ plan: planRef, title: text('Título opcional para la copia.', 220) }, ['plan'])),
+  entry('plan.duplicate', 'action', 'Duplica un plan.', object({ plan: planRef, title: text('Solo el título de la copia, sin frases introductorias ni etiquetas narrativas.', 220) }, ['plan'])),
   entry('plan.membership', 'action', 'Añade, retira, reordena o reemplaza ejercicios de un plan.', object({
     plan: planRef,
     operation: enumText(['add', 'remove', 'reorder', 'replace'], 'Usa replace cuando el usuario sustituya un ejercicio; exerciseIds debe ser la lista final completa en el orden deseado.'),
@@ -157,7 +160,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 
   entry('exercise.create_simple', 'action', 'Crea un ejercicio canónico.', object(exerciseFields, ['name'])),
   entry('exercise.update_fields', 'action', 'Actualiza un ejercicio.', object({ exercise: exerciseRef, patch: object(exerciseFields) }, ['exercise', 'patch'])),
-  entry('exercise.duplicate', 'action', 'Duplica un ejercicio.', object({ exercise: exerciseRef, name: text('Nombre opcional para la copia.', 220) }, ['exercise'])),
+  entry('exercise.duplicate', 'action', 'Duplica un ejercicio.', object({ exercise: exerciseRef, name: text('Solo el nombre de la copia, sin frases introductorias ni etiquetas narrativas.', 220) }, ['exercise'])),
   entry('exercise.lifecycle', 'action', 'Archiva o restaura un ejercicio.', object({ exercise: exerciseRef, archived: { type: 'boolean' } }, ['exercise', 'archived'])),
   entry('exercise.media', 'action', 'Vincula artefactos visuales locales a un ejercicio.', object({
     exercise: exerciseRef, mediaType: enumText(['image', 'sequence'], 'Tipo de recurso.'), artifactIds: stringArray('IDs de artefactos locales.', 12),
@@ -174,7 +177,7 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
 
   entry('settings.update', 'action', 'Actualiza preferencias compatibles usando únicamente las claves canónicas indicadas en patch.', object({ patch: settingsPatchSchema }, ['patch'])),
   entry('settings.profile_update', 'action', 'Actualiza el perfil profesional.', object({
-    professionalName: text('Nombre profesional.', 180), specialty: text('Especialidad.', 180), clinic: text('Clínica.', 300),
+    professionalName: text('Solo el nombre profesional, sin frases introductorias ni etiquetas narrativas.', 180), specialty: text('Solo la especialidad profesional, sin explicación adicional.', 180), clinic: text('Solo el nombre de la clínica, sin explicación adicional.', 300),
   })),
   entry('settings.appearance', 'action', 'Cambia el tema local.', object({ mode: enumText(['light', 'dark', 'system'], 'Modo visual.') }, ['mode'])),
   entry('delivery.open', 'read', 'Abre la entrega de un plan.', object({ plan: planRef }, ['plan'])),
