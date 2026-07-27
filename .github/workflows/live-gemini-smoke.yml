@@ -86,6 +86,7 @@ jobs:
           e2e/live-gemini-exercise-maintenance.spec.mjs
           e2e/live-gemini-session-flow.spec.mjs
           e2e/live-gemini-report-review.spec.mjs
+          e2e/live-gemini-physio-workflow.spec.mjs
           e2e/live-gemini-settings.spec.mjs
           e2e/live-gemini-contextual-isolation.spec.mjs
           e2e/live-gemini-export.spec.mjs
