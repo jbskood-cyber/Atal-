@@ -90,7 +90,7 @@ function safeResult(error: unknown): ToolExecutionResult {
     : coreError('CORE_EXECUTION_FAILED', error instanceof Error ? error.message : 'No se pudo completar la acción.');
   if (['CORE_ENTITY_NOT_FOUND', 'CORE_ENTITY_AMBIGUOUS', 'CORE_ENTITY_RELATION_INVALID'].includes(core.code)) {
     const code = core.code === 'CORE_ENTITY_NOT_FOUND' ? 'ENTITY_NOT_FOUND'
-      : core.code === 'CORE_ENTITY_AMBIGUOUS' ? 'ENTITY_AMIGUOUS'
+      : core.code === 'CORE_ENTITY_AMBIGUOUS' ? 'ENTITY_AMBIGUOUS'
         : 'ENTITY_RELATION_INVALID';
     return { status: 'clarification', clarification: { code, message: core.message } };
   }
