@@ -153,3 +153,23 @@ test('keeps demographic and exercise selector fields free of narrative wrappers'
   assert.equal(exercise.equipment, 'banda elástica');
   assert.equal(exercise.difficulty, 'intermedia');
 });
+
+test('keeps clinical array fields free of narrative wrappers', () => {
+  const { normalizeStructuredToolInput } = hygiene();
+  const normalized = normalizeStructuredToolInput('clinical_record.upsert', {
+    patient: { type: 'patient', id: 'patient-e2e', label: 'Francisco López' },
+    patch: {
+      symptoms: ['El síntoma es dolor nocturno', 'Síntoma: rigidez matutina'],
+      functionalLimitations: ['La limitación funcional es elevar el brazo por encima de la cabeza'],
+      goals: ['El objetivo clínico es vestirse sin dolor'],
+      relevantHistory: ['El antecedente relevante es esguince de hombro hace 2 años'],
+      precautions: ['La precaución es evitar cargas por encima de 5 kg'],
+    },
+  });
+
+  assert.deepEqual(normalized.patch.symptoms, ['dolor nocturno', 'rigidez matutina']);
+  assert.deepEqual(normalized.patch.functionalLimitations, ['elevar el brazo por encima de la cabeza']);
+  assert.deepEqual(normalized.patch.goals, ['vestirse sin dolor']);
+  assert.deepEqual(normalized.patch.relevantHistory, ['esguince de hombro hace 2 años']);
+  assert.deepEqual(normalized.patch.precautions, ['evitar cargas por encima de 5 kg']);
+});
