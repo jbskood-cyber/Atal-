@@ -122,3 +122,34 @@ test('keeps exercise time and rest as pure structured dose values', () => {
   assert.equal(normalized.time, '30 segundos');
   assert.equal(normalized.rest, '45 segundos');
 });
+
+test('keeps demographic and exercise selector fields free of narrative wrappers', () => {
+  const { normalizeStructuredToolInput } = hygiene();
+  const catalog = loadCore('src/features/atal-ai/api/agentToolCatalog.js').agentToolCatalog;
+  const patientCreate = catalog.find((item) => item.name === 'patient.create');
+  const exerciseCreate = catalog.find((item) => item.name === 'exercise.create_simple');
+  assert.ok(patientCreate);
+  assert.ok(exerciseCreate);
+  assert.match(patientCreate.inputSchema.properties.patient.properties.birthDate.description, /solo la fecha/i);
+  assert.match(patientCreate.inputSchema.properties.patient.properties.sex.description, /solo el sexo/i);
+  assert.match(exerciseCreate.inputSchema.properties.equipment.description, /solo el equipo/i);
+  assert.match(exerciseCreate.inputSchema.properties.difficulty.description, /solo la dificultad/i);
+
+  const patient = normalizeStructuredToolInput('patient.create', {
+    patient: {
+      name: 'Francisco López',
+      birthDate: 'La fecha de nacimiento es 1982-01-05',
+      sex: 'El sexo registrado es masculino',
+    },
+  });
+  assert.equal(patient.patient.birthDate, '1982-01-05');
+  assert.equal(patient.patient.sex, 'masculino');
+
+  const exercise = normalizeStructuredToolInput('exercise.create_simple', {
+    name: 'Rotación externa con banda',
+    equipment: 'El equipo necesario es banda elástica',
+    difficulty: 'La dificultad es intermedia',
+  });
+  assert.equal(exercise.equipment, 'banda elástica');
+  assert.equal(exercise.difficulty, 'intermedia');
+});
