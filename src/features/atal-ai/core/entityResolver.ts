@@ -29,6 +29,7 @@ const RESOLUTION_ORDER: EntityType[] = [
   'clinical-record',
   'settings',
 ];
+const LATEST_COMPLETED_SESSION_LABEL = normalizeEntityLabel('última sesión completada');
 
 function clarification(
   code: ClarificationRequest['code'],
@@ -102,19 +103,29 @@ function contextId(type: EntityType, context: ExecutionContext): string {
   }
 }
 
-function uniqueReportReviewSessionCandidate(
+function latestCompletedReportSessionCandidate(
   state: AtalState,
   invocation: ToolInvocation,
   context: ExecutionContext,
+  reference: EntityRef,
 ): Candidate | undefined {
-  if (invocation.tool !== 'report.review' || !context.selectedPatientId) return undefined;
-  const sessions = state.sessions.filter((session) =>
-    session.status === 'completed'
-    && session.patientId === context.selectedPatientId
-    && (!context.selectedPlanId || session.planId === context.selectedPlanId));
-  if (sessions.length !== 1) return undefined;
+  if (invocation.tool !== 'report.review'
+      || reference.type !== 'session'
+      || normalizeEntityLabel(reference.label ?? '') !== LATEST_COMPLETED_SESSION_LABEL
+      || !context.selectedPatientId
+      || !context.selectedPlanId) return undefined;
+
+  const sessions = state.sessions
+    .filter((session) => session.status === 'completed'
+      && session.patientId === context.selectedPatientId
+      && session.planId === context.selectedPlanId)
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.completedAt || left.startedAt || '') || 0;
+      const rightTime = Date.parse(right.completedAt || right.startedAt || '') || 0;
+      return rightTime - leftTime || left.id.localeCompare(right.id);
+    });
   const value = sessions[0];
-  return { id: value.id, label: value.startedAt, value };
+  return value ? { id: value.id, label: value.startedAt, value } : undefined;
 }
 
 function assignResolved(resolved: ResolvedEntities, type: EntityType, value: EntityValue): void {
@@ -208,23 +219,23 @@ export function resolveEntities(
         }
         selected = matches[0];
       }
-      if (!selected && type === 'session') {
-        selected = uniqueReportReviewSessionCandidate(state, invocation, context);
-      }
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró la entidad ${type} indicada.`, type);
       }
     } else if (reference.label?.trim()) {
-      const matches = exactLabelMatches(allCandidates, type, reference.label);
-      if (matches.length > 1) {
-        return clarification(
-          'ENTITY_AMBIGUOUS',
-          `Hay varias coincidencias exactas para ${reference.label}.`,
-          type,
-          matches,
-        );
+      selected = latestCompletedReportSessionCandidate(state, invocation, context, reference);
+      if (!selected) {
+        const matches = exactLabelMatches(allCandidates, type, reference.label);
+        if (matches.length > 1) {
+          return clarification(
+            'ENTITY_AMBIGUOUS',
+            `Hay varias coincidencias exactas para ${reference.label}.`,
+            type,
+            matches,
+          );
+        }
+        selected = matches[0];
       }
-      selected = matches[0];
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró ${reference.label}.`, type);
       }
