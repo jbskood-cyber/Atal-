@@ -1,6 +1,7 @@
 import type { AgentFunctionCall, AgentStepResult } from './contracts';
 
 type RecordValue = Record<string, unknown>;
+type ExerciseEvidence = { id: string; name: string };
 
 function recordValue(value: unknown): RecordValue | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : undefined;
@@ -10,29 +11,53 @@ function stringArray(value: unknown): string[] | undefined {
   return Array.isArray(value) && value.every((item) => typeof item === 'string') ? value : undefined;
 }
 
-function looksLikeSingularExerciseRemoval(goal: string): boolean {
-  const normalized = goal
+function normalizeText(value: string): string {
+  return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .toLocaleLowerCase('es-MX');
+    .toLocaleLowerCase('es-MX')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function looksLikeSingularExerciseRemoval(goal: string): boolean {
+  const normalized = normalizeText(goal);
   const removal = /\b(quita(?:le)?|retira(?:le)?|elimina(?:le)?|saca(?:le)?|remove|remueve)\b/.test(normalized);
   if (!removal) return false;
   if (/\b(los|varios|ambos|dos|tres|ejercicios)\b/.test(normalized)) return false;
   return /\b(el|un)\s+ejercicio\b/.test(normalized) || /\bexercise\b/.test(normalized);
 }
 
-function latestSingleExerciseRead(completed: AgentStepResult[]): string | undefined {
+function exerciseEvidenceFromReads(completed: AgentStepResult[]): ExerciseEvidence[] {
+  const evidence = new Map<string, ExerciseEvidence>();
   for (let index = completed.length - 1; index >= 0; index -= 1) {
     const step = completed[index];
     if (step.invocation.tool !== 'app.read' || step.result.status !== 'success') continue;
     const data = recordValue(step.result.data);
     const exercises = data?.exercises;
-    if (!Array.isArray(exercises) || exercises.length !== 1) continue;
-    const exercise = recordValue(exercises[0]);
-    const id = typeof exercise?.id === 'string' ? exercise.id.trim() : '';
-    if (id) return id;
+    if (!Array.isArray(exercises)) continue;
+    for (const value of exercises) {
+      const exercise = recordValue(value);
+      const id = typeof exercise?.id === 'string' ? exercise.id.trim() : '';
+      const name = typeof exercise?.name === 'string' ? exercise.name.trim() : '';
+      if (id && name && !evidence.has(id)) evidence.set(id, { id, name });
+    }
   }
-  return undefined;
+  return [...evidence.values()];
+}
+
+function groundedExerciseForGoal(goal: string, completed: AgentStepResult[]): string | undefined {
+  const evidence = exerciseEvidenceFromReads(completed);
+  if (!evidence.length) return undefined;
+
+  const normalizedGoal = ` ${normalizeText(goal)} `;
+  const explicitMatches = evidence.filter(({ name }) => {
+    const normalizedName = normalizeText(name);
+    return normalizedName.length > 0 && normalizedGoal.includes(` ${normalizedName} `);
+  });
+  if (explicitMatches.length === 1) return explicitMatches[0].id;
+
+  return evidence.length === 1 ? evidence[0].id : undefined;
 }
 
 export function groundPlanMembershipCall(
@@ -46,7 +71,7 @@ export function groundPlanMembershipCall(
   const exerciseIds = stringArray(input.exerciseIds);
   if (!exerciseIds?.length) return call;
 
-  const groundedExerciseId = latestSingleExerciseRead(completed);
+  const groundedExerciseId = groundedExerciseForGoal(goal, completed);
   if (!groundedExerciseId || (exerciseIds.length === 1 && exerciseIds[0] === groundedExerciseId)) return call;
 
   return {
