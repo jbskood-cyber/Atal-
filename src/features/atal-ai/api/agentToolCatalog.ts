@@ -49,23 +49,23 @@ const contactSchema = object({
   phone: text('Teléfono.'), email: text('Correo electrónico.'), address: text('Dirección.'), emergencyContact: text('Contacto de emergencia.'),
 });
 const patientPatchSchema = object({
-  name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Diagnóstico proporcionado.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
-  birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género registrado.'), affectedArea: text('Zona afectada.'),
+  name: text('Solo el nombre del paciente, sin frases introductorias ni etiquetas narrativas.', 180), diagnosis: text('Solo el diagnóstico proporcionado, sin frases introductorias.', 1_000), age: number('Edad entre 0 y 130.', 0, 130),
+  birthDate: text('Fecha de nacimiento.'), sex: text('Sexo o género registrado.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
   visitType: enumText(['first', 'followup'], 'Tipo de consulta.'), contact: contactSchema,
 });
 const recordPatchSchema = object({
-  reasonForVisit: text('Motivo de consulta.'), evolution: text('Evolución.'), affectedArea: text('Zona afectada.'),
-  symptoms: stringArray('Síntomas.'), painLevel: number('Dolor entre 0 y 10.', 0, 10), providedDiagnosis: text('Diagnóstico proporcionado.'),
-  functionalLimitations: stringArray('Limitaciones funcionales.'), goals: stringArray('Objetivos.'), relevantHistory: stringArray('Antecedentes relevantes.'),
-  precautions: stringArray('Precauciones.'), clinicalNotes: text('Notas clínicas.', 10_000), planId: text('ID del plan relacionado.'),
+  reasonForVisit: text('Solo el motivo de consulta, sin encabezados ni frases introductorias.'), evolution: text('Solo la evolución clínica descrita.'), affectedArea: text('Solo la zona afectada, sin explicación adicional.'),
+  symptoms: stringArray('Solo síntomas, un síntoma por elemento.'), painLevel: number('Dolor entre 0 y 10.', 0, 10), providedDiagnosis: text('Solo el diagnóstico proporcionado por el usuario, sin convertirlo en explicación.'),
+  functionalLimitations: stringArray('Solo limitaciones funcionales, una por elemento.'), goals: stringArray('Solo objetivos clínicos o funcionales, uno por elemento.'), relevantHistory: stringArray('Solo antecedentes relevantes, uno por elemento.'),
+  precautions: stringArray('Solo precauciones clínicas, una por elemento.'), clinicalNotes: text('Solo notas clínicas pertinentes al expediente.', 10_000), planId: text('ID del plan relacionado.'),
 });
 const planFields = {
-  title: text('Título del plan.', 220), focus: text('Enfoque del plan.'), duration: text('Duración.'), frequency: text('Solo la frecuencia del plan, sin objetivo, duración ni explicación adicional.'),
-  goal: text('Objetivo.'), progression: text('Progresión.'), reportCriteria: text('Criterios de reporte.'), generalInstructions: text('Solo indicaciones generales del plan; no mezcles dosis específicas de ejercicios, frecuencia ni precauciones.'),
+  title: text('Solo el título del plan, sin frases introductorias ni etiquetas narrativas.', 220), focus: text('Solo el enfoque clínico del plan, sin objetivo, duración ni frecuencia.'), duration: text('Solo la duración del plan, por ejemplo “6 semanas”, sin explicación adicional.'), frequency: text('Solo la frecuencia del plan, sin objetivo, duración ni explicación adicional.'),
+  goal: text('Solo el objetivo del plan, sin título, frecuencia ni explicación narrativa.'), progression: text('Solo la progresión prevista del plan, sin mezclar dosis específicas de ejercicios.'), reportCriteria: text('Solo criterios de reporte o seguimiento, sin explicación narrativa adicional.'), generalInstructions: text('Solo indicaciones generales del plan; no mezcles dosis específicas de ejercicios, frecuencia ni precauciones.'),
 };
 const exerciseFields = {
-  name: text('Solo el nombre del ejercicio, sin frases introductorias ni etiquetas narrativas.', 220), region: text('Región corporal.'), category: text('Categoría.'), objective: text('Objetivo.'),
-  startingPosition: text('Posición inicial.'), instructions: stringArray('Solo pasos o instrucciones de ejecución; no incluyas series, repeticiones, frecuencia, descanso ni precauciones.'), precautions: text('Solo precauciones del ejercicio; no mezcles instrucciones ni dosis.'),
+  name: text('Solo el nombre del ejercicio, sin frases introductorias ni etiquetas narrativas.', 220), region: text('Solo la región corporal del ejercicio.'), category: text('Solo la categoría del ejercicio.'), objective: text('Solo el objetivo del ejercicio, sin instrucciones ni dosis.'),
+  startingPosition: text('Solo la posición inicial del ejercicio, sin instrucciones de ejecución ni dosis.'), instructions: stringArray('Solo pasos o instrucciones de ejecución; no incluyas series, repeticiones, frecuencia, descanso ni precauciones.'), precautions: text('Solo precauciones del ejercicio; no mezcles instrucciones ni dosis.'),
   equipment: text('Equipo necesario.'), difficulty: text('Dificultad.'), sets: integer('Series, entre 1 y 100.', 1, 100),
   repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Tiempo de ejecución.'), rest: text('Descanso.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
