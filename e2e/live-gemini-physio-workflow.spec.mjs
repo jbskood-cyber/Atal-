@@ -219,6 +219,9 @@ test.describe('Live Gemini complete physiotherapist workflow', () => {
       selectedPlanId: createdPlan.id,
     });
     await send(page, 'Activa este plan. Hazlo ahora.');
+    const activateConfirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
+    await expect(activateConfirmation).toBeVisible({ timeout: 30_000 });
+    await activateConfirmation.getByRole('button', { name: 'Continuar' }).click();
     await expect.poll(async () => (await currentPlan(page))?.status, { timeout: 120_000 }).toBe('active');
 
     // 5) Start and complete a real guided session with exact metrics.
