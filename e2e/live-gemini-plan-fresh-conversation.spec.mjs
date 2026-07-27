@@ -52,10 +52,19 @@ async function waitForSettledAgent(page) {
   await expect(page.getByLabel('Mensaje para Atal IA')).toBeEnabled({ timeout: 20_000 });
 }
 
+async function send(page, text) {
+  await waitForSettledAgent(page);
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await composer.fill(text);
+  await expect(composer).toHaveValue(text);
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+}
+
 async function planSnapshot(page) {
   const state = await readStore(page);
   const matches = state.plans.filter((plan) => plan.title === 'Plan hombro Fresh QA');
   const plan = matches[0];
+  const exerciseNames = (plan?.exerciseIds ?? []).map((exerciseId) => state.exercises.find((exercise) => exercise.id === exerciseId)?.name).filter(Boolean);
   return {
     count: matches.length,
     patientId: plan?.patientId,
@@ -65,21 +74,23 @@ async function planSnapshot(page) {
     goal: plan?.goal,
     focus: plan?.focus,
     status: plan?.status,
+    exerciseIds: plan?.exerciseIds ?? [],
+    exerciseNames,
     createEvents: state.events.filter((event) => event.kind === 'plan_created' && event.planId === plan?.id).length,
+    membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success' && event.planId === plan?.id).length,
   };
 }
 
 test.describe('Live Gemini fresh natural plan creation', () => {
-  test('creates the correct patient plan from a completely fresh general conversation and survives reload/readback', async ({ page }) => {
-    test.setTimeout(300_000);
+  test('creates the correct patient plan from a completely fresh general conversation, adds an exercise naturally, and survives reload/readback', async ({ page }) => {
+    test.setTimeout(360_000);
     await seedFreshPlanConversation(page);
     await page.goto('/assistant');
 
-    const composer = page.getByLabel('Mensaje para Atal IA');
-    await composer.fill(
+    await send(
+      page,
       'Crea para Paciente E2E un plan llamado “Plan hombro Fresh QA”, de 6 semanas, 3 veces por semana, con objetivo “Recuperar movilidad y fuerza del hombro” y enfoque “Movilidad y fortalecimiento progresivo”. Déjalo como borrador para revisarlo antes de guardar.',
     );
-    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
 
     await waitForSettledAgent(page);
     await expect(page.getByRole('alert')).toHaveCount(0);
@@ -104,8 +115,21 @@ test.describe('Live Gemini fresh natural plan creation', () => {
       goal: 'Recuperar movilidad y fuerza del hombro',
       focus: 'Movilidad y fortalecimiento progresivo',
       status: 'draft',
+      exerciseIds: [],
       createEvents: 1,
     });
+
+    // Continue naturally in the same fresh thread and prove the new plan can be operated immediately.
+    await send(page, 'Ahora agrégale a ese plan el ejercicio Movilidad asistida E2E. No cambies ninguna otra cosa.');
+    await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
+      count: 1,
+      patientId: 'patient-e2e',
+      exerciseIds: ['exercise-e2e'],
+      exerciseNames: ['Movilidad asistida E2E'],
+      membershipSuccesses: 1,
+    });
+    await waitForSettledAgent(page);
+    await expect(page.getByRole('alert')).toHaveCount(0);
 
     await page.reload();
     await expect.poll(() => planSnapshot(page), { timeout: 20_000 }).toMatchObject({
@@ -116,12 +140,13 @@ test.describe('Live Gemini fresh natural plan creation', () => {
       goal: 'Recuperar movilidad y fuerza del hombro',
       focus: 'Movilidad y fortalecimiento progresivo',
       status: 'draft',
+      exerciseIds: ['exercise-e2e'],
+      exerciseNames: ['Movilidad asistida E2E'],
       createEvents: 1,
+      membershipSuccesses: 1,
     });
 
-    await waitForSettledAgent(page);
-    await composer.fill('¿Qué plan tiene Paciente E2E? Dime el nombre, duración, frecuencia y objetivo usando únicamente lo guardado en Atal.');
-    await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+    await send(page, '¿Qué plan tiene Paciente E2E? Dime el nombre, duración, frecuencia, objetivo y ejercicios usando únicamente lo guardado en Atal.');
     await waitForSettledAgent(page);
 
     const lastAssistant = page.locator('.atal-command-message.is-assistant').last();
@@ -129,6 +154,7 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     await expect(lastAssistant).toContainText(/6 semanas/i);
     await expect(lastAssistant).toContainText(/3 veces por semana/i);
     await expect(lastAssistant).toContainText(/Recuperar movilidad y fuerza del hombro/i);
+    await expect(lastAssistant).toContainText(/Movilidad asistida E2E/i);
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 });
