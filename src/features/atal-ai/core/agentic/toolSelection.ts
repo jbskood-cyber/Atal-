@@ -18,7 +18,8 @@ const PLAN_MEMBERSHIP_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|q
 const PLAN_COMPLETE_ACTION_PATTERN = /\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b|\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i;
 const PLAN_REPLACE_ACTIVE_PATTERN = /\b(?:reemplaza|reemplazar|sustituye|sustituir)\b.{0,64}\bplan activo\b/i;
 const PLAN_FIELD_EDIT_PATTERN = /\b(?:actualiza|actualizar|actualízale|actualizale|modifica|modificar|modifícale|modificale|cambia|cambiar|cámbiale|cambiale|ajusta|ajustar|ajústale|ajustale|edita|editar|edítale|editale|pon|poner|define|definir)\b.{0,80}\b(?:frecuencia|título|titulo|nombre del plan|objetivo|enfoque|duración|duracion|progresión|progresion|criterio|instrucciones)\b/i;
-const PLAN_EXPLICIT_FIELD_EDIT_PATTERN = /\b(?:plan|tratamiento)\b.{0,64}\b(?:actualiza|actualizar|actualízale|actualizale|modifica|modificar|modifícale|modificale|cambia|cambiar|cámbiale|cambiale|ajusta|ajustar|ajústale|ajustale|edita|editar|edítale|editale|pon|poner|define|definir)\b.{0,80}\b(?:frecuencia|título|titulo|nombre del plan|objetivo|enfoque|duración|duracion|progresión|progresion|criterio|instrucciones)\b|\b(?:actualiza|actualizar|actualízale|actualizale|modifica|modificar|modifícale|modificale|cambia|cambiar|cámbiale|cambiale|ajusta|ajustar|ajústale|ajustale|edita|editar|edítale|editale|pon|poner|define|definir)\b.{0,80}\b(?:frecuencia|título|titulo|nombre del plan|objetivo|enfoque|duración|duracion|progresión|progresion|criterio|instrucciones)\b.{0,24}\b(?:del|de este|en el|en este)\s+(?:plan|tratamiento)\b/i;
+const PLAN_UNAMBIGUOUS_FIELD_PATTERN = /\b(?:frecuencia|título|titulo|nombre del plan|enfoque|duración|duracion|progresión|progresion|criterio)\b/i;
+const PLAN_AMBIGUOUS_FIELD_EDIT_PATTERN = /\b(?:plan|tratamiento)\b.{0,64}\b(?:objetivo|instrucciones)\b|\b(?:objetivo|instrucciones)\b.{0,32}\b(?:del|de este|en el|en este)\s+(?:plan|tratamiento)\b/i;
 
 const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
 const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
@@ -259,7 +260,9 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && intent === 'update_existing_plan') {
     const maintenanceTools = selectPlanMaintenanceTools(rawText);
     const exerciseTools = selectPlanExerciseMutationTools(rawText);
-    const scopedMaintenanceTools = exerciseTools.length > 0 && !PLAN_EXPLICIT_FIELD_EDIT_PATTERN.test(rawText)
+    const hasExplicitPlanFieldEdit = PLAN_UNAMBIGUOUS_FIELD_PATTERN.test(rawText)
+      || PLAN_AMBIGUOUS_FIELD_EDIT_PATTERN.test(rawText);
+    const scopedMaintenanceTools = exerciseTools.length > 0 && !hasExplicitPlanFieldEdit
       ? maintenanceTools.filter((tool) => tool !== 'plan.update_fields')
       : maintenanceTools;
     const requestedTools = [...scopedMaintenanceTools, ...exerciseTools];
