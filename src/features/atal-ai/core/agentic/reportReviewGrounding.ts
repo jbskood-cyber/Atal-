@@ -1,8 +1,8 @@
 import type { AgentFunctionCall, AgentStepResult } from './contracts';
 
-export const LATEST_COMPLETED_SESSION_ID = '__atal_latest_completed_session__';
-
 type RecordValue = Record<string, unknown>;
+
+const LATEST_COMPLETED_SESSION_LABEL = 'última sesión completada';
 
 function recordValue(value: unknown): RecordValue | undefined {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : undefined;
@@ -33,16 +33,16 @@ function asksForLatestCompletedSession(goal: string): boolean {
     || /\bsesion\b.{0,48}\b(?:ultima|ultimo|mas reciente|reciente)\b.{0,48}\bcompletad[ao]\b/.test(normalized);
 }
 
-function rewriteSession(call: AgentFunctionCall, input: RecordValue, sessionId: string): AgentFunctionCall {
+function rewriteSession(call: AgentFunctionCall, input: RecordValue, reference: { type: 'session'; id?: string; label?: string }): AgentFunctionCall {
   return {
     ...call,
     input: {
       ...input,
-      session: { type: 'session', id: sessionId },
+      session: reference,
     },
     references: [
-      ...call.references.filter((reference) => reference.type !== 'session'),
-      { type: 'session', id: sessionId },
+      ...call.references.filter((item) => item.type !== 'session'),
+      reference,
     ],
   };
 }
@@ -61,11 +61,11 @@ export function groundReportReviewCall(
   const ids = canonicalSessionIds(completed);
   if (ids.length === 1) {
     const canonicalId = ids[0];
-    return session.id === canonicalId ? call : rewriteSession(call, input, canonicalId);
+    return session.id === canonicalId ? call : rewriteSession(call, input, { type: 'session', id: canonicalId });
   }
 
   if (asksForLatestCompletedSession(goal)) {
-    return rewriteSession(call, input, LATEST_COMPLETED_SESSION_ID);
+    return rewriteSession(call, input, { type: 'session', label: LATEST_COMPLETED_SESSION_LABEL });
   }
 
   return call;
