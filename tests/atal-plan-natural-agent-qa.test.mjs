@@ -62,6 +62,16 @@ test('natural pause request in an existing plan conversation exposes plan.pause'
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.pause']);
 });
 
+test('natural complete request in an existing plan conversation exposes plan.complete', () => {
+  const tools = select('Da por terminado este plan porque ya cumplió sus objetivos.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.complete']);
+});
+
+test('natural activate request in an existing plan conversation exposes plan.activate', () => {
+  const tools = select('Activa este plan para empezar a usarlo con el paciente.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.activate']);
+});
+
 test('natural archive request in an existing plan conversation exposes plan.archive instead of a field update', () => {
   const tools = select('Archiva este plan.');
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.archive']);
@@ -70,6 +80,11 @@ test('natural archive request in an existing plan conversation exposes plan.arch
 test('natural restore request in an existing plan conversation exposes plan.restore', () => {
   const tools = select('Restaura este plan archivado.');
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.restore']);
+});
+
+test('natural replace-active request in an existing plan conversation exposes plan.replace_active', () => {
+  const tools = select('Reemplaza el plan activo de Paciente E2E por Plan retorno QA.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.replace_active']);
 });
 
 test('fresh underspecified treatment mutation is clarified without exposing write tools', () => {
