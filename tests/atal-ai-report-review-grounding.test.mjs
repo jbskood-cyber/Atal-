@@ -4,12 +4,14 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const grounding = () => loadCore('src/features/atal-ai/core/agentic/reportReviewGrounding.js');
 
-function readSessionsStep(sessions) {
+function readSessionsStep(sessions, tool = 'app.read') {
   return {
     callId: 'read-sessions',
     invocation: {
-      tool: 'app.read', version: 1, proposalId: 'read-sessions', references: [],
-      input: { resource: 'sessions', status: 'completed' },
+      tool, version: 1, proposalId: 'read-sessions', references: [],
+      input: tool === 'app.read'
+        ? { resource: 'sessions', status: 'completed' }
+        : { patient: { type: 'patient', id: 'patient-e2e' }, limit: 1 },
     },
     result: {
       status: 'success',
@@ -44,6 +46,17 @@ test('grounds report.review to the sole completed session returned by same-turn 
 
   assert.deepEqual(grounded.input.session, { type: 'session', id: 'session-canonical' });
   assert.deepEqual(grounded.references, [{ type: 'session', id: 'session-canonical' }]);
+});
+
+test('grounds report.review after same-turn session.summarize_recent resolves one canonical session', () => {
+  const { groundReportReviewCall } = grounding();
+  const grounded = groundReportReviewCall(
+    [readSessionsStep([{ id: 'session-recent', status: 'completed', completedAt: '2026-07-27T09:13:08.714Z' }], 'session.summarize_recent')],
+    reportCall(),
+  );
+
+  assert.deepEqual(grounded.input.session, { type: 'session', id: 'session-recent' });
+  assert.deepEqual(grounded.references, [{ type: 'session', id: 'session-recent' }]);
 });
 
 test('does not guess when the same-turn read contains multiple sessions', () => {
