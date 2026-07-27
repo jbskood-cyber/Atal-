@@ -11,6 +11,7 @@ import {
   type ToolInvocation,
 } from './contracts';
 import { contextualInvocationViolation } from './agentic/contextualToolPolicy';
+import { normalizeStructuredToolInput } from './agentic/structuredFieldHygiene';
 import { resolveEntities } from './entityResolver';
 import { decideExecutionPolicy } from './riskPolicy';
 import { createToolRegistry, type ToolRegistry } from './toolRegistry';
@@ -89,7 +90,7 @@ function safeResult(error: unknown): ToolExecutionResult {
     : coreError('CORE_EXECUTION_FAILED', error instanceof Error ? error.message : 'No se pudo completar la acción.');
   if (['CORE_ENTITY_NOT_FOUND', 'CORE_ENTITY_AMBIGUOUS', 'CORE_ENTITY_RELATION_INVALID'].includes(core.code)) {
     const code = core.code === 'CORE_ENTITY_NOT_FOUND' ? 'ENTITY_NOT_FOUND'
-      : core.code === 'CORE_ENTITY_AMBIGUOUS' ? 'ENTITY_AMBIGUOUS'
+      : core.code === 'CORE_ENTITY_AMBIGUOUS' ? 'ENTITY_AMIGUOUS'
         : 'ENTITY_RELATION_INVALID';
     return { status: 'clarification', clarification: { code, message: core.message } };
   }
@@ -113,9 +114,10 @@ function normalizeInvocationInput(
   input: unknown,
   state: ReturnType<StorePort['read']>,
 ): unknown {
-  if (tool !== 'plan.membership' || !input || typeof input !== 'object' || Array.isArray(input)) return input;
-  const value = input as Record<string, unknown>;
-  if (!Array.isArray(value.exerciseIds) || value.exerciseIds.some((item) => typeof item !== 'string')) return input;
+  const structuredInput = normalizeStructuredToolInput(tool, input);
+  if (tool !== 'plan.membership' || !structuredInput || typeof structuredInput !== 'object' || Array.isArray(structuredInput)) return structuredInput;
+  const value = structuredInput as Record<string, unknown>;
+  if (!Array.isArray(value.exerciseIds) || value.exerciseIds.some((item) => typeof item !== 'string')) return structuredInput;
 
   const canonicalIds = value.exerciseIds.map((rawValue) => {
     const token = rawValue.trim();
