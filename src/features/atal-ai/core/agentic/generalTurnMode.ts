@@ -40,6 +40,15 @@ const deferredMutationPatterns = [
   /\b(?:lo|la|los|las)\s+revisar/i,
 ];
 
+// A negative clause can be a scope guard for a positive action instead of a
+// request to defer the action itself. Keep this intentionally narrow: the
+// user must have an explicit positive action and the negative clause must
+// clearly protect "another" target (or "nothing else").
+const scopedNegativeConstraintPatterns = [
+  /\bno\s+(?:lo\s+|la\s+|los\s+|las\s+)?(?:cambies|modifiques|edites|actualices)\b.{0,64}\bni\s+otr[oa]s?\b/i,
+  /\bno\s+(?:lo\s+|la\s+|los\s+|las\s+)?(?:cambies|modifiques|edites|actualices)\b.{0,48}\bnada\s+m[aá]s\b/i,
+];
+
 const draftCommitPatterns = [
   /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b/i,
   /\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i,
@@ -88,11 +97,16 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
   const value = classificationText(text);
   if (!value) return { kind: 'conversation', allowedToolKinds: [] };
 
-  if (deferredMutationPatterns.some((pattern) => pattern.test(value))) {
+  const hasExplicitAction = explicitActionPatterns.some((pattern) => pattern.test(value));
+  const hasDeferredMutation = deferredMutationPatterns.some((pattern) => pattern.test(value));
+  const hasScopedNegativeConstraint = hasExplicitAction
+    && scopedNegativeConstraintPatterns.some((pattern) => pattern.test(value));
+
+  if (hasDeferredMutation && !hasScopedNegativeConstraint) {
     return { kind: 'proposal', allowedToolKinds: ['read'] };
   }
 
-  if (explicitActionPatterns.some((pattern) => pattern.test(value))) {
+  if (hasExplicitAction) {
     return { kind: 'action', allowedToolKinds: ['read', 'action'] };
   }
 
