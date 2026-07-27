@@ -70,7 +70,7 @@ const exerciseFields = {
   name: text('Solo el nombre del ejercicio, sin frases introductorias ni etiquetas narrativas.', 220), region: text('Solo la región corporal del ejercicio.'), category: text('Solo la categoría del ejercicio.'), objective: text('Solo el objetivo del ejercicio, sin instrucciones ni dosis.'),
   startingPosition: text('Solo la posición inicial del ejercicio, sin instrucciones de ejecución ni dosis.'), instructions: stringArray('Solo pasos o instrucciones de ejecución; no incluyas series, repeticiones, frecuencia, descanso ni precauciones.'), precautions: text('Solo precauciones del ejercicio; no mezcles instrucciones ni dosis.'),
   equipment: text('Equipo necesario.'), difficulty: text('Dificultad.'), sets: integer('Series, entre 1 y 100.', 1, 100),
-  repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Tiempo de ejecución.'), rest: text('Descanso.'),
+  repetitions: integer('Repeticiones, entre 1 y 10000.', 1, 10_000), time: text('Solo el tiempo de ejecución, sin series, repeticiones, descanso ni instrucciones.'), rest: text('Solo el descanso entre series o repeticiones, sin instrucciones ni otras dosis.'),
   maxPain: number('Dolor máximo permitido entre 0 y 10.', 0, 10), tags: stringArray('Etiquetas.'), notes: text('Notas.'),
 };
 const sessionPatchSchema = object({
@@ -161,31 +161,31 @@ export const agentToolCatalog: AgentToolCatalogEntry[] = [
   entry('exercise.create_simple', 'action', 'Crea un ejercicio canónico.', object(exerciseFields, ['name'])),
   entry('exercise.update_fields', 'action', 'Actualiza un ejercicio.', object({ exercise: exerciseRef, patch: object(exerciseFields) }, ['exercise', 'patch'])),
   entry('exercise.duplicate', 'action', 'Duplica un ejercicio.', object({ exercise: exerciseRef, name: text('Solo el nombre de la copia, sin frases introductorias ni etiquetas narrativas.', 220) }, ['exercise'])),
-  entry('exercise.lifecycle', 'action', 'Archiva o restaura un ejercicio.', object({ exercise: exerciseRef, archived: { type: 'boolean' } }, ['exercise', 'archived'])),
-  entry('exercise.media', 'action', 'Vincula artefactos visuales locales a un ejercicio.', object({
-    exercise: exerciseRef, mediaType: enumText(['image', 'sequence'], 'Tipo de recurso.'), artifactIds: stringArray('IDs de artefactos locales.', 12),
-  }, ['exercise', 'mediaType', 'artifactIds'])),
-
-  entry('session.start_or_resume', 'action', 'Inicia o recupera una sesión guiada.', object({
-    patient: patientRef, plan: planRef, startPain: number('Dolor inicial entre 0 y 10.', 0, 10), startEnergy: number('Energía inicial entre 0 y 10.', 0, 10), comment: text('Comentario inicial.'),
-  }, ['patient', 'plan'])),
-  entry('session.update_draft', 'action', 'Actualiza el borrador de sesión. Incluye en patch cada dato de sesión proporcionado por el usuario.', object({ patient: patientRef, plan: planRef, patch: sessionPatchSchema }, ['patient', 'plan', 'patch'])),
-  entry('session.complete', 'action', 'Completa o guarda como parcial una sesión. Incluye en patch cada dato final proporcionado por el usuario, usando endPain, endEnergy, effort y endComment cuando correspondan.', object({
-    patient: patientRef, plan: planRef, status: enumText(['completed', 'partial'], 'Estado final.'), patch: sessionPatchSchema,
-  }, ['patient', 'plan', 'status'])),
-  entry('report.review', 'action', 'Guarda una observación clínica en el reporte.', object({ session: sessionRef, observation: text('Observación clínica.', 10_000) }, ['session', 'observation'])),
-
-  entry('settings.update', 'action', 'Actualiza preferencias compatibles usando únicamente las claves canónicas indicadas en patch.', object({ patch: settingsPatchSchema }, ['patch'])),
+  entry('exercise.lifecycle', 'action', 'Archiva o restaura un ejercicio.', object({ exercise: exerciseRef, archived: { type: 'boolean', description: 'true para archivar; false para restaurar.' } }, ['exercise', 'archived'])),
+  entry('session.start_or_resume', 'action', 'Inicia o reanuda una sesión guiada.', object({ patient: patientRef, plan: planRef, patch: sessionPatchSchema }, ['patient', 'plan'])),
+  entry('session.complete', 'action', 'Completa una sesión guiada.', object({ patient: patientRef, plan: planRef, session: sessionRef, patch: sessionPatchSchema }, ['patient', 'plan'])),
+  entry('report.review', 'action', 'Marca una sesión/reporte como revisado.', object({ patient: patientRef, plan: planRef, session: sessionRef, reviewed: { type: 'boolean', description: 'Estado revisado.' }, note: text('Nota de revisión opcional.', 2_000) }, ['session', 'reviewed'])),
+  entry('settings.update', 'action', 'Actualiza preferencias de Atal.', object({ patch: settingsPatchSchema }, ['patch'])),
+  entry('settings.appearance', 'action', 'Actualiza la apariencia.', object({ theme: enumText(['light', 'dark', 'system'], 'Tema visual.') }, ['theme'])),
   entry('settings.profile_update', 'action', 'Actualiza el perfil profesional.', object({
-    professionalName: text('Solo el nombre profesional, sin frases introductorias ni etiquetas narrativas.', 180), specialty: text('Solo la especialidad profesional, sin explicación adicional.', 180), clinic: text('Solo el nombre de la clínica, sin explicación adicional.', 300),
+    professionalName: text('Solo el nombre profesional, sin etiquetas ni explicación adicional.'),
+    specialty: text('Solo la especialidad, sin etiquetas ni explicación adicional.'),
+    license: text('Solo la cédula/licencia profesional, sin etiquetas ni explicación adicional.'),
+    clinic: text('Solo el nombre de la clínica, sin etiquetas ni explicación adicional.'),
   })),
-  entry('settings.appearance', 'action', 'Cambia el tema local.', object({ mode: enumText(['light', 'dark', 'system'], 'Modo visual.') }, ['mode'])),
   entry('delivery.open', 'read', 'Abre la entrega de un plan.', object({ plan: planRef }, ['plan'])),
-  entry('delivery.action', 'action', 'Descarga, comparte o imprime una entrega.', object({
-    plan: planRef, action: enumText(['download', 'share', 'print'], 'Acción local.'), options: object({}, [], true),
-  }, ['plan', 'action'])),
-  entry('data.export_local', 'action', 'Genera una exportación local.', object({ kind: enumText(['patients', 'progress', 'plans', 'backup'], 'Tipo de exportación.') }, ['kind'])),
+  entry('delivery.action', 'action', 'Ejecuta una acción de entrega.', object({ plan: planRef, action: enumText(['download', 'print', 'share', 'whatsapp'], 'Acción de entrega.') }, ['plan', 'action'])),
+  entry('export.local', 'action', 'Exporta datos localmente.', object({ resource: text('Recurso a exportar.'), format: enumText(['json', 'csv'], 'Formato de exportación.') }, ['resource', 'format'])),
 ];
 
-export const agentToolCatalogByName = new Map(agentToolCatalog.map((item) => [item.name, item]));
-export const agentToolCatalogByFunctionName = new Map(agentToolCatalog.map((item) => [item.functionName, item]));
+export function agentToolByName(name: string): AgentToolCatalogEntry | undefined {
+  return agentToolCatalog.find((item) => item.name === name);
+}
+
+export function agentFunctionName(toolName: string): string {
+  return agentToolByName(toolName)?.functionName ?? `atal_${toolName.replaceAll('.', '_')}`;
+}
+
+export function agentToolNameFromFunction(functionName: string): string | undefined {
+  return agentToolCatalog.find((item) => item.functionName === functionName)?.name;
+}
