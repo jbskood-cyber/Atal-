@@ -49,6 +49,14 @@ const FIELD_PREFIXES: Record<string, RegExp[]> = {
   rest: [/^(?:el\s+)?descanso\s+(?:es|sería|será)\s+/i, /^descanso\s*:\s*/i],
 };
 
+const ARRAY_ITEM_PREFIXES: Record<string, RegExp[]> = {
+  symptoms: [/^(?:el\s+)?síntoma\s+(?:es|sería|será)\s+/i, /^síntoma\s*:\s*/i],
+  functionalLimitations: [/^(?:la\s+)?limitación\s+funcional\s+(?:es|sería|será)\s+/i, /^limitación\s+funcional\s*:\s*/i],
+  goals: [/^(?:el\s+)?objetivo(?:\s+clínico|\s+funcional)?\s+(?:es|sería|será)\s+/i, /^objetivo(?:\s+clínico|\s+funcional)?\s*:\s*/i],
+  relevantHistory: [/^(?:el\s+)?antecedente(?:\s+relevante)?\s+(?:es|sería|será)\s+/i, /^antecedente(?:\s+relevante)?\s*:\s*/i],
+  precautions: FIELD_PREFIXES.precautions,
+};
+
 const INSTRUCTION_PREFIXES = [
   /^(?:la\s+)?instrucción\s+(?:es|sería|será)\s+/i,
   /^(?:las\s+)?instrucciones\s+(?:son|serían|serán)\s+/i,
@@ -91,7 +99,11 @@ function normalizeValue(key: string, value: unknown): unknown {
   if (key === 'instructions' && Array.isArray(value)) {
     return value.map((item) => typeof item === 'string' ? stripPrefix(item, INSTRUCTION_PREFIXES) : item);
   }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  if (Array.isArray(value)) {
+    const patterns = ARRAY_ITEM_PREFIXES[key];
+    return patterns ? value.map((item) => typeof item === 'string' ? stripPrefix(item, patterns) : item) : value;
+  }
+  if (!value || typeof value !== 'object') return value;
   return normalizeObject(value as Record<string, unknown>);
 }
 
