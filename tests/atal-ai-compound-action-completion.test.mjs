@@ -5,6 +5,7 @@ import { context } from './helpers/core-fixtures.mjs';
 
 const loopModule = () => loadCore('src/features/atal-ai/core/agentic/agentLoop.js');
 const selectionModule = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
+const requirementsModule = () => loadCore('src/features/atal-ai/core/agentic/compoundActionRequirements.js');
 
 const request = {
   conversationId: 'conversation-compound-plan-edit',
@@ -28,7 +29,7 @@ test('explicit compound plan + exercise edits are marked as required actions', (
     hasConversationContext: true,
   };
   const allowed = selectionModule().selectAgentTools(input);
-  const required = selectionModule().selectRequiredAgentTools(input);
+  const required = requirementsModule().requiredAgentToolsForSelection(input, allowed);
 
   assert.deepEqual(allowed, ['app.read', 'patient.search', 'plan.update_fields', 'exercise.update_fields']);
   assert.deepEqual(required, ['plan.update_fields', 'exercise.update_fields']);
