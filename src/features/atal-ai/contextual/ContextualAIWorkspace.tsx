@@ -65,6 +65,12 @@ export function ContextualAIWorkspace() {
     queueGlobalAIHandoff(context, model.conversation!, model.draft);
     window.location.assign('/assistant');
   };
+  const closeAfterPersistenceFlush = () => {
+    if (processing) return;
+    // Conversation persistence is effect-driven. Closing on the next task keeps
+    // the last committed assistant/user turn from being dropped on unmount.
+    window.setTimeout(controller.close, 0);
+  };
 
   return <>
     <RouteContextualAISurface />
@@ -89,7 +95,7 @@ export function ContextualAIWorkspace() {
           <span><b>{context.contextLabel}</b><small>{context.entityLabel}</small></span>
         </div>
         <button type="button" aria-label="Minimizar asistente" onClick={controller.minimize}><Minus /></button>
-        <button type="button" aria-label="Cerrar asistente" onClick={controller.close}><X /></button>
+        <button type="button" aria-label="Cerrar asistente" disabled={processing} onClick={closeAfterPersistenceFlush}><X /></button>
       </header>
 
       <div className="atal-contextual-work-area">
