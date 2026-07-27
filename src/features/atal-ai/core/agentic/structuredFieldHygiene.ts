@@ -24,6 +24,8 @@ const FIELD_PREFIXES: Record<string, RegExp[]> = {
   email: [/^(?:el|su)\s+correo(?:\s+electrónico)?\s+(?:es|sería|será)\s+/i, /^correo(?:\s+electrónico)?\s*:\s*/i],
   address: [/^(?:la|su)\s+dirección\s+(?:es|sería|será)\s+/i, /^dirección\s*:\s*/i],
   emergencyContact: [/^(?:el|su)\s+contacto\s+de\s+emergencia\s+(?:es|sería|será)\s+/i, /^contacto\s+de\s+emergencia\s*:\s*/i],
+  birthDate: [/^(?:la\s+)?fecha\s+de\s+nacimiento\s+(?:es|sería|será)\s+/i, /^fecha\s+de\s+nacimiento\s*:\s*/i],
+  sex: [/^(?:el\s+)?sexo(?:\s+registrado)?\s+(?:es|sería|será)\s+/i, /^sexo(?:\s+registrado)?\s*:\s*/i],
   affectedArea: [/^(?:la\s+)?zona\s+afectada\s+(?:es|sería|será)\s+/i, /^zona\s+afectada\s*:\s*/i],
   diagnosis: [/^(?:el\s+)?diagnóstico(?:\s+proporcionado)?\s+(?:es|sería|será)\s+/i, /^diagnóstico\s*:\s*/i],
   providedDiagnosis: [/^(?:el\s+)?diagnóstico(?:\s+proporcionado)?\s+(?:es|sería|será)\s+/i, /^diagnóstico\s*:\s*/i],
@@ -41,6 +43,8 @@ const FIELD_PREFIXES: Record<string, RegExp[]> = {
   objective: [/^(?:el\s+)?objetivo\s+(?:es|sería|será)\s+/i, /^objetivo\s*:\s*/i],
   startingPosition: [/^(?:la\s+)?posición\s+inicial\s+(?:es|sería|será)\s+/i, /^posición\s+inicial\s*:\s*/i],
   precautions: [/^(?:la\s+)?precaución\s+(?:es|sería|será)\s+/i, /^(?:las\s+)?precauciones\s+(?:son|serían|serán)\s+/i, /^precauciones?\s*:\s*/i],
+  equipment: [/^(?:el\s+)?equipo(?:\s+necesario)?\s+(?:es|sería|será)\s+/i, /^equipo(?:\s+necesario)?\s*:\s*/i],
+  difficulty: [/^(?:la\s+)?dificultad\s+(?:es|sería|será)\s+/i, /^dificultad\s*:\s*/i],
   time: [/^(?:el\s+)?tiempo(?:\s+de\s+ejecución)?\s+(?:es|sería|será)\s+/i, /^tiempo(?:\s+de\s+ejecución)?\s*:\s*/i],
   rest: [/^(?:el\s+)?descanso\s+(?:es|sería|será)\s+/i, /^descanso\s*:\s*/i],
 };
