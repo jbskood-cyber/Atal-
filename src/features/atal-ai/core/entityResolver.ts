@@ -85,6 +85,13 @@ function exactLabel(candidate: Candidate, type: EntityType): string {
   return normalizeEntityLabel(candidate.label);
 }
 
+function exactLabelMatches(candidates: Candidate[], type: EntityType, label: string): Candidate[] {
+  const normalized = normalizeEntityLabel(label);
+  return candidates
+    .filter((candidate) => exactLabel(candidate, type) === normalized)
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
 function contextId(type: EntityType, context: ExecutionContext): string {
   switch (type) {
     case 'patient': return context.selectedPatientId;
@@ -174,14 +181,23 @@ export function resolveEntities(
 
     if (reference.id?.trim()) {
       selected = candidatesFor(state, type, {}).find((candidate) => candidate.id === reference.id);
+      if (!selected && reference.label?.trim()) {
+        const matches = exactLabelMatches(allCandidates, type, reference.label);
+        if (matches.length > 1) {
+          return clarification(
+            'ENTITY_AMBIGUOUS',
+            `Hay varias coincidencias exactas para ${reference.label}.`,
+            type,
+            matches,
+          );
+        }
+        selected = matches[0];
+      }
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró la entidad ${type} indicada.`, type);
       }
     } else if (reference.label?.trim()) {
-      const normalized = normalizeEntityLabel(reference.label);
-      const matches = allCandidates
-        .filter((candidate) => exactLabel(candidate, type) === normalized)
-        .sort((left, right) => left.id.localeCompare(right.id));
+      const matches = exactLabelMatches(allCandidates, type, reference.label);
       if (matches.length > 1) {
         return clarification(
           'ENTITY_AMBIGUOUS',
