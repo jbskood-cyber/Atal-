@@ -46,6 +46,7 @@ const draftCommitPatterns = [
 ];
 
 const explicitActionPatterns = [
+  /\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i,
   /\b(?:añade|anade|añádele|anadele|agrega|agrégale|agregale|guarda|registra|actualiza|actualízale|actualizale|modifica|modifícale|modificale|cambia|cámbiale|cambiale|ajusta|ajústale|ajustale|corrige|corrígele|corrigele|edita|edítale|editale|quita|quítale|quitale|sustituye|sustituir|reemplaza|reemplazar|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
   ...draftCommitPatterns,
 ];
