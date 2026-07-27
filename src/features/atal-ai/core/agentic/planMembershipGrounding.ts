@@ -66,7 +66,7 @@ export function groundPlanMembershipCall(
   completed: AgentStepResult[],
   call: AgentFunctionCall,
 ): AgentFunctionCall {
-  const groundedCall = groundReportReviewCall(completed, call);
+  const groundedCall = groundReportReviewCall(completed, call, goal);
   if (groundedCall.tool !== 'plan.membership' || !looksLikeSingularExerciseRemoval(goal)) return groundedCall;
   const input = recordValue(groundedCall.input);
   if (!input || input.operation !== 'remove') return groundedCall;
