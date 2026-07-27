@@ -73,6 +73,13 @@ function selectPatientMaintenanceTools(rawText: string): string[] {
 function selectPlanMaintenanceTools(rawText: string): string[] {
   const selected: string[] = [];
 
+  if (/\b(?:duplica|duplicar|copia|copiar)\b/i.test(rawText)) append(selected, ['plan.duplicate']);
+  if (/\b(?:pausa|pausar|suspende|suspender)\b/i.test(rawText)) append(selected, ['plan.pause']);
+  if (/\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b/i.test(rawText)) append(selected, ['plan.complete']);
+  if (/\b(?:archiva|archivar)\b/i.test(rawText)) append(selected, ['plan.archive']);
+  if (/\b(?:restaura|restaurar|reactiva|reactivar)\b/i.test(rawText)) append(selected, ['plan.restore']);
+  if (/\b(?:activa|activar)\b/i.test(rawText)) append(selected, ['plan.activate']);
+
   if (includesAny(rawText, [
     'frecuencia', 'título', 'titulo', 'nombre del plan', 'objetivo', 'enfoque', 'duración', 'duracion',
     'progresión', 'progresion', 'criterio', 'instrucciones',
