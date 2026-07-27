@@ -102,6 +102,21 @@ function contextId(type: EntityType, context: ExecutionContext): string {
   }
 }
 
+function uniqueReportReviewSessionCandidate(
+  state: AtalState,
+  invocation: ToolInvocation,
+  context: ExecutionContext,
+): Candidate | undefined {
+  if (invocation.tool !== 'report.review' || !context.selectedPatientId) return undefined;
+  const sessions = state.sessions.filter((session) =>
+    session.status === 'completed'
+    && session.patientId === context.selectedPatientId
+    && (!context.selectedPlanId || session.planId === context.selectedPlanId));
+  if (sessions.length !== 1) return undefined;
+  const value = sessions[0];
+  return { id: value.id, label: value.startedAt, value };
+}
+
 function assignResolved(resolved: ResolvedEntities, type: EntityType, value: EntityValue): void {
   switch (type) {
     case 'patient': resolved.patient = value as PatientEntity; break;
@@ -192,6 +207,9 @@ export function resolveEntities(
           );
         }
         selected = matches[0];
+      }
+      if (!selected && type === 'session') {
+        selected = uniqueReportReviewSessionCandidate(state, invocation, context);
       }
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró la entidad ${type} indicada.`, type);
