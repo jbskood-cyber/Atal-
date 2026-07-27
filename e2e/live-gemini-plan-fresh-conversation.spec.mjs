@@ -81,9 +81,21 @@ async function planSnapshot(page) {
   };
 }
 
+async function exerciseSnapshot(page) {
+  const state = await readStore(page);
+  const exercise = state.exercises.find((item) => item.id === 'exercise-e2e');
+  return {
+    name: exercise?.name,
+    sets: exercise?.sets,
+    repetitions: exercise?.repetitions,
+    instructions: exercise?.instructions,
+    updateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
+  };
+}
+
 test.describe('Live Gemini fresh natural plan creation', () => {
-  test('creates the correct patient plan from a completely fresh general conversation, adds an exercise naturally, and survives reload/readback', async ({ page }) => {
-    test.setTimeout(360_000);
+  test('creates the correct patient plan from a completely fresh general conversation, adds and edits an exercise naturally, and survives reload/readback', async ({ page }) => {
+    test.setTimeout(420_000);
     await seedFreshPlanConversation(page);
     await page.goto('/assistant');
 
@@ -131,6 +143,18 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     await waitForSettledAgent(page);
     await expect(page.getByRole('alert')).toHaveCount(0);
 
+    // Keep the same conversational context and edit only the exercise dose/instructions.
+    await send(page, 'Ahora cambia ese ejercicio a 4 series de 10 repeticiones y deja las instrucciones exactamente como “Movimiento lento y controlado”. No modifiques el plan ni otro ejercicio.');
+    await expect.poll(() => exerciseSnapshot(page), { timeout: 120_000 }).toMatchObject({
+      name: 'Movilidad asistida E2E',
+      sets: 4,
+      repetitions: 10,
+      instructions: 'Movimiento lento y controlado',
+      updateSuccesses: 1,
+    });
+    await waitForSettledAgent(page);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+
     await page.reload();
     await expect.poll(() => planSnapshot(page), { timeout: 20_000 }).toMatchObject({
       count: 1,
@@ -145,8 +169,15 @@ test.describe('Live Gemini fresh natural plan creation', () => {
       createEvents: 1,
       membershipSuccesses: 1,
     });
+    await expect.poll(() => exerciseSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      name: 'Movilidad asistida E2E',
+      sets: 4,
+      repetitions: 10,
+      instructions: 'Movimiento lento y controlado',
+      updateSuccesses: 1,
+    });
 
-    await send(page, '¿Qué plan tiene Paciente E2E? Dime el nombre, duración, frecuencia, objetivo y ejercicios usando únicamente lo guardado en Atal.');
+    await send(page, '¿Qué plan tiene Paciente E2E? Dime el nombre, duración, frecuencia, objetivo, ejercicios y la dosis e instrucciones del ejercicio usando únicamente lo guardado en Atal.');
     await waitForSettledAgent(page);
 
     const lastAssistant = page.locator('.atal-command-message.is-assistant').last();
@@ -155,6 +186,9 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     await expect(lastAssistant).toContainText(/3 veces por semana/i);
     await expect(lastAssistant).toContainText(/Recuperar movilidad y fuerza del hombro/i);
     await expect(lastAssistant).toContainText(/Movilidad asistida E2E/i);
+    await expect(lastAssistant).toContainText(/4 series/i);
+    await expect(lastAssistant).toContainText(/10 repeticiones/i);
+    await expect(lastAssistant).toContainText(/Movimiento lento y controlado/i);
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 });
