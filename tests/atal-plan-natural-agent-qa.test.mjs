@@ -32,6 +32,11 @@ test('natural clitic add exercise request exposes plan membership', () => {
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
 });
 
+test('natural plural add exercises request exposes plan membership', () => {
+  const tools = select('Añade a este plan los ejercicios “Movilidad asistida E2E” y “Rotación externa Flujo QA”. Hazlo ahora.');
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
+});
+
 test('natural clitic remove exercise request exposes plan membership', () => {
   const tools = select('Quítale al plan el ejercicio Puente lumbar E2E.');
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.membership']);
