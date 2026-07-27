@@ -8,6 +8,7 @@ import type {
   AgentStepResult,
   AgentTaskState,
 } from './contracts';
+import { groundPlanMembershipCall } from './planMembershipGrounding';
 import { AGENT_TOOL_CALL_REPAIR_MARKER } from './toolCallingPolicy';
 
 const DEFAULT_MAX_STEPS = 8;
@@ -315,7 +316,8 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     }
 
     const responseParts: AgentHistoryContent['parts'] = [];
-    for (const call of turn.calls) {
+    for (const rawCall of turn.calls) {
+      const call = groundPlanMembershipCall(task.goal, task.completed, rawCall);
       if (!task.allowedTools.includes(call.tool)) {
         task.status = 'blocked';
         task.finalText = 'Esa acción no está disponible desde este contexto.';
@@ -358,25 +360,6 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     task.error = 'MAX_AGENT_STEPS';
     task.finalText = 'Detuve el proceso al alcanzar el límite seguro de pasos. Los cambios completados se conservaron.';
   }
-  task.updatedAt = now();
-  return { task, lastResults };
-}
 
-export function appendConfirmedResult(
-  task: AgentTaskState,
-  call: AgentFunctionCall,
-  invocation: ToolInvocation,
-  result: ToolExecutionResult,
-): AgentTaskState {
-  const next = structuredClone(task);
-  next.pendingInvocation = undefined;
-  next.pendingCall = undefined;
-  next.completed.push({ callId: call.id, invocation, result });
-  next.history.push(functionResponseContent(call, result));
-  next.status = result.status === 'success' ? 'running'
-    : result.status === 'clarification' ? 'needs-clarification'
-      : result.status === 'blocked' ? 'blocked' : 'failed';
-  next.finalText = result.status === 'success' ? '' : result.status === 'error' ? visibleFailureMessage(result) : resultMessage(result);
-  next.updatedAt = now();
-  return next;
+  return { task, lastResults };
 }
