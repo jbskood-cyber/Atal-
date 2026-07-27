@@ -67,6 +67,7 @@ export type AgentTaskState = {
   stepCount: number;
   maxSteps: number;
   allowedTools: string[];
+  requiredTools?: string[];
   history: AgentHistoryContent[];
   completed: AgentStepResult[];
   seenCallSignatures: string[];
