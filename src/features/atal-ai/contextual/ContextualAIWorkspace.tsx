@@ -13,7 +13,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { AtalMark } from '@/src/components/atal/AtalLogo';
 import { AssistantMessageContent } from '../components/AssistantMessageContent';
-import { saveAIConversation } from '../data/aiRepository';
+import { persistPendingContextualUserMessage } from '../data/aiRepository';
 import { contextualConversationKey } from './conversationAdapter';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
@@ -35,8 +35,6 @@ export function ContextualAIWorkspace() {
     conversationId: controller.session.conversationId,
     draftId: controller.session.draftId,
     onProposalFingerprint: controller.bindProposal,
-    // Draft state remains internal. The user stays in the conversation and gets
-    // one compact approval affordance instead of being moved to a draft pane.
     onDraftReady: () => controller.updateView({ activePane: 'conversation' }),
   });
 
@@ -68,32 +66,12 @@ export function ContextualAIWorkspace() {
   };
   const closeAfterPersistenceFlush = () => {
     if (processing) return;
-    // Conversation persistence is effect-driven. Closing on the next task keeps
-    // the last committed assistant/user turn from being dropped on unmount.
     window.setTimeout(controller.close, 0);
   };
   const sendWithDurableUserTurn = () => {
     const text = model.conversation!.composerText.trim();
     if (!text || processing) return;
-    const now = new Date().toISOString();
-    saveAIConversation({
-      ...model.conversation!,
-      messages: [
-        ...model.conversation!.messages,
-        {
-          id: `message-pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-          role: 'user',
-          text,
-          createdAt: now,
-          attachments: [],
-        },
-      ],
-      composerText: '',
-      transcription: '',
-      status: 'processing',
-      error: undefined,
-      updatedAt: now,
-    });
+    persistPendingContextualUserMessage(model.conversation!.id, text);
     model.send();
   };
 
