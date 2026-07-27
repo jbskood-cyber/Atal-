@@ -108,6 +108,14 @@ test('compound plan maintenance exposes only field update and membership mutatio
   assert.deepEqual(tools, ['app.read', 'patient.search', 'plan.update_fields', 'plan.membership']);
 });
 
+test('exercise dosing in persistent plan context does not expose plan field mutation', () => {
+  const tools = selection(
+    'Ahora cambia ese ejercicio a 4 series de 10 repeticiones y deja las instrucciones exactamente como “Movimiento lento y controlado”. No modifiques el plan ni otro ejercicio.',
+    'update_existing_plan',
+  );
+  assert.deepEqual(tools, ['app.read', 'patient.search', 'exercise.update_fields']);
+});
+
 test('underspecified treatment update stays read-only so Gemini must clarify before any mutation', () => {
   const tools = selection('Actualiza el tratamiento de Paciente E2E.', 'summarize_patient');
   assert.deepEqual(tools, ['app.read', 'patient.search']);
