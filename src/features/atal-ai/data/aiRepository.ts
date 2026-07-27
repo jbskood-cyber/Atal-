@@ -81,8 +81,17 @@ export function deleteAIDraft(id: string) {
 }
 
 export function saveAIConversation(conversation: AIConversation & { scope?: ConversationScope }) {
-  const persisted: PersistedConversation = { ...conversation, scope: inferConversationScope(conversation) };
-  const next = [...readAIConversations().filter((item) => item.id !== conversation.id), persisted];
+  const conversations = readAIConversations();
+  const previous = conversations.find((item) => item.id === conversation.id);
+  const shouldPreserveDurableMessages = conversation.status === 'processing'
+    && previous
+    && previous.messages.length > conversation.messages.length;
+  const persisted: PersistedConversation = {
+    ...conversation,
+    scope: inferConversationScope(conversation),
+    messages: shouldPreserveDurableMessages ? previous.messages : conversation.messages,
+  };
+  const next = [...conversations.filter((item) => item.id !== conversation.id), persisted];
   window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(next));
   if (conversation.status === 'saved') deleteAIDraft(conversation.draftId);
 }
