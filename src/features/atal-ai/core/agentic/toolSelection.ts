@@ -258,7 +258,10 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
   if (allowMutations && intent === 'update_existing_plan') {
     const maintenanceTools = selectPlanMaintenanceTools(rawText);
     const exerciseTools = selectPlanExerciseMutationTools(rawText);
-    const requestedTools = [...maintenanceTools, ...exerciseTools];
+    const scopedMaintenanceTools = exerciseTools.length > 0 && !PLAN_FIELD_EDIT_PATTERN.test(rawText)
+      ? maintenanceTools.filter((tool) => tool !== 'plan.update_fields')
+      : maintenanceTools;
+    const requestedTools = [...scopedMaintenanceTools, ...exerciseTools];
     append(selected, requestedTools.length > 0 ? requestedTools : ['plan.update_fields']);
     return scopeTools(selected, input.contextSurface);
   }
