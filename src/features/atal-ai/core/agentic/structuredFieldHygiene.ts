@@ -41,6 +41,8 @@ const FIELD_PREFIXES: Record<string, RegExp[]> = {
   objective: [/^(?:el\s+)?objetivo\s+(?:es|sería|será)\s+/i, /^objetivo\s*:\s*/i],
   startingPosition: [/^(?:la\s+)?posición\s+inicial\s+(?:es|sería|será)\s+/i, /^posición\s+inicial\s*:\s*/i],
   precautions: [/^(?:la\s+)?precaución\s+(?:es|sería|será)\s+/i, /^(?:las\s+)?precauciones\s+(?:son|serían|serán)\s+/i, /^precauciones?\s*:\s*/i],
+  time: [/^(?:el\s+)?tiempo(?:\s+de\s+ejecución)?\s+(?:es|sería|será)\s+/i, /^tiempo(?:\s+de\s+ejecución)?\s*:\s*/i],
+  rest: [/^(?:el\s+)?descanso\s+(?:es|sería|será)\s+/i, /^descanso\s*:\s*/i],
 };
 
 const INSTRUCTION_PREFIXES = [
