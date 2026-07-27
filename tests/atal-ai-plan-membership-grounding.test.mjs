@@ -21,6 +21,33 @@ function readStep(exerciseId = 'exercise-e2e', name = 'Movilidad asistida E2E') 
   };
 }
 
+function planReadStep() {
+  return {
+    callId: 'read-plan',
+    invocation: {
+      tool: 'app.read', version: 1, proposalId: 'read-plan', references: [],
+      input: { resource: 'plan', plan: { type: 'plan', id: 'plan-active-e2e' } },
+    },
+    result: {
+      status: 'success',
+      message: 'Plan Plan activo E2E consultado.',
+      summary: ['active.', '3 ejercicios.'],
+      data: {
+        plan: {
+          id: 'plan-active-e2e',
+          exerciseIds: ['exercise-e2e', 'exercise-control-live', 'exercise-rotation-live'],
+        },
+        exercises: [
+          { id: 'exercise-e2e', name: 'Movilidad asistida E2E' },
+          { id: 'exercise-control-live', name: 'Control escapular Natural QA' },
+          { id: 'exercise-rotation-live', name: 'Rotación externa Natural QA' },
+        ],
+      },
+      affected: [],
+    },
+  };
+}
+
 function removeCall(exerciseIds) {
   return {
     id: 'remove-membership',
@@ -47,6 +74,18 @@ test('grounds a singular natural exercise removal to the exact exercise resolved
 
   assert.deepEqual(grounded.input.exerciseIds, ['exercise-e2e']);
   assert.equal(grounded.input.operation, 'remove');
+});
+
+test('grounds a singular natural removal from the exact exercise name inside a broader plan read', () => {
+  const { groundPlanMembershipCall } = grounding();
+  const call = removeCall(['exercise-control-live', 'exercise-rotation-live']);
+  const grounded = groundPlanMembershipCall(
+    'Quítale al plan el ejercicio Movilidad asistida E2E.',
+    [planReadStep()],
+    call,
+  );
+
+  assert.deepEqual(grounded.input.exerciseIds, ['exercise-e2e']);
 });
 
 test('keeps an already-correct removal target unchanged', () => {
