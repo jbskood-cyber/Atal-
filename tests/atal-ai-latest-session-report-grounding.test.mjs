@@ -50,9 +50,9 @@ function completedSession(id, completedAt, patientId = 'patient-e2e', planId = '
 test('latest completed session wording creates a deterministic report-review reference when same-turn read evidence is absent', () => {
   const { groundReportReviewCall } = groundingModule();
   const grounded = groundReportReviewCall(
-    'Revisa el reporte de la última sesión completada y guarda esta observación clínica.',
     [],
     reportCall(),
+    'Revisa el reporte de la última sesión completada y guarda esta observación clínica.',
   );
 
   assert.deepEqual(grounded.input.session, { type: 'session', label: 'última sesión completada' });
