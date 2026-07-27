@@ -34,6 +34,10 @@ test('tool schemas reinforce field purity at the function-calling boundary', () 
   const patient = patientCreate.inputSchema.properties.patient;
   assert.match(patient.properties.name.description, /solo el nombre/i);
   assert.match(patient.properties.name.description, /sin frases/i);
+  assert.match(patient.properties.diagnosis.description, /solo el diagnóstico/i);
+  assert.match(patient.properties.affectedArea.description, /solo la zona/i);
+  assert.match(patient.properties.phone.description, /solo el teléfono/i);
+  assert.match(patient.properties.email.description, /solo el correo/i);
 
   const record = patientCreate.inputSchema.properties.record;
   assert.match(record.properties.reasonForVisit.description, /solo el motivo/i);
@@ -61,4 +65,14 @@ test('tool schemas reinforce field purity at the function-calling boundary', () 
   assert.match(planCreate.inputSchema.properties.progression.description, /solo la progresión/i);
   assert.match(planCreate.inputSchema.properties.reportCriteria.description, /solo criterios/i);
   assert.match(planCreate.inputSchema.properties.generalInstructions.description, /solo indicaciones generales/i);
+});
+
+test('direct duplicate and profile fields also reject narrative wrappers', () => {
+  assert.match(tool('plan.duplicate').inputSchema.properties.title.description, /solo el título/i);
+  assert.match(tool('exercise.duplicate').inputSchema.properties.name.description, /solo el nombre/i);
+
+  const profile = tool('settings.profile_update').inputSchema.properties;
+  assert.match(profile.professionalName.description, /solo el nombre/i);
+  assert.match(profile.specialty.description, /solo la especialidad/i);
+  assert.match(profile.clinic.description, /solo (?:el nombre de )?la clínica|solo la clínica/i);
 });
