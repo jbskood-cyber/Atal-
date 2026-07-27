@@ -36,10 +36,12 @@ test('contextual agent persists the sent user message before the provider finish
   expect(conversationId).toBeTruthy();
 
   let markStarted;
+  let releaseProvider;
   const requestStarted = new Promise((resolve) => { markStarted = resolve; });
+  const providerReleased = new Promise((resolve) => { releaseProvider = resolve; });
   await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
     markStarted();
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await providerReleased;
     const text = 'Paciente E2E está disponible en el contexto actual.';
     const events = [
       { type: 'text_delta', text },
@@ -56,11 +58,16 @@ test('contextual agent persists the sent user message before the provider finish
   await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
   await requestStarted;
 
-  await expect.poll(async () => {
-    const stored = await storedConversation(page, conversationId);
-    return stored?.messages?.filter((message) => message.role === 'user').map((message) => message.text) ?? [];
-  }).toContain(prompt);
+  try {
+    await expect.poll(async () => {
+      const stored = await storedConversation(page, conversationId);
+      return stored?.messages?.filter((message) => message.role === 'user').map((message) => message.text) ?? [];
+    }, { timeout: 1000 }).toContain(prompt);
+  } finally {
+    releaseProvider();
+  }
 
+  await expect(workspace.getByText('Paciente E2E está disponible en el contexto actual.')).toBeVisible();
   await page.getByRole('button', { name: 'Cerrar asistente' }).click();
   await expect(workspace).toHaveCount(0);
 
