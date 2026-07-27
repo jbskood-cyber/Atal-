@@ -17,6 +17,7 @@ const EXPLICIT_EXERCISE_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita
 const PLAN_MEMBERSHIP_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar)\b.{0,64}\bejercicios?\b/i;
 const PLAN_COMPLETE_ACTION_PATTERN = /\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b|\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i;
 const PLAN_REPLACE_ACTIVE_PATTERN = /\b(?:reemplaza|reemplazar|sustituye|sustituir)\b.{0,64}\bplan activo\b/i;
+const PLAN_FIELD_EDIT_PATTERN = /\b(?:actualiza|actualizar|actualízale|actualizale|modifica|modificar|modifícale|modificale|cambia|cambiar|cámbiale|cambiale|ajusta|ajustar|ajústale|ajustale|edita|editar|edítale|editale|pon|poner|define|definir)\b.{0,80}\b(?:frecuencia|título|titulo|nombre del plan|objetivo|enfoque|duración|duracion|progresión|progresion|criterio|instrucciones)\b/i;
 
 const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
 const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
@@ -84,10 +85,11 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
   if (/\b(?:activa|activar)\b/i.test(rawText)) append(selected, ['plan.activate']);
   if (PLAN_REPLACE_ACTIVE_PATTERN.test(rawText)) append(selected, ['plan.replace_active']);
 
-  if (includesAny(rawText, [
+  const mentionsPlanField = includesAny(rawText, [
     'frecuencia', 'título', 'titulo', 'nombre del plan', 'objetivo', 'enfoque', 'duración', 'duracion',
     'progresión', 'progresion', 'criterio', 'instrucciones',
-  ])) {
+  ]);
+  if (mentionsPlanField && (selected.length === 0 || PLAN_FIELD_EDIT_PATTERN.test(rawText))) {
     append(selected, ['plan.update_fields']);
   }
   if (PLAN_MEMBERSHIP_ACTION_PATTERN.test(rawText) || includesAny(rawText, [
