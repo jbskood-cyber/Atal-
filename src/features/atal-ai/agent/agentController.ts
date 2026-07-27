@@ -8,7 +8,7 @@ import { requiredAgentToolsForSelection } from '../core/agentic/compoundActionRe
 import { freshRequestClarification } from '../core/agentic/freshRequestClarification';
 import { AGENT_MAX_ACTIVE_TOOLS, selectAgentTools, type ToolSelectionInput } from '../core/agentic/toolSelection';
 import { requestAtalAgentTurn } from '../api/geminiClient';
-import { readAIConversations } from '../data/aiRepository';
+import { persistPendingContextualUserMessage, readAIConversations } from '../data/aiRepository';
 
 const MAX_VISIBLE_HISTORY_MESSAGES = 16;
 
@@ -122,6 +122,9 @@ function toolSelectionInput(input: AtalAgentControllerInput, hasConversationCont
 
 export async function runAtalAgentRequest(input: AtalAgentControllerInput): Promise<AgentLoopOutcome> {
   const visibleHistory = visibleConversationHistory(input);
+  if (input.assistantScope === 'contextual' && input.text.trim()) {
+    persistPendingContextualUserMessage(input.conversationId, input.text);
+  }
   const hasConversationContext = visibleHistory.length > 0
     || Boolean(input.draftContext)
     || Boolean(input.task && ['running', 'needs-confirmation', 'needs-clarification'].includes(input.task.status));
