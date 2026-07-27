@@ -177,6 +177,23 @@ export function resolveEntities(
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró la entidad ${type} indicada.`, type);
       }
+    } else if (reference.label?.trim()) {
+      const normalized = normalizeEntityLabel(reference.label);
+      const matches = allCandidates
+        .filter((candidate) => exactLabel(candidate, type) === normalized)
+        .sort((left, right) => left.id.localeCompare(right.id));
+      if (matches.length > 1) {
+        return clarification(
+          'ENTITY_AMBIGUOUS',
+          `Hay varias coincidencias exactas para ${reference.label}.`,
+          type,
+          matches,
+        );
+      }
+      selected = matches[0];
+      if (!selected) {
+        return clarification('ENTITY_NOT_FOUND', `No se encontró ${reference.label}.`, type);
+      }
     } else {
       const selectedId = contextId(type, context);
       if (selectedId) {
@@ -186,20 +203,6 @@ export function resolveEntities(
         }
       } else if (type === 'settings') {
         selected = allCandidates[0];
-      } else if (reference.label?.trim()) {
-        const normalized = normalizeEntityLabel(reference.label);
-        const matches = allCandidates
-          .filter((candidate) => exactLabel(candidate, type) === normalized)
-          .sort((left, right) => left.id.localeCompare(right.id));
-        if (matches.length > 1) {
-          return clarification(
-            'ENTITY_AMBIGUOUS',
-            `Hay varias coincidencias exactas para ${reference.label}.`,
-            type,
-            matches,
-          );
-        }
-        selected = matches[0];
       }
     }
 
