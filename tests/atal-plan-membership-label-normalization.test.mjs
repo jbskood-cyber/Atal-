@@ -64,7 +64,7 @@ test('plan.membership normalizes a unique exact exercise label to its canonical 
   assert.equal(port.read().plans[0].exerciseIds.includes('Rotación externa Natural QA'), false);
 });
 
-test('plan.membership refuses an ambiguous exercise label instead of guessing', () => {
+test('plan.membership asks for clarification when an exercise label is ambiguous', () => {
   const state = validState();
   state.exercises[0].id = 'exercise-a';
   state.exercises[0].name = 'Rotación externa Natural QA';
@@ -83,10 +83,8 @@ test('plan.membership refuses an ambiguous exercise label instead of guessing', 
     exerciseIds: ['Rotación externa Natural QA'],
   });
 
-  const gate = execute(port, current);
-  assert.equal(gate.status, 'confirmation-required');
-  const result = execute(port, gate.invocation, confirmation(gate.invocation));
-  assert.equal(result.status, 'error');
-  assert.equal(result.code, 'CORE_PRECONDITION_FAILED');
+  const result = execute(port, current);
+  assert.equal(result.status, 'clarification');
+  assert.equal(result.clarification.code, 'ENTITY_AMBIGUOUS');
   assert.deepEqual(port.read().plans[0].exerciseIds, []);
 });
