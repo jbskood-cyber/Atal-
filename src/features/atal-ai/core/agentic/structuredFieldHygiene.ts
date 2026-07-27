@@ -49,6 +49,8 @@ const INSTRUCTION_PREFIXES = [
   /^instrucciones?\s*:\s*/i,
 ];
 
+const EXERCISE_DOSE_PREFIX = /^(\d+)\s+series?\s*(?:de|x|×)\s*(\d+)\s*(?:repeticiones|repetición|reps?)\b\s*[.;,:-]?\s*/i;
+
 function stripPrefix(value: string, patterns: RegExp[]): string {
   let next = value.trim();
   for (const pattern of patterns) {
@@ -56,6 +58,23 @@ function stripPrefix(value: string, patterns: RegExp[]): string {
     if (stripped !== next) return stripped;
   }
   return next;
+}
+
+function stripMatchingExerciseDose(value: string, sets: unknown, repetitions: unknown): string {
+  if (typeof sets !== 'number' || typeof repetitions !== 'number') return value;
+  const match = value.trim().match(EXERCISE_DOSE_PREFIX);
+  if (!match || Number(match[1]) !== sets || Number(match[2]) !== repetitions) return value;
+  return value.trim().slice(match[0].length).trim();
+}
+
+function normalizeObject(value: Record<string, unknown>): Record<string, unknown> {
+  const normalized = Object.fromEntries(Object.entries(value).map(([childKey, child]) => [childKey, normalizeValue(childKey, child)]));
+  if (Array.isArray(normalized.instructions)) {
+    normalized.instructions = normalized.instructions
+      .map((item) => typeof item === 'string' ? stripMatchingExerciseDose(item, normalized.sets, normalized.repetitions) : item)
+      .filter((item) => typeof item !== 'string' || item.length > 0);
+  }
+  return normalized;
 }
 
 function normalizeValue(key: string, value: unknown): unknown {
@@ -67,10 +86,10 @@ function normalizeValue(key: string, value: unknown): unknown {
     return value.map((item) => typeof item === 'string' ? stripPrefix(item, INSTRUCTION_PREFIXES) : item);
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
-  return Object.fromEntries(Object.entries(value).map(([childKey, child]) => [childKey, normalizeValue(childKey, child)]));
+  return normalizeObject(value as Record<string, unknown>);
 }
 
 export function normalizeStructuredToolInput(tool: string, input: unknown): unknown {
   if (!STRUCTURED_WRITE_TOOLS.has(tool) || !input || typeof input !== 'object' || Array.isArray(input)) return input;
-  return Object.fromEntries(Object.entries(input as Record<string, unknown>).map(([key, value]) => [key, normalizeValue(key, value)]));
+  return normalizeObject(input as Record<string, unknown>);
 }
