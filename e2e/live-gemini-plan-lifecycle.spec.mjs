@@ -71,6 +71,7 @@ test.describe('Live Gemini plan lifecycle', () => {
       status: 'paused',
       pauseEvents: 1,
     });
+    await expect(page.locator('body')).not.toContainText('Trabajando…', { timeout: 30_000 });
     await expect(page.locator('body')).toContainText(/Plan activo E2E:\s*(?:paused|pausad[oa])/i);
     await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
     await expect(page.getByRole('alert')).toHaveCount(0);
