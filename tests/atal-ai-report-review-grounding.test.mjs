@@ -59,6 +59,19 @@ test('grounds report.review after same-turn session.summarize_recent resolves on
   assert.deepEqual(grounded.references, [{ type: 'session', id: 'session-recent' }]);
 });
 
+test('marks latest-completed report review for deterministic contextual resolution when prior read was a previous conversation turn', () => {
+  const { groundReportReviewCall, LATEST_COMPLETED_SESSION_ID } = grounding();
+  const grounded = groundReportReviewCall(
+    [],
+    reportCall('session-model-invented'),
+    'Revisa el reporte de la última sesión completada y guarda esta observación clínica.',
+  );
+
+  assert.equal(LATEST_COMPLETED_SESSION_ID, '__atal_latest_completed_session__');
+  assert.deepEqual(grounded.input.session, { type: 'session', id: LATEST_COMPLETED_SESSION_ID });
+  assert.deepEqual(grounded.references, [{ type: 'session', id: LATEST_COMPLETED_SESSION_ID }]);
+});
+
 test('does not guess when the same-turn read contains multiple sessions', () => {
   const { groundReportReviewCall } = grounding();
   const call = reportCall();
@@ -72,8 +85,8 @@ test('does not guess when the same-turn read contains multiple sessions', () => 
   assert.deepEqual(grounded, call);
 });
 
-test('does not rewrite report.review without canonical session evidence', () => {
+test('does not rewrite report.review without canonical evidence or explicit latest-completed intent', () => {
   const { groundReportReviewCall } = grounding();
   const call = reportCall();
-  assert.deepEqual(groundReportReviewCall([], call), call);
+  assert.deepEqual(groundReportReviewCall([], call, 'Revisa este reporte clínico.'), call);
 });
