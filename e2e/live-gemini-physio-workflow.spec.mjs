@@ -242,6 +242,10 @@ test.describe('Live Gemini complete physiotherapist workflow', () => {
       };
     }, { timeout: 120_000 }).toEqual({ starts: 1, startedEvents: 1 });
 
+    // session.start_or_resume intentionally opens the guided-session surface. Return to the same
+    // assistant conversation before asking Atal to complete it; this mirrors the real navigation flow.
+    await page.goto('/assistant');
+    await expect(page.getByLabel('Mensaje para Atal IA')).toBeVisible({ timeout: 20_000 });
     await send(page, 'Completa la sesión con dolor final 3, energía final 6, esfuerzo 5 y comentario “Buena tolerancia sin aumento del dolor”. Hazlo ahora.');
     const sensitiveConfirmation = page.getByRole('dialog', { name: '¿Continuar con la acción sensible?' });
     await expect(sensitiveConfirmation).toBeVisible({ timeout: 30_000 });
