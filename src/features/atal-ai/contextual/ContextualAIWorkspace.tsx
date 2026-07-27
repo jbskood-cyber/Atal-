@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { AtalMark } from '@/src/components/atal/AtalLogo';
 import { AssistantMessageContent } from '../components/AssistantMessageContent';
+import { saveAIConversation } from '../data/aiRepository';
 import { contextualConversationKey } from './conversationAdapter';
 import { ContextualAudioCapture } from './ContextualAudioCapture';
 import { useContextualAI } from './ContextualAIProvider';
@@ -70,6 +71,30 @@ export function ContextualAIWorkspace() {
     // Conversation persistence is effect-driven. Closing on the next task keeps
     // the last committed assistant/user turn from being dropped on unmount.
     window.setTimeout(controller.close, 0);
+  };
+  const sendWithDurableUserTurn = () => {
+    const text = model.conversation!.composerText.trim();
+    if (!text || processing) return;
+    const now = new Date().toISOString();
+    saveAIConversation({
+      ...model.conversation!,
+      messages: [
+        ...model.conversation!.messages,
+        {
+          id: `message-pending-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          role: 'user',
+          text,
+          createdAt: now,
+          attachments: [],
+        },
+      ],
+      composerText: '',
+      transcription: '',
+      status: 'processing',
+      error: undefined,
+      updatedAt: now,
+    });
+    model.send();
   };
 
   return <>
@@ -150,14 +175,14 @@ export function ContextualAIWorkspace() {
             onKeyDown={(event) => {
               if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
                 event.preventDefault();
-                model.send();
+                sendWithDurableUserTurn();
               }
             }}
             placeholder="Escribe un mensaje…"
             aria-label="Mensaje para Atal IA contextual"
           />
           {processing ? <button type="button" className="is-send" aria-label="Cancelar procesamiento" onClick={model.cancelProcessing}><X /></button>
-            : hasText ? <button type="button" className="is-send" aria-label="Enviar mensaje" onClick={model.send}><Send /></button>
+            : hasText ? <button type="button" className="is-send" aria-label="Enviar mensaje" onClick={sendWithDurableUserTurn}><Send /></button>
               : <ContextualAudioCapture onTranscript={model.setText} />}
         </div>
       </footer>
