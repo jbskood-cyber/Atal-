@@ -30,3 +30,29 @@ test('an explicit exercise label overrides a different ambient selected exercise
   assert.equal(result.data.exercise.name, 'Movilidad asistida E2E');
   assert.match(result.message, /Movilidad asistida E2E/);
 });
+
+test('a nonexistent model-supplied exercise id falls back to its exact unique explicit label', () => {
+  const state = validState();
+  state.exercises[0] = exercise('exercise-mobility', 'Movilidad asistida E2E');
+  state.exercises.push(exercise('exercise-rotation-live', 'Rotación externa Natural QA'));
+  const port = memoryPort(state);
+  const { executeToolInvocation } = engineModule();
+  const explicitReference = {
+    type: 'exercise',
+    id: 'exercise-rotacion-externa-natural-qa',
+    label: 'Rotación externa Natural QA',
+  };
+
+  const result = executeToolInvocation({
+    invocation: invocation(
+      'app.read',
+      { resource: 'exercise', exercise: explicitReference },
+      [explicitReference],
+    ),
+    context: context({ selectedExerciseId: 'exercise-mobility' }),
+  }, { port });
+
+  assert.equal(result.status, 'success');
+  assert.equal(result.data.exercise.id, 'exercise-rotation-live');
+  assert.equal(result.data.exercise.name, 'Rotación externa Natural QA');
+});
