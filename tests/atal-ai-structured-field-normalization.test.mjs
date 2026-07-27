@@ -105,3 +105,20 @@ test('keeps structured dose fields out of exercise instructions when Gemini repe
   assert.equal(updated.patch.repetitions, 8);
   assert.deepEqual(updated.patch.instructions, ['rota sin compensar el tronco']);
 });
+
+test('keeps exercise time and rest as pure structured dose values', () => {
+  const { normalizeStructuredToolInput } = hygiene();
+  const catalog = loadCore('src/features/atal-ai/api/agentToolCatalog.js').agentToolCatalog;
+  const exerciseCreate = catalog.find((item) => item.name === 'exercise.create_simple');
+  assert.ok(exerciseCreate);
+  assert.match(exerciseCreate.inputSchema.properties.time.description, /solo el tiempo/i);
+  assert.match(exerciseCreate.inputSchema.properties.rest.description, /solo el descanso/i);
+
+  const normalized = normalizeStructuredToolInput('exercise.create_simple', {
+    name: 'Rotación externa con banda',
+    time: 'El tiempo de ejecución es 30 segundos',
+    rest: 'El descanso es 45 segundos',
+  });
+  assert.equal(normalized.time, '30 segundos');
+  assert.equal(normalized.rest, '45 segundos');
+});
