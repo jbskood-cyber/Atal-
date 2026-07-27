@@ -9,7 +9,7 @@ function recordValue(value: unknown): RecordValue | undefined {
 function canonicalSessionIds(completed: AgentStepResult[]): string[] {
   const ids: string[] = [];
   for (const step of completed) {
-    if (step.invocation.tool !== 'app.read' || step.result.status !== 'success') continue;
+    if (!['app.read', 'session.summarize_recent'].includes(step.invocation.tool) || step.result.status !== 'success') continue;
     const data = recordValue(step.result.data);
     const sessions = data?.sessions;
     if (!Array.isArray(sessions)) continue;
