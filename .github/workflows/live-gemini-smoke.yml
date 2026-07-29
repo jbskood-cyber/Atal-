@@ -5,6 +5,15 @@ on:
     paths:
       - '.github/live-gemini-trigger'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run only the provider preflight or the full browser matrix'
+        required: true
+        default: preflight
+        type: choice
+        options:
+          - preflight
+          - full
 
 permissions:
   contents: read
@@ -24,6 +33,11 @@ jobs:
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
+            if [[ "${{ inputs.mode }}" == "full" ]]; then
+              echo "run_matrix=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "run_matrix=false" >> "$GITHUB_OUTPUT"
+            fi
             exit 0
           fi
 
@@ -31,8 +45,10 @@ jobs:
           git fetch origin "$head_sha" --depth=2
           if git rev-parse "${head_sha}^" >/dev/null 2>&1 && ! git diff --quiet "${head_sha}^" "$head_sha" -- .github/live-gemini-trigger; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "run_matrix=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "run_matrix=false" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-node@v4
         if: steps.gate.outputs.enabled == 'true'
@@ -54,19 +70,22 @@ jobs:
         run: npm run test:core:compile
       - name: Probe Gemini provider before browser matrix
         if: steps.gate.outputs.enabled == 'true'
+        shell: bash
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ''
           GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite'
-        run: timeout 180s npm run test:ai-live
+        run: |
+          set -o pipefail
+          timeout 180s npm run test:ai-live 2>&1 | tee provider-preflight.log
       - name: Install Playwright test runner without changing the lockfile
-        if: steps.gate.outputs.enabled == 'true'
+        if: steps.gate.outputs.enabled == 'true' && steps.gate.outputs.run_matrix == 'true'
         run: npm install --no-save --no-package-lock --legacy-peer-deps @playwright/test@1.61.1
       - name: Install Chromium and system dependencies
-        if: steps.gate.outputs.enabled == 'true'
+        if: steps.gate.outputs.enabled == 'true' && steps.gate.outputs.run_matrix == 'true'
         run: npx playwright install --with-deps chromium
       - name: Verify final live Gemini regression
-        if: steps.gate.outputs.enabled == 'true'
+        if: steps.gate.outputs.enabled == 'true' && steps.gate.outputs.run_matrix == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: 'AQ.synthetic-ai-studio-platform-resource-token'
@@ -103,6 +122,7 @@ jobs:
         with:
           name: live-gemini-diagnostics
           path: |
+            provider-preflight.log
             live-browser-e2e.log
             playwright-report/
             test-results/
