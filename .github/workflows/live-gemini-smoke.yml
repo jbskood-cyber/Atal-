@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/live-gemini-trigger'
+      - '.github/workflows/live-gemini-smoke.yml'
   workflow_dispatch:
     inputs:
       mode:
@@ -43,11 +44,10 @@ jobs:
 
           head_sha="${{ github.event.pull_request.head.sha }}"
           git fetch origin "$head_sha" --depth=2
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
           if git rev-parse "${head_sha}^" >/dev/null 2>&1 && ! git diff --quiet "${head_sha}^" "$head_sha" -- .github/live-gemini-trigger; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
             echo "run_matrix=true" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "run_matrix=false" >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/setup-node@v4
