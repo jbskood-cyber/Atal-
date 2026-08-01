@@ -1,1 +1,1 @@
-export { AppCloseout as App } from './AppCloseout';
+export { AtalRoot as App } from './routing/AtalRoot';
