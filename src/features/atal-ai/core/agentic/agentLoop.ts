@@ -9,6 +9,7 @@ import type {
   AgentTaskState,
 } from './contracts';
 import { groundPlanMembershipCall } from './planMembershipGrounding';
+import { groundReportReviewCall } from './reportReviewGrounding';
 import { AGENT_TOOL_CALL_REPAIR_MARKER } from './toolCallingPolicy';
 
 const DEFAULT_MAX_STEPS = 8;
@@ -317,7 +318,8 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
 
     const responseParts: AgentHistoryContent['parts'] = [];
     for (const rawCall of turn.calls) {
-      const call = groundPlanMembershipCall(task.goal, task.completed, rawCall);
+      const membershipGroundedCall = groundPlanMembershipCall(task.goal, task.completed, rawCall);
+      const call = groundReportReviewCall(task.completed, membershipGroundedCall, task.goal);
       if (!task.allowedTools.includes(call.tool)) {
         task.status = 'blocked';
         task.finalText = 'Esa acción no está disponible desde este contexto.';
