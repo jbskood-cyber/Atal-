@@ -36,10 +36,13 @@ test('mobile menu supports keyboard open, Escape close and focus return', async 
   await page.goto('/landing');
 
   const trigger = page.getByRole('button', { name: 'Menú', exact: true });
+  const primaryNavigation = page.getByRole('navigation', { name: 'Navegación principal' });
+  const firstMenuLink = primaryNavigation.getByRole('link', { name: 'Producto' });
+
   await trigger.focus();
   await page.keyboard.press('Enter');
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.getByRole('link', { name: 'Producto' })).toBeFocused();
+  await expect(firstMenuLink).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
