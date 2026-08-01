@@ -14,10 +14,12 @@
 .atal-landing a { color: inherit; text-decoration: none; }
 .atal-landing__skip { position: fixed; left: 1rem; top: -4rem; z-index: 50; padding: .75rem 1rem; background: #fff; border: 1px solid var(--landing-border); border-radius: .75rem; }
 .atal-landing__skip:focus { top: 1rem; }
-.atal-landing__header { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; max-width: 1180px; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 3rem); background: color-mix(in srgb, var(--landing-bg) 92%, transparent); backdrop-filter: blur(14px); }
-.atal-landing__brand { font-size: 1.3rem; font-weight: 700; color: var(--landing-blue-deep); }
-.atal-landing__header nav { display: flex; gap: 1.25rem; font-size: .9rem; font-weight: 500; }
-.atal-landing__header a:focus-visible, .atal-landing__button:focus-visible, .atal-landing__agent button:focus-visible { outline: 3px solid #93b4f5; outline-offset: 3px; }
+.atal-landing__header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between; max-width: 1180px; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 3rem); background: color-mix(in srgb, var(--landing-bg) 92%, transparent); backdrop-filter: blur(14px); }
+.atal-landing__brand { position: relative; z-index: 34; font-size: 1.3rem; font-weight: 700; color: var(--landing-blue-deep); }
+.atal-landing__nav { display: flex; align-items: center; gap: 1.25rem; font-size: .9rem; font-weight: 500; }
+.atal-landing__nav-cta { display: inline-flex; min-height: 44px; align-items: center; padding: .65rem .9rem; border-radius: .75rem; color: #fff !important; background: var(--landing-blue); }
+.atal-landing__menu-trigger, .atal-landing__nav-backdrop { display: none; }
+.atal-landing__header a:focus-visible, .atal-landing__button:focus-visible, .atal-landing__agent button:focus-visible, .atal-landing__menu-trigger:focus-visible { outline: 3px solid #93b4f5; outline-offset: 3px; }
 
 .atal-landing__hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; max-width: 1180px; min-height: 76vh; margin: 0 auto; padding: clamp(3rem, 8vw, 7rem) clamp(1rem, 4vw, 3rem); }
 .atal-landing__hero h1 { max-width: 13ch; margin: 0; font-size: clamp(2.7rem, 6vw, 5.7rem); line-height: .98; letter-spacing: -.055em; }
@@ -54,7 +56,16 @@
 .atal-landing__footer { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; padding: 2rem 1rem 3rem; border-top: 1px solid var(--landing-border); color: var(--landing-muted); font-size: .85rem; }
 
 @media (max-width: 767px) {
-  .atal-landing__header nav { gap: .8rem; font-size: .78rem; }
+  .atal-landing__header { padding-block: .75rem; }
+  .atal-landing__menu-trigger { position: relative; z-index: 34; display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; gap: .55rem; border: 1px solid var(--landing-border); border-radius: .75rem; color: var(--landing-text); background: var(--landing-surface); font: inherit; font-size: .84rem; font-weight: 600; }
+  .atal-landing__menu-icon { display: grid; gap: 4px; width: 16px; }
+  .atal-landing__menu-icon span { display: block; height: 1.5px; border-radius: 99px; background: currentColor; }
+  .atal-landing__nav { position: fixed; z-index: 33; top: .75rem; right: 1rem; left: 1rem; display: grid; gap: .25rem; padding: 4.5rem 1rem 1rem; border: 1px solid var(--landing-border); border-radius: 1rem; background: var(--landing-surface); box-shadow: 0 26px 60px rgb(16 24 39 / .18); visibility: hidden; opacity: 0; transform: translateY(-8px); transition: opacity 160ms ease, transform 160ms ease, visibility 160ms; }
+  .atal-landing__nav.is-open { visibility: visible; opacity: 1; transform: translateY(0); }
+  .atal-landing__nav a { display: flex; min-height: 48px; align-items: center; padding: .7rem .75rem; border-radius: .65rem; }
+  .atal-landing__nav a:hover { background: #f2f6fc; }
+  .atal-landing__nav-cta { justify-content: center; margin-top: .4rem; }
+  .atal-landing__nav-backdrop { position: fixed; z-index: 32; inset: 0; display: block; border: 0; background: rgb(16 24 39 / .22); }
   .atal-landing__hero { grid-template-columns: 1fr; min-height: auto; padding-top: 3.5rem; }
   .atal-landing__hero h1 { font-size: clamp(2.55rem, 13vw, 4rem); }
   .atal-landing__product-scene { min-height: 285px; }
@@ -64,7 +75,7 @@
 }
 
 @media (max-width: 360px) {
-  .atal-landing__header nav a:first-child { display: none; }
+  .atal-landing__menu-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .atal-landing__actions { flex-direction: column; }
   .atal-landing__button { width: 100%; }
 }
