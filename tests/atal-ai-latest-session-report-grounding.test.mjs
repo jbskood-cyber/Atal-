@@ -5,6 +5,7 @@ import { context, validState } from './helpers/core-fixtures.mjs';
 
 const groundingModule = () => loadCore('src/features/atal-ai/core/agentic/reportReviewGrounding.js');
 const resolverModule = () => loadCore('src/features/atal-ai/core/entityResolver.js');
+const agentLoopModule = () => loadCore('src/features/atal-ai/core/agentic/agentLoop.js');
 
 function reportCall(sessionId = 'session-fabricated') {
   return {
@@ -104,4 +105,56 @@ test('latest-session semantic reference remains fail-safe without patient or pla
 
   const result = resolveEntities(state, invocation, context({ selectedPatientId: '', selectedPlanId: '' }));
   assert.equal(result.status, 'clarification');
+});
+
+test('agent loop grounds a fabricated report-review session id before Action Core execution', async () => {
+  const { createAgentTask, runAgentLoop } = agentLoopModule();
+  const goal = 'Resúmeme la última sesión completada de este paciente y añade una observación clínica.';
+  const task = createAgentTask('conversation-latest-session', goal, ['report.review'], '2026-08-01T18:00:00.000Z');
+  const turns = [
+    {
+      text: '',
+      calls: [reportCall('session-fabricated-by-model')],
+    },
+    {
+      text: 'La última sesión quedó revisada.',
+      calls: [],
+    },
+  ];
+  const executed = [];
+
+  const outcome = await runAgentLoop({
+    task,
+    request: {
+      conversationId: task.conversationId,
+      text: goal,
+      route: '/assistant',
+      selectedPatientId: 'patient-e2e',
+      selectedPlanId: 'plan-active-e2e',
+      selectedExerciseId: '',
+      selectedSessionId: '',
+      conversationHistory: [],
+      attachments: [],
+    },
+    context: {
+      conversationId: task.conversationId,
+      draftId: 'draft-latest-session',
+      route: '/assistant',
+      selectedPatientId: 'patient-e2e',
+      selectedPlanId: 'plan-active-e2e',
+      selectedExerciseId: '',
+      selectedSessionId: '',
+      now: '2026-08-01T18:00:00.000Z',
+    },
+    requestModel: async () => turns.shift(),
+    executeTool: (invocation) => {
+      executed.push(invocation);
+      return { status: 'success', message: 'Reporte revisado.', data: {} };
+    },
+  });
+
+  assert.equal(outcome.task.status, 'completed');
+  assert.equal(executed.length, 1);
+  assert.deepEqual(executed[0].input.session, { type: 'session', label: 'última sesión completada' });
+  assert.deepEqual(executed[0].references, [{ type: 'session', label: 'última sesión completada' }]);
 });
