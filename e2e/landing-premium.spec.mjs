@@ -35,7 +35,7 @@ test('mobile menu supports keyboard open, Escape close and focus return', async 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/landing');
 
-  const trigger = page.getByRole('button', { name: 'Menú' });
+  const trigger = page.getByRole('button', { name: 'Menú', exact: true });
   await trigger.focus();
   await page.keyboard.press('Enter');
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
