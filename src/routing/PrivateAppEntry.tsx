@@ -1,0 +1,36 @@
+import '@/app/globals.css';
+import '@/src/styles/closeout.css';
+import '@/src/styles/atal-ai.css';
+import '@/src/styles/functional.css';
+import '@/src/styles/atal-ai-command-center.css';
+import '@/src/styles/surgical-corrections.css';
+import '@/src/styles/atal-ai-minimal-polish.css';
+import '@/src/styles/visual-closeout-selectors.css';
+import '@/src/styles/visual-closeout-plan-form.css';
+import '@/src/styles/visual-closeout-plan-detail.css';
+import '@/src/styles/visual-closeout-exercises.css';
+import '@/src/styles/commercial-closeout.css';
+import '@/src/styles/ai-navigation-polish.css';
+import '@/src/styles/atal-unified-visual-system.css';
+import '@/src/styles/atal-surgical-qa.css';
+import '@/src/styles/atal-residual-polish.css';
+import '@/src/styles/atal-residual-compat.css';
+import '@/src/styles/atal-final-closeout.css';
+import '@/src/styles/atal-context-menu-fix.css';
+import '@/src/styles/atal-ai-surgical-polish.css';
+import '@/src/styles/atal-contextual-ai.css';
+import '@/src/styles/atal-contextual-ai-operational.css';
+import '@/src/styles/atal-ai-agentic-chat.css';
+import '@/src/styles/atal-ai-draft-interaction-fix.css';
+import '@/src/styles/atal-final-polish-agent.css';
+import '@/src/styles/atal-final-polish-patient.css';
+import '@/src/styles/atal-final-polish-density-fix.css';
+
+import { AppCloseout } from '../AppCloseout';
+import { bootstrapRealWorkspace } from '../data/workspaceBootstrap';
+
+bootstrapRealWorkspace();
+
+export default function PrivateAppEntry() {
+  return <AppCloseout />;
+}
