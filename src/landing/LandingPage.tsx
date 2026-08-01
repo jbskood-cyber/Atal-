@@ -1,17 +1,12 @@
 import './landing.css';
+import { LandingNav } from './components/LandingNav';
 import { landingCopy, workflowSteps } from './content';
 
 export default function LandingPage() {
   return (
     <div className="atal-landing">
       <a className="atal-landing__skip" href="#contenido">Saltar al contenido</a>
-      <header className="atal-landing__header">
-        <a className="atal-landing__brand" href="/landing" aria-label="Atal, inicio">Atal</a>
-        <nav aria-label="Navegación principal">
-          <a href="#flujo">Producto</a>
-          <a href="#atal-ia">Atal IA</a>
-        </nav>
-      </header>
+      <LandingNav />
 
       <main id="contenido">
         <section className="atal-landing__hero" aria-labelledby="landing-title">
