@@ -7,14 +7,19 @@ export function LandingNav() {
 
   useEffect(() => {
     if (!open) return;
-    firstLinkRef.current?.focus();
+
+    const focusFrame = requestAnimationFrame(() => firstLinkRef.current?.focus());
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       setOpen(false);
       requestAnimationFrame(() => triggerRef.current?.focus());
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open]);
 
   const closeMenu = () => setOpen(false);
