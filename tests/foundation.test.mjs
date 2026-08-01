@@ -4,12 +4,16 @@ import fs from 'node:fs';
 
 const read=(path)=>fs.readFileSync(new URL(`../${path}`,import.meta.url),'utf8');
 
-test('boots one canonical application without changing visual imports',()=>{
+test('boots one canonical private application behind the public route boundary',()=>{
   const app=read('src/App.tsx');
+  const root=read('src/routing/AtalRoot.tsx');
+  const privateEntry=read('src/routing/PrivateAppEntry.tsx');
   const main=read('src/main.tsx');
-  assert.match(app,/AppCloseout as App/);
+  assert.match(app,/AtalRoot as App/);
+  assert.match(root,/import\('\.\/PrivateAppEntry'\)/);
+  assert.match(privateEntry,/import \{ AppCloseout \} from '\.\.\/AppCloseout'/);
+  assert.match(privateEntry,/atal-context-menu-fix\.css/);
   assert.match(main,/import \{ App \} from '\.\/App'/);
-  assert.match(main,/atal-context-menu-fix\.css/);
 });
 
 test('starts new real workspaces empty and keeps demo explicit',()=>{
