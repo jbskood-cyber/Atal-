@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const viewports = [
+  { width: 320, height: 800 },
   { width: 360, height: 800 },
   { width: 390, height: 844 },
   { width: 768, height: 1024 },
@@ -55,4 +56,17 @@ test('CTA anchors reach the approved workflow and Atal IA sections', async ({ pa
   await expect(page).toHaveURL(/#flujo$/);
   await page.getByRole('link', { name: 'Conocer Atal IA' }).click();
   await expect(page).toHaveURL(/#atal-ia$/);
+});
+
+test('reduced motion keeps the complete story while removing long transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/landing');
+
+  await expect(page.locator('#flujo li')).toHaveCount(6);
+  await expect(page.locator('#atal-ia')).toBeVisible();
+
+  const trigger = page.getByRole('button', { name: 'Menú', exact: true });
+  const transitionDuration = await trigger.evaluate((element) => getComputedStyle(element).transitionDuration);
+  expect(transitionDuration).not.toMatch(/(^|,\s*)[1-9]\d*(\.\d+)?s/);
 });
