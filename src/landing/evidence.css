@@ -1,0 +1,209 @@
+.atal-landing__fragmentation-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(110px, .7fr);
+  gap: .65rem;
+  align-items: center;
+  margin-top: 2.5rem;
+}
+
+.atal-landing__fragmentation-flow span,
+.atal-landing__fragmentation-flow strong {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: center;
+  padding: .8rem;
+  border: 1px solid var(--landing-border);
+  border-radius: 1rem;
+  background: var(--landing-surface);
+  text-align: center;
+}
+
+.atal-landing__fragmentation-flow strong {
+  color: #fff;
+  border-color: var(--landing-blue-deep);
+  background: var(--landing-blue-deep);
+}
+
+.atal-landing__mobile,
+.atal-landing__trust {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(310px, 1.1fr);
+  gap: clamp(2.5rem, 8vw, 7rem);
+  align-items: center;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(4rem, 9vw, 8rem) clamp(1rem, 4vw, 3rem);
+}
+
+.atal-landing__mobile h2,
+.atal-landing__trust h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+
+.atal-landing__phone {
+  width: min(100%, 390px);
+  margin-inline: auto;
+  padding: 1rem;
+  border: 1px solid var(--landing-border);
+  border-radius: 2rem;
+  background: var(--landing-surface);
+  box-shadow: 0 30px 70px rgb(23 59 114 / .13);
+}
+
+.atal-landing__phone-topline,
+.atal-landing__phone-exercise,
+.atal-landing__phone dl {
+  display: grid;
+}
+
+.atal-landing__phone-topline {
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: .55rem .35rem 1rem;
+  color: var(--landing-muted);
+  font-size: .8rem;
+}
+
+.atal-landing__phone-exercise {
+  gap: .45rem;
+  padding: 1.2rem;
+  border-radius: 1.15rem;
+  background: #f4f7fb;
+}
+
+.atal-landing__phone-exercise small,
+.atal-landing__phone-exercise span {
+  color: var(--landing-muted);
+}
+
+.atal-landing__phone-exercise strong {
+  font-size: 1.2rem;
+}
+
+.atal-landing__phone-progress {
+  height: 6px;
+  margin: 1.25rem 0;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e4eaf2;
+}
+
+.atal-landing__phone-progress span {
+  display: block;
+  width: 50%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--landing-blue);
+}
+
+.atal-landing__phone dl {
+  gap: .65rem;
+  margin: 0;
+}
+
+.atal-landing__phone dl div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  padding: .75rem .2rem;
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.atal-landing__phone dt {
+  color: var(--landing-muted);
+}
+
+.atal-landing__phone dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.atal-landing__trust {
+  align-items: start;
+  border-top: 1px solid var(--landing-border);
+}
+
+.atal-landing__trust-list {
+  margin: 0;
+  border-top: 1px solid var(--landing-border);
+}
+
+.atal-landing__trust-list div {
+  display: grid;
+  grid-template-columns: minmax(130px, .65fr) 1.35fr;
+  gap: 1.25rem;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--landing-border);
+}
+
+.atal-landing__trust-list dt {
+  color: var(--landing-blue-deep);
+  font-weight: 650;
+}
+
+.atal-landing__trust-list dd {
+  margin: 0;
+  color: var(--landing-muted);
+  line-height: 1.6;
+}
+
+.atal-landing__agent-name {
+  align-items: center;
+  gap: .55rem;
+}
+
+.atal-landing__ati,
+.atal-landing__ati img {
+  width: 36px;
+  height: 36px;
+}
+
+.atal-landing__ati {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #42516a;
+  border-radius: 50%;
+  background: #172132;
+}
+
+.atal-landing__ati img {
+  object-fit: cover;
+}
+
+@media (max-width: 767px) {
+  .atal-landing__fragmentation-flow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .atal-landing__fragmentation-flow strong {
+    grid-column: 1 / -1;
+  }
+
+  .atal-landing__mobile,
+  .atal-landing__trust {
+    grid-template-columns: 1fr;
+  }
+
+  .atal-landing__trust-list div {
+    grid-template-columns: 1fr;
+    gap: .4rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .atal-landing__fragmentation-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .atal-landing__fragmentation-flow strong {
+    grid-column: auto;
+  }
+
+  .atal-landing__phone {
+    border-radius: 1.35rem;
+  }
+}
