@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
+const MENU_REVEAL_MS = 180;
+
 export function LandingNav() {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -8,11 +10,13 @@ export function LandingNav() {
   useEffect(() => {
     if (!open) return;
 
-    const focusFrame = requestAnimationFrame(() => {
+    // The mobile sheet transitions `visibility` for 160ms. Waiting until the
+    // reveal finishes prevents Chromium from rejecting focus on a hidden link.
+    const focusTimer = window.setTimeout(() => {
       firstLinkRef.current?.focus();
-    });
+    }, MENU_REVEAL_MS);
 
-    return () => cancelAnimationFrame(focusFrame);
+    return () => window.clearTimeout(focusTimer);
   }, [open]);
 
   useEffect(() => {
