@@ -34,6 +34,29 @@ test('landing contains approved copy and no private runtime imports', async () =
   assert.equal((page.match(/<h1/g) ?? []).length, 1);
   assert.match(page, /id="flujo"/);
   assert.match(page, /id="atal-ia"/);
+  assert.match(page, /id="movil"/);
+  assert.match(page, /id="confianza"/);
+  assert.match(page, /<AtiSlot/);
+  assert.match(page, /MobileProductEvidence/);
+  assert.match(page, /TrustLedger/);
   assert.doesNotMatch(`${page}\n${content}`, /atalStore|useAtalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
   assert.doesNotMatch(`${page}\n${content}`, /Empieza gratis|precio|testimonio|lista de espera/i);
+});
+
+test('Ati slot stays hidden without an approved persistent asset', async () => {
+  const source = await read('src/landing/components/AtiSlot.tsx');
+  assert.match(source, /assetUrl\?: string/);
+  assert.match(source, /if \(!assetUrl\) return null/);
+  assert.match(source, /loading="lazy"/);
+  assert.match(source, /decoding="async"/);
+});
+
+test('public evidence components remain static and private-store free', async () => {
+  const mobile = await read('src/landing/components/MobileProductEvidence.tsx');
+  const trust = await read('src/landing/components/TrustLedger.tsx');
+  const combined = `${mobile}\n${trust}`;
+  assert.match(mobile, /Sesión guiada/);
+  assert.match(trust, /Cambios revisables/);
+  assert.match(trust, /Deshacer/);
+  assert.doesNotMatch(combined, /useAtalStore|atalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
 });
