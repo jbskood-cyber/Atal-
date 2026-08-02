@@ -1,5 +1,8 @@
 import './landing.css';
+import { AtiSlot } from './components/AtiSlot';
 import { LandingNav } from './components/LandingNav';
+import { MobileProductEvidence } from './components/MobileProductEvidence';
+import { TrustLedger } from './components/TrustLedger';
 import { landingCopy, workflowSteps } from './content';
 
 export default function LandingPage() {
@@ -35,6 +38,13 @@ export default function LandingPage() {
         <section className="atal-landing__fragmentation" aria-labelledby="fragmentation-title">
           <h2 id="fragmentation-title">Menos trabajo fragmentado alrededor del paciente.</h2>
           <p>Notas, mensajes, documentos y seguimiento dejan de competir por el contexto clínico.</p>
+          <div className="atal-landing__fragmentation-flow" aria-label="El trabajo fragmentado converge en Atal">
+            <span>Notas</span>
+            <span>Mensajes</span>
+            <span>Documentos</span>
+            <span>Seguimiento</span>
+            <strong>Atal</strong>
+          </div>
         </section>
 
         <section id="flujo" className="atal-landing__workflow" aria-labelledby="workflow-title">
@@ -54,7 +64,10 @@ export default function LandingPage() {
 
         <section id="atal-ia" className="atal-landing__agent" aria-labelledby="agent-title">
           <div>
-            <span className="atal-landing__agent-name">Atal IA</span>
+            <span className="atal-landing__agent-name">
+              Atal IA
+              <AtiSlot />
+            </span>
             <h2 id="agent-title">{landingCopy.agentTitle}</h2>
             <p>Consulta el contexto, prepara acciones revisables y usa las mismas operaciones que la interfaz.</p>
           </div>
@@ -64,6 +77,9 @@ export default function LandingPage() {
             <small>Cambios aplicados · Deshacer</small>
           </div>
         </section>
+
+        <MobileProductEvidence />
+        <TrustLedger />
 
         <section className="atal-landing__final" aria-labelledby="final-title">
           <h2 id="final-title">{landingCopy.finalTitle}</h2>
@@ -78,6 +94,7 @@ export default function LandingPage() {
         <span>Atal</span>
         <a href="#flujo">Producto</a>
         <a href="#atal-ia">Atal IA</a>
+        <a href="#confianza">Confianza</a>
       </footer>
     </div>
   );
