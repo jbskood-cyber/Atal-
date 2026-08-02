@@ -1,13 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function LandingNav() {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!open) return;
-    firstLinkRef.current?.focus();
+
+    const focusFrame = requestAnimationFrame(() => {
+      firstLinkRef.current?.focus();
+    });
+
+    return () => cancelAnimationFrame(focusFrame);
   }, [open]);
 
   useEffect(() => {
