@@ -1,25 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export function LandingNav() {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    firstLinkRef.current?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
 
-    const focusFrame = requestAnimationFrame(() => firstLinkRef.current?.focus());
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      event.preventDefault();
       setOpen(false);
       requestAnimationFrame(() => triggerRef.current?.focus());
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      cancelAnimationFrame(focusFrame);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open]);
 
   const closeMenu = () => setOpen(false);
