@@ -1,217 +1,204 @@
 # Atal Exercise Library 80/20 with Clinical Images — Design Specification
 
-**Status:** proposed for product-owner review  
-**Date:** 2026-08-02  
+**Status:** revised for product-owner review  
+**Date:** 2026-08-03  
 **Branch:** `feature/atal-exercise-library-80-20-design`  
-**Protected base:** Block 9 branch at `d0a576c6337de0899121689be964055ff076ef74`  
-**Scope:** design/specification only; no product code, generated image, seed mutation, merge, or deployment is authorized by this document.
+**Protected base:** Block 9 / PR #22  
+**Scope:** design/specification only. This document does not authorize merge, deployment, full-pack image generation, or changes to protected branches.
 
 ## 1. Purpose
 
-Atal currently exposes a library of 14 demonstration exercises. The canonical `ExerciseEntity` already supports:
+Atal currently exposes 14 seeded exercises. `ExerciseEntity.media` already supports `image`, `video`, `animation`, `sequence`, `none`, `mediaId`, and `thumbnailId`, but the seed records use `type: image` without a durable `mediaId`. The legacy demo also reuses a few generic photographs between unrelated movements.
 
-```ts
-type ExerciseMediaRef = {
-  type: 'image' | 'video' | 'animation' | 'sequence' | 'none';
-  mediaId?: string;
-  thumbnailId?: string;
-};
-```
+This specification defines:
 
-However, the seeded entries are created with `media: { type: 'image' }` and no `mediaId`. The old demonstration source also rotates four generic Unsplash fitness photographs that do not prove correspondence between the displayed movement and the exercise. The result is a visual fallback rather than a clinically trustworthy exercise illustration.
+1. an exact 60-exercise ambulatory musculoskeletal base pack;
+2. a preservation-first upgrade that keeps existing IDs and plans intact;
+3. a canonical global image layer for every approved exercise;
+4. an optional request-generated variant layer;
+5. a project skill and QA process for producing clinically corresponding images;
+6. a three-exercise pilot before any mass generation.
 
-This project will define a compact, high-utility musculoskeletal exercise pack and a production system for creating, reviewing, versioning, resolving, and displaying exercise-specific media without altering the protected Behavior System or breaking `atal:store:v2`.
+“80/20” is a product-prioritization label. It is not a claim that the pack is appropriate for 80% of patients.
 
-“80/20” is a product-prioritization label, not a clinical coverage claim. It means selecting a deliberately small first pack that is reusable across common ambulatory musculoskeletal plans. It does **not** mean that these exercises are appropriate for 80% of patients or replace professional assessment.
+## 2. Safety and non-goals
 
-## 2. Non-goals
+The library is clinician-selectable. It does not diagnose, prescribe automatically, select candidacy, or replace professional judgment.
 
 This project does not:
 
-- prescribe treatment or choose exercises automatically for a diagnosis;
-- claim clinical efficacy, diagnostic accuracy, or universal suitability;
-- replace the physiotherapist's judgment;
-- add a public marketplace or user-uploaded media platform;
-- introduce video generation in the first release;
-- rewrite Action Core, Gemini behavior, plan membership, or `atal:store:v2`;
-- overwrite local exercises or user-edited clinical content;
-- generate the full media pack before the product owner approves the spec and pilot direction.
+- create condition-specific protocols;
+- claim treatment efficacy or clinical outcomes;
+- overwrite local exercises or user-edited content;
+- replace `e01`–`e14`;
+- place image bytes in `atal:store:v2`;
+- change Action Core, Gemini runtime, plan membership semantics, PR #20, PR #22, landing branches, or `main`;
+- approve generated media automatically;
+- generate the full pack before pilot review.
 
 ## 3. Current-state findings
 
-### 3.1 Existing seed catalog
+### 3.1 Existing seeds
 
-The current demonstration catalog contains 14 entries:
+The current catalog contains:
 
-1. Sentadilla asistida
-2. Elevación de pierna recta
-3. Puente de glúteos
-4. Clamshell
-5. Step Up
-6. Elevación de talones
-7. Bird Dog
-8. Plancha lateral
-9. Wall Sit
-10. Estiramiento de isquiotibia
-11. Movilización de cadera 90/90
-12. Curl nórdico asistido
-13. Retracción escapular
-14. Rotación externa con banda
+`e01` Sentadilla asistida  
+`e02` Elevación de pierna recta  
+`e03` Puente de glúteos  
+`e04` Clamshell  
+`e05` Step up  
+`e06` Elevación de talones  
+`e07` Bird dog  
+`e08` Plancha lateral  
+`e09` Wall sit  
+`e10` Estiramiento de isquiotibia  
+`e11` Movilización de cadera 90/90  
+`e12` Curl nórdico asistido  
+`e13` Retracción escapular  
+`e14` Rotación externa con banda
 
-### 3.2 Current media gap
+### 3.2 Media gap
 
-- `ExerciseMediaRef` can reference `image`, `video`, `animation`, `sequence`, or `none`.
-- Seeded `ExerciseEntity` records have `type: 'image'` but no durable `mediaId`.
-- The demo data's four external photographs are generic and reused across unrelated movements.
-- `atal:store:v2` stores exercise metadata, but image bytes should not be embedded in localStorage.
-- Existing plans reference exercises by stable `exerciseIds`; those IDs must not be replaced casually.
+- existing seeds lack durable `mediaId`;
+- generic photos do not prove exercise correspondence;
+- existing plans depend on stable `exerciseIds`;
+- the correct upgrade is additive and idempotent;
+- media bytes must remain outside localStorage.
 
-### 3.3 Clinical-safety boundary
+## 4. Approaches considered
 
-The pack is a library of clinician-selectable movement templates. Every exercise requires individual selection, dosing, precautions, and adaptation by the treating professional. Images communicate form; they do not determine candidacy.
+### Approach A — Replace all seeds
 
-## 4. Design approaches considered
+Clean taxonomy, but breaks plan references and persisted continuity. **Rejected.**
 
-### Approach A — Replace all 14 seeds with a new catalog and new IDs
+### Approach B — Preserve 14 seeds and expand to 60
 
-**Advantages**
+Preserves IDs, provides broader foundational coverage, supports progressions/regressions, and remains small enough for controlled QA. **Recommended.**
 
-- clean taxonomy;
-- consistent identifiers;
-- easiest implementation on a fresh install.
+### Approach C — Large condition-specific library
 
-**Costs and risks**
+Broader on paper but harder to review, more duplicative, and likely to imply false completeness. **Deferred.**
 
-- breaks existing plan references;
-- may duplicate or orphan persisted seed exercises;
-- violates continuity of `atal:store:v2`;
-- increases migration risk for little user value.
+## 5. Recommended strategy
 
-**Decision:** rejected.
-
-### Approach B — Keep the 14 seeds, attach verified media, and add 16 complementary exercises
-
-**Advantages**
-
-- preserves every existing ID and plan membership;
-- reaches balanced coverage with 30 total movements;
-- supports an idempotent additive upgrade;
-- keeps scope small enough for manual media QA.
-
-**Costs and risks**
-
-- legacy names/taxonomy need normalization rules;
-- some regions contain more advanced exercises than a minimal first-line pack;
-- requires a manifest that maps old IDs and new IDs consistently.
-
-**Decision:** recommended.
-
-### Approach C — Build a very large condition-specific library first
-
-**Advantages**
-
-- broad choice;
-- easier to market as “complete.”
-
-**Costs and risks**
-
-- poor image-review scalability;
-- higher chance of mismatched or unsafe illustrations;
-- duplicated movements and inconsistent naming;
-- delays useful delivery and creates false completeness.
-
-**Decision:** rejected for the first release.
-
-## 5. Recommended product strategy
-
-Adopt **Approach B**:
+Adopt Approach B:
 
 - preserve `e01`–`e14`;
-- attach verified media by stable `mediaId`;
-- add `e15`–`e30` as complementary seed entries;
-- keep all user-created exercises untouched;
-- ship media through a versioned static manifest, not inside `atal:store:v2`;
-- use a two-frame `sequence` for movements where start/end distinction materially improves comprehension;
-- use one `image` only for static holds or positions where a second frame adds no useful information;
-- require human exercise↔media approval before an asset becomes production-eligible.
+- add `e15`–`e60`;
+- use 12 exercises per region;
+- attach media only through stable `mediaId`;
+- store approved assets in a versioned static manifest;
+- use one image for static positions and two-frame sequences for meaningful movement;
+- require visual, clinical, and accessibility review;
+- separate canonical global assets from generated request variants.
 
-## 6. First pack: exact 30-exercise catalog
+## 6. Exact first pack — 60 exercises
 
-The first pack balances five regions: shoulder, lumbar/lumbopelvic control, hip, knee, and ankle. Existing IDs are retained. New IDs continue the current scheme only for compatibility; the manifest also carries a semantic slug.
+The pack covers five regions with 12 exercises each. It prioritizes mobility, motor control, strength, endurance, balance, and functional patterns with low equipment burden.
 
-### 6.1 Shoulder — 6
+### 6.1 Shoulder — 12
 
-| ID | Exercise | Category | Media | Level role |
+| ID | Exercise | Category | Media | Role |
 |---|---|---|---|---|
-| `e13` | Retracción escapular | motor control | sequence | foundation |
-| `e14` | Rotación externa con banda | strength/stability | sequence | progression |
-| `e15` | Péndulo de hombro | mobility | sequence | regression/foundation |
-| `e16` | Deslizamiento de brazos en pared | mobility/control | sequence | foundation |
-| `e17` | Elevación en plano escapular sin carga | mobility/control | sequence | foundation |
-| `e18` | Empuje serrato en pared | strength/control | sequence | progression |
+| `e13` | Retracción escapular | control motor | sequence | foundation |
+| `e14` | Rotación externa con banda | fuerza/estabilidad | sequence | progression |
+| `e15` | Péndulo de hombro | movilidad | sequence | regression |
+| `e16` | Deslizamiento de brazos en pared | movilidad/control | sequence | foundation |
+| `e17` | Elevación en plano escapular sin carga | movilidad/control | sequence | foundation |
+| `e18` | Empuje serrato en pared | fuerza/control | sequence | foundation |
+| `e19` | Flexión asistida de hombro con bastón | movilidad | sequence | regression |
+| `e20` | Rotación externa asistida con bastón | movilidad | sequence | regression |
+| `e21` | Remo con banda | fuerza/postura | sequence | foundation |
+| `e22` | Isométrico de rotación externa contra pared | fuerza | image | foundation |
+| `e23` | Isométrico de abducción contra pared | fuerza | image | foundation |
+| `e24` | Elevación en Y inclinada sin carga | control escapular | sequence | progression |
 
-### 6.2 Lumbar and lumbopelvic control — 6
+### 6.2 Columna y control lumbopélvico — 12
 
-| ID | Exercise | Category | Media | Level role |
+| ID | Exercise | Category | Media | Role |
 |---|---|---|---|---|
-| `e07` | Bird Dog | stability | sequence | progression |
-| `e08` | Plancha lateral con apoyo de rodillas | stability | image or sequence | progression |
-| `e19` | Basculación pélvica en decúbito supino | motor control | sequence | foundation |
-| `e20` | Cat–camel | mobility | sequence | foundation |
-| `e21` | Dead bug con deslizamiento de talón | stability | sequence | foundation/progression |
-| `e22` | Bisagra de cadera con bastón | motor control | sequence | functional progression |
+| `e07` | Bird dog | estabilidad | sequence | progression |
+| `e08` | Plancha lateral con apoyo de rodillas | estabilidad | sequence | progression |
+| `e25` | Basculación pélvica en decúbito supino | control motor | sequence | foundation |
+| `e26` | Cat-camel | movilidad | sequence | foundation |
+| `e27` | Dead bug con deslizamiento de talón | estabilidad | sequence | foundation |
+| `e28` | Bisagra de cadera con bastón | control motor | sequence | functional |
+| `e29` | Respiración diafragmática en decúbito | control | image | regression |
+| `e30` | Activación abdominal con marcha supina | estabilidad | sequence | foundation |
+| `e31` | Rotación lumbar en decúbito con rodillas flexionadas | movilidad | sequence | foundation |
+| `e32` | Extensión lumbar de pie con apoyo | movilidad | sequence | option |
+| `e33` | Puente corto con marcha alterna | estabilidad | sequence | progression |
+| `e34` | Plancha frontal con apoyo de rodillas | estabilidad | image | progression |
 
-### 6.3 Hip — 6
+### 6.3 Cadera — 12
 
-| ID | Exercise | Category | Media | Level role |
+| ID | Exercise | Category | Media | Role |
 |---|---|---|---|---|
-| `e03` | Puente de glúteos | strength | sequence | foundation |
-| `e04` | Clamshell | stability | sequence | foundation |
-| `e11` | Movilización de cadera 90/90 | mobility | sequence | progression |
-| `e23` | Abducción de cadera de pie con apoyo | strength/control | sequence | foundation |
-| `e24` | Caminata lateral con banda | strength/stability | sequence | progression |
-| `e25` | Estiramiento de flexor de cadera en media rodilla | flexibility | image | mobility option |
+| `e03` | Puente de glúteos | fuerza | sequence | foundation |
+| `e04` | Clamshell | estabilidad | sequence | foundation |
+| `e11` | Movilización de cadera 90/90 | movilidad | sequence | progression |
+| `e35` | Abducción de cadera de pie con apoyo | fuerza/control | sequence | foundation |
+| `e36` | Caminata lateral con banda | fuerza/estabilidad | sequence | progression |
+| `e37` | Estiramiento de flexor de cadera en media rodilla | flexibilidad | image | mobility |
+| `e38` | Extensión de cadera de pie con apoyo | fuerza | sequence | foundation |
+| `e39` | Aducción de cadera en decúbito lateral | fuerza | sequence | foundation |
+| `e40` | Rotación interna de cadera sentada con banda | fuerza/control | sequence | progression |
+| `e41` | Transferencia de peso lateral | control funcional | sequence | regression |
+| `e42` | Sit-to-stand desde silla alta | fuerza/función | sequence | foundation |
+| `e43` | Step lateral bajo con apoyo | fuerza/control | sequence | progression |
 
-### 6.4 Knee — 6
+### 6.4 Rodilla — 12
 
-| ID | Exercise | Category | Media | Level role |
+| ID | Exercise | Category | Media | Role |
 |---|---|---|---|---|
-| `e01` | Sentadilla asistida | strength/control | sequence | foundation |
-| `e02` | Elevación de pierna recta | strength | sequence | foundation |
-| `e05` | Step up bajo | strength/function | sequence | progression |
-| `e09` | Wall sit | endurance | image | progression |
-| `e12` | Curl nórdico asistido | strength | sequence | advanced optional |
-| `e26` | Extensión terminal de rodilla con banda | strength/control | sequence | foundation |
+| `e01` | Sentadilla asistida | fuerza/control | sequence | foundation |
+| `e02` | Elevación de pierna recta | fuerza | sequence | foundation |
+| `e05` | Step up bajo | fuerza/función | sequence | progression |
+| `e09` | Wall sit | resistencia | image | progression |
+| `e10` | Estiramiento de isquiotibiales | flexibilidad | image | mobility |
+| `e12` | Curl nórdico asistido | fuerza | sequence | advanced |
+| `e44` | Extensión terminal de rodilla con banda | fuerza/control | sequence | foundation |
+| `e45` | Extensión de rodilla sentada sin carga | movilidad/fuerza | sequence | regression |
+| `e46` | Flexión de rodilla de pie con apoyo | movilidad/fuerza | sequence | foundation |
+| `e47` | Mini sentadilla contra pared con pelota | fuerza/control | sequence | foundation |
+| `e48` | Descenso controlado de escalón bajo | fuerza excéntrica | sequence | progression |
+| `e49` | Desplazamiento posterior de cadera con apoyo | control funcional | sequence | foundation |
 
-### 6.5 Ankle — 6
+### 6.5 Tobillo y pie — 12
 
-| ID | Exercise | Category | Media | Level role |
+| ID | Exercise | Category | Media | Role |
 |---|---|---|---|---|
-| `e06` | Elevación de talones con apoyo | strength | sequence | foundation |
-| `e27` | Movilidad de tobillo rodilla-a-pared | mobility | sequence | foundation |
-| `e28` | Dorsiflexión de tobillo con banda | strength | sequence | foundation |
-| `e29` | Eversión de tobillo con banda | strength/control | sequence | foundation |
-| `e30` | Equilibrio unipodal con apoyo cercano | balance | image | foundation/progression |
-| `e10` | Estiramiento de cadena posterior de pie | flexibility | image | mobility option |
+| `e06` | Elevación de talones con apoyo | fuerza | sequence | foundation |
+| `e50` | Movilidad de tobillo rodilla-a-pared | movilidad | sequence | foundation |
+| `e51` | Dorsiflexión de tobillo con banda | fuerza | sequence | foundation |
+| `e52` | Eversión de tobillo con banda | fuerza/control | sequence | foundation |
+| `e53` | Inversión de tobillo con banda | fuerza/control | sequence | foundation |
+| `e54` | Equilibrio unipodal con apoyo cercano | balance | image | foundation |
+| `e55` | Elevación de punta de pies con apoyo | fuerza | sequence | foundation |
+| `e56` | Estiramiento de gastrocnemio en pared | flexibilidad | image | mobility |
+| `e57` | Estiramiento de sóleo en pared | flexibilidad | image | mobility |
+| `e58` | Doming del arco plantar | control del pie | sequence | foundation |
+| `e59` | Separación activa de dedos del pie | control del pie | sequence | foundation |
+| `e60` | Transferencia talón-punta con apoyo | control funcional | sequence | regression |
 
-### 6.6 Selection rationale
+## 7. Selection criteria
 
-An exercise qualifies for the first pack when it meets most of these criteria:
+An exercise belongs in the base pack when it meets most of these conditions:
 
-- reusable across multiple ambulatory plan contexts;
-- understandable with one or two frames;
-- low equipment burden;
-- easy to regress or progress;
+- reusable across multiple ambulatory contexts;
+- easy to understand with one or two frames;
+- low equipment requirement;
 - practical for home use after clinician instruction;
+- supports a clear regression or progression;
 - visually distinguishable from neighboring exercises;
-- no need for specialized apparatus;
-- compatible with Atal's existing sets/repetitions/time/rest model.
+- compatible with sets, repetitions, time, rest, load, laterality, and tolerance;
+- does not require a specialist apparatus or a clinician physically in frame.
 
-The pack intentionally avoids condition-specific protocols, high-skill plyometrics, heavy loading, manual therapy, cervical manipulation, unstable-surface novelty exercises, and movements that are difficult to represent safely in a static image.
+The pack intentionally excludes manipulation, manual therapy, high-skill plyometrics, heavy-loading protocols, unstable-surface novelty, diagnosis-specific tests, and movements too subtle to represent reliably without video.
 
-## 7. Canonical exercise card
+## 8. Canonical exercise card
 
-Before media production, every exercise must have a canonical card. No prompt may be sent to an image generator without a completed card.
+No image generation request may run without a completed card.
 
 ```yaml
 exerciseId: e01
@@ -221,7 +208,7 @@ locale: es-MX
 name: Sentadilla asistida
 region: Rodilla
 category: Fuerza y control
-purpose: Demonstrate the movement pattern only; clinician selects suitability and dose.
+purpose: Demonstrate movement form only; the clinician selects suitability and dose.
 startingPosition:
   body: standing, feet hip-width apart
   support: both hands lightly holding a stable rail
@@ -231,10 +218,10 @@ movement:
   end: controlled shallow squat with knees aligned over feet
 keyCues:
   - trunk controlled
-  - heels remain supported
-  - knees track in line with feet
+  - heels supported
+  - knees aligned with feet
 avoidShowing:
-  - deep forced range
+  - forced deep range
   - knee collapse
   - unstable furniture
   - pain expression
@@ -246,94 +233,108 @@ frames:
   - start
   - end
 altText:
-  start: Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida.
-  end: Persona realizando una sentadilla asistida poco profunda con pies y rodillas alineados.
+  start: Persona de pie sujetando una barra estable antes de una sentadilla asistida.
+  end: Persona realizando una sentadilla asistida poco profunda con rodillas alineadas.
 reviewStatus: draft
 reviewers:
   clinical: pending
   visual: pending
+  accessibility: pending
 ```
 
-## 8. Project skill design
+## 9. Image system: two layers
 
-### 8.1 Proposed path
+### 9.1 Canonical global layer
 
-`skills/atal-exercise-asset-production/SKILL.md`
+Every production exercise has one approved canonical media record. This is the default asset used by:
 
-The skill is proposed in this spec but must not be created or invoked for production assets until the product owner approves this design.
+- library selector;
+- exercise detail;
+- plan views;
+- guided sessions;
+- patient delivery;
+- print/PDF when images are enabled.
 
-### 8.2 Skill responsibilities
+Canonical assets are stable, versioned, reviewed, and referenced through `mediaId`.
+
+### 9.2 Request-generated variant layer
+
+A separate optional layer may produce a variant for a specific request, for example:
+
+- different permitted equipment;
+- left/right laterality;
+- seated or supported regression;
+- different safe camera view;
+- approved demographic presentation.
+
+The request flow may be initiated by Atal IA or another product surface, but the generation job is an explicit media-production request. ChatGPT is the primary generation workflow; Gemini may prepare or route the request. A generated variant:
+
+- receives a unique `variantId`;
+- references the canonical `exerciseId`;
+- never silently replaces canonical media;
+- remains `draft` until reviewed;
+- cannot be used in production delivery while unapproved;
+- records prompt, generator/model, date, card version, checksum, and provenance.
+
+## 10. Project skill
+
+**Proposed path:** `skills/atal-exercise-asset-production/SKILL.md`
 
 The skill must:
 
-1. read the canonical exercise card;
-2. reject incomplete cards;
-3. select `image` vs `sequence` according to the card;
-4. build a constrained image-generation prompt;
-5. preserve a consistent visual system;
-6. create deterministic filenames and manifest entries;
-7. run a structured self-check;
-8. require human clinical and visual review;
-9. never mark an asset `approved` automatically.
+1. read and validate a canonical card;
+2. reject incomplete or ambiguous cards;
+3. choose `image` or `sequence`;
+4. generate constrained prompts;
+5. preserve model, clothing, background, camera, and equipment consistency;
+6. generate deterministic filenames and manifest records;
+7. run a visual self-check;
+8. create alt text from the card, not from style;
+9. require human visual, clinical, and accessibility review;
+10. never mark an asset approved automatically.
 
-### 8.3 Locked visual system
+### 10.1 Locked pilot visual system
 
-- one consistent adult model for the pilot, with neutral and non-identifying appearance;
-- plain cool-white clinical studio background;
-- navy/blue athletic clothing with no logo and sufficient body-joint visibility;
-- full body or region-appropriate crop with all relevant joints visible;
-- camera height and angle defined by the canonical card;
-- natural proportions and five digits per visible hand/foot where visible;
-- no text baked into the image;
-- no arrows, red pain areas, anatomy overlays, diagnostic labels, watermarks, brand marks, or medical devices not listed in the card;
-- no exaggerated smiles, pain expressions, or theatrical “fitness advertising” pose;
-- no clinician in frame unless an exercise specifically requires physical assistance, which is outside the first pack.
+- one consistent synthetic adult model;
+- neutral, non-identifying appearance;
+- cool-white clinical studio;
+- navy/blue unbranded clothing;
+- relevant joints fully visible;
+- region-appropriate crop;
+- no text, arrows, pain overlays, diagnoses, watermarks, logos, or decorative medical props;
+- no theatrical fitness advertising;
+- no invented brace, therapist, anchor, weight, or machine.
 
-### 8.4 Prompt contract
+### 10.2 Rejection criteria
 
-Every production prompt must include:
+Regenerate when:
 
-- exercise ID and semantic name;
-- exact start/end frame;
-- body position and support surface;
-- camera angle and crop;
-- limb visibility and laterality;
-- permitted equipment;
-- clothing/background lock;
-- explicit negative constraints;
-- instruction that the image demonstrates form and makes no clinical claim.
+- movement or frame is wrong;
+- anatomy is impossible;
+- a relevant joint or support is cropped;
+- equipment differs from the card;
+- support is unsafe;
+- start and end are indistinguishable;
+- person, clothing, setting, or camera changes across frames;
+- the pose violates a key cue;
+- the asset could be confused with another exercise;
+- text, labels, logos, watermarks, or diagnosis claims appear.
 
-### 8.5 Mandatory rejection criteria
+## 11. Asset manifest
 
-Reject and regenerate when any of the following occurs:
+### 11.1 Locations
 
-- wrong movement or wrong frame;
-- missing, duplicated, or anatomically impossible limb;
-- required joint or support surface cropped out;
-- unsafe or unstable support;
-- start and end frames are visually indistinguishable;
-- inconsistent person, clothing, setting, camera angle, or equipment across a sequence;
-- invented band attachment, machine, weight, brace, or therapist;
-- embedded text, arrows, labels, watermarks, or brand;
-- pose contradicts canonical cues;
-- asset could plausibly represent another exercise in the same pack.
+- `public/exercises/v1/manifest.json`
+- `public/exercises/v1/<region>/<exercise-id>/`
+- `docs/exercises/v1/cards/<exercise-id>.yaml`
+- `docs/exercises/v1/review-ledger.md`
 
-## 9. Asset manifest
-
-### 9.1 Proposed location
-
-- manifest: `public/exercises/v1/manifest.json`
-- images: `public/exercises/v1/<region>/<exercise-id>/`
-- source cards: `docs/exercises/v1/cards/<exercise-id>.yaml`
-- review ledger: `docs/exercises/v1/review-ledger.md`
-
-### 9.2 Manifest schema
+### 11.2 Canonical asset record
 
 ```json
 {
   "schemaVersion": 1,
-  "catalogVersion": "2026.08.1",
-  "generatedAt": "2026-08-02T00:00:00.000Z",
+  "catalogVersion": "2026.08.2",
   "assets": [
     {
       "mediaId": "ex-v1-e01-sequence",
@@ -351,7 +352,7 @@ Reject and regenerate when any of the following occurs:
           "height": 900,
           "bytes": 0,
           "sha256": "pending",
-          "alt": "Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida."
+          "alt": "Persona de pie sujetando una barra estable antes de una sentadilla asistida."
         },
         {
           "id": "ex-v1-e01-end",
@@ -361,12 +362,12 @@ Reject and regenerate when any of the following occurs:
           "height": 900,
           "bytes": 0,
           "sha256": "pending",
-          "alt": "Persona realizando una sentadilla asistida poco profunda con pies y rodillas alineados."
+          "alt": "Persona realizando una sentadilla asistida poco profunda con rodillas alineadas."
         }
       ],
       "provenance": {
         "method": "generated",
-        "generator": "approved-image-workflow",
+        "generator": "chatgpt-approved-image-workflow",
         "sourceCardVersion": 1,
         "license": "project-owned-generated-asset",
         "containsRealPatient": false
@@ -382,23 +383,25 @@ Reject and regenerate when any of the following occurs:
 }
 ```
 
-### 9.3 Status lifecycle
+### 11.3 Variant record additions
 
-`draft → visual-reviewed → clinical-reviewed → approved → retired`
+```json
+{
+  "variantId": "ex-v1-e01-var-supported-chair-left",
+  "canonicalMediaId": "ex-v1-e01-sequence",
+  "requestSource": "atal-ai",
+  "status": "draft",
+  "replacesCanonical": false
+}
+```
 
-Only `approved` assets may be returned by the production resolver. Draft or missing assets resolve to the existing neutral fallback.
+### 11.4 Status lifecycle
 
-## 10. Runtime architecture
+`draft → visual-reviewed → clinical-reviewed → accessibility-reviewed → approved → retired`
 
-### 10.1 Separation of concerns
+Only approved media resolves in production.
 
-1. `ExerciseEntity.media` remains the lightweight reference inside `atal:store:v2`.
-2. Static image bytes remain outside localStorage.
-3. A pure `exerciseMediaCatalog` reads the bundled manifest.
-4. A resolver maps `mediaId` to approved assets.
-5. UI components receive a resolved presentation object, never raw manifest internals.
-
-Proposed interface:
+## 12. Runtime architecture
 
 ```ts
 type ResolvedExerciseMedia =
@@ -409,204 +412,179 @@ type ResolvedExerciseMedia =
 resolveExerciseMedia(exercise: ExerciseEntity): ResolvedExerciseMedia;
 ```
 
-### 10.2 Seed upgrade without breaking `atal:store:v2`
+Rules:
 
-No store-version bump is required because `mediaId` and `thumbnailId` already exist in the current type.
+- `ExerciseEntity.media` remains a lightweight reference;
+- image bytes remain outside localStorage;
+- one manifest resolver powers every consumer surface;
+- no component constructs URLs from exercise names;
+- variants require an explicit selector and never replace canonical media by inference.
 
-The future implementation must use an idempotent additive reconciler:
+## 13. Preservation of `atal:store:v2`
 
-- preserve `e01`–`e14` IDs;
-- add missing `e15`–`e30` seed records;
-- attach `mediaId` only when a seed exercise has no media ID;
-- never replace a `source: 'local'` exercise;
-- never overwrite an existing user-selected media reference;
-- never reorder or rewrite existing `plan.exerciseIds`;
-- preserve archived status and timestamps for persisted entries;
-- record catalog version separately from `AtalState.version` if runtime migration bookkeeping is needed.
+No store-version bump is required because the current type already includes `mediaId` and `thumbnailId`.
 
-### 10.3 Consumer surfaces
+The future reconciler must:
 
-The same resolver must power:
+- preserve `e01`–`e14`;
+- add missing `e15`–`e60`;
+- attach `mediaId` only when absent;
+- never overwrite `source: local`;
+- never overwrite a user-selected media reference;
+- never reorder `plan.exerciseIds`;
+- preserve archived state and timestamps;
+- remain idempotent;
+- track catalog version separately when needed.
 
-- exercise library selector;
-- exercise detail/editor preview;
-- plan exercise list;
-- guided session exercise step;
-- patient plan/delivery view;
-- print/PDF delivery when images are included.
+## 14. Storage, performance, and PWA
 
-No surface may independently construct image URLs from exercise names.
-
-## 11. Storage, caching, and performance
-
-### 11.1 Formats
-
-- source master: lossless PNG or project-controlled original;
-- production primary: WebP;
-- optional AVIF only when build/browser support and visual comparison are verified;
-- intrinsic width/height required to prevent layout shift;
-- no base64 data URLs in `atal:store:v2` or component source.
-
-### 11.2 Budget
-
-Pilot target per frame:
-
-- thumbnail: ≤40 KB;
-- mobile/detail frame: ≤120 KB;
-- sequence total: ≤240 KB;
-- no automatic prefetch of the full 30-exercise pack.
-
-The library list loads thumbnails. Full frames load only when a card enters the viewport or the exercise detail/session step opens.
-
-### 11.3 PWA behavior
-
-- app-shell cache must not eagerly cache every full-resolution asset;
+- source master: project-controlled lossless original;
+- production: WebP;
+- intrinsic dimensions required;
+- no base64 in store or source code;
+- thumbnail target: ≤40 KB;
+- detail frame target: ≤120 KB;
+- sequence target: ≤240 KB;
+- list loads thumbnails only;
+- full frames lazy-load;
 - approved thumbnails may use stale-while-revalidate;
-- guided-session frames may be cached on demand after plan opening;
-- missing/offline images keep instructions and show the neutral fallback;
-- media failure must never block session completion, plan access, or delivery text.
+- guided-session frames may cache after opening a plan;
+- missing media never blocks instructions, plan access, session completion, or delivery.
 
-## 12. Accessibility
+## 15. Accessibility
 
-- every frame has Spanish alt text describing body position and movement state, not decorative style;
-- paired frames expose `Inicio` and `Final` labels outside the image;
-- alt text must not repeat the full written exercise instructions;
-- no essential cue may depend only on color;
-- swipe/carousel cannot be the only way to change frames;
-- sequence controls require keyboard and screen-reader operation;
-- reduced motion disables animated crossfades or auto-advance;
-- fallback preserves the exercise name, position, steps, precautions, and dose.
+- Spanish alt text describes body position and frame state;
+- paired frames expose visible `Inicio` and `Final` labels;
+- controls work with keyboard and screen reader;
+- swipe is never the only navigation method;
+- reduced motion disables crossfade/auto-advance;
+- no essential cue depends on color;
+- fallback preserves name, instructions, precautions, and dose.
 
-## 13. Privacy, provenance, and licensing
+## 16. Privacy, provenance, and licensing
 
-- use no real patient image or uploaded clinical photo in the seed pack;
-- generated people must be synthetic and non-identifying;
-- store prompt, generator/model identifier, date, card version, checksum, and review status;
-- do not use generic web images, scraped images, stock photographs with unclear exercise correspondence, or assets without durable usage rights;
-- do not imply endorsement by a professional association;
-- do not depict protected logos, branded clothing, clinic names, or personal data;
-- retiring an asset must preserve its historical manifest entry and replacement reference.
+- no real patient images;
+- only synthetic, non-identifying people;
+- store generator/model, prompt, date, card version, checksum, license, and review status;
+- no scraped or unclear-rights images;
+- no third-party logos or clinic identifiers;
+- retired assets keep history and replacement references.
 
-## 14. QA plan
+## 17. QA
 
-### 14.1 Manifest and resolver tests
+### 17.1 Manifest and resolver
 
-- every production `mediaId` is unique;
-- every `exerciseId` maps to at most one active approved media entry per catalog version;
-- referenced files exist and match declared dimensions/checksum;
-- no `approved` entry has pending review fields;
-- an unapproved or missing media ID returns fallback;
-- an invalid manifest cannot crash the product;
-- local exercise media references remain untouched.
+- unique `mediaId` and `variantId`;
+- at most one active approved canonical asset per exercise/version;
+- referenced files exist and match dimensions/checksum;
+- approved entries have no pending review;
+- missing/unapproved media returns fallback;
+- invalid manifest cannot crash the app;
+- local exercise media stays untouched.
 
-### 14.2 Exercise↔image correspondence review
+### 17.2 Exercise↔image correspondence
 
-For every asset, reviewers answer:
+Every reviewer answers:
 
 1. Does the image show the named exercise?
-2. Is it the correct start/end frame?
-3. Are all relevant joints and supports visible?
-4. Does the depicted equipment match the card?
-5. Is alignment consistent with the card's key cues?
-6. Is the sequence internally consistent?
-7. Could it be confused with another catalog exercise?
-8. Does the alt text accurately describe the frame?
-9. Is there any unsafe, impossible, or clinically misleading detail?
-10. Is the asset free of text, branding, diagnosis, and outcome claims?
+2. Is the frame role correct?
+3. Are relevant joints and supports visible?
+4. Does equipment match?
+5. Do alignment and cues match?
+6. Are sequence frames consistent?
+7. Could it be confused with another exercise?
+8. Is alt text accurate?
+9. Is any unsafe or impossible detail present?
+10. Is it free of text, branding, diagnosis, and outcome claims?
 
 Any “no” blocks approval.
 
-### 14.3 Product flow QA
+### 17.3 Product flow
 
-At minimum, Playwright verifies:
+Playwright must verify:
 
-- library selector shows the correct thumbnail for each pilot exercise;
-- selecting the exercise keeps the same `exerciseId` and `mediaId` in the plan draft;
-- exercise detail shows start/end frames in order;
-- guided session shows the same approved asset and continues if loading fails;
-- patient delivery shows the same exercise and never swaps assets between IDs;
-- hard reload preserves exercise membership and resolves media again from the manifest;
-- archived/local exercises retain their existing behavior;
-- mobile viewports 360×800 and 390×844 have no horizontal overflow;
-- dark/light themes preserve visibility without modifying the image itself.
+- correct pilot thumbnail in library selector;
+- stable `exerciseId` and `mediaId` after selection;
+- correct frame order in detail;
+- same asset in guided session;
+- session continues on load failure;
+- patient delivery never swaps assets;
+- hard reload resolves media again;
+- archived/local exercises retain behavior;
+- 360×800 and 390×844 have no overflow;
+- light/dark themes preserve visibility.
 
-## 15. Pilot proposal — blocked until owner review
+## 18. Three-exercise pilot
 
-The first pilot should contain three exercises chosen to stress different visual and runtime requirements:
+The pilot remains:
 
-1. **`e01` Sentadilla asistida** — lower-limb compound movement, stable support, start/end sequence.
-2. **`e14` Rotación externa con banda** — shoulder movement, band anchoring and lateral alignment, start/end sequence.
-3. **`e19` Basculación pélvica en decúbito supino** — subtle lumbopelvic movement where camera angle and visual clarity are challenging.
+1. `e01` Sentadilla asistida — compound lower-limb sequence.
+2. `e14` Rotación externa con banda — shoulder/band anchoring sequence.
+3. `e25` Basculación pélvica en decúbito supino — subtle lumbopelvic sequence.
 
-The pilot validates the workflow, not the entire catalog. It must produce:
+Pilot deliverables:
 
 - three canonical cards;
-- six primary frames (two per exercise unless self-review justifies a single frame);
+- six draft frames;
 - three thumbnails;
 - one draft manifest;
-- correspondence checklist results;
-- screenshots from selector, detail, guided session, and patient delivery;
-- a rejection/regeneration log where applicable.
+- correspondence checklists;
+- generation/rejection log;
+- screenshots in selector, detail, guided session, and patient delivery.
 
-No pilot asset may be integrated as `approved` until the product owner reviews the visual direction.
+Pilot images remain draft until product-owner review.
 
-## 16. Clinical evidence boundary
+## 19. Evidence boundary
 
-The catalog structure is informed by broad rehabilitation principles rather than condition-specific prescription. Relevant evidence sources include:
+The catalog is informed by broad exercise-therapy principles and current clinical practice guidance for shoulder rehabilitation, low-back pain, and knee osteoarthritis. Those sources support clinician-directed exercise as an intervention category; they do not validate this exact 60-item product pack or make every exercise suitable for every patient.
 
-- Desmeules et al., *Rotator Cuff Tendinopathy Diagnosis, Nonsurgical Medical Care, and Rehabilitation: A Clinical Practice Guideline*, JOSPT 2025, DOI `10.2519/jospt.2025.13182`.
-- George et al., *Interventions for the Management of Acute and Chronic Low Back Pain: Revision 2021*, JOSPT 2021.
-- Lawford et al., *Exercise for osteoarthritis of the knee*, Cochrane Database of Systematic Reviews 2024, DOI `10.1002/14651858.CD004376.pub4`.
-
-These sources support exercise as a clinician-directed intervention category. They do not validate this exact 30-item product pack or make every movement suitable for every condition.
-
-## 17. Acceptance criteria for the design phase
+## 20. Design acceptance criteria
 
 The design phase is complete when:
 
-- current seed/media architecture is documented accurately;
-- two or more strategies and their trade-offs are recorded;
-- one strategy is recommended;
-- the exact 30-exercise pack is defined;
-- the canonical card and skill contract are defined;
-- manifest, resolver, store-preservation, caching, accessibility, privacy, provenance, and QA contracts are explicit;
-- the pilot is scoped but not generated;
-- placeholder scan finds no unresolved design decision required before owner review;
-- no product file, image asset, protected PR, or store schema has been modified.
+- exact 60-exercise pack is recorded;
+- existing IDs and store protections are explicit;
+- canonical and request-generated image layers are separated;
+- skill, card, manifest, resolver, caching, accessibility, provenance, and QA contracts are explicit;
+- pilot is scoped but not mass-generated;
+- no placeholders or contradictory IDs remain;
+- no protected product branch or store schema has changed.
 
-## 18. Self-review
+## 21. Self-review
 
 ### Placeholder scan
 
-No `TBD`, `TODO`, or unspecified first-pack exercise remains. Review statuses inside example data are intentional lifecycle values, not missing design decisions.
+No unresolved `TBD` or `TODO` remains.
 
 ### Internal consistency
 
-- IDs `e01`–`e14` are preserved.
-- New seeds are additive.
-- media stays external to localStorage.
-- only approved assets resolve in production.
-- pilot generation remains gated by owner review.
+- 12 exercises are assigned to each of five regions;
+- IDs are unique from `e01` through `e60`;
+- `e01`–`e14` remain preserved;
+- new exercises are additive;
+- canonical media and variants are separate;
+- only approved assets resolve in production;
+- pilot generation does not authorize the full pack.
 
 ### Scope check
 
-The spec covers one bounded subsystem: seed exercise catalog + exercise-specific media production and resolution. Video, user uploads, condition protocols, and automated prescription remain out of scope.
+The spec remains one subsystem: base exercise catalog plus media production/resolution. Automated prescription, condition protocols, video generation, and user uploads remain out of scope.
 
 ### Ambiguity check
 
-- “80/20” is explicitly non-clinical.
-- static `image` vs two-frame `sequence` is decided per catalog row.
-- local exercises and existing media are never overwritten.
-- pilot approval does not authorize the full 30-exercise generation run.
+- “80/20” is explicitly non-clinical;
+- canonical media is the default;
+- request variants never silently replace canonical media;
+- local exercises and user media are never overwritten.
 
-## 19. Approval boundary
+## 22. Approval boundary
 
-Approval of this spec authorizes the next step only: writing a task-level implementation plan and producing the three-exercise **draft pilot** in an isolated branch.
+Approval authorizes a task-level implementation plan and the three-exercise draft pilot in an isolated branch.
 
 It does not authorize:
 
 - full-pack generation;
-- merge or deployment;
-- replacement of existing exercise IDs;
 - automatic media approval;
-- changes to PR #20, PR #22, landing branches, `main`, Action Core, Gemini runtime, or `atal:store:v2` schema.
+- merge or deployment;
+- replacement of existing IDs;
+- changes to PR #20, PR #22, landing branches, `main`, Action Core, Gemini runtime, or the `atal:store:v2` schema.
