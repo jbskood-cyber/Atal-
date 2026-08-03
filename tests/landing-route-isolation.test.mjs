@@ -28,19 +28,23 @@ test('private entry exclusively owns workspace bootstrap and private styles', as
 test('landing contains approved copy and no private runtime imports', async () => {
   const page = await read('src/landing/LandingPage.tsx');
   const content = await read('src/landing/content.ts');
+  const mobile = await read('src/landing/components/MobileProductEvidence.tsx');
+  const trust = await read('src/landing/components/TrustLedger.tsx');
+  const publicSource = `${page}\n${content}\n${mobile}\n${trust}`;
+
   assert.match(content, /Del expediente al seguimiento, sin perder el hilo del paciente\./);
   assert.match(content, /Ver Atal en acción/);
   assert.match(content, /Conocer Atal IA/);
   assert.equal((page.match(/<h1/g) ?? []).length, 1);
   assert.match(page, /id="flujo"/);
   assert.match(page, /id="atal-ia"/);
-  assert.match(page, /id="movil"/);
-  assert.match(page, /id="confianza"/);
+  assert.match(mobile, /id="movil"/);
+  assert.match(trust, /id="confianza"/);
   assert.match(page, /<AtiSlot/);
   assert.match(page, /MobileProductEvidence/);
   assert.match(page, /TrustLedger/);
-  assert.doesNotMatch(`${page}\n${content}`, /atalStore|useAtalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
-  assert.doesNotMatch(`${page}\n${content}`, /Empieza gratis|precio|testimonio|lista de espera/i);
+  assert.doesNotMatch(publicSource, /atalStore|useAtalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
+  assert.doesNotMatch(publicSource, /Empieza gratis|precio|testimonio|lista de espera/i);
 });
 
 test('Ati slot stays hidden without an approved persistent asset', async () => {
