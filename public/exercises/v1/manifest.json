@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "2026.08.3-pilot",
+  "status": "draft",
+  "assets": [
+    {
+      "mediaId": "ex-v1-e01-sequence",
+      "exerciseId": "e01",
+      "slug": "knee-assisted-squat",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e01-thumb",
+      "cardVersion": 1,
+      "generator": "pending",
+      "frames": [
+        {
+          "id": "ex-v1-e01-start",
+          "role": "start",
+          "src": "/exercises/v1/knee/e01/start.webp",
+          "alt": "Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida."
+        },
+        {
+          "id": "ex-v1-e01-end",
+          "role": "end",
+          "src": "/exercises/v1/knee/e01/end.webp",
+          "alt": "Persona realizando una sentadilla asistida poco profunda con talones apoyados y rodillas alineadas con los pies."
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    },
+    {
+      "mediaId": "ex-v1-e14-sequence",
+      "exerciseId": "e14",
+      "slug": "shoulder-band-external-rotation",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e14-thumb",
+      "cardVersion": 1,
+      "generator": "pending",
+      "frames": [
+        {
+          "id": "ex-v1-e14-start",
+          "role": "start",
+          "src": "/exercises/v1/shoulder/e14/start.webp",
+          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado sosteniendo una banda elástica antes de iniciar la rotación externa."
+        },
+        {
+          "id": "ex-v1-e14-end",
+          "role": "end",
+          "src": "/exercises/v1/shoulder/e14/end.webp",
+          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda elástica sin separar el codo del costado ni girar el tronco."
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    },
+    {
+      "mediaId": "ex-v1-e25-sequence",
+      "exerciseId": "e25",
+      "slug": "lumbar-supine-pelvic-tilt",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e25-thumb",
+      "cardVersion": 1,
+      "generator": "pending",
+      "frames": [
+        {
+          "id": "ex-v1-e25-start",
+          "role": "start",
+          "src": "/exercises/v1/lumbar/e25/start.webp",
+          "alt": "Persona acostada boca arriba con rodillas flexionadas y pelvis neutra antes de iniciar una basculación pélvica."
+        },
+        {
+          "id": "ex-v1-e25-end",
+          "role": "end",
+          "src": "/exercises/v1/lumbar/e25/end.webp",
+          "alt": "Persona realizando una basculación pélvica posterior suave que reduce el espacio lumbar sin levantar la pelvis de la colchoneta."
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    }
+  ]
+}
