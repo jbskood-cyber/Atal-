@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const expectedIds = ['e01', 'e14', 'e25'];
+const expectedIds = ['e01', 'e14', 'e27'];
 const expectedFrames = ['start', 'end'];
 
 function yamlField(source, field) {
@@ -66,10 +66,15 @@ test('generation requests and review ledger exist for all pilot frames', async (
     assert.match(request, /status after generation: `draft`/);
   }
 
+  const heelSlideRequest = await read('docs/exercises/v1/generation/e27-request.md');
+  assert.match(heelSlideRequest, /right heel remains in contact with the mat/i);
+  assert.match(heelSlideRequest, /obvious at thumbnail size/i);
+
   const ledger = await read('docs/exercises/v1/review-ledger.md');
   for (const exerciseId of expectedIds) {
     assert.match(ledger, new RegExp(`${exerciseId} .*\\| start`));
     assert.match(ledger, new RegExp(`${exerciseId} .*\\| end`));
   }
+  assert.match(ledger, /Thumbnail observability/);
   assert.doesNotMatch(ledger, /\| pass \|/);
 });
