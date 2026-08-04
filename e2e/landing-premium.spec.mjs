@@ -24,11 +24,22 @@ test('landing renders approved story without initializing private workspace', as
 });
 
 for (const viewport of viewports) {
-  test(`landing has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`landing has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto('/landing');
+    await page.evaluate(() => document.fonts.ready);
+
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+
+    const screenshot = await page.screenshot({
+      fullPage: true,
+      animations: 'disabled',
+    });
+    await testInfo.attach(`landing-${viewport.width}x${viewport.height}`, {
+      body: screenshot,
+      contentType: 'image/png',
+    });
   });
 }
 
