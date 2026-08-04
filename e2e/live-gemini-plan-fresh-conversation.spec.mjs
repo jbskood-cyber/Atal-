@@ -55,9 +55,33 @@ async function waitForSettledAgent(page) {
 async function send(page, text) {
   await waitForSettledAgent(page);
   const composer = page.getByLabel('Mensaje para Atal IA');
+  const userMessages = page.locator('.atal-command-message.is-user');
+  const messageCountBefore = await userMessages.count();
+  const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
+
   await composer.fill(text);
   await expect(composer).toHaveValue(text);
-  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  await sendButton.click();
+
+  const dispatched = async () => (
+    (await composer.inputValue()) === ''
+    && (await userMessages.count()) > messageCountBefore
+  );
+
+  try {
+    await expect.poll(dispatched, { timeout: 5_000 }).toBe(true);
+  } catch (error) {
+    const valueAfterFirstClick = await composer.inputValue();
+    const messageCountAfterFirstClick = await userMessages.count();
+    if (valueAfterFirstClick !== text || messageCountAfterFirstClick > messageCountBefore) {
+      throw error;
+    }
+
+    // Retry exactly once only when the first click demonstrably left the prompt untouched.
+    await expect(sendButton).toBeEnabled({ timeout: 5_000 });
+    await sendButton.click();
+    await expect.poll(dispatched, { timeout: 10_000 }).toBe(true);
+  }
 }
 
 async function planSnapshot(page) {
