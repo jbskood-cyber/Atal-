@@ -1,0 +1,45 @@
+exerciseId: e27
+slug: lumbar-dead-bug-heel-slide
+version: 1
+locale: es-MX
+name: Dead bug con deslizamiento de talón
+region: lumbar
+category: Estabilidad y control motor
+purpose: Mostrar la forma del movimiento; el fisioterapeuta decide indicación, amplitud, lado y dosis.
+startingPosition:
+  body: Acostado boca arriba sobre una colchoneta, rodillas flexionadas, pies apoyados al ancho de caderas y brazos relajados a los lados.
+  support: Colchoneta clínica lisa y firme.
+  camera: Vista lateral tres cuartos ligeramente elevada, cuerpo visible desde hombros hasta pies y región lumbopélvica despejada.
+movement:
+  start: Ambas rodillas flexionadas con pies apoyados, pelvis nivelada y tronco estable.
+  end: Un talón se desliza lentamente hacia adelante hasta dejar esa rodilla casi extendida, manteniendo el talón en contacto con la colchoneta y la pelvis sin girar ni arquearse.
+keyCues:
+  - Movimiento lento y controlado.
+  - Talón permanece en contacto con la superficie durante el deslizamiento.
+  - Pelvis se mantiene nivelada y estable.
+  - Rodilla de apoyo permanece alineada y quieta.
+  - Cabeza, hombros y brazos permanecen relajados y apoyados.
+  - Respiración relajada, sin esfuerzo visible.
+avoidShowing:
+  - Talón elevado o pierna suspendida.
+  - Arco lumbar exagerado.
+  - Rotación o inclinación visible de la pelvis.
+  - Empuje brusco con el pie de apoyo.
+  - Rodilla de apoyo colapsando hacia dentro o fuera.
+  - Flexión cervical o cabeza levantada.
+  - Expresión de dolor.
+laterality: right-demonstration
+requiredEquipment:
+  - Colchoneta clínica lisa sin logotipos.
+mediaMode: sequence
+frames:
+  - start
+  - end
+altText:
+  start: Persona acostada boca arriba con ambas rodillas flexionadas y pies apoyados antes de iniciar un deslizamiento de talón.
+  end: Persona deslizando el talón derecho hacia adelante sobre la colchoneta mientras mantiene la pelvis nivelada y el tronco estable.
+reviewStatus: draft
+reviewers:
+  clinical: pending
+  visual: pending
+  accessibility: pending
