@@ -32,6 +32,17 @@ test('landing renders approved story without initializing private workspace', as
   expect(privateState).toBeNull();
 });
 
+test('trailing-slash landing URL remains public and does not initialize private workspace', async ({ page }) => {
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto('/landing/');
+
+  await waitForLanding(page);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(landingTitle);
+
+  const privateState = await page.evaluate(() => localStorage.getItem('atal:store:v2'));
+  expect(privateState).toBeNull();
+});
+
 for (const viewport of viewports) {
   test(`landing has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
