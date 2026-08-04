@@ -7,8 +7,13 @@ function RootLoading() {
   return <div className="atal-root-loading" role="status" aria-label="Cargando Atal" />;
 }
 
+function isLandingPath(pathname: string) {
+  const normalizedPath = pathname.replace(/\/+$/, '');
+  return normalizedPath === '/landing';
+}
+
 export function AtalRoot() {
-  const isLanding = window.location.pathname === '/landing';
+  const isLanding = isLandingPath(window.location.pathname);
 
   return (
     <Suspense fallback={<RootLoading />}>
