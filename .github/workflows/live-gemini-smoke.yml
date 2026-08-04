@@ -88,8 +88,8 @@ jobs:
         if: steps.gate.outputs.enabled == 'true' && steps.gate.outputs.run_matrix == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: 'AQ.synthetic-ai-studio-platform-resource-token'
-          GEMINI_MODEL_CASCADE: ''
+          GEMINI_MODEL: ''
+          GEMINI_MODEL_CASCADE: 'gemini-3.6-flash,gemini-3.5-flash-lite,gemini-3.1-flash-lite'
           ATAL_LIVE_GEMINI_E2E: '1'
         run: >-
           npx playwright test
