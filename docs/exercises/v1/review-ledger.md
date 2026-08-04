@@ -10,8 +10,8 @@ Approval requires independent visual, clinical, accessibility, and product-owner
 | e01 Sentadilla asistida | end | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/knee/e01/end.webp` |
 | e14 Rotación externa con banda | start | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/shoulder/e14/start.webp` |
 | e14 Rotación externa con banda | end | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/shoulder/e14/end.webp` |
-| e25 Basculación pélvica | start | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/lumbar/e25/start.webp` |
-| e25 Basculación pélvica | end | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/lumbar/e25/end.webp` |
+| e27 Dead bug con deslizamiento de talón | start | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/lumbar/e27/start.webp` |
+| e27 Dead bug con deslizamiento de talón | end | pending | pending | pending | pending | prepared | pending | pending | pending | pending | pending | pending | Reserved path: `/exercises/v1/lumbar/e27/end.webp`; right heel must remain on mat and start/end must be distinguishable at thumbnail size |
 
 ## Review rules
 
@@ -22,5 +22,6 @@ Approval requires independent visual, clinical, accessibility, and product-owner
 - **Alt text:** accurately describes position and movement state without promotional or diagnostic language.
 - **Provenance/checksum:** generator/model, date, card version, dimensions, bytes, and SHA-256 recorded.
 - **Result:** only `pass`, `fail`, or `pending`. A failed row cannot be shipped.
+- **Thumbnail observability:** start/end sequences must remain distinguishable without labels at the smallest product thumbnail; otherwise reject or change media mode.
 
 No row may be changed to `pass` automatically by the image generator or by a test suite.
