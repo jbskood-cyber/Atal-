@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "2026.08.3-pilot",
+  "catalogVersion": "2026.08.4-pilot",
   "status": "draft",
   "assets": [
     {
@@ -64,26 +64,26 @@
       }
     },
     {
-      "mediaId": "ex-v1-e25-sequence",
-      "exerciseId": "e25",
-      "slug": "lumbar-supine-pelvic-tilt",
+      "mediaId": "ex-v1-e27-sequence",
+      "exerciseId": "e27",
+      "slug": "lumbar-dead-bug-heel-slide",
       "type": "sequence",
       "status": "draft",
-      "thumbnailId": "ex-v1-e25-thumb",
+      "thumbnailId": "ex-v1-e27-thumb",
       "cardVersion": 1,
       "generator": "pending",
       "frames": [
         {
-          "id": "ex-v1-e25-start",
+          "id": "ex-v1-e27-start",
           "role": "start",
-          "src": "/exercises/v1/lumbar/e25/start.webp",
-          "alt": "Persona acostada boca arriba con rodillas flexionadas y pelvis neutra antes de iniciar una basculación pélvica."
+          "src": "/exercises/v1/lumbar/e27/start.webp",
+          "alt": "Persona acostada boca arriba con ambas rodillas flexionadas y pies apoyados antes de iniciar un deslizamiento de talón."
         },
         {
-          "id": "ex-v1-e25-end",
+          "id": "ex-v1-e27-end",
           "role": "end",
-          "src": "/exercises/v1/lumbar/e25/end.webp",
-          "alt": "Persona realizando una basculación pélvica posterior suave que reduce el espacio lumbar sin levantar la pelvis de la colchoneta."
+          "src": "/exercises/v1/lumbar/e27/end.webp",
+          "alt": "Persona deslizando el talón derecho hacia adelante sobre la colchoneta mientras mantiene la pelvis nivelada y el tronco estable."
         }
       ],
       "review": {
