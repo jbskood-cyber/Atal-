@@ -9,11 +9,20 @@ const viewports = [
   { width: 1440, height: 900 },
 ];
 
+const landingTitle = 'Del expediente al seguimiento, sin perder el hilo del paciente.';
+
+async function waitForLanding(page) {
+  const heading = page.getByRole('heading', { level: 1, name: landingTitle });
+  await expect(heading).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+}
+
 test('landing renders approved story without initializing private workspace', async ({ page }) => {
   await page.addInitScript(() => localStorage.clear());
   await page.goto('/landing');
 
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Del expediente al seguimiento, sin perder el hilo del paciente.');
+  await waitForLanding(page);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(landingTitle);
   await expect(page.getByRole('link', { name: 'Ver Atal en acción' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Conocer Atal IA' })).toBeVisible();
   await expect(page.locator('#flujo li')).toHaveCount(6);
@@ -27,7 +36,7 @@ for (const viewport of viewports) {
   test(`landing has no horizontal overflow at ${viewport.width}x${viewport.height}`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto('/landing');
-    await page.evaluate(() => document.fonts.ready);
+    await waitForLanding(page);
 
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);
@@ -46,6 +55,7 @@ for (const viewport of viewports) {
 test('mobile menu supports keyboard open, Escape close and focus return', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/landing');
+  await waitForLanding(page);
 
   const trigger = page.getByRole('button', { name: 'Menú', exact: true });
   const primaryNavigation = page.getByRole('navigation', { name: 'Navegación principal' });
@@ -63,6 +73,7 @@ test('mobile menu supports keyboard open, Escape close and focus return', async 
 
 test('CTA anchors reach the approved workflow and Atal IA sections', async ({ page }) => {
   await page.goto('/landing');
+  await waitForLanding(page);
   await page.getByRole('link', { name: 'Ver Atal en acción' }).first().click();
   await expect(page).toHaveURL(/#flujo$/);
   await page.getByRole('link', { name: 'Conocer Atal IA' }).click();
@@ -73,6 +84,7 @@ test('reduced motion keeps the complete story while removing long transitions', 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/landing');
+  await waitForLanding(page);
 
   await expect(page.locator('#flujo li')).toHaveCount(6);
   await expect(page.locator('#atal-ia')).toBeVisible();
