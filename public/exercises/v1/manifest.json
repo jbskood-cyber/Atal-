@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "2026.08.4-pilot",
+  "status": "draft",
+  "assets": [
+    {
+      "mediaId": "ex-v1-e01-sequence",
+      "exerciseId": "e01",
+      "slug": "knee-assisted-squat",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e01-thumb",
+      "cardVersion": 1,
+      "generator": "programmatic-svg-v1",
+      "frames": [
+        {
+          "id": "ex-v1-e01-start",
+          "role": "start",
+          "src": "/exercises/v1/knee/e01/start.svg",
+          "alt": "Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "efe6cdfd703e392ab574ccc67fe1ae8c0632e29f101a389fc125311ee5dbb106"
+        },
+        {
+          "id": "ex-v1-e01-end",
+          "role": "end",
+          "src": "/exercises/v1/knee/e01/end.svg",
+          "alt": "Persona realizando una sentadilla asistida poco profunda con talones apoyados y rodillas alineadas con los pies.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "34659a08f7af5a428fd38992bf66c473758bb796d05d18fd9d9aa49581ef46b2"
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    },
+    {
+      "mediaId": "ex-v1-e14-sequence",
+      "exerciseId": "e14",
+      "slug": "shoulder-band-external-rotation",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e14-thumb",
+      "cardVersion": 1,
+      "generator": "programmatic-svg-v1",
+      "frames": [
+        {
+          "id": "ex-v1-e14-start",
+          "role": "start",
+          "src": "/exercises/v1/shoulder/e14/start.svg",
+          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado, la mano frente al abdomen y una banda anclada al lado opuesto.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "dba9fd9ce6b2f770931b110ab4d85ad557d5ee21c582878429bec46e4fafe183"
+        },
+        {
+          "id": "ex-v1-e14-end",
+          "role": "end",
+          "src": "/exercises/v1/shoulder/e14/end.svg",
+          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda anclada al lado opuesto, con el codo pegado al costado y el tronco estable.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "55cb0da247134f7e30dcaa8b65a921b26f18a1c439cb7cb86875ed4f6d16af1e"
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    },
+    {
+      "mediaId": "ex-v1-e27-sequence",
+      "exerciseId": "e27",
+      "slug": "lumbar-dead-bug-heel-slide",
+      "type": "sequence",
+      "status": "draft",
+      "thumbnailId": "ex-v1-e27-thumb",
+      "cardVersion": 1,
+      "generator": "programmatic-svg-v1",
+      "frames": [
+        {
+          "id": "ex-v1-e27-start",
+          "role": "start",
+          "src": "/exercises/v1/lumbar/e27/start.svg",
+          "alt": "Persona acostada boca arriba con ambas rodillas flexionadas y pies apoyados antes de iniciar un deslizamiento de talón.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "47ac93748e4ccb36a49f383d06cb3e08ba1dc7bf435e5170629b924f8553af2e"
+        },
+        {
+          "id": "ex-v1-e27-end",
+          "role": "end",
+          "src": "/exercises/v1/lumbar/e27/end.svg",
+          "alt": "Persona deslizando el talón derecho hacia adelante sobre la colchoneta mientras mantiene la pelvis nivelada y el tronco estable.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "48ff666243b48bd6f4b1bcbe355be2c4de567c0c0ee6464507f68d33e5c7547c"
+        }
+      ],
+      "review": {
+        "clinical": "pending",
+        "visual": "pending",
+        "accessibility": "pending",
+        "productOwner": "pending"
+      }
+    }
+  ]
+}

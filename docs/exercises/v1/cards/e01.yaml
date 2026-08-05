@@ -1,0 +1,42 @@
+exerciseId: e01
+slug: knee-assisted-squat
+version: 1
+locale: es-MX
+name: Sentadilla asistida
+region: knee
+category: Fuerza y control
+purpose: Mostrar la forma del movimiento; el fisioterapeuta decide indicación, rango y dosis.
+startingPosition:
+  body: De pie, pies separados al ancho de caderas, tronco erguido y mirada al frente.
+  support: Ambas manos sujetan ligeramente una barra horizontal estable a la altura aproximada de la cintura.
+  camera: Vista lateral tres cuartos, cuerpo completo y barra visible.
+movement:
+  start: Posición erguida neutra, caderas y rodillas extendidas sin bloquear, talones apoyados.
+  end: Sentadilla poco profunda y controlada, caderas desplazadas ligeramente atrás, rodillas flexionadas y alineadas con los pies.
+keyCues:
+  - Tronco controlado y estable.
+  - Talones permanecen apoyados.
+  - Rodillas siguen la dirección de los pies.
+  - Agarre ligero, sin colgarse de la barra.
+avoidShowing:
+  - Rango profundo forzado.
+  - Colapso medial de rodillas.
+  - Talones elevados.
+  - Mueble o soporte inestable.
+  - Expresión de dolor.
+  - Flexión excesiva del tronco.
+laterality: neutral
+requiredEquipment:
+  - Barra horizontal estable sin logotipos.
+mediaMode: sequence
+frames:
+  - start
+  - end
+altText:
+  start: Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida.
+  end: Persona realizando una sentadilla asistida poco profunda con talones apoyados y rodillas alineadas con los pies.
+reviewStatus: draft
+reviewers:
+  clinical: pending
+  visual: pending
+  accessibility: pending

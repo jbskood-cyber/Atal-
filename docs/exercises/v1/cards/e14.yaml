@@ -1,0 +1,44 @@
+exerciseId: e14
+slug: shoulder-band-external-rotation
+version: 1
+locale: es-MX
+name: Rotación externa con banda
+region: shoulder
+category: Fuerza y estabilidad
+purpose: Mostrar la forma del movimiento; el fisioterapeuta decide indicación, resistencia, rango y dosis.
+startingPosition:
+  body: De pie, tronco erguido, hombros relajados y pies cómodamente separados.
+  support: Banda elástica anclada de forma segura a la altura de la mano del lado trabajado.
+  camera: Vista frontal tres cuartos del lado trabajado, desde cabeza hasta caderas, con anclaje y ambas manos visibles.
+movement:
+  start: Codo del lado trabajado flexionado aproximadamente 90 grados y pegado al costado, antebrazo frente al abdomen, muñeca neutra.
+  end: Antebrazo rota hacia afuera de forma controlada manteniendo el codo junto al tronco y sin girar el torso.
+keyCues:
+  - Codo permanece cerca del costado.
+  - Hombro se mantiene relajado, sin elevarse.
+  - Muñeca permanece neutra.
+  - Tronco y pelvis no rotan.
+  - Banda permanece alineada y con tensión moderada.
+avoidShowing:
+  - Codo separado del cuerpo.
+  - Elevación del hombro.
+  - Rotación del tronco.
+  - Extensión o desviación de muñeca.
+  - Banda anclada a un objeto inestable.
+  - Expresión de dolor.
+laterality: right
+requiredEquipment:
+  - Banda elástica lisa sin logotipos.
+  - Anclaje fijo y seguro a la altura de la mano.
+mediaMode: sequence
+frames:
+  - start
+  - end
+altText:
+  start: Persona de pie con el codo derecho flexionado y pegado al costado sosteniendo una banda elástica antes de iniciar la rotación externa.
+  end: Persona rotando el antebrazo derecho hacia afuera contra una banda elástica sin separar el codo del costado ni girar el tronco.
+reviewStatus: draft
+reviewers:
+  clinical: pending
+  visual: pending
+  accessibility: pending
