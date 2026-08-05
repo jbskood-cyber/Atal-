@@ -59,7 +59,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "eda74f5929889233cee17380ce0f4a642aa36d1e1824f14bd68a63a9a2887bec"
+          "sha256": "e683cfc367cab18c64d39ceb864942e1de6ebba98deaed93dd94104e6552603c"
         },
         {
           "id": "ex-v1-e14-end",
@@ -69,7 +69,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "7bbc1d7cbc670e1d389633811116e09b1073b17eddc3bf55178105e11b62bf4a"
+          "sha256": "7c3ed62a65e2c536d962f73a50731b10081d49e8dbffecae8ba2d730e2c803c3"
         }
       ],
       "review": {
@@ -97,7 +97,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "800223d9447a1de930d2bea9c64eaf8a77c9ed8b01c88f24e3cd8e94f78338b6"
+          "sha256": "47ac93748e4ccb36a49f383d06cb3e08ba1dc7bf435e5170629b924f8553af2e"
         },
         {
           "id": "ex-v1-e27-end",
@@ -107,7 +107,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "1fa8ec8affae872eaf9ebc85fdeeedeb15aa7dbfb80b7ece43a0f083bdd8a293"
+          "sha256": "48ff666243b48bd6f4b1bcbe355be2c4de567c0c0ee6464507f68d33e5c7547c"
         }
       ],
       "review": {
