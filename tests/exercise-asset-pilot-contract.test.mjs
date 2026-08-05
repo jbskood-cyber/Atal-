@@ -59,6 +59,21 @@ test('assisted squat frames show both hands contacting the support rail without 
   }
 });
 
+test('band external rotation keeps the elbow fixed, anchors medially, and increases band length', async () => {
+  const start = await read('public/exercises/v1/shoulder/e14/start.svg');
+  const end = await read('public/exercises/v1/shoulder/e14/end.svg');
+
+  for (const svg of [start, end]) {
+    assert.match(svg, /<rect x="250" y="220" width="30" height="360"/);
+    assert.match(svg, /<line x1="555" y1="315" x2="565" y2="430"/);
+  }
+
+  assert.match(start, /<line x1="565" y1="430" x2="500" y2="430"/);
+  assert.match(start, /<line x1="500" y1="430" x2="260" y2="430"/);
+  assert.match(end, /<line x1="565" y1="430" x2="720" y2="430"/);
+  assert.match(end, /<line x1="720" y1="430" x2="260" y2="430"/);
+});
+
 test('all pilot frames keep instructions out of the visible artwork', async () => {
   const manifest = JSON.parse(await read('public/exercises/v1/manifest.json'));
 
