@@ -55,21 +55,21 @@
           "id": "ex-v1-e14-start",
           "role": "start",
           "src": "/exercises/v1/shoulder/e14/start.svg",
-          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado sosteniendo una banda elástica antes de iniciar la rotación externa.",
+          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado, la mano frente al abdomen y una banda anclada al lado opuesto.",
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "e683cfc367cab18c64d39ceb864942e1de6ebba98deaed93dd94104e6552603c"
+          "sha256": "dba9fd9ce6b2f770931b110ab4d85ad557d5ee21c582878429bec46e4fafe183"
         },
         {
           "id": "ex-v1-e14-end",
           "role": "end",
           "src": "/exercises/v1/shoulder/e14/end.svg",
-          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda elástica sin separar el codo del costado ni girar el tronco.",
+          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda anclada al lado opuesto, con el codo pegado al costado y el tronco estable.",
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "7c3ed62a65e2c536d962f73a50731b10081d49e8dbffecae8ba2d730e2c803c3"
+          "sha256": "55cb0da247134f7e30dcaa8b65a921b26f18a1c439cb7cb86875ed4f6d16af1e"
         }
       ],
       "review": {
