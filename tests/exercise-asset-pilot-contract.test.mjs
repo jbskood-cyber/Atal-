@@ -59,6 +59,18 @@ test('assisted squat frames show both hands contacting the support rail without 
   }
 });
 
+test('all pilot frames keep instructions out of the visible artwork', async () => {
+  const manifest = JSON.parse(await read('public/exercises/v1/manifest.json'));
+
+  for (const asset of manifest.assets) {
+    for (const frame of asset.frames) {
+      const svg = await read(`public${frame.src}`);
+      assert.doesNotMatch(svg, /<text\b/i, `${frame.id} must not contain visible labels`);
+      assert.doesNotMatch(svg, /stroke-dasharray=/i, `${frame.id} must not contain motion guides`);
+    }
+  }
+});
+
 test('pilot cards match manifest IDs and stay draft', async () => {
   for (const exerciseId of expectedIds) {
     const source = await read(`docs/exercises/v1/cards/${exerciseId}.yaml`);
