@@ -82,6 +82,20 @@ test('mobile menu supports keyboard open, Escape close and focus return', async 
   await expect(trigger).toBeFocused();
 });
 
+test('mobile menu backdrop closes the sheet and restores focus to its trigger', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/landing');
+  await waitForLanding(page);
+
+  const trigger = page.getByRole('button', { name: 'Menú', exact: true });
+  await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+  await page.getByRole('button', { name: 'Cerrar menú' }).click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  await expect(trigger).toBeFocused();
+});
+
 test('CTA anchors reach the approved workflow and Atal IA sections', async ({ page }) => {
   await page.goto('/landing');
   await waitForLanding(page);
