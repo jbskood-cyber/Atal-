@@ -17,6 +17,4 @@
 <line x1="410" y1="720" x2="490" y2="720" stroke="#101827" stroke-width="24" stroke-linecap="round"/>
 <line x1="510" y1="720" x2="590" y2="720" stroke="#101827" stroke-width="24" stroke-linecap="round"/>
 <circle cx="755" cy="345" r="18" fill="#D6A57C" stroke="#101827" stroke-width="5"/>
-<path d="M675 430 Q720 395 755 345" fill="none" stroke="#8AA8D8" stroke-width="8" stroke-dasharray="14 12"/>
-<text x="600" y="785" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#101827">Final · Antebrazo rota hacia afuera</text>
 </svg>
