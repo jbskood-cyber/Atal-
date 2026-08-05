@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 
 const MENU_REVEAL_MS = 180;
 
@@ -44,31 +44,33 @@ export function LandingNav() {
   const closeMenu = () => setOpen(false);
 
   return (
-    <header className="atal-landing__header">
-      <a className="atal-landing__brand" href="/landing" aria-label="Atal, inicio">Atal</a>
-      <button
-        ref={triggerRef}
-        className="atal-landing__menu-trigger"
-        type="button"
-        aria-expanded={open}
-        aria-controls="landing-navigation"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span className="atal-landing__menu-label">Menú</span>
-        <span aria-hidden="true" className="atal-landing__menu-icon">
-          <span />
-          <span />
-        </span>
-      </button>
-      <nav
-        id="landing-navigation"
-        className={open ? 'atal-landing__nav is-open' : 'atal-landing__nav'}
-        aria-label="Navegación principal"
-      >
-        <a ref={firstLinkRef} href="#flujo" onClick={closeMenu}>Producto</a>
-        <a href="#atal-ia" onClick={closeMenu}>Atal IA</a>
-        <a className="atal-landing__nav-cta" href="#flujo" onClick={closeMenu}>Ver Atal en acción</a>
-      </nav>
+    <Fragment>
+      <header className="atal-landing__header">
+        <a className="atal-landing__brand" href="/landing" aria-label="Atal, inicio">Atal</a>
+        <button
+          ref={triggerRef}
+          className="atal-landing__menu-trigger"
+          type="button"
+          aria-expanded={open}
+          aria-controls="landing-navigation"
+          onClick={() => setOpen((current) => !current)}
+        >
+          <span className="atal-landing__menu-label">Menú</span>
+          <span aria-hidden="true" className="atal-landing__menu-icon">
+            <span />
+            <span />
+          </span>
+        </button>
+        <nav
+          id="landing-navigation"
+          className={open ? 'atal-landing__nav is-open' : 'atal-landing__nav'}
+          aria-label="Navegación principal"
+        >
+          <a ref={firstLinkRef} href="#flujo" onClick={closeMenu}>Producto</a>
+          <a href="#atal-ia" onClick={closeMenu}>Atal IA</a>
+          <a className="atal-landing__nav-cta" href="#flujo" onClick={closeMenu}>Ver Atal en acción</a>
+        </nav>
+      </header>
       {open ? (
         <button
           className="atal-landing__nav-backdrop"
@@ -77,6 +79,6 @@ export function LandingNav() {
           onClick={closeMenuAndRestoreFocus}
         />
       ) : null}
-    </header>
+    </Fragment>
   );
 }
