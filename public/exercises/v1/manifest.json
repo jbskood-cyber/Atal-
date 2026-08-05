@@ -11,19 +11,27 @@
       "status": "draft",
       "thumbnailId": "ex-v1-e01-thumb",
       "cardVersion": 1,
-      "generator": "pending",
+      "generator": "programmatic-svg-v1",
       "frames": [
         {
           "id": "ex-v1-e01-start",
           "role": "start",
-          "src": "/exercises/v1/knee/e01/start.webp",
-          "alt": "Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida."
+          "src": "/exercises/v1/knee/e01/start.svg",
+          "alt": "Persona de pie sujetando una barra estable antes de iniciar una sentadilla asistida.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "39ed05653087733c9f32ab615d484ca8de40b2b73fc79b8cbdddca43990dfc2a"
         },
         {
           "id": "ex-v1-e01-end",
           "role": "end",
-          "src": "/exercises/v1/knee/e01/end.webp",
-          "alt": "Persona realizando una sentadilla asistida poco profunda con talones apoyados y rodillas alineadas con los pies."
+          "src": "/exercises/v1/knee/e01/end.svg",
+          "alt": "Persona realizando una sentadilla asistida poco profunda con talones apoyados y rodillas alineadas con los pies.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "ade69f50df51848d7df2efd3c39fb3adb4b319a3a02478f6e67cdbcf325f7f99"
         }
       ],
       "review": {
@@ -41,19 +49,27 @@
       "status": "draft",
       "thumbnailId": "ex-v1-e14-thumb",
       "cardVersion": 1,
-      "generator": "pending",
+      "generator": "programmatic-svg-v1",
       "frames": [
         {
           "id": "ex-v1-e14-start",
           "role": "start",
-          "src": "/exercises/v1/shoulder/e14/start.webp",
-          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado sosteniendo una banda elástica antes de iniciar la rotación externa."
+          "src": "/exercises/v1/shoulder/e14/start.svg",
+          "alt": "Persona de pie con el codo derecho flexionado y pegado al costado sosteniendo una banda elástica antes de iniciar la rotación externa.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "eda74f5929889233cee17380ce0f4a642aa36d1e1824f14bd68a63a9a2887bec"
         },
         {
           "id": "ex-v1-e14-end",
           "role": "end",
-          "src": "/exercises/v1/shoulder/e14/end.webp",
-          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda elástica sin separar el codo del costado ni girar el tronco."
+          "src": "/exercises/v1/shoulder/e14/end.svg",
+          "alt": "Persona rotando el antebrazo derecho hacia afuera contra una banda elástica sin separar el codo del costado ni girar el tronco.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "7bbc1d7cbc670e1d389633811116e09b1073b17eddc3bf55178105e11b62bf4a"
         }
       ],
       "review": {
@@ -71,19 +87,27 @@
       "status": "draft",
       "thumbnailId": "ex-v1-e27-thumb",
       "cardVersion": 1,
-      "generator": "pending",
+      "generator": "programmatic-svg-v1",
       "frames": [
         {
           "id": "ex-v1-e27-start",
           "role": "start",
-          "src": "/exercises/v1/lumbar/e27/start.webp",
-          "alt": "Persona acostada boca arriba con ambas rodillas flexionadas y pies apoyados antes de iniciar un deslizamiento de talón."
+          "src": "/exercises/v1/lumbar/e27/start.svg",
+          "alt": "Persona acostada boca arriba con ambas rodillas flexionadas y pies apoyados antes de iniciar un deslizamiento de talón.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "800223d9447a1de930d2bea9c64eaf8a77c9ed8b01c88f24e3cd8e94f78338b6"
         },
         {
           "id": "ex-v1-e27-end",
           "role": "end",
-          "src": "/exercises/v1/lumbar/e27/end.webp",
-          "alt": "Persona deslizando el talón derecho hacia adelante sobre la colchoneta mientras mantiene la pelvis nivelada y el tronco estable."
+          "src": "/exercises/v1/lumbar/e27/end.svg",
+          "alt": "Persona deslizando el talón derecho hacia adelante sobre la colchoneta mientras mantiene la pelvis nivelada y el tronco estable.",
+          "width": 1200,
+          "height": 900,
+          "format": "svg",
+          "sha256": "1fa8ec8affae872eaf9ebc85fdeeedeb15aa7dbfb80b7ece43a0f083bdd8a293"
         }
       ],
       "review": {
