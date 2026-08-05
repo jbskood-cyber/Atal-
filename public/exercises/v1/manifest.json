@@ -21,7 +21,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "39ed05653087733c9f32ab615d484ca8de40b2b73fc79b8cbdddca43990dfc2a"
+          "sha256": "efe6cdfd703e392ab574ccc67fe1ae8c0632e29f101a389fc125311ee5dbb106"
         },
         {
           "id": "ex-v1-e01-end",
@@ -31,7 +31,7 @@
           "width": 1200,
           "height": 900,
           "format": "svg",
-          "sha256": "ade69f50df51848d7df2efd3c39fb3adb4b319a3a02478f6e67cdbcf325f7f99"
+          "sha256": "34659a08f7af5a428fd38992bf66c473758bb796d05d18fd9d9aa49581ef46b2"
         }
       ],
       "review": {
