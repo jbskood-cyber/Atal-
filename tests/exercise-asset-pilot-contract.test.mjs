@@ -127,3 +127,18 @@ test('generation requests and review ledger exist for all pilot frames', async (
   assert.match(ledger, /Thumbnail observability/);
   assert.doesNotMatch(ledger, /\| pass \|/);
 });
+
+test('review ledger records the current manifest checksum for every pilot frame', async () => {
+  const manifest = JSON.parse(await read('public/exercises/v1/manifest.json'));
+  const ledger = await read('docs/exercises/v1/review-ledger.md');
+
+  for (const asset of manifest.assets) {
+    for (const frame of asset.frames) {
+      assert.match(
+        ledger,
+        new RegExp(`${asset.exerciseId} .*\\| ${frame.role} .*${frame.sha256}`),
+        `${frame.id} checksum must match the manifest`,
+      );
+    }
+  }
+});
