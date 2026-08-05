@@ -11,6 +11,13 @@ function yamlField(source, field) {
   return match?.[1]?.trim();
 }
 
+function parseLedgerRows(ledger) {
+  return ledger
+    .split('\n')
+    .filter((line) => /^\| e(?:01|14|27) /.test(line))
+    .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()));
+}
+
 test('pilot manifest contains exactly three draft sequence assets with six real frames', async () => {
   const manifest = JSON.parse(await read('public/exercises/v1/manifest.json'));
   assert.equal(manifest.schemaVersion, 1);
@@ -125,7 +132,14 @@ test('generation requests and review ledger exist for all pilot frames', async (
     assert.match(ledger, new RegExp(`${exerciseId} .*\\| end`));
   }
   assert.match(ledger, /Thumbnail observability/);
-  assert.doesNotMatch(ledger, /\| pass \|/);
+
+  const rows = parseLedgerRows(ledger);
+  assert.equal(rows.length, 6);
+  for (const row of rows) {
+    assert.equal(row[8], 'pending', `${row[0]} ${row[1]} clinical approval must remain pending`);
+    assert.equal(row[11], 'pending', `${row[0]} ${row[1]} product-owner approval must remain pending`);
+    assert.equal(row[12], 'pending', `${row[0]} ${row[1]} final result must remain pending`);
+  }
 });
 
 test('review ledger records the current manifest checksum for every pilot frame', async () => {
