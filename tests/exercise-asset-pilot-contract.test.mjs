@@ -44,7 +44,18 @@ test('pilot manifest contains exactly three draft sequence assets with six real 
       assert.match(svg, /aria-labelledby="title desc"/);
       assert.match(svg, /<title id="title">.+<\/title>/s);
       assert.match(svg, /<desc id="desc">.+<\/desc>/s);
+      assert.doesNotMatch(svg, /<text\b/i, `${frame.id} must not embed visible labels`);
+      assert.doesNotMatch(svg, /stroke-dasharray=/i, `${frame.id} must not embed movement-guide annotations`);
     }
+  }
+});
+
+test('assisted squat frames show both hands contacting the support rail', async () => {
+  for (const role of expectedFrames) {
+    const svg = await read(`public/exercises/v1/knee/e01/${role}.svg`);
+    assert.match(svg, /<circle cx="704" cy="360" r="16"/);
+    assert.match(svg, /<circle cx="704" cy="392" r="16"/);
+    assert.doesNotMatch(svg, /<circle cx="720" cy="360" r="14"/);
   }
 });
 
