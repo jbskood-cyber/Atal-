@@ -11,7 +11,7 @@ function yamlField(source, field) {
   return match?.[1]?.trim();
 }
 
-test('pilot manifest contains exactly three draft sequence assets', async () => {
+test('pilot manifest contains exactly three draft sequence assets with six real frames', async () => {
   const manifest = JSON.parse(await read('public/exercises/v1/manifest.json'));
   assert.equal(manifest.schemaVersion, 1);
   assert.equal(manifest.status, 'draft');
@@ -21,7 +21,7 @@ test('pilot manifest contains exactly three draft sequence assets', async () => 
   for (const asset of manifest.assets) {
     assert.equal(asset.type, 'sequence');
     assert.equal(asset.status, 'draft');
-    assert.equal(asset.generator, 'pending');
+    assert.equal(asset.generator, 'programmatic-svg-v1');
     assert.deepEqual(asset.frames.map((frame) => frame.role), expectedFrames);
     assert.equal(asset.frames.length, 2);
     assert.ok(asset.thumbnailId);
@@ -31,8 +31,19 @@ test('pilot manifest contains exactly three draft sequence assets', async () => 
     assert.equal(asset.review.productOwner, 'pending');
 
     for (const frame of asset.frames) {
-      assert.match(frame.src, /^\/exercises\/v1\/(knee|shoulder|lumbar)\/e\d{2}\/(start|end)\.webp$/);
+      assert.match(frame.src, /^\/exercises\/v1\/(knee|shoulder|lumbar)\/e\d{2}\/(start|end)\.svg$/);
       assert.ok(frame.alt.length > 40);
+      assert.equal(frame.width, 1200);
+      assert.equal(frame.height, 900);
+      assert.equal(frame.format, 'svg');
+      assert.match(frame.sha256, /^[a-f0-9]{64}$/);
+
+      const svg = await read(`public${frame.src}`);
+      assert.match(svg, /^<svg /);
+      assert.match(svg, /role="img"/);
+      assert.match(svg, /aria-labelledby="title desc"/);
+      assert.match(svg, /<title id="title">.+<\/title>/s);
+      assert.match(svg, /<desc id="desc">.+<\/desc>/s);
     }
   }
 });
