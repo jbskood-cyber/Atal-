@@ -7,6 +7,15 @@ export function LandingNav() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstLinkRef = useRef<HTMLAnchorElement>(null);
 
+  const restoreTriggerFocus = () => {
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  };
+
+  const closeMenuAndRestoreFocus = () => {
+    setOpen(false);
+    restoreTriggerFocus();
+  };
+
   useEffect(() => {
     if (!open) return;
 
@@ -25,8 +34,7 @@ export function LandingNav() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
-      setOpen(false);
-      requestAnimationFrame(() => triggerRef.current?.focus());
+      closeMenuAndRestoreFocus();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -61,7 +69,14 @@ export function LandingNav() {
         <a href="#atal-ia" onClick={closeMenu}>Atal IA</a>
         <a className="atal-landing__nav-cta" href="#flujo" onClick={closeMenu}>Ver Atal en acción</a>
       </nav>
-      {open ? <button className="atal-landing__nav-backdrop" type="button" aria-label="Cerrar menú" onClick={closeMenu} /> : null}
+      {open ? (
+        <button
+          className="atal-landing__nav-backdrop"
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={closeMenuAndRestoreFocus}
+        />
+      ) : null}
     </header>
   );
 }
