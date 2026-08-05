@@ -21,7 +21,7 @@ test('root chooses the landing before importing the private application', async 
 test('public route matcher keeps canonical and trailing-slash landing URLs isolated', async () => {
   const source = await read('src/routing/AtalRoot.tsx');
   assert.match(source, /function isLandingPath\(pathname: string\)/);
-  assert.match(source, /pathname\.replace\(\/\\\/+\$\/, ''\)/);
+  assert.ok(source.includes("pathname.replace(/\\/+$/, '')"));
   assert.match(source, /normalizedPath === '\/landing'/);
 });
 
