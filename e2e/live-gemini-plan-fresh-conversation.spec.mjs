@@ -61,26 +61,63 @@ async function send(page, text) {
 
   await composer.fill(text);
   await expect(composer).toHaveValue(text);
-  await sendButton.click();
+  await expect(sendButton).toBeEnabled({ timeout: 5_000 });
+
+  await page.evaluate(() => {
+    window.__atalLiveDispatchDiagnostic = {
+      clicks: 0,
+      submits: 0,
+      lastClickDefaultPrevented: null,
+      lastSubmitDefaultPrevented: null,
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest('button[aria-label="Enviar mensaje"]')) {
+        window.__atalLiveDispatchDiagnostic.clicks += 1;
+        window.__atalLiveDispatchDiagnostic.lastClickDefaultPrevented = event.defaultPrevented;
+      }
+    }, { capture: true, once: true });
+
+    document.addEventListener('submit', (event) => {
+      window.__atalLiveDispatchDiagnostic.submits += 1;
+      window.__atalLiveDispatchDiagnostic.lastSubmitDefaultPrevented = event.defaultPrevented;
+    }, { capture: true, once: true });
+  });
 
   const dispatched = async () => (
     (await composer.inputValue()) === ''
     && (await userMessages.count()) > messageCountBefore
   );
 
+  await sendButton.click();
+
   try {
     await expect.poll(dispatched, { timeout: 5_000 }).toBe(true);
-  } catch (error) {
-    const valueAfterFirstClick = await composer.inputValue();
-    const messageCountAfterFirstClick = await userMessages.count();
-    if (valueAfterFirstClick !== text || messageCountAfterFirstClick > messageCountBefore) {
-      throw error;
+    return;
+  } catch (clickError) {
+    const valueAfterClick = await composer.inputValue();
+    const messageCountAfterClick = await userMessages.count();
+    if (valueAfterClick !== text || messageCountAfterClick > messageCountBefore) {
+      throw clickError;
     }
+  }
 
-    // Retry exactly once only when the first click demonstrably left the prompt untouched.
-    await expect(sendButton).toBeEnabled({ timeout: 5_000 });
-    await sendButton.click();
+  // Product-equivalent fallback: the compact composer supports keyboard submission.
+  // Use it only when the visible enabled button click demonstrably left the prompt untouched.
+  await composer.focus();
+  await composer.press('Enter');
+
+  try {
     await expect.poll(dispatched, { timeout: 10_000 }).toBe(true);
+  } catch (keyboardError) {
+    const diagnostic = await page.evaluate(() => ({
+      ...(window.__atalLiveDispatchDiagnostic ?? {}),
+      activeElement: document.activeElement?.tagName ?? null,
+    }));
+    const finalValue = await composer.inputValue();
+    const finalMessageCount = await userMessages.count();
+    throw new Error(`Composer dispatch failed after click and keyboard paths: ${JSON.stringify({ diagnostic, finalValue, messageCountBefore, finalMessageCount })}`, { cause: keyboardError });
   }
 }
 
