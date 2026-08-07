@@ -4,7 +4,9 @@ import test from 'node:test';
 
 const releaseGateWorkflows = [
   '.github/workflows/quality.yml',
+  '.github/workflows/behavior-system-quality.yml',
   '.github/workflows/e2e.yml',
+  '.github/workflows/live-gemini-smoke.yml',
 ];
 
 const immutableActionRef = /^[^\s#]+@[0-9a-f]{40}(?:\s+#.*)?$/i;
