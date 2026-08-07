@@ -1,7 +1,7 @@
 Block 9 — Final Polish & Exhaustive Agent QA — current-head NO-SKIPPED certification.
 
-Pre-trigger product/QA HEAD: 0aa5d5f274357402637959bc632dd78ecbaf7c1e.
-Deterministic checkpoint: quality #1167 PASS, Behavior System #738 PASS, E2E #1143 PASS.
-Provider checkpoint: live-gemini-smoke #426 completed secret verification, Action Core compile and real Gemini preflight PASS; browser matrix intentionally skipped because this trigger had not changed. No live run was concurrent when this checkpoint was prepared.
+Pre-trigger product/QA HEAD: ca0a21f7074ce05108483501dc65ceef36f64025.
+Deterministic checkpoint: quality #1170 PASS, Behavior System #741 PASS, E2E #1146 PASS.
+Provider checkpoint: live-gemini-smoke #429 completed secret verification, Action Core compile and real Gemini preflight PASS; browser matrix intentionally skipped because this trigger had not changed. No live run was concurrent when this checkpoint was prepared.
 
 Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan create/edit/lifecycle/membership/dose; zero mutation before confirmation; persistence/readback/hard reload; contextual isolation; physiotherapist chain; session summary; report review; patient edit; Undo; and canonical atal:store:v2/audit evidence. Do not treat retries as automatic acceptance and do not alter healthy product logic to force green.
