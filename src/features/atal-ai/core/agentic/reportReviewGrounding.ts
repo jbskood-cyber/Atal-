@@ -47,14 +47,18 @@ function rewriteSession(call: AgentFunctionCall, input: RecordValue, reference: 
   };
 }
 
+function supportsLatestSessionGrounding(call: AgentFunctionCall, input: RecordValue): boolean {
+  return call.tool === 'report.review'
+    || (call.tool === 'app.read' && input.resource === 'sessions');
+}
+
 export function groundReportReviewCall(
   completed: AgentStepResult[],
   call: AgentFunctionCall,
   goal = '',
 ): AgentFunctionCall {
-  if (call.tool !== 'report.review') return call;
   const input = recordValue(call.input);
-  if (!input) return call;
+  if (!input || !supportsLatestSessionGrounding(call, input)) return call;
   const session = recordValue(input.session);
   if (!session || session.type !== 'session') return call;
 
