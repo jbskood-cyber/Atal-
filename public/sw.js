@@ -49,13 +49,13 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request).then((cached) => cached || caches.match('/'))),
+        .catch(() => caches.match(request, { ignoreVary: true }).then((cached) => cached || caches.match('/', { ignoreVary: true }))),
     );
     return;
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => cached || fetch(request).then((response) => {
+    caches.match(request, { ignoreVary: true }).then((cached) => cached || fetch(request).then((response) => {
       if (response.ok) {
         event.waitUntil(caches.open(CACHE).then((cache) => cache.put(request, response.clone())));
       }
