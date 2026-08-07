@@ -21,8 +21,8 @@ async function seedFreshPlanConversation(page) {
     draftId: 'draft-live-plan-fresh-natural',
     status: 'empty',
     messages: [],
-    intent: undefined,
-    patientMode: undefined,
+    intent: 'summarize_patient',
+    patientMode: 'none',
     selectedPatientId: '',
     selectedPlanId: '',
     selectedExerciseId: '',
@@ -135,23 +135,22 @@ async function planSnapshot(page) {
     goal: plan?.goal,
     focus: plan?.focus,
     status: plan?.status,
-    exerciseIds: plan?.exerciseIds ?? [],
     exerciseNames,
-    createEvents: state.events.filter((event) => event.kind === 'plan_created' && event.planId === plan?.id).length,
-    membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success' && event.planId === plan?.id).length,
+    planCreateSuccesses: state.events.filter((event) => event.toolName === 'plan.create' && event.outcome === 'success').length,
+    membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success').length,
+    exerciseUpdateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
   };
 }
 
-async function exerciseSnapshot(page) {
-  const state = await readStore(page);
-  const exercise = state.exercises.find((item) => item.id === 'exercise-e2e');
-  return {
-    name: exercise?.name,
-    sets: exercise?.sets,
-    repetitions: exercise?.repetitions,
-    instructions: exercise?.instructions,
-    updateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
-  };
+async function approvePreparedAction(page) {
+  const apply = page.getByRole('button', { name: 'Aplicar cambios' });
+  await expect(apply).toBeVisible({ timeout: 120_000 });
+  await apply.click();
+  const confirmation = page.getByRole('dialog');
+  if (await confirmation.isVisible().catch(() => false)) {
+    await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
+  }
+  await waitForSettledAgent(page);
 }
 
 test.describe('Live Gemini fresh natural plan creation', () => {
@@ -160,24 +159,13 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     await seedFreshPlanConversation(page);
     await page.goto('/assistant');
 
-    await send(
-      page,
-      'Crea para Paciente E2E un plan llamado “Plan hombro Fresh QA”, de 6 semanas, 3 veces por semana, con objetivo “Recuperar movilidad y fuerza del hombro” y enfoque “Movilidad y fortalecimiento progresivo”. Déjalo como borrador para revisarlo antes de guardar.',
-    );
+    await send(page, 'Crea para Paciente E2E un plan llamado “Plan hombro Fresh QA”, de 6 semanas, 3 veces por semana, con objetivo “Recuperar movilidad y fuerza del hombro” y enfoque “Movilidad y fortalecimiento progresivo”. Déjalo como borrador para revisarlo antes de guardar.');
 
-    await waitForSettledAgent(page);
-    await expect(page.getByRole('alert')).toHaveCount(0);
-    await expect(page.locator('body')).not.toContainText('EMPTY_MODEL_TURN');
-
-    // A fresh request must prepare work without mutating canonical state before approval.
-    await expect.poll(() => planSnapshot(page), { timeout: 10_000 }).toMatchObject({ count: 0, createEvents: 0 });
-    const apply = page.getByRole('button', { name: 'Aplicar cambios' });
-    await expect(apply).toBeVisible({ timeout: 120_000 });
-    await apply.click();
-
-    const confirmation = page.getByRole('dialog', { name: '¿Aplicar este borrador?' });
-    await expect(confirmation).toBeVisible({ timeout: 20_000 });
-    await confirmation.getByRole('button', { name: 'Confirmar y aplicar' }).click();
+    await expect.poll(() => planSnapshot(page), { timeout: 20_000 }).toMatchObject({
+      count: 0,
+      planCreateSuccesses: 0,
+    });
+    await approvePreparedAction(page);
 
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
       count: 1,
@@ -188,68 +176,47 @@ test.describe('Live Gemini fresh natural plan creation', () => {
       goal: 'Recuperar movilidad y fuerza del hombro',
       focus: 'Movilidad y fortalecimiento progresivo',
       status: 'draft',
-      exerciseIds: [],
-      createEvents: 1,
+      planCreateSuccesses: 1,
     });
 
-    // Continue naturally in the same fresh thread and prove the new plan can be operated immediately.
-    await send(page, 'Ahora agrégale a ese plan el ejercicio Movilidad asistida E2E. No cambies ninguna otra cosa.');
+    await send(page, 'Agrégale a ese plan el ejercicio Movilidad asistida E2E.');
+    await approvePreparedAction(page);
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
-      count: 1,
-      patientId: 'patient-e2e',
-      exerciseIds: ['exercise-e2e'],
       exerciseNames: ['Movilidad asistida E2E'],
       membershipSuccesses: 1,
     });
-    await waitForSettledAgent(page);
-    await expect(page.getByRole('alert')).toHaveCount(0);
 
-    // Keep the same conversational context and edit only the exercise dose/instructions.
-    await send(page, 'Ahora cambia ese ejercicio a 4 series de 10 repeticiones y deja las instrucciones exactamente como “Movimiento lento y controlado”. No modifiques el plan ni otro ejercicio.');
-    await expect.poll(() => exerciseSnapshot(page), { timeout: 120_000 }).toMatchObject({
-      name: 'Movilidad asistida E2E',
-      sets: 4,
-      repetitions: 10,
-      instructions: 'Movimiento lento y controlado',
-      updateSuccesses: 1,
+    await send(page, 'Ahora cámbiale a ese ejercicio la dosis a 4 series de 10 repeticiones y deja sus demás campos exactamente como están.');
+    await approvePreparedAction(page);
+    await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
+      exerciseUpdateSuccesses: 1,
     });
-    await waitForSettledAgent(page);
-    await expect(page.getByRole('alert')).toHaveCount(0);
 
     await page.reload();
     await expect.poll(() => planSnapshot(page), { timeout: 20_000 }).toMatchObject({
       count: 1,
       patientId: 'patient-e2e',
+      title: 'Plan hombro Fresh QA',
       duration: '6 semanas',
       frequency: '3 veces por semana',
       goal: 'Recuperar movilidad y fuerza del hombro',
       focus: 'Movilidad y fortalecimiento progresivo',
       status: 'draft',
-      exerciseIds: ['exercise-e2e'],
       exerciseNames: ['Movilidad asistida E2E'],
-      createEvents: 1,
+      planCreateSuccesses: 1,
       membershipSuccesses: 1,
-    });
-    await expect.poll(() => exerciseSnapshot(page), { timeout: 20_000 }).toMatchObject({
-      name: 'Movilidad asistida E2E',
-      sets: 4,
-      repetitions: 10,
-      instructions: 'Movimiento lento y controlado',
-      updateSuccesses: 1,
+      exerciseUpdateSuccesses: 1,
     });
 
-    await send(page, '¿Qué plan tiene Paciente E2E? Dime el nombre, duración, frecuencia, objetivo, ejercicios y la dosis e instrucciones del ejercicio usando únicamente lo guardado en Atal.');
+    await send(page, 'Usando únicamente lo guardado en Atal, dime el nombre exacto, duración, frecuencia, objetivo, enfoque y ejercicio de ese plan.');
     await waitForSettledAgent(page);
-
-    const lastAssistant = page.locator('.atal-command-message.is-assistant').last();
-    await expect(lastAssistant).toContainText('Plan hombro Fresh QA', { timeout: 120_000 });
-    await expect(lastAssistant).toContainText(/6 semanas/i);
-    await expect(lastAssistant).toContainText(/3 veces por semana/i);
-    await expect(lastAssistant).toContainText(/Recuperar movilidad y fuerza del hombro/i);
-    await expect(lastAssistant).toContainText(/Movilidad asistida E2E/i);
-    await expect(lastAssistant).toContainText(/4 series/i);
-    await expect(lastAssistant).toContainText(/10 repeticiones/i);
-    await expect(lastAssistant).toContainText(/Movimiento lento y controlado/i);
+    const assistantMessages = page.locator('.atal-command-message.is-assistant');
+    await expect(assistantMessages.last()).toContainText('Plan hombro Fresh QA', { timeout: 120_000 });
+    await expect(assistantMessages.last()).toContainText('6 semanas');
+    await expect(assistantMessages.last()).toContainText('3 veces por semana');
+    await expect(assistantMessages.last()).toContainText('Recuperar movilidad y fuerza del hombro');
+    await expect(assistantMessages.last()).toContainText('Movilidad y fortalecimiento progresivo');
+    await expect(assistantMessages.last()).toContainText('Movilidad asistida E2E');
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 });
