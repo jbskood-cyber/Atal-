@@ -25,6 +25,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run deterministic Atal AI E2E suite
         run: npx playwright test
+      - name: Verify production PWA first offline reload and deep-link fallback
+        run: npx playwright test --config=playwright.pwa.config.mjs
       - name: Upload Playwright evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v5
@@ -32,6 +34,7 @@ jobs:
           name: playwright-evidence
           path: |
             playwright-report/
+            playwright-report-pwa/
             test-results/
           if-no-files-found: warn
           retention-days: 14
