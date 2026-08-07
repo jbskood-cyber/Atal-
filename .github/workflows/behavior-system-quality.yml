@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -24,7 +24,7 @@ jobs:
           npm run typecheck 2>&1 | tee typecheck.log
       - name: Upload typecheck log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: behavior-typecheck-log
           path: typecheck.log
@@ -35,8 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -54,7 +54,7 @@ jobs:
           test -f .tmp/core-tests/src/features/atal-ai/core/agentic/conversationScope.js
       - name: Upload core compile log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: behavior-core-compile-log
           path: core-compile.log
@@ -65,8 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -79,7 +79,7 @@ jobs:
           node --test tests/atal-behavior-system.test.mjs tests/atal-action-transaction-compat.test.mjs tests/atal-patient-record-actions.test.mjs tests/atal-plan-actions.test.mjs tests/atal-plan-association-versioning.test.mjs tests/atal-exercise-actions.test.mjs tests/atal-session-actions.test.mjs tests/atal-session-review-actions.test.mjs tests/atal-session-completion-actions.test.mjs tests/atal-patient-note-actions.test.mjs tests/atal-settings-actions.test.mjs tests/atal-settings-tools.test.mjs tests/atal-settings-ui-routing.test.mjs tests/atal-ai-conversation-isolation.test.mjs tests/atal-behavior-parity-matrix.test.mjs tests/atal-agent-tool-selection.test.mjs 2>&1 | tee behavior-test-output.txt
       - name: Upload behavior test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: behavior-test-output
           path: behavior-test-output.txt
@@ -90,8 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -122,7 +122,7 @@ jobs:
           fi
       - name: Upload legacy failure manifest
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: legacy-test-failure-manifest
           path: legacy-test-failures.txt
@@ -130,7 +130,7 @@ jobs:
           retention-days: 1
       - name: Upload legacy test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: legacy-test-output
           path: legacy-test-output.txt
@@ -141,8 +141,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: npm
@@ -154,7 +154,7 @@ jobs:
           npm run build 2>&1 | tee build.log
       - name: Upload build log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: behavior-build-log
           path: build.log
