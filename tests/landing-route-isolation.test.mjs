@@ -32,26 +32,35 @@ test('private entry exclusively owns workspace bootstrap and private styles', as
   assert.match(source, /atal-final-polish-agent\.css/);
 });
 
-test('landing contains approved copy and no private runtime imports', async () => {
+test('landing follows the approved product-led direction and stays private-runtime free', async () => {
   const page = await read('src/landing/LandingPage.tsx');
   const content = await read('src/landing/content.ts');
+  const styles = `${await read('src/landing/landing.css')}\n${await read('src/landing/evidence.css')}`;
   const mobile = await read('src/landing/components/MobileProductEvidence.tsx');
   const trust = await read('src/landing/components/TrustLedger.tsx');
   const publicSource = `${page}\n${content}\n${mobile}\n${trust}`;
 
-  assert.match(content, /Del expediente al seguimiento, sin perder el hilo del paciente\./);
-  assert.match(content, /Ver Atal en acción/);
+  assert.match(content, /Tu práctica clínica, conectada de principio a fin\./);
+  assert.match(content, /Ver cómo funciona/);
+  assert.match(content, /Explorar el flujo clínico/);
   assert.match(content, /Conocer Atal IA/);
   assert.equal((page.match(/<h1/g) ?? []).length, 1);
   assert.match(page, /id="flujo"/);
   assert.match(page, /id="atal-ia"/);
+  assert.match(page, /Pacientes/);
+  assert.match(page, /Expedientes/);
+  assert.match(page, /Planes/);
+  assert.match(page, /Ejercicios/);
+  assert.match(page, /Sesiones/);
+  assert.match(page, /Reportes/);
   assert.match(mobile, /id="movil"/);
   assert.match(trust, /id="confianza"/);
   assert.match(page, /<AtiSlot/);
-  assert.match(page, /MobileProductEvidence/);
-  assert.match(page, /TrustLedger/);
+  assert.doesNotMatch(styles, /--landing-blue|#2563eb|#173b72|#101827/);
+  assert.match(styles, /--landing-mint/);
+  assert.match(styles, /--landing-ink/);
   assert.doesNotMatch(publicSource, /atalStore|useAtalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
-  assert.doesNotMatch(publicSource, /Empieza gratis|precio|testimonio|lista de espera/i);
+  assert.doesNotMatch(publicSource, /Empieza gratis|Comenzar gratis|precio|testimonio|cientos de|lista de espera|iniciar sesión|solicitar demo/i);
 });
 
 test('Ati slot stays hidden without an approved persistent asset', async () => {
