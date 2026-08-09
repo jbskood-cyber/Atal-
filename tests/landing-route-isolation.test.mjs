@@ -47,12 +47,12 @@ test('landing follows the approved product-led direction and stays private-runti
   assert.equal((page.match(/<h1/g) ?? []).length, 1);
   assert.match(page, /id="flujo"/);
   assert.match(page, /id="atal-ia"/);
-  assert.match(page, /Pacientes/);
-  assert.match(page, /Expedientes/);
-  assert.match(page, /Planes/);
-  assert.match(page, /Ejercicios/);
-  assert.match(page, /Sesiones/);
-  assert.match(page, /Reportes/);
+  assert.match(publicSource, /Pacientes/);
+  assert.match(publicSource, /Expedientes/);
+  assert.match(publicSource, /Planes/);
+  assert.match(publicSource, /Ejercicios/);
+  assert.match(publicSource, /Sesiones/);
+  assert.match(publicSource, /Reportes/);
   assert.match(mobile, /id="movil"/);
   assert.match(trust, /id="confianza"/);
   assert.match(page, /<AtiSlot/);
