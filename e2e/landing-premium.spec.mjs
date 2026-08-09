@@ -9,7 +9,7 @@ const viewports = [
   { width: 1440, height: 900 },
 ];
 
-const landingTitle = 'Del expediente al seguimiento, sin perder el hilo del paciente.';
+const landingTitle = 'Tu práctica clínica, conectada de principio a fin.';
 
 async function waitForLanding(page) {
   const heading = page.getByRole('heading', { level: 1, name: landingTitle });
@@ -23,10 +23,10 @@ test('landing renders approved story without initializing private workspace', as
 
   await waitForLanding(page);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(landingTitle);
-  await expect(page.getByRole('link', { name: 'Ver Atal en acción' }).first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Ver cómo funciona' }).first()).toBeVisible();
   await expect(page.getByRole('link', { name: 'Conocer Atal IA' })).toBeVisible();
   await expect(page.locator('#flujo li')).toHaveCount(6);
-  await expect(page.locator('#atal-ia')).toContainText('Pídeselo como lo dirías en la clínica.');
+  await expect(page.locator('#atal-ia')).toContainText('Consulta, revisa y decide antes de aplicar cambios.');
 
   const privateState = await page.evaluate(() => localStorage.getItem('atal:store:v2'));
   expect(privateState).toBeNull();
@@ -99,9 +99,9 @@ test('mobile menu backdrop closes the sheet and restores focus to its trigger', 
 test('CTA anchors reach the approved workflow and Atal IA sections', async ({ page }) => {
   await page.goto('/landing');
   await waitForLanding(page);
-  await page.getByRole('link', { name: 'Ver Atal en acción' }).first().click();
+  await page.getByRole('link', { name: 'Explorar el flujo clínico' }).first().click();
   await expect(page).toHaveURL(/#flujo$/);
-  await page.getByRole('link', { name: 'Conocer Atal IA' }).click();
+  await page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Atal IA' }).click();
   await expect(page).toHaveURL(/#atal-ia$/);
 });
 
