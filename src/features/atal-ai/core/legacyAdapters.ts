@@ -18,6 +18,25 @@ export const commandToolMap: Record<AICommandType, string> = {
   create_report: 'report.prepare_session_summary', export_data: 'data.export_local', update_settings: 'settings.update',
 };
 
+function normalizePatientName(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es-MX').replace(/\s+/g, ' ');
+}
+
+export function groundDraftToExistingPatient(
+  draft: AtalAIDraft,
+  patients: Array<{ id: string; name: string }>,
+): AtalAIDraft {
+  if (draft.intent !== 'create_patient_plan' || draft.selectedPatientId || !draft.patient.name.trim()) return draft;
+  const targetName = normalizePatientName(draft.patient.name);
+  const matches = patients.filter((patient) => normalizePatientName(patient.name) === targetName);
+  if (matches.length !== 1) return draft;
+  return {
+    ...draft,
+    intent: 'create_plan_for_existing_patient',
+    selectedPatientId: matches[0].id,
+  };
+}
+
 export function invocationFromDraft(
   draft: AtalAIDraft,
   privateContact: PrivateContactDraft,
