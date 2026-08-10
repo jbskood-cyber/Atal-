@@ -109,6 +109,17 @@ function normalizedEntityLabel(value: string): string {
     .replace(/\s+/g, ' ');
 }
 
+function normalizeInvocationReferences(
+  tool: string,
+  input: unknown,
+  references: ToolInvocation['references'],
+): ToolInvocation['references'] {
+  if (tool !== 'app.read' || !input || typeof input !== 'object' || Array.isArray(input)) return references;
+  const resource = (input as Record<string, unknown>).resource;
+  if (resource === 'exercises') return [];
+  return references;
+}
+
 function normalizeInvocationInput(
   tool: string,
   input: unknown,
@@ -147,10 +158,15 @@ export function executeToolInvocation(
     if (request.invocation.version !== 1 || !request.invocation.proposalId || !Array.isArray(request.invocation.references)) {
       throw coreError('CORE_INPUT_INVALID', 'La propuesta de Atal IA no es válida.');
     }
+    const normalizedReferences = normalizeInvocationReferences(
+      request.invocation.tool,
+      request.invocation.input,
+      request.invocation.references,
+    );
     const contextualViolation = contextualInvocationViolation(
       request.context,
       request.invocation.tool,
-      request.invocation.references,
+      normalizedReferences,
       request.invocation.input,
     );
     if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
@@ -159,7 +175,7 @@ export function executeToolInvocation(
     const snapshot = structuredClone(port.read());
     const normalizedInput = normalizeInvocationInput(request.invocation.tool, request.invocation.input, snapshot);
     const validatedInput = definition.validateInput(normalizedInput);
-    const invocation = { ...request.invocation, input: validatedInput };
+    const invocation = { ...request.invocation, input: validatedInput, references: normalizedReferences };
     const resolution = resolveEntities(snapshot, invocation, request.context);
     if (resolution.status === 'clarification') return resolution;
     for (const required of definition.requiredEntities) {
