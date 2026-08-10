@@ -1,5 +1,6 @@
 import type { AICommand, AICommandType, AIWorkContext, AtalAIDraft, AtalAIIntent, PrivateContactDraft } from '../types';
 import type { ConfirmationProof, ExecutionContext, ToolInvocation } from './contracts';
+import { atalStorePort } from './atalStorePort';
 import { executeToolInvocation, type ExecuteToolOptions } from './executionEngine';
 
 export const draftToolMap: Partial<Record<AtalAIIntent, string>> = {
@@ -90,8 +91,13 @@ export function executeLegacyAIAction(args: {
   metadata: { conversationId: string; draftId: string; route?: string; now?: string; force?: boolean };
   confirmation?: ConfirmationProof;
 }, options?: ExecuteToolOptions) {
-  const invocation = args.draft
-    ? invocationFromDraft(args.draft, args.privateContact ?? { phone: '', email: '', address: '', emergencyContact: '' }, { proposalId: args.draft.id, force: args.metadata.force })
+  const port = options?.port ?? atalStorePort;
+  const groundedDraft = args.draft ? groundDraftToExistingPatient(args.draft, port.read().patients) : undefined;
+  const invocation = groundedDraft
+    ? invocationFromDraft(groundedDraft, args.privateContact ?? { phone: '', email: '', address: '', emergencyContact: '' }, { proposalId: groundedDraft.id, force: args.metadata.force })
     : invocationFromCommand(args.command!, args.workContext, args.metadata.draftId);
-  return executeToolInvocation({ invocation, context: executionContext(args.workContext, args.metadata), confirmation: args.confirmation }, options);
+  return executeToolInvocation(
+    { invocation, context: executionContext(args.workContext, args.metadata), confirmation: args.confirmation },
+    { ...options, port },
+  );
 }
