@@ -4,6 +4,7 @@ import { loadCore } from './helpers/core-modules.mjs';
 
 const toolSelection = () => loadCore('src/features/atal-ai/core/agentic/toolSelection.js');
 const clarification = () => loadCore('src/features/atal-ai/core/agentic/freshRequestClarification.js');
+const legacyAdapters = () => loadCore('src/features/atal-ai/core/legacyAdapters.js');
 
 function select(text, intent = 'update_existing_plan', hasConversationContext = true) {
   return toolSelection().selectAgentTools({
@@ -16,6 +17,36 @@ function select(text, intent = 'update_existing_plan', hasConversationContext = 
     hasConversationContext,
   });
 }
+
+test('fresh plan draft grounds an exact unique patient name before legacy invocation selection', () => {
+  const draft = {
+    intent: 'create_patient_plan',
+    selectedPatientId: '',
+    patient: { name: 'Paciente E2E' },
+  };
+  const grounded = legacyAdapters().groundDraftToExistingPatient(draft, [
+    { id: 'patient-e2e', name: 'Paciente E2E' },
+    { id: 'patient-other', name: 'Otra Persona' },
+  ]);
+
+  assert.equal(grounded.intent, 'create_plan_for_existing_patient');
+  assert.equal(grounded.selectedPatientId, 'patient-e2e');
+});
+
+test('fresh plan draft does not guess when a patient name is ambiguous', () => {
+  const draft = {
+    intent: 'create_patient_plan',
+    selectedPatientId: '',
+    patient: { name: 'Paciente E2E' },
+  };
+  const grounded = legacyAdapters().groundDraftToExistingPatient(draft, [
+    { id: 'patient-a', name: 'Paciente E2E' },
+    { id: 'patient-b', name: 'Paciente E2E' },
+  ]);
+
+  assert.equal(grounded.intent, 'create_patient_plan');
+  assert.equal(grounded.selectedPatientId, '');
+});
 
 test('natural plan dose edit exposes exercise.update_fields instead of misrouting the request to plan.update_fields only', () => {
   const tools = select('Cámbiale al segundo ejercicio la dosis a 4 series de 10 repeticiones.');
