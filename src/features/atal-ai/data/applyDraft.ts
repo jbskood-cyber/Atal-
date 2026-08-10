@@ -1,5 +1,6 @@
 import type { AIUndoToken, AtalAIDraft, PrivateContactDraft } from '../types';
-import { executeLegacyAIAction, invocationFromDraft } from '../core/legacyAdapters';
+import { atalStorePort } from '../core/atalStorePort';
+import { executeLegacyAIAction, groundDraftToExistingPatient, invocationFromDraft } from '../core/legacyAdapters';
 import { fingerprintInvocation } from '../core/stableValue';
 
 export function applyAtalAIDraft(
@@ -8,13 +9,20 @@ export function applyAtalAIDraft(
   metadata: { conversationId: string; draftId: string; force?: boolean } = { conversationId: '', draftId: '', force: false },
 ) {
   const now = new Date().toISOString();
-  const invocation = invocationFromDraft(draft, privateContact, { proposalId: draft.id, force: metadata.force });
+  const groundedDraft = groundDraftToExistingPatient(draft, atalStorePort.read().patients);
+  const invocation = invocationFromDraft(groundedDraft, privateContact, { proposalId: groundedDraft.id, force: metadata.force });
   const result = executeLegacyAIAction({
-    draft,
+    draft: groundedDraft,
     privateContact,
-    workContext: { intent: draft.intent, patientMode: draft.selectedPatientId ? 'existing' : 'new', selectedPatientId: draft.selectedPatientId, selectedPlanId: draft.selectedPlanId, selectedExerciseId: draft.selectedExerciseId },
+    workContext: {
+      intent: groundedDraft.intent,
+      patientMode: groundedDraft.selectedPatientId ? 'existing' : 'new',
+      selectedPatientId: groundedDraft.selectedPatientId,
+      selectedPlanId: groundedDraft.selectedPlanId,
+      selectedExerciseId: groundedDraft.selectedExerciseId,
+    },
     metadata: { ...metadata, now },
-    confirmation: { id: `review-${draft.id}`, fingerprint: fingerprintInvocation(invocation), mode: 'review', confirmedAt: now, expiresAt: new Date(Date.parse(now) + 5 * 60_000).toISOString() },
+    confirmation: { id: `review-${groundedDraft.id}`, fingerprint: fingerprintInvocation(invocation), mode: 'review', confirmedAt: now, expiresAt: new Date(Date.parse(now) + 5 * 60_000).toISOString() },
   });
   if (result.status !== 'success') {
     const message = result.status === 'clarification'
