@@ -35,6 +35,22 @@ test('explicit compound plan + exercise edits are marked as required actions', (
   assert.deepEqual(required, ['plan.update_fields', 'exercise.update_fields']);
 });
 
+test('isolated plan membership remains required even when analyzer intent is not update_existing_plan', () => {
+  const input = {
+    text: 'Añade a este plan los ejercicios Movilidad asistida E2E y Rotación externa Flujo QA.',
+    route: '/assistant',
+    intent: 'summarize_patient',
+    selectionHints: '',
+    hasImageOrPdf: false,
+    hasAudio: false,
+    hasConversationContext: true,
+  };
+  const allowed = ['app.read', 'patient.search', 'plan.membership'];
+  const required = requirementsModule().requiredAgentToolsForSelection(input, allowed);
+
+  assert.deepEqual(required, ['plan.membership']);
+});
+
 test('agent cannot finish a compound request after applying only one explicitly required mutation', async () => {
   const { createAgentTask, runAgentLoop } = loopModule();
   const task = createAgentTask(
