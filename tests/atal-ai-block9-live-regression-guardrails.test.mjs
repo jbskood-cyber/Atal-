@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { loadCore } from './helpers/core-modules.mjs';
-import { memoryPort, validState } from './helpers/core-fixtures.mjs';
+import { context, memoryPort, validState } from './helpers/core-fixtures.mjs';
 
 const adaptersModule = () => loadCore('src/features/atal-ai/core/legacyAdapters.js');
+const executionModule = () => loadCore('src/features/atal-ai/core/executionEngine.js');
 const requirementsModule = () => loadCore('src/features/atal-ai/core/agentic/compoundActionRequirements.js');
 
 function planDraftForExistingPatientByName() {
@@ -48,6 +50,43 @@ test('legacy apply grounds a fresh create_patient_plan draft to the unique canon
   assert.equal(result.invocation.input.draft.intent, 'create_plan_for_existing_patient');
   assert.equal(result.invocation.input.draft.selectedPatientId, 'patient-1');
   assert.equal(port.read().patients.length, beforePatients, 'grounding must not create a duplicate patient before confirmation');
+});
+
+test('review apply fingerprints the same grounded invocation that Action Core executes', () => {
+  const source = readFileSync(new URL('../src/features/atal-ai/data/applyDraft.ts', import.meta.url), 'utf8');
+  assert.match(source, /groundDraftToExistingPatient/);
+  assert.match(source, /invocationFromDraft\(groundedDraft,/);
+  assert.match(source, /draft:\s*groundedDraft/);
+  assert.match(source, /fingerprintInvocation\(invocation\)/);
+});
+
+test('collection app.read ignores a hallucinated item reference and grounds by the exact query', () => {
+  const { executeToolInvocation } = executionModule();
+  const port = memoryPort(validState());
+  const result = executeToolInvocation({
+    invocation: {
+      tool: 'app.read',
+      version: 1,
+      proposalId: 'read-exercises-grounded-query',
+      input: {
+        resource: 'exercises',
+        query: 'Movilidad',
+        exercise: { type: 'exercise', id: 'exercise-hallucinated' },
+        plan: { type: 'plan', id: 'plan-1' },
+      },
+      references: [
+        { type: 'exercise', id: 'exercise-hallucinated' },
+        { type: 'plan', id: 'plan-1' },
+      ],
+      authorization: 'explicit-user-request',
+    },
+    context: context(),
+  }, { port });
+
+  assert.equal(result.status, 'success');
+  assert.equal(result.data.total, 1);
+  assert.equal(result.data.exercises[0].id, 'exercise-1');
+  assert.equal(port.mutationCount(), 0);
 });
 
 test('latest completed session summaries require a canonical app.read before the agent may narrate completion', () => {
