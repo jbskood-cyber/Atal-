@@ -12,7 +12,7 @@ const ruleBody = (source, marker) => {
   return source.slice(open + 1, close);
 };
 
-const main = read('src/main.tsx');
+const privateEntry = read('src/routing/PrivateAppEntry.tsx');
 const conversation = read('src/features/atal-ai/AtalAIConversationScreen.tsx');
 const draftCard = read('src/features/atal-ai/components/ConversationalDraftCard.tsx');
 const composer = read('src/features/atal-ai/components/AIComposer.tsx');
@@ -21,9 +21,9 @@ const css = read('src/styles/atal-ai-surgical-polish.css');
 
 const polishImport = "import '@/src/styles/atal-ai-surgical-polish.css';";
 
-test('loads the surgical polish stylesheet after the existing visual layers', () => {
-  assert.match(main, /atal-ai-surgical-polish\.css/);
-  assert.ok(main.lastIndexOf(polishImport) > main.lastIndexOf("atal-context-menu-fix.css"));
+test('loads the surgical polish stylesheet after the existing private visual layers', () => {
+  assert.match(privateEntry, /atal-ai-surgical-polish\.css/);
+  assert.ok(privateEntry.lastIndexOf(polishImport) > privateEntry.lastIndexOf("atal-context-menu-fix.css"));
 });
 
 test('keeps home alert icon surfaces neutral while preserving semantic icon color', () => {

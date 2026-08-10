@@ -150,6 +150,7 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await seed(page, state);
     await page.goto('/patients');
+    await expect(page.getByText('Paciente scroll 24')).toBeVisible();
 
     const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
     expect(maxScroll).toBeGreaterThan(0);
