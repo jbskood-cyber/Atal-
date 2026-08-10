@@ -59,6 +59,12 @@ test('landing follows the approved product-led direction and stays private-runti
   assert.doesNotMatch(styles, /--landing-blue|#2563eb|#173b72|#101827/);
   assert.match(styles, /--landing-mint/);
   assert.match(styles, /--landing-ink/);
+  assert.match(styles, /--landing-green:\s*#16a36a/i);
+  assert.match(styles, /--landing-green-dark:\s*#0d7d51/i);
+  assert.match(styles, /--landing-mint-soft:\s*#e8f5ef/i);
+  assert.match(styles, /--landing-ink:\s*#0f1416/i);
+  assert.match(styles, /--landing-muted:\s*#6c7771/i);
+  assert.match(styles, /--landing-border:\s*#e2e8e5/i);
   assert.doesNotMatch(publicSource, /atalStore|useAtalStore|bootstrapRealWorkspace|Gemini|IndexedDB/);
   assert.doesNotMatch(publicSource, /Empieza gratis|Comenzar gratis|precio|testimonio|cientos de|lista de espera|iniciar sesión|solicitar demo/i);
 });
