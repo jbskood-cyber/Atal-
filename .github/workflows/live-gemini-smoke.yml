@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 2
       - name: Resolve live checkpoint gate
@@ -50,7 +50,7 @@ jobs:
           else
             echo "run_matrix=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.gate.outputs.enabled == 'true'
         with:
           node-version: 24
@@ -118,7 +118,7 @@ jobs:
           --workers=1 > live-browser-e2e.log 2>&1
       - name: Upload live Gemini diagnostics
         if: ${{ always() && steps.gate.outputs.enabled == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
         with:
           name: live-gemini-diagnostics
           path: |
