@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { commandFixture, createConversation, createDraftResponse, createState, FIXED_NOW, seedBrowser } from './fixtures.mjs';
+import { commandFixture, createConversation, createDraftResponse, createState, FIXED_NOW, readStore, seedBrowser } from './fixtures.mjs';
 
 function message(id, role, text) {
   return { id, role, text, createdAt: FIXED_NOW, attachments: [] };
@@ -108,4 +108,66 @@ test('typing the next message while Atal is streaming never loses the user draft
   await expect(page.getByRole('button', { name: 'Detener respuesta' })).toHaveCount(0);
   await expect(composer).toHaveValue(queuedText);
   await expect(page.getByRole('button', { name: 'Enviar mensaje' })).toBeVisible();
+});
+
+test('fresh natural plan draft keeps Gemini intent instead of stale empty conversation intent', async ({ page }) => {
+  const state = createState();
+  state.plans = state.plans.filter((plan) => plan.patientId !== 'patient-e2e');
+  state.clinicalRecords = state.clinicalRecords.map((record) => record.patientId === 'patient-e2e' ? { ...record, planId: '' } : record);
+  const conversation = createConversation({
+    id: 'conversation-fresh-plan-context-regression',
+    draftId: 'draft-fresh-plan-context-regression',
+    status: 'empty',
+    messages: [],
+    intent: 'summarize_patient',
+    patientMode: 'none',
+    selectedPatientId: '',
+    selectedPlanId: '',
+    selectedExerciseId: '',
+  });
+  await seedBrowser(page, { state, conversations: [conversation], drafts: [] });
+
+  await page.route('**/api/atal-ai/analyze', async (route) => {
+    const response = createDraftResponse({
+      intent: 'create_patient_plan',
+      responseMode: 'draft',
+      assistantMessage: 'He preparado el borrador del plan para Paciente E2E.',
+      selectedPatientId: '',
+    });
+    response.draft.patient = {
+      ...response.draft.patient,
+      name: 'Paciente E2E',
+      affectedArea: 'Hombro',
+      goals: ['Recuperar movilidad y fuerza del hombro'],
+    };
+    response.draft.plan = {
+      ...response.draft.plan,
+      title: 'Plan hombro Fresh QA',
+      goal: 'Recuperar movilidad y fuerza del hombro',
+      focus: 'Movilidad y fortalecimiento progresivo',
+      duration: { value: 6, unit: 'weeks', customText: '' },
+      frequency: { value: 3, period: 'week', customText: '' },
+      status: 'draft',
+    };
+    response.draft.missingFields = ['patient.age', 'patient.birthDate', 'patient.sex', 'patient.providedDiagnosis'];
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(response) });
+  });
+
+  await page.goto('/assistant');
+  const composer = page.getByLabel('Mensaje para Atal IA');
+  await composer.fill('Crea para Paciente E2E un plan llamado “Plan hombro Fresh QA”, de 6 semanas, 3 veces por semana. Déjalo como borrador para revisarlo antes de guardar.');
+  await page.getByRole('button', { name: 'Enviar mensaje' }).click();
+  const apply = page.getByRole('button', { name: 'Aplicar cambios' });
+  await expect(apply).toBeVisible();
+  await apply.click();
+
+  const confirmation = page.getByRole('dialog');
+  await expect(confirmation).toBeVisible();
+  await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
+
+  await expect.poll(async () => {
+    const next = await readStore(page);
+    return next.plans.find((plan) => plan.title === 'Plan hombro Fresh QA')?.patientId;
+  }).toBe('patient-e2e');
+  await expect(page.getByText(/Unsupported draft intent/)).toHaveCount(0);
 });
