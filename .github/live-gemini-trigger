@@ -1,8 +1,8 @@
 Block 9 — Final Polish & Exhaustive Agent QA — current-head NO-SKIPPED certification.
 
-Pre-trigger product/QA HEAD: b7316c5e5da1298c41bdaea53542f569926cf3e0.
-Deterministic checkpoint: quality #1200 PASS, Behavior System #771 PASS, E2E #1176 PASS.
-Harness checkpoint: fresh-plan E2E fixture is referentially valid; the prior failure was caused by deleting the patient's plans while retaining a session that referenced the deleted plan, and no product logic was changed to clear it.
-Provider checkpoint: live-gemini-smoke #448 completed secret verification, Action Core compile and real Gemini preflight PASS via healthy cascade fallback gemini-3.5-flash-lite; browser matrix intentionally skipped because the trigger had not changed. No live full matrix was concurrent when this checkpoint was prepared.
+Pre-trigger product/QA HEAD: 3e3e6e733ad0126140beca9423d189e06df22117.
+Deterministic checkpoint: quality #1202 PASS, Behavior System #773 PASS, E2E #1178 PASS.
+Harness checkpoint: fresh-plan fixture remains referentially valid and no deterministic harness/product failure is open.
+Provider checkpoint: live-gemini-smoke #450 attempt 2 completed secret verification, Action Core compile and real Gemini preflight PASS on gemini-3.6-flash; browser matrix was intentionally skipped because the rerun did not re-arm the trigger. No live full matrix was queued or in progress before this trigger commit.
 
 Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan create/edit/lifecycle/membership/dose; zero mutation before confirmation; persistence/readback/hard reload; contextual isolation; physiotherapist chain; session summary; report review; patient edit; Undo; and canonical atal:store:v2/audit evidence. Do not treat retries as automatic acceptance and do not alter healthy product logic to force green.
