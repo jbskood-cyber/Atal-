@@ -12,6 +12,7 @@ import {
 async function seedFreshPlanConversation(page) {
   const state = createState();
   state.plans = state.plans.filter((plan) => plan.patientId !== 'patient-e2e');
+  state.sessions = state.sessions.filter((session) => session.patientId !== 'patient-e2e');
   state.clinicalRecords = state.clinicalRecords.map((record) => (
     record.patientId === 'patient-e2e' ? { ...record, planId: '' } : record
   ));
