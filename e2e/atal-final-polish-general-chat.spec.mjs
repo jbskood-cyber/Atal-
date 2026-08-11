@@ -113,6 +113,7 @@ test('typing the next message while Atal is streaming never loses the user draft
 test('fresh natural plan draft keeps Gemini intent instead of stale empty conversation intent', async ({ page }) => {
   const state = createState();
   state.plans = state.plans.filter((plan) => plan.patientId !== 'patient-e2e');
+  state.sessions = state.sessions.filter((session) => session.patientId !== 'patient-e2e');
   state.clinicalRecords = state.clinicalRecords.map((record) => record.patientId === 'patient-e2e' ? { ...record, planId: '' } : record);
   const conversation = createConversation({
     id: 'conversation-fresh-plan-context-regression',
