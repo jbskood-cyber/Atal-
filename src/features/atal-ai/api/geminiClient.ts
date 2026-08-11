@@ -16,6 +16,15 @@ type AgentStreamEvent =
   | { type: 'done'; turn: AgentModelTurn }
   | { type: 'error'; error: string };
 
+function hasExplicitDraftWorkContext(payload: AtalAIAnalyzeRequest) {
+  const context = payload.workContext;
+  if (!context) return false;
+  if (payload.currentDraft) return true;
+  if (context.patientMode !== 'none') return true;
+  if (context.selectedPatientId || context.selectedPlanId || context.selectedExerciseId) return true;
+  return context.intent !== 'summarize_patient';
+}
+
 export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: AbortSignal): Promise<AtalAIAnalyzeResponse> {
   const state = getAtalState();
   const settings = state.settings;
@@ -41,7 +50,7 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: Abor
     draft.createdAt = payload.currentDraft.createdAt;
     draft.baseVersions = payload.currentDraft.baseVersions;
   }
-  if (payload.workContext) {
+  if (payload.workContext && hasExplicitDraftWorkContext(payload)) {
     draft.intent = payload.workContext.intent;
     draft.selectedPatientId = payload.workContext.selectedPatientId;
     draft.selectedPlanId = payload.workContext.selectedPlanId;
