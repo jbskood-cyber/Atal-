@@ -58,6 +58,8 @@ async function planSnapshot(page) {
   };
 }
 
+const FOUR_WEEKLY = /^4 (?:días|veces) por semana$/i;
+
 test.describe('Live Gemini plan creation', () => {
   test('creates and applies a structured draft plan for the selected patient through the real app', async ({ page }) => {
     test.setTimeout(180_000);
@@ -86,7 +88,7 @@ test.describe('Live Gemini plan creation', () => {
     await expect.poll(() => planSnapshot(page), { timeout: 60_000 }).toMatchObject({
       exists: true,
       patientId: 'patient-e2e',
-      frequency: '4 días por semana',
+      frequency: expect.stringMatching(FOUR_WEEKLY),
       status: 'draft',
       createEvents: 1,
     });
@@ -97,7 +99,7 @@ test.describe('Live Gemini plan creation', () => {
     await expect.poll(() => planSnapshot(page), { timeout: 20_000 }).toMatchObject({
       exists: true,
       patientId: 'patient-e2e',
-      frequency: '4 días por semana',
+      frequency: expect.stringMatching(FOUR_WEEKLY),
       status: 'draft',
       createEvents: 1,
     });

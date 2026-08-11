@@ -1,5 +1,6 @@
 import { getAtalState } from '@/src/data/atalStore';
 import { assertAIRequestSize } from '../domain/attachmentLimits';
+import { groundDraftToExistingPatient } from '../core/legacyAdapters';
 import { normalizeAtalAIDraft } from './schemas';
 import type { AgentModelTurn, AgentTurnRequest } from '../core/agentic/contracts';
 import type { AtalAIAnalyzeRequest, AtalAIAnalyzeResponse } from '../types';
@@ -15,8 +16,18 @@ type AgentStreamEvent =
   | { type: 'done'; turn: AgentModelTurn }
   | { type: 'error'; error: string };
 
+function hasExplicitDraftWorkContext(payload: AtalAIAnalyzeRequest) {
+  const context = payload.workContext;
+  if (!context) return false;
+  if (payload.currentDraft) return true;
+  if (context.patientMode !== 'none') return true;
+  if (context.selectedPatientId || context.selectedPlanId || context.selectedExerciseId) return true;
+  return context.intent !== 'summarize_patient';
+}
+
 export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: AbortSignal): Promise<AtalAIAnalyzeResponse> {
-  const settings = getAtalState().settings;
+  const state = getAtalState();
+  const settings = state.settings;
   const preferences: AtalAIPreferences = {
     suggestions: settings.aiSuggestions,
     alerts: settings.aiAlerts,
@@ -33,12 +44,13 @@ export async function requestAtalAI(payload: AtalAIAnalyzeRequest, signal?: Abor
   const result = await response.json().catch(() => ({})) as { draft?: unknown; transcript?: unknown; error?: unknown };
   if (!response.ok) throw new Error(typeof result.error === 'string' ? result.error : 'Atal IA no pudo procesar la solicitud.');
   if (payload.mode === 'transcribe') return { transcript: typeof result.transcript === 'string' ? result.transcript : '' };
-  const draft = normalizeAtalAIDraft(result.draft, payload.currentDraft?.id ?? payload.draftId);
+  let draft = normalizeAtalAIDraft(result.draft, payload.currentDraft?.id ?? payload.draftId);
+  draft = groundDraftToExistingPatient(draft, state.patients);
   if (payload.currentDraft) {
     draft.createdAt = payload.currentDraft.createdAt;
     draft.baseVersions = payload.currentDraft.baseVersions;
   }
-  if (payload.workContext) {
+  if (payload.workContext && hasExplicitDraftWorkContext(payload)) {
     draft.intent = payload.workContext.intent;
     draft.selectedPatientId = payload.workContext.selectedPatientId;
     draft.selectedPlanId = payload.workContext.selectedPlanId;

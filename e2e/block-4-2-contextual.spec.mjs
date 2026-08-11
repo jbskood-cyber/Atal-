@@ -13,6 +13,7 @@ import {
 } from './fixtures.mjs';
 
 const patientPath = '/patients/patient-e2e';
+const notePrompt = 'Ayúdame a preparar una nota clínica breve para este paciente. La revisaré antes de aplicarla.';
 
 async function mockAgent(page, turns) {
   let index = 0;
@@ -72,10 +73,16 @@ async function openWorkspace(page) {
 
 async function prepareNoteDraft(page) {
   const workspace = await openWorkspace(page);
-  await workspace.getByRole('button', { name: 'Crear nota' }).click();
+  await workspace.getByLabel('Mensaje para Atal IA contextual').fill(notePrompt);
   await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
   await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
   return workspace;
+}
+
+async function confirmationDialog(page) {
+  const dialog = page.getByRole('dialog', { name: 'Aplicar cambios' });
+  await expect(dialog).toBeVisible();
+  return dialog;
 }
 
 test.describe('Block 4.2 contextual patient workspace', () => {
@@ -184,8 +191,8 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     await expect(page.getByRole('heading', { name: 'Paciente E2E' })).toBeVisible();
     expect(await readAIStorage(page)).toEqual(beforeReload);
     workspace = await openWorkspace(page);
-    await workspace.getByRole('button', { name: 'Borrador' }).click();
     await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
+    await expect(workspace.getByText('Borrador', { exact: true })).toHaveCount(0);
     expect((await readStore(page)).notes).toHaveLength(0);
   });
 
@@ -206,27 +213,27 @@ test.describe('Block 4.2 contextual patient workspace', () => {
     expect((await readStore(page)).notes).toHaveLength(0);
 
     await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
-    let dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await expect(dialog).toBeVisible();
+    let dialog = await confirmationDialog(page);
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
     await expect(workspace).toBeVisible();
     expect((await readStore(page)).notes).toHaveLength(0);
 
     await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
-    dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
+    dialog = await confirmationDialog(page);
     await dialog.getByRole('button', { name: 'Cancelar' }).click();
     expect((await readStore(page)).notes).toHaveLength(0);
 
     await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
-    dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
-    await dialog.getByRole('button', { name: 'Confirmar y aplicar' }).click();
+    dialog = await confirmationDialog(page);
+    await dialog.getByRole('button', { name: 'Aplicar cambios' }).click();
     await expect(workspace.getByText('Cambios aplicados', { exact: true })).toBeVisible();
     let stored = await readStore(page);
     expect(stored.notes).toHaveLength(1);
     expect(stored.notes[0].content).toBe('Nota contextual E2E reversible.');
     expect(stored.events.some((event) => event.toolName === 'patient_note.add' && event.outcome === 'success')).toBe(true);
 
+    await workspace.getByText('Cambios aplicados', { exact: true }).click();
     await workspace.getByRole('button', { name: 'Deshacer cambio' }).click();
     await expect(workspace.getByText('Cambio deshecho correctamente.')).toBeVisible();
     stored = await readStore(page);

@@ -82,6 +82,18 @@ async function storedConversation(page, conversationId) {
   }, { key: CONVERSATIONS_KEY, id: conversationId });
 }
 
+async function mockContextualAgentTurn(page, finalText) {
+  await page.route('**/api/atal-ai/agent-turn-stream', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const turn = { text: finalText, calls: [] };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/x-ndjson',
+      body: `${JSON.stringify({ type: 'text_delta', text: finalText })}\n${JSON.stringify({ type: 'done', turn })}\n`,
+    });
+  });
+}
+
 test('global and patient contextual assistants keep independent persistent instances', async ({ page }) => {
   await seedPersistentBrowser(page);
 
@@ -154,4 +166,30 @@ test('global and patient contextual assistants keep independent persistent insta
   expect(contextual).toHaveLength(2);
   expect(storedA.composerText).toBe('Borrador privado del paciente A');
   expect(storedB.composerText).toBe('Borrador privado del paciente B');
+});
+
+test('contextual close waits for the active agent turn and persists the final turn before unmount', async ({ page }) => {
+  await seedPersistentBrowser(page);
+  const finalText = 'Resumen contextual persistente del paciente.';
+  const prompt = 'Resume este paciente en una sola frase.';
+  await mockContextualAgentTurn(page, finalText);
+
+  const workspace = await openPatientWorkspace(page, patientAPath, 'Paciente E2E');
+  const conversationId = await workspace.getAttribute('data-conversation-id');
+  expect(conversationId).toBeTruthy();
+
+  const composer = workspace.getByLabel('Mensaje para Atal IA contextual');
+  await composer.fill(prompt);
+  await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
+
+  const close = workspace.getByRole('button', { name: 'Cerrar asistente' });
+  await expect(close).toBeDisabled();
+  await expect(workspace.getByText(finalText, { exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(close).toBeEnabled();
+  await close.click();
+  await expect(workspace).toHaveCount(0);
+
+  const stored = await storedConversation(page, conversationId);
+  expect(stored.messages.some((message) => message.role === 'user' && message.text === prompt)).toBe(true);
+  expect(stored.messages.some((message) => message.role === 'assistant' && message.text === finalText)).toBe(true);
 });

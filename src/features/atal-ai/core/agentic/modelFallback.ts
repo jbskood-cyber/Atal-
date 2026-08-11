@@ -6,6 +6,8 @@ export const DEFAULT_GEMINI_MODEL_CASCADE = [
 
 const DEFAULT_FALLBACK_DELAY_MS = 250;
 const GEMINI_MODEL_NAME_PATTERN = /^gemini-[a-z0-9][a-z0-9._-]*$/i;
+const AUTH_FAILURE_PATTERN = /\b(?:401|403)\b|API key not valid|invalid API key|UNAUTHENTICATED|permission denied|PERMISSION_DENIED|schema|function call|INVALID_ARGUMENT|invalid argument/i;
+const TRANSIENT_FAILURE_PATTERN = /MODEL_EMPTY_RESPONSE|\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|ECONNRESET|ECONNREFUSED|EAI_AGAIN|fetch failed|network error/i;
 
 function normalizeConfiguredGeminiModel(model: string): string | null {
   const normalized = model.trim().replace(/^models\//i, '');
@@ -39,10 +41,18 @@ export function isTransientGeminiFailure(error: unknown): boolean {
   // point, so the safe recovery is to reject that output and retry the next
   // configured model rather than accepting/aliasing an undeclared capability.
   if (/Gemini solicitó una herramienta no permitida:/i.test(message)) return true;
-  if (/\b(?:401|403)\b|API key|permission denied|PERMISSION_DENIED|schema|function call|INVALID_ARGUMENT|invalid argument/i.test(message)) {
-    return false;
-  }
-  return /MODEL_EMPTY_RESPONSE|\b429\b|RESOURCE_EXHAUSTED|quota|rate limit|too many requests|\b503\b|UNAVAILABLE|overload|temporar(?:y|ily)|timed? out|timeout|ECONNRESET|ECONNREFUSED|EAI_AGAIN|fetch failed|network error/i.test(message);
+  // Quota responses can mention the phrase "API key" while still being a 429.
+  // Only explicit authentication/permission failures are permanent; a mere
+  // mention of an API key must not abort the model cascade.
+  if (AUTH_FAILURE_PATTERN.test(message)) return false;
+  return TRANSIENT_FAILURE_PATTERN.test(message);
+}
+
+function terminalTransientError(): Error {
+  // Do not leak provider wording such as "per API key" into presentation
+  // classification: server/UI layers can now reliably render this as temporary
+  // saturation rather than falsely claiming the project has no key configured.
+  return new Error('503 UNAVAILABLE GEMINI_TRANSIENT_PROVIDER_FAILURE');
 }
 
 type GeminiFallbackOptions<T> = {
@@ -72,11 +82,14 @@ export async function runWithGeminiFallback<T>({
       return await operation(model);
     } catch (error) {
       lastError = error;
+      const transient = isTransientGeminiFailure(error);
       const nextModel = cascade[index + 1];
-      if (!nextModel || !isTransientGeminiFailure(error)) throw error;
+      if (!transient) throw error;
+      if (!nextModel) throw terminalTransientError();
       onFallback?.({ failedModel: model, nextModel, attempt: index + 1, error });
       await sleep(DEFAULT_FALLBACK_DELAY_MS * (2 ** index));
     }
   }
+  if (lastError && isTransientGeminiFailure(lastError)) throw terminalTransientError();
   throw lastError instanceof Error ? lastError : new Error('Gemini no pudo completar la solicitud.');
 }

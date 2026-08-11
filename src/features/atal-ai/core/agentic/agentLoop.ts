@@ -8,18 +8,28 @@ import type {
   AgentStepResult,
   AgentTaskState,
 } from './contracts';
+import { groundPlanMembershipCall } from './planMembershipGrounding';
+import { groundReportReviewCall } from './reportReviewGrounding';
 import { AGENT_TOOL_CALL_REPAIR_MARKER } from './toolCallingPolicy';
 
 const DEFAULT_MAX_STEPS = 8;
 const MAX_RESULT_CHARS = 40_000;
 const MAX_REPAIRABLE_FAILURES = 1;
 const MAX_PSEUDO_TOOL_REPAIRS = 1;
+const REQUIRED_ACTION_REPAIR_MARKER = '[ATAL_REQUIRED_ACTION_REPAIR]';
+const READ_CONTINUATION_TOOLS = new Set(['app.read', 'patient.search']);
 
 function now(): string {
   return new Date().toISOString();
 }
 
-export function createAgentTask(conversationId: string, goal: string, allowedTools: string[], createdAt = now()): AgentTaskState {
+export function createAgentTask(
+  conversationId: string,
+  goal: string,
+  allowedTools: string[],
+  createdAt = now(),
+  requiredTools: string[] = [],
+): AgentTaskState {
   return {
     id: `agent-task-${conversationId}-${Date.parse(createdAt) || Date.now()}`,
     conversationId,
@@ -28,6 +38,7 @@ export function createAgentTask(conversationId: string, goal: string, allowedToo
     stepCount: 0,
     maxSteps: DEFAULT_MAX_STEPS,
     allowedTools: [...new Set(allowedTools)],
+    requiredTools: [...new Set(requiredTools)],
     history: [],
     completed: [],
     seenCallSignatures: [],
@@ -130,6 +141,43 @@ function lastSuccessfulResult(task: AgentTaskState): Extract<ToolExecutionResult
   return undefined;
 }
 
+function successfulToolNames(task: AgentTaskState): Set<string> {
+  return new Set(task.completed
+    .filter((step) => step.result.status === 'success')
+    .map((step) => step.invocation.tool));
+}
+
+function missingRequiredTools(task: AgentTaskState): string[] {
+  const successful = successfulToolNames(task);
+  return (task.requiredTools ?? []).filter((tool) => !successful.has(tool));
+}
+
+function requiredActionRepairs(task: AgentTaskState): number {
+  return task.history.reduce((count, content) => count + content.parts.filter(
+    (part) => typeof part.text === 'string' && part.text.includes(REQUIRED_ACTION_REPAIR_MARKER),
+  ).length, 0);
+}
+
+function requiredActionRepairContent(missingTools: string[]): AgentHistoryContent {
+  return {
+    role: 'user',
+    parts: [{
+      text: `${REQUIRED_ACTION_REPAIR_MARKER} La solicitud contiene varias acciones explícitas y todavía faltan: ${missingTools.join(', ')}. No des por terminada la tarea. Usa las funciones declaradas restantes para completar únicamente esas acciones antes de redactar la respuesta final.`,
+    }],
+  };
+}
+
+function continuationTools(task: AgentTaskState, missingTools: string[]): string[] {
+  const reads = task.allowedTools.filter((tool) => READ_CONTINUATION_TOOLS.has(tool));
+  return [...new Set([...reads, ...missingTools])];
+}
+
+function partialCompletionMessage(task: AgentTaskState, missingTools: string[]): string {
+  const successful = lastSuccessfulResult(task);
+  const prefix = successful ? `${successful.message} ` : '';
+  return `${prefix}No pude completar todas las acciones solicitadas. Falta: ${missingTools.join(', ')}. Revisa los cambios aplicados antes de continuar.`;
+}
+
 function looksLikePseudoToolText(text: string): boolean {
   const candidate = text.trim();
   if (!candidate.startsWith('{') || !candidate.endsWith('}')) return false;
@@ -181,12 +229,21 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
         task = { ...task, status: 'cancelled', finalText: 'Procesamiento cancelado. El trabajo completado se conservó.', updatedAt: now() };
       } else {
         const successfulResult = lastSuccessfulResult(task);
-        if (successfulResult) {
+        const missingTools = missingRequiredTools(task);
+        if (successfulResult && missingTools.length === 0) {
           task = {
             ...task,
             status: 'completed',
             finalText: successfulResult.message,
             error: undefined,
+            updatedAt: now(),
+          };
+        } else if (successfulResult && missingTools.length > 0) {
+          task = {
+            ...task,
+            status: 'failed',
+            finalText: partialCompletionMessage(task, missingTools),
+            error: 'INCOMPLETE_REQUIRED_ACTIONS',
             updatedAt: now(),
           };
         } else {
@@ -205,15 +262,43 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
       const finalText = turn.text.trim();
       if (!finalText) {
         const successfulResult = lastSuccessfulResult(task);
-        if (successfulResult) {
+        const missingTools = missingRequiredTools(task);
+        if (successfulResult && missingTools.length === 0) {
           task.status = 'completed';
           delete task.error;
           task.finalText = successfulResult.message;
           break;
         }
+        if (missingTools.length > 0) {
+          const repairs = requiredActionRepairs(task);
+          const repairBudget = Math.max(1, task.requiredTools?.length ?? 0);
+          if (repairs < repairBudget) {
+            task.history.push(requiredActionRepairContent(missingTools));
+            task.allowedTools = continuationTools(task, missingTools);
+            continue;
+          }
+          task.status = 'failed';
+          task.error = 'INCOMPLETE_REQUIRED_ACTIONS';
+          task.finalText = partialCompletionMessage(task, missingTools);
+          break;
+        }
         task.status = 'failed';
         task.error = 'EMPTY_MODEL_TURN';
         task.finalText = 'Atal IA no recibió una respuesta válida del modelo. No se aplicó ningún cambio; vuelve a intentarlo.';
+        break;
+      }
+      const missingTools = missingRequiredTools(task);
+      if (missingTools.length > 0) {
+        const repairs = requiredActionRepairs(task);
+        const repairBudget = Math.max(1, task.requiredTools?.length ?? 0);
+        if (repairs < repairBudget) {
+          task.history.push(requiredActionRepairContent(missingTools));
+          task.allowedTools = continuationTools(task, missingTools);
+          continue;
+        }
+        task.status = 'failed';
+        task.error = 'INCOMPLETE_REQUIRED_ACTIONS';
+        task.finalText = partialCompletionMessage(task, missingTools);
         break;
       }
       if (task.allowedTools.length > 0 && looksLikePseudoToolText(finalText) && pseudoToolRepairs(task) < MAX_PSEUDO_TOOL_REPAIRS) {
@@ -232,7 +317,9 @@ export async function runAgentLoop(input: AgentLoopInput): Promise<AgentLoopOutc
     }
 
     const responseParts: AgentHistoryContent['parts'] = [];
-    for (const call of turn.calls) {
+    for (const rawCall of turn.calls) {
+      const membershipGroundedCall = groundPlanMembershipCall(task.goal, task.completed, rawCall);
+      const call = groundReportReviewCall(task.completed, membershipGroundedCall, task.goal);
       if (!task.allowedTools.includes(call.tool)) {
         task.status = 'blocked';
         task.finalText = 'Esa acción no está disponible desde este contexto.';

@@ -14,6 +14,12 @@ const DRAFT_COMMIT_PATTERN = /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|h
 const BARE_CONFIRMATION_PATTERN = /^\s*(?:(?:por favor|ahora s[ií])[,\s]*)?(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)[.!?¡¿]*\s*$/i;
 const GENERIC_PLAN_MUTATION_PATTERN = /\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b.{0,64}\b(?:tratamiento|plan)\b|\b(?:tratamiento|plan)\b.{0,64}\b(?:actualiza|actualizar|modifica|modificar|cambia|cambiar|ajusta|ajustar|edita|editar)\b/i;
 const EXPLICIT_EXERCISE_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar|crea|crear|duplica|duplicar)\b.{0,40}\bejercicios?\b/i;
+const PLAN_MEMBERSHIP_ACTION_PATTERN = /\b(?:añade|anade|agrega|agregar|quita|quitar|elimina|eliminar|reordena|reordenar|ordena|ordenar)\b.{0,64}\bejercicios?\b/i;
+const PLAN_COMPLETE_ACTION_PATTERN = /\b(?:completa|completar|finaliza|finalizar|termina|terminar)\b|\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i;
+const PLAN_REPLACE_ACTIVE_PATTERN = /\b(?:reemplaza|reemplazar|sustituye|sustituir)\b.{0,64}\bplan activo\b/i;
+const PLAN_FIELD_EDIT_PATTERN = /\b(?:actualiza|actualizar|actualízale|actualizale|modifica|modificar|modifícale|modificale|cambia|cambiar|cámbiale|cambiale|ajusta|ajustar|ajústale|ajustale|edita|editar|edítale|editale|pon|poner|define|definir)\b.{0,80}\b(?:frecuencia|título|titulo|nombre del plan|objetivo|enfoque|duración|duracion|progresión|progresion|criterio|instrucciones)\b/i;
+const PLAN_UNAMBIGUOUS_FIELD_PATTERN = /\b(?:frecuencia|título|titulo|nombre del plan|enfoque|duración|duracion|progresión|progresion|criterio)\b/i;
+const PLAN_AMBIGUOUS_FIELD_EDIT_PATTERN = /\b(?:plan|tratamiento)\b.{0,64}\b(?:objetivo|instrucciones)\b|\b(?:objetivo|instrucciones)\b.{0,32}\b(?:del|de este|en el|en este)\s+(?:plan|tratamiento)\b/i;
 
 const PATIENT_INTENTS = new Set(['create_patient_plan', 'update_patient_record', 'search_patient', 'summarize_patient', 'add_patient_note']);
 const PLAN_INTENTS = new Set(['create_plan_for_existing_patient', 'update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan']);
@@ -73,16 +79,23 @@ function selectPatientMaintenanceTools(rawText: string): string[] {
 function selectPlanMaintenanceTools(rawText: string): string[] {
   const selected: string[] = [];
 
-  if (includesAny(rawText, [
+  if (/\b(?:duplica|duplicar|copia|copiar)\b/i.test(rawText)) append(selected, ['plan.duplicate']);
+  if (/\b(?:pausa|pausar|suspende|suspender)\b/i.test(rawText)) append(selected, ['plan.pause']);
+  if (PLAN_COMPLETE_ACTION_PATTERN.test(rawText)) append(selected, ['plan.complete']);
+  if (/\b(?:archiva|archivar)\b/i.test(rawText)) append(selected, ['plan.archive']);
+  if (/\b(?:restaura|restaurar|reactiva|reactivar)\b/i.test(rawText)) append(selected, ['plan.restore']);
+  if (/\b(?:activa|activar)\b/i.test(rawText)) append(selected, ['plan.activate']);
+  if (PLAN_REPLACE_ACTIVE_PATTERN.test(rawText)) append(selected, ['plan.replace_active']);
+
+  const mentionsPlanField = includesAny(rawText, [
     'frecuencia', 'título', 'titulo', 'nombre del plan', 'objetivo', 'enfoque', 'duración', 'duracion',
     'progresión', 'progresion', 'criterio', 'instrucciones',
-  ])) {
+  ]);
+  if (mentionsPlanField && (selected.length === 0 || PLAN_FIELD_EDIT_PATTERN.test(rawText))) {
     append(selected, ['plan.update_fields']);
   }
-  if (includesAny(rawText, [
-    'añade el ejercicio', 'anade el ejercicio', 'agrega el ejercicio', 'agregar el ejercicio',
-    'quita el ejercicio', 'quitar el ejercicio', 'elimina el ejercicio', 'eliminar el ejercicio',
-    'reordena', 'reordenar', 'ordena los ejercicios', 'ordenar los ejercicios',
+  if (PLAN_MEMBERSHIP_ACTION_PATTERN.test(rawText) || includesAny(rawText, [
+    'añádele', 'anadele', 'agrégale', 'agregale', 'quítale', 'quitale',
   ])) {
     append(selected, ['plan.membership']);
   }
@@ -90,9 +103,27 @@ function selectPlanMaintenanceTools(rawText: string): string[] {
   return selected;
 }
 
+function selectPlanExerciseMutationTools(rawText: string): string[] {
+  if (!includesAny(rawText, ['ejercicio', 'ejercicios'])) return [];
+
+  if (includesAny(rawText, [
+    'dosis', 'serie', 'series', 'repetición', 'repeticion', 'repeticiones', 'tiempo', 'descanso',
+    'instrucciones', 'precauciones', 'dolor', 'equipo', 'dificultad',
+  ])) {
+    return ['exercise.update_fields'];
+  }
+
+  if (/\b(?:sustituye|sustituir|reemplaza|reemplazar|cambia|cambiar)\b.{0,48}\bejercicios?\b.{0,40}\bpor\b/i.test(rawText)) {
+    return ['plan.membership'];
+  }
+
+  return [];
+}
+
 function isUnderspecifiedPlanMutation(rawText: string): boolean {
   if (!GENERIC_PLAN_MUTATION_PATTERN.test(rawText)) return false;
   if (selectPlanMaintenanceTools(rawText).length > 0) return false;
+  if (selectPlanExerciseMutationTools(rawText).length > 0) return false;
   if (EXPLICIT_EXERCISE_ACTION_PATTERN.test(rawText)) return false;
   return !includesAny(rawText, [
     'activa', 'activar', 'pausa', 'pausar', 'suspende', 'suspender', 'completa', 'completar',
@@ -110,7 +141,7 @@ function selectPlanLifecycleTools(rawText: string, intent: string): string[] {
   if (intent === 'update_plan_status') {
     if (includesAny(rawText, ['activa', 'activar', 'activar el plan'])) return ['plan.activate'];
     if (includesAny(rawText, ['pausa', 'pausar', 'suspende', 'suspender'])) return ['plan.pause'];
-    if (includesAny(rawText, ['completa', 'completar', 'finaliza', 'finalizar', 'termina', 'terminar'])) return ['plan.complete'];
+    if (PLAN_COMPLETE_ACTION_PATTERN.test(rawText)) return ['plan.complete'];
   }
 
   return [];
@@ -228,7 +259,14 @@ export function selectAgentTools(input: ToolSelectionInput): string[] {
 
   if (allowMutations && intent === 'update_existing_plan') {
     const maintenanceTools = selectPlanMaintenanceTools(rawText);
-    append(selected, maintenanceTools.length > 0 ? maintenanceTools : ['plan.update_fields']);
+    const exerciseTools = selectPlanExerciseMutationTools(rawText);
+    const hasExplicitPlanFieldEdit = PLAN_UNAMBIGUOUS_FIELD_PATTERN.test(rawText)
+      || PLAN_AMBIGUOUS_FIELD_EDIT_PATTERN.test(rawText);
+    const scopedMaintenanceTools = exerciseTools.length > 0 && !hasExplicitPlanFieldEdit
+      ? maintenanceTools.filter((tool) => tool !== 'plan.update_fields')
+      : maintenanceTools;
+    const requestedTools = [...scopedMaintenanceTools, ...exerciseTools];
+    append(selected, requestedTools.length > 0 ? requestedTools : ['plan.update_fields']);
     return scopeTools(selected, input.contextSurface);
   }
 

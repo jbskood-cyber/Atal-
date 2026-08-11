@@ -1,15 +1,27 @@
 import { ArrowUp, Mic, Plus, Square } from 'lucide-react';
-import { FormEvent, KeyboardEvent, RefObject, useEffect } from 'react';
+import { FormEvent, KeyboardEvent, RefObject, useEffect, useState } from 'react';
 
 const MAX_COMPOSER_HEIGHT = 168;
 
 export function AIComposer({ textareaRef,value,hasReadyContent,processing,recording,onChange,onAttach,onSend,onMicrophone,onCancelProcessing }: { textareaRef:RefObject<HTMLTextAreaElement|null>;value:string;hasReadyContent:boolean;processing:boolean;recording:boolean;onChange:(value:string)=>void;onAttach:()=>void;onSend:()=>void;onMicrophone:()=>void;onCancelProcessing:()=>void }) {
+  const [queuedValue,setQueuedValue]=useState<string|null>(null);
+  const visibleValue=queuedValue??value;
+
+  useEffect(() => {
+    if(processing||queuedValue===null)return;
+    if(value!==queuedValue){
+      onChange(queuedValue);
+      return;
+    }
+    setQueuedValue(null);
+  },[processing,queuedValue,value,onChange]);
+
   useEffect(() => {
     const textarea=textareaRef.current;
     if(!textarea)return;
     textarea.style.height='0px';
     textarea.style.height=`${Math.min(MAX_COMPOSER_HEIGHT,Math.max(24,textarea.scrollHeight))}px`;
-  },[value,textareaRef]);
+  },[visibleValue,textareaRef]);
 
   const submit=(event:FormEvent)=>{
     event.preventDefault();
@@ -23,9 +35,14 @@ export function AIComposer({ textareaRef,value,hasReadyContent,processing,record
     }
   };
 
+  const change=(next:string)=>{
+    if(processing){setQueuedValue(next);return;}
+    onChange(next);
+  };
+
   return <form className="atal-command-composer" onSubmit={submit}>
     <button type="button" className="atal-command-attach" aria-label="Adjuntar cámara, foto, PDF o archivo" onClick={onAttach}><Plus/></button>
-    <textarea ref={textareaRef} rows={1} value={value} onChange={(event)=>onChange(event.target.value)} onKeyDown={keyboard} placeholder="Escribe un mensaje…" aria-label="Mensaje para Atal IA"/>
+    <textarea ref={textareaRef} rows={1} value={visibleValue} onChange={(event)=>change(event.target.value)} onKeyDown={keyboard} placeholder="Escribe un mensaje…" aria-label="Mensaje para Atal IA"/>
     {processing ? (
       <button type="button" className="atal-command-dynamic is-processing" aria-label="Detener respuesta" title="Detener respuesta" onClick={onCancelProcessing}><Square strokeWidth={2.4}/></button>
     ) : hasReadyContent ? (

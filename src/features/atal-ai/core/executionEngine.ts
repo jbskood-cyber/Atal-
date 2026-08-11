@@ -11,6 +11,7 @@ import {
   type ToolInvocation,
 } from './contracts';
 import { contextualInvocationViolation } from './agentic/contextualToolPolicy';
+import { normalizeStructuredToolInput } from './agentic/structuredFieldHygiene';
 import { resolveEntities } from './entityResolver';
 import { decideExecutionPolicy } from './riskPolicy';
 import { createToolRegistry, type ToolRegistry } from './toolRegistry';
@@ -99,6 +100,53 @@ function safeResult(error: unknown): ToolExecutionResult {
   return { status: 'error', code: core.code, message: core.message };
 }
 
+function normalizedEntityLabel(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('es-MX')
+    .replace(/\s+/g, ' ');
+}
+
+function normalizeInvocationReferences(
+  tool: string,
+  input: unknown,
+  references: ToolInvocation['references'],
+): ToolInvocation['references'] {
+  if (tool !== 'app.read' || !input || typeof input !== 'object' || Array.isArray(input)) return references;
+  const resource = (input as Record<string, unknown>).resource;
+  if (resource === 'exercises') return [];
+  return references;
+}
+
+function normalizeInvocationInput(
+  tool: string,
+  input: unknown,
+  state: ReturnType<StorePort['read']>,
+): unknown {
+  const structuredInput = normalizeStructuredToolInput(tool, input);
+  if (tool !== 'plan.membership' || !structuredInput || typeof structuredInput !== 'object' || Array.isArray(structuredInput)) return structuredInput;
+  const value = structuredInput as Record<string, unknown>;
+  if (!Array.isArray(value.exerciseIds) || value.exerciseIds.some((item) => typeof item !== 'string')) return structuredInput;
+
+  const canonicalIds = value.exerciseIds.map((rawValue) => {
+    const token = rawValue.trim();
+    const byId = state.exercises.find((exercise) => exercise.id === token);
+    if (byId) return byId.id;
+
+    const normalized = normalizedEntityLabel(token);
+    const matches = state.exercises.filter((exercise) => normalizedEntityLabel(exercise.name) === normalized);
+    if (matches.length === 1) return matches[0].id;
+    if (matches.length > 1) {
+      throw coreError('CORE_ENTITY_AMBIGUOUS', `Hay varios ejercicios llamados “${token}”. Aclara cuál quieres usar.`);
+    }
+    throw coreError('CORE_ENTITY_NOT_FOUND', `No se encontró el ejercicio “${token}”.`);
+  });
+
+  return { ...value, exerciseIds: [...new Set(canonicalIds)] };
+}
+
 export function executeToolInvocation(
   request: ExecuteToolRequest,
   options: ExecuteToolOptions = {},
@@ -110,18 +158,24 @@ export function executeToolInvocation(
     if (request.invocation.version !== 1 || !request.invocation.proposalId || !Array.isArray(request.invocation.references)) {
       throw coreError('CORE_INPUT_INVALID', 'La propuesta de Atal IA no es válida.');
     }
+    const normalizedReferences = normalizeInvocationReferences(
+      request.invocation.tool,
+      request.invocation.input,
+      request.invocation.references,
+    );
     const contextualViolation = contextualInvocationViolation(
       request.context,
       request.invocation.tool,
-      request.invocation.references,
+      normalizedReferences,
       request.invocation.input,
     );
     if (contextualViolation) throw coreError('CORE_CONTEXT_SCOPE_VIOLATION', contextualViolation);
 
     const definition = registry.get(request.invocation.tool);
-    const validatedInput = definition.validateInput(request.invocation.input);
-    const invocation = { ...request.invocation, input: validatedInput };
     const snapshot = structuredClone(port.read());
+    const normalizedInput = normalizeInvocationInput(request.invocation.tool, request.invocation.input, snapshot);
+    const validatedInput = definition.validateInput(normalizedInput);
+    const invocation = { ...request.invocation, input: validatedInput, references: normalizedReferences };
     const resolution = resolveEntities(snapshot, invocation, request.context);
     if (resolution.status === 'clarification') return resolution;
     for (const required of definition.requiredEntities) {

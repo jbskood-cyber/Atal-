@@ -29,6 +29,7 @@ const RESOLUTION_ORDER: EntityType[] = [
   'clinical-record',
   'settings',
 ];
+const LATEST_COMPLETED_SESSION_LABEL = normalizeEntityLabel('última sesión completada');
 
 function clarification(
   code: ClarificationRequest['code'],
@@ -85,6 +86,13 @@ function exactLabel(candidate: Candidate, type: EntityType): string {
   return normalizeEntityLabel(candidate.label);
 }
 
+function exactLabelMatches(candidates: Candidate[], type: EntityType, label: string): Candidate[] {
+  const normalized = normalizeEntityLabel(label);
+  return candidates
+    .filter((candidate) => exactLabel(candidate, type) === normalized)
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
 function contextId(type: EntityType, context: ExecutionContext): string {
   switch (type) {
     case 'patient': return context.selectedPatientId;
@@ -93,6 +101,31 @@ function contextId(type: EntityType, context: ExecutionContext): string {
     case 'session': return context.selectedSessionId;
     default: return '';
   }
+}
+
+function latestCompletedReportSessionCandidate(
+  state: AtalState,
+  invocation: ToolInvocation,
+  context: ExecutionContext,
+  reference: EntityRef,
+): Candidate | undefined {
+  if (invocation.tool !== 'report.review'
+      || reference.type !== 'session'
+      || normalizeEntityLabel(reference.label ?? '') !== LATEST_COMPLETED_SESSION_LABEL
+      || !context.selectedPatientId
+      || !context.selectedPlanId) return undefined;
+
+  const sessions = state.sessions
+    .filter((session) => session.status === 'completed'
+      && session.patientId === context.selectedPatientId
+      && session.planId === context.selectedPlanId)
+    .sort((left, right) => {
+      const leftTime = Date.parse(left.completedAt || left.startedAt || '') || 0;
+      const rightTime = Date.parse(right.completedAt || right.startedAt || '') || 0;
+      return rightTime - leftTime || left.id.localeCompare(right.id);
+    });
+  const value = sessions[0];
+  return value ? { id: value.id, label: value.startedAt, value } : undefined;
 }
 
 function assignResolved(resolved: ResolvedEntities, type: EntityType, value: EntityValue): void {
@@ -174,8 +207,37 @@ export function resolveEntities(
 
     if (reference.id?.trim()) {
       selected = candidatesFor(state, type, {}).find((candidate) => candidate.id === reference.id);
+      if (!selected && type === 'exercise' && reference.label?.trim()) {
+        const matches = exactLabelMatches(allCandidates, type, reference.label);
+        if (matches.length > 1) {
+          return clarification(
+            'ENTITY_AMBIGUOUS',
+            `Hay varias coincidencias exactas para ${reference.label}.`,
+            type,
+            matches,
+          );
+        }
+        selected = matches[0];
+      }
       if (!selected) {
         return clarification('ENTITY_NOT_FOUND', `No se encontró la entidad ${type} indicada.`, type);
+      }
+    } else if (reference.label?.trim()) {
+      selected = latestCompletedReportSessionCandidate(state, invocation, context, reference);
+      if (!selected) {
+        const matches = exactLabelMatches(allCandidates, type, reference.label);
+        if (matches.length > 1) {
+          return clarification(
+            'ENTITY_AMBIGUOUS',
+            `Hay varias coincidencias exactas para ${reference.label}.`,
+            type,
+            matches,
+          );
+        }
+        selected = matches[0];
+      }
+      if (!selected) {
+        return clarification('ENTITY_NOT_FOUND', `No se encontró ${reference.label}.`, type);
       }
     } else {
       const selectedId = contextId(type, context);
@@ -186,20 +248,6 @@ export function resolveEntities(
         }
       } else if (type === 'settings') {
         selected = allCandidates[0];
-      } else if (reference.label?.trim()) {
-        const normalized = normalizeEntityLabel(reference.label);
-        const matches = allCandidates
-          .filter((candidate) => exactLabel(candidate, type) === normalized)
-          .sort((left, right) => left.id.localeCompare(right.id));
-        if (matches.length > 1) {
-          return clarification(
-            'ENTITY_AMBIGUOUS',
-            `Hay varias coincidencias exactas para ${reference.label}.`,
-            type,
-            matches,
-          );
-        }
-        selected = matches[0];
       }
     }
 

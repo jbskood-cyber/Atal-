@@ -1,2 +1,8 @@
-Adversarial autonomous QA checkpoint — full multidomain matrix v16 after H-031 retired-model recovery.
-Run the complete real Gemini + Chromium matrix under the opaque AI Studio GEMINI_MODEL environment on the current feature/atal-behavior-system head. Execute the lightweight function-calling provider preflight first; if Gemini is saturated, fail fast and do not spend the browser matrix quota. Explicitly revalidate H-027 post-action provider-failure recovery, H-028 grounded patient-list with canonical names, fresh underspecified treatment clarification with zero mutation, H-029 grounded collection fallbacks, H-030 standalone contextless “Hazlo.” deterministic clarification with zero mutations, and H-031 provider recovery when a syntactically valid but retired/unavailable Gemini model returns 404 NOT_FOUND. Revalidate all prior multidomain flows. This checkpoint must not be gate-skipped; inspect jobs and artifact before changing completion status.
+Block 9 — Final Polish & Exhaustive Agent QA — current-head NO-SKIPPED certification.
+
+Pre-trigger product/QA HEAD: 3e3e6e733ad0126140beca9423d189e06df22117.
+Deterministic checkpoint: quality #1202 PASS, Behavior System #773 PASS, E2E #1178 PASS.
+Harness checkpoint: fresh-plan fixture remains referentially valid and no deterministic harness/product failure is open.
+Provider checkpoint: live-gemini-smoke #450 attempt 2 completed secret verification, Action Core compile and real Gemini preflight PASS on gemini-3.6-flash; browser matrix was intentionally skipped because the rerun did not re-arm the trigger. No live full matrix was queued or in progress before this trigger commit.
+
+Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan create/edit/lifecycle/membership/dose; zero mutation before confirmation; persistence/readback/hard reload; contextual isolation; physiotherapist chain; session summary; report review; patient edit; Undo; and canonical atal:store:v2/audit evidence. Do not treat retries as automatic acceptance and do not alter healthy product logic to force green.

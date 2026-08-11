@@ -1,5 +1,6 @@
 import type { AICommand, AICommandType, AIWorkContext, AtalAIDraft, AtalAIIntent, PrivateContactDraft } from '../types';
 import type { ConfirmationProof, ExecutionContext, ToolInvocation } from './contracts';
+import { atalStorePort } from './atalStorePort';
 import { executeToolInvocation, type ExecuteToolOptions } from './executionEngine';
 
 export const draftToolMap: Partial<Record<AtalAIIntent, string>> = {
@@ -17,6 +18,25 @@ export const commandToolMap: Record<AICommandType, string> = {
   restore_plan: 'plan.restore', replace_active_plan: 'plan.replace_active', summarize_sessions: 'session.summarize_recent',
   create_report: 'report.prepare_session_summary', export_data: 'data.export_local', update_settings: 'settings.update',
 };
+
+function normalizePatientName(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es-MX').replace(/\s+/g, ' ');
+}
+
+export function groundDraftToExistingPatient(
+  draft: AtalAIDraft,
+  patients: Array<{ id: string; name: string }>,
+): AtalAIDraft {
+  if (draft.intent !== 'create_patient_plan' || draft.selectedPatientId || !draft.patient.name.trim()) return draft;
+  const targetName = normalizePatientName(draft.patient.name);
+  const matches = patients.filter((patient) => normalizePatientName(patient.name) === targetName);
+  if (matches.length !== 1) return draft;
+  return {
+    ...draft,
+    intent: 'create_plan_for_existing_patient',
+    selectedPatientId: matches[0].id,
+  };
+}
 
 export function invocationFromDraft(
   draft: AtalAIDraft,
@@ -71,8 +91,13 @@ export function executeLegacyAIAction(args: {
   metadata: { conversationId: string; draftId: string; route?: string; now?: string; force?: boolean };
   confirmation?: ConfirmationProof;
 }, options?: ExecuteToolOptions) {
-  const invocation = args.draft
-    ? invocationFromDraft(args.draft, args.privateContact ?? { phone: '', email: '', address: '', emergencyContact: '' }, { proposalId: args.draft.id, force: args.metadata.force })
+  const port = options?.port ?? atalStorePort;
+  const groundedDraft = args.draft ? groundDraftToExistingPatient(args.draft, port.read().patients) : undefined;
+  const invocation = groundedDraft
+    ? invocationFromDraft(groundedDraft, args.privateContact ?? { phone: '', email: '', address: '', emergencyContact: '' }, { proposalId: groundedDraft.id, force: args.metadata.force })
     : invocationFromCommand(args.command!, args.workContext, args.metadata.draftId);
-  return executeToolInvocation({ invocation, context: executionContext(args.workContext, args.metadata), confirmation: args.confirmation }, options);
+  return executeToolInvocation(
+    { invocation, context: executionContext(args.workContext, args.metadata), confirmation: args.confirmation },
+    { ...options, port },
+  );
 }

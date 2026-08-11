@@ -40,18 +40,28 @@ const deferredMutationPatterns = [
   /\b(?:lo|la|los|las)\s+revisar/i,
 ];
 
+// A negative clause can be a scope guard for a positive action instead of a
+// request to defer the action itself. Keep this intentionally narrow: the
+// user must have an explicit positive action and the negative clause must
+// clearly protect "another" target (or "nothing else").
+const scopedNegativeConstraintPatterns = [
+  /\bno\s+(?:lo\s+|la\s+|los\s+|las\s+)?(?:cambies|modifiques|edites|actualices)\b.{0,64}\bni\s+otr[oa]s?\b/i,
+  /\bno\s+(?:lo\s+|la\s+|los\s+|las\s+)?(?:cambies|modifiques|edites|actualices)\b.{0,48}\bnada\s+m[aá]s\b/i,
+];
+
 const draftCommitPatterns = [
   /\b(?:guárdalo|guardalo|guárdala|guardala|hazlo|hazla|apl[ií]calo|apl[ií]cala)\b/i,
   /\bahora s[ií]\b.{0,24}\b(?:guarda|aplica|haz|registra)\b/i,
 ];
 
 const explicitActionPatterns = [
-  /\b(?:añade|anade|agrega|guarda|registra|actualiza|modifica|cambia|ajusta|corrige|edita|quita|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
+  /\b(?:da|dar|marca|marcar)\b.{0,24}\b(?:por\s+)?(?:terminado|terminada|completado|completada|finalizado|finalizada)\b/i,
+  /\b(?:añade|anade|añádele|anadele|agrega|agrégale|agregale|guarda|registra|actualiza|actualízale|actualizale|modifica|modifícale|modificale|cambia|cámbiale|cambiale|ajusta|ajústale|ajustale|corrige|corrígele|corrigele|edita|edítale|editale|quita|quítale|quitale|sustituye|sustituir|reemplaza|reemplazar|crea|archiva|restaura|activa|pausa|completa|duplica|ordena|coloca|inicia|reanuda|termina|genera|descarga|imprime|exporta|elimina|borra|aplica)\b/i,
   ...draftCommitPatterns,
 ];
 
 const draftEditPatterns = [
-  /\b(?:cambia|modifica|ajusta|corrige|edita|añade|anade|agrega|quita|elimina|reordena)\b.{0,80}\b(?:borrador|paciente|expediente|plan|tratamiento|ejercicio|frecuencia|duración|duracion|objetivo|enfoque|progresión|progresion|indicaciones|series|repeticiones|tiempo|descanso|precauciones)\b/i,
+  /\b(?:cambia|cámbiale|cambiale|modifica|modifícale|modificale|ajusta|ajústale|ajustale|corrige|corrígele|corrigele|edita|edítale|editale|añade|anade|añádele|anadele|agrega|agrégale|agregale|quita|quítale|quitale|sustituye|sustituir|reemplaza|reemplazar|elimina|reordena)\b.{0,80}\b(?:borrador|paciente|expediente|plan|tratamiento|ejercicio|frecuencia|duración|duracion|objetivo|enfoque|progresión|progresion|indicaciones|series|repeticiones|tiempo|descanso|precauciones)\b/i,
   /\b(?:en el|del|al)\s+borrador\b/i,
 ];
 
@@ -87,11 +97,16 @@ export function classifyAgentTurn(text: string): AgentTurnClassification {
   const value = classificationText(text);
   if (!value) return { kind: 'conversation', allowedToolKinds: [] };
 
-  if (deferredMutationPatterns.some((pattern) => pattern.test(value))) {
+  const hasExplicitAction = explicitActionPatterns.some((pattern) => pattern.test(value));
+  const hasDeferredMutation = deferredMutationPatterns.some((pattern) => pattern.test(value));
+  const hasScopedNegativeConstraint = hasExplicitAction
+    && scopedNegativeConstraintPatterns.some((pattern) => pattern.test(value));
+
+  if (hasDeferredMutation && !hasScopedNegativeConstraint) {
     return { kind: 'proposal', allowedToolKinds: ['read'] };
   }
 
-  if (explicitActionPatterns.some((pattern) => pattern.test(value))) {
+  if (hasExplicitAction) {
     return { kind: 'action', allowedToolKinds: ['read', 'action'] };
   }
 

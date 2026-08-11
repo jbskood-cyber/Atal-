@@ -12,6 +12,7 @@ import {
 
 const patientPath = '/patients/patient-e2e';
 const noteText = 'Nota contextual visible fuera del asistente.';
+const notePrompt = 'Ayúdame a preparar una nota clínica breve para este paciente. La revisaré antes de aplicarla.';
 
 async function seedPersistentBrowser(page) {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -40,13 +41,14 @@ async function openWorkspace(page) {
 
 async function applyContextualNote(page) {
   const workspace = await openWorkspace(page);
-  await workspace.getByRole('button', { name: 'Crear nota' }).click();
+  const composer = workspace.getByLabel('Mensaje para Atal IA contextual');
+  await composer.fill(notePrompt);
   await workspace.getByRole('button', { name: 'Enviar mensaje' }).click();
   await expect(workspace.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
   await workspace.getByRole('button', { name: 'Aplicar cambios' }).click();
-  const dialog = page.getByRole('dialog', { name: /Aplicar esta acción/ });
+  const dialog = page.getByRole('dialog', { name: 'Aplicar cambios' });
   await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Confirmar y aplicar' }).click();
+  await dialog.getByRole('button', { name: 'Aplicar cambios' }).click();
   await expect(workspace.getByText('Cambios aplicados', { exact: true })).toBeVisible();
   return workspace;
 }

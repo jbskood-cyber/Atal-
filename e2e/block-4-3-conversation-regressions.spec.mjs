@@ -179,7 +179,7 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(dialog.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
   });
 
-  test('structured work restores the full reviewable draft inside the global assistant', async ({ page }) => {
+  test('structured work keeps a compact safe apply path inside the global assistant', async ({ page }) => {
     await openAssistant(page);
     await mockAnalyze(page, createDraftResponse({
       intent: 'create_patient_plan',
@@ -189,7 +189,8 @@ test.describe('Block 4.3 conversational regressions', () => {
     await send(page, 'Prepara un plan de tratamiento de cuatro semanas.');
     await expect(page.getByText('Preparé el borrador general para revisión.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Aplicar cambios' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Revisar todo' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Revisar todo' })).toHaveCount(0);
+    await expect(page.getByText('Acción preparada')).toHaveCount(0);
     await expect(page.locator('[data-assistant-scope="global"]')).toBeVisible();
   });
 

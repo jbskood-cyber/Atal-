@@ -1,4 +1,4 @@
-import type { AIConversation, AtalAIDraft } from '../types';
+import type { AIConversation, AIMessage, AtalAIDraft } from '../types';
 import {
   inferConversationScope,
   selectGlobalConversationHistory,
@@ -81,10 +81,48 @@ export function deleteAIDraft(id: string) {
 }
 
 export function saveAIConversation(conversation: AIConversation & { scope?: ConversationScope }) {
-  const persisted: PersistedConversation = { ...conversation, scope: inferConversationScope(conversation) };
-  const next = [...readAIConversations().filter((item) => item.id !== conversation.id), persisted];
+  const conversations = readAIConversations();
+  const previous = conversations.find((item) => item.id === conversation.id);
+  const shouldPreserveDurableMessages = conversation.status === 'processing'
+    && previous
+    && previous.messages.length > conversation.messages.length;
+  const persisted: PersistedConversation = {
+    ...conversation,
+    scope: inferConversationScope(conversation),
+    messages: shouldPreserveDurableMessages ? previous.messages : conversation.messages,
+  };
+  const next = [...conversations.filter((item) => item.id !== conversation.id), persisted];
   window.localStorage.setItem(AI_CONVERSATIONS_KEY, JSON.stringify(next));
   if (conversation.status === 'saved') deleteAIDraft(conversation.draftId);
+}
+
+export function persistPendingContextualUserMessage(conversationId: string, text: string): void {
+  if (typeof window === 'undefined') return;
+  const trimmed = text.trim();
+  if (!conversationId || !trimmed) return;
+  const conversations = readAIConversations();
+  const conversation = conversations.find((item) => item.id === conversationId && inferConversationScope(item) === 'contextual');
+  if (!conversation) return;
+  const last = conversation.messages.at(-1);
+  if (last?.role === 'user' && last.text.trim() === trimmed) return;
+  const now = new Date().toISOString();
+  const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  const message: AIMessage = {
+    id: `message-pending-${id}`,
+    role: 'user',
+    text: trimmed,
+    createdAt: now,
+    attachments: [],
+  };
+  saveAIConversation({
+    ...conversation,
+    messages: [...conversation.messages, message],
+    composerText: '',
+    transcription: '',
+    status: 'processing',
+    error: undefined,
+    updatedAt: now,
+  });
 }
 
 export function saveAIDraft(draft: AtalAIDraft) {
