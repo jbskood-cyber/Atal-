@@ -932,3 +932,53 @@ html[data-theme="dark"] .atal-plan-segments b { color: var(--ink); background: #
   .atal-patient-filters button { padding: 0 3px; font-size: 10px; }
   .atal-directory-empty { padding: 30px 10px; }
 }
+
+
+/* Phase 3B screenshot QA: show every plan state without clipped tab labels.
+   Desktop uses a compact 5-column matrix; small screens wrap into two columns. */
+.atal-plan-directory .atal-plan-segments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  max-width: 940px;
+  overflow: visible;
+  gap: 8px;
+}
+.atal-plan-directory .atal-plan-segments button {
+  min-width: 0;
+  min-height: 40px;
+  gap: 5px;
+  padding: 0 8px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (max-width: 720px) {
+  .atal-plan-directory .atal-plan-segments {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .atal-plan-directory .atal-plan-segments button {
+    justify-content: space-between;
+    min-height: 35px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 540px) {
+  .atal-patient-directory .atal-patient-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .atal-patient-directory .atal-patient-filters button {
+    min-width: 0;
+    gap: 3px;
+    padding: 0 3px;
+    white-space: nowrap;
+    font-size: 9px;
+  }
+  .atal-patient-directory .atal-patient-filters button i {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+  }
+}
