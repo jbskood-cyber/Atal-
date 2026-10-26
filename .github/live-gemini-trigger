@@ -8,3 +8,5 @@ Provider checkpoint: live-gemini-smoke #450 attempt 2 completed secret verificat
 Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan create/edit/lifecycle/membership/dose; zero mutation before confirmation; persistence/readback/hard reload; contextual isolation; physiotherapist chain; session summary; report review; patient edit; Undo; and canonical atal:store:v2/audit evidence. Do not treat retries as automatic acceptance and do not alter healthy product logic to force green.
 
 2026-10-26 — Integrated QA checkpoint (Linear search + Gemini fresh-plan approval/audit alias + Spanish birth-date normalization), request FULL live Gemini browser matrix for the combined PR. No production deploy/merge.
+
+2026-10-26 — Integrated full Gemini recertification after fixing named-patient plan-draft context, surfacing draft-apply errors, accepting all audited plan-create tool names, and adding deterministic browser test. Require entire browser matrix; preflight alone is not certification.
