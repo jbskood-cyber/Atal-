@@ -137,7 +137,8 @@ async function planSnapshot(page) {
     focus: plan?.focus,
     status: plan?.status,
     exerciseNames,
-    planCreateSuccesses: state.events.filter((event) => event.toolName === 'plan.create' && event.outcome === 'success').length,
+    // Canonical direct and legacy-draft create tools all audit their respective tool name.
+    planCreateSuccesses: state.events.filter((event) => ['plan.create', 'plan.create_simple', 'plan.create_for_patient'].includes(event.toolName) && event.outcome === 'success').length,
     membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success').length,
     exerciseUpdateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
   };
@@ -147,10 +148,11 @@ async function approvePreparedAction(page) {
   const apply = page.getByRole('button', { name: 'Aplicar cambios' });
   await expect(apply).toBeVisible({ timeout: 120_000 });
   await apply.click();
+  // The confirmation dialog is required before any canonical plan write.
+  // isVisible() is a synchronous probe and can race the modal opening.
   const confirmation = page.getByRole('dialog');
-  if (await confirmation.isVisible().catch(() => false)) {
-    await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
-  }
+  await expect(confirmation).toBeVisible({ timeout: 20_000 });
+  await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
   await waitForSettledAgent(page);
 }
 
