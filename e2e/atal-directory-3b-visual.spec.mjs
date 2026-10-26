@@ -38,6 +38,33 @@ for (const scenario of cases) {
       await expect(page.locator('.atal-directory-empty')).toBeVisible();
     }
 
+    // Every clinical state must be reachable without clipping. Checking only
+    // document overflow missed a truncated plan-tab strip in the visual review.
+    const tabLayout = await page.locator('.atal-segments').evaluate((tabs) => {
+      const outer = tabs.getBoundingClientRect();
+      return {
+        outerWidth: tabs.clientWidth,
+        fullWidth: tabs.scrollWidth,
+        children: [...tabs.querySelectorAll('button')].map((button) => {
+          const bounds = button.getBoundingClientRect();
+          return {
+            label: button.textContent?.trim() ?? '',
+            left: bounds.left,
+            right: bounds.right,
+            top: bounds.top,
+            bottom: bounds.bottom,
+            textFits: button.scrollWidth <= button.clientWidth + 1,
+            inside: bounds.left >= outer.left - 1 && bounds.right <= outer.right + 1
+              && bounds.top >= outer.top - 1 && bounds.bottom <= outer.bottom + 1,
+          };
+        }),
+      };
+    });
+    expect(tabLayout.fullWidth, 'State tabs overflow their container').toBeLessThanOrEqual(tabLayout.outerWidth + 1);
+    expect(tabLayout.children.length).toBe(scenario.route === '/patients' ? 4 : 5);
+    expect(tabLayout.children.every((button) => button.inside && button.textFits),
+      `Clipped state filter: ${JSON.stringify(tabLayout.children)}`).toBe(true);
+
     await testInfo.attach(`atal-3b-${scenario.id}.png`, {
       body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
       contentType: 'image/png',
