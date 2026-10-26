@@ -11,7 +11,11 @@ test('global search shortcut opens and closes the filtered dialog', async ({ pag
   await expect(dialog).toBeVisible();
   const input = dialog.getByRole('textbox', { name: 'Buscar pacientes, planes, ejercicios y reportes' });
   await expect(input).toBeFocused();
-  await expect(dialog.getByText('Busca un paciente, plan, ejercicio o reporte.')).toBeVisible();
+  // Like Linear's command menu, the empty query now offers useful destinations
+  // immediately, without requiring the user to type a clinical identifier.
+  await expect(dialog.getByText('Ir rápidamente a…')).toBeVisible();
+  await expect(dialog.locator('a[href="/patients"]')).toBeVisible();
+  await expect(dialog.locator('a[href="/plans"]')).toBeVisible();
   await expect(dialog.getByText(/No encontramos resultados/)).toHaveCount(0);
 
   await input.fill('Paciente E2E');
