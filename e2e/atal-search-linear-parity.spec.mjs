@@ -43,8 +43,11 @@ test('global search keeps the existing entity links and returns to the selected 
 test('Enter opens the first matching result and does not interfere with editing fields', async ({ page }) => {
   await seedBrowser(page, { state: createState() });
   await page.goto('/');
+  // Route hydration installs the global keyboard listener.
+  await expect(page.locator('.atal-desktop-search')).toBeVisible();
   await page.keyboard.press('Control+k');
   const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await expect(dialog).toBeVisible();
   await dialog.getByRole('textbox').fill('Movilidad asistida E2E');
   await dialog.getByRole('textbox').press('Enter');
   await expect(page).toHaveURL(/\/exercises\/exercise-e2e$/);
