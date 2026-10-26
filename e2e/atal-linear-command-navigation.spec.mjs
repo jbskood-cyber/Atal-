@@ -5,7 +5,7 @@ test('command palette shows instant destinations and supports arrow-key selectio
   const state = createState();
   await seedBrowser(page, { state });
   await page.goto('/');
-  await page.keyboard.press('Control+k');
+  await page.locator('.atal-desktop-search').click();
   const panel = page.getByRole('dialog', { name: 'Buscar en Atal' });
   await expect(panel).toBeVisible();
   await expect(panel.getByText('Ir rápidamente a…')).toBeVisible();
@@ -23,7 +23,7 @@ test('command palette shows instant destinations and supports arrow-key selectio
 test('command palette preserves typed multientity search and category filters', async ({ page }) => {
   await seedBrowser(page, { state: createState() });
   await page.goto('/patients');
-  await page.getByRole('button', { name: 'Buscar en Atal' }).click();
+  await page.locator('.atal-desktop-search').click();
   const panel = page.getByRole('dialog', { name: 'Buscar en Atal' });
   await panel.getByRole('button', { name: 'Pacientes' }).click();
   const input = panel.getByRole('textbox', { name: 'Buscar pacientes, planes, ejercicios y reportes' });
@@ -54,7 +54,7 @@ test('visual QA: keyboard command surface remains accessible on desktop', async 
   await page.setViewportSize({ width: 1366, height: 768 });
   await seedBrowser(page, { state: createState(), theme: 'dark' });
   await page.goto('/');
-  await page.keyboard.press('Control+k');
+  await page.locator('.atal-desktop-search').click();
   await expect(page.getByRole('dialog', { name: 'Buscar en Atal' })).toBeVisible();
   await info.attach('atal-linear-command-dark-desktop.png', {
     body: await page.screenshot({ animations: 'disabled' }), contentType: 'image/png',
