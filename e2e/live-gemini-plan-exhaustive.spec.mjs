@@ -76,11 +76,19 @@ async function waitForSettledAgent(page) {
 async function send(page, text) {
   await waitForSettledAgent(page);
   const composer = page.getByLabel('Mensaje para Atal IA');
+  const before = await page.locator('.atal-command-message.is-user').count();
   await composer.fill(text);
   await expect(composer).toHaveValue(text);
   const sendButton = page.getByRole('button', { name: 'Enviar mensaje' });
   await expect(sendButton).toBeVisible();
   await sendButton.click();
+  // Avoid a false readback assertion against the preceding agent message:
+  // await acknowledgement of the newly submitted turn, not merely an idle
+  // indicator that may still be stale from the prior React render.
+  await expect.poll(async () => (
+    (await page.locator('.atal-command-message.is-user').count()) > before
+    || (await page.locator('.atal-command-processing').count()) > 0
+  )).toBe(true);
 }
 
 async function naturalPlanSnapshot(page) {
