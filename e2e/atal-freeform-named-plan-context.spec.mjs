@@ -48,7 +48,16 @@ test('freeform named plan draft can be reviewed, approved and saved exactly once
     id: 'conversation-context-apply-qa', draftId: 'draft-context-apply-qa',
     intent: 'summarize_patient', patientMode: 'none', selectedPatientId: '',
   });
-  await seedBrowser(page, { state: createState(), conversations: [conversation] });
+  // Seed once: seedBrowser uses addInitScript and would reset the store on reload,
+  // creating a false failure in the persistence assertion below.
+  await page.goto('/');
+  await page.evaluate(({ state, conversation }) => {
+    localStorage.clear();
+    localStorage.setItem('atal:store:v2', JSON.stringify(state));
+    localStorage.setItem('atal:ai-conversations:v1', JSON.stringify([conversation]));
+    localStorage.setItem('atal:ai-drafts:v1', '[]');
+    localStorage.setItem('atal:theme', 'light');
+  }, { state: createState(), conversation });
   await mockAnalyze(page, createDraftResponse({
     intent: 'create_plan_for_existing_patient', responseMode: 'draft',
     assistantMessage: 'Preparé un borrador de plan para Paciente E2E.',
