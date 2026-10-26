@@ -10,3 +10,5 @@ Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan 
 2026-10-26 — Integrated QA checkpoint (Linear search + Gemini fresh-plan approval/audit alias + Spanish birth-date normalization), request FULL live Gemini browser matrix for the combined PR. No production deploy/merge.
 
 2026-10-26 — Integrated full Gemini recertification after fixing named-patient plan-draft context, surfacing draft-apply errors, accepting all audited plan-create tool names, and adding deterministic browser test. Require entire browser matrix; preflight alone is not certification.
+
+2026-10-26 QA checkpoint: rerun full real-Gemini matrix following isolated fixes for composer dispatch acceptance, readback turn synchronization, and strict no-reseed persistence validation. Require 32/32 tests with zero flaky/failure. No deployment/merge.
