@@ -1013,3 +1013,86 @@ html[data-theme="dark"] .atal-plan-segments b { color: var(--ink); background: #
     font-size: 9px !important;
   }
 }
+
+
+/* Phase 3B-2 — contextual clinic navigation and activity return states.
+   Scope to the patient profile, timeline and report; no clinical store edits. */
+.atal-activity-scope {
+  display: flex;
+  max-width: 900px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 15px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+}
+.atal-activity-scope > span { flex: 1; min-width: 170px; }
+.atal-activity-scope strong { color: var(--ink); }
+.atal-activity-scope button,
+.atal-report-quicklinks button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 580;
+  cursor: pointer;
+}
+.atal-activity-scope button:hover,
+.atal-report-quicklinks button:hover { background: var(--mint); }
+.atal-activity-scope button svg,
+.atal-report-quicklinks button svg { width: 14px; height: 14px; }
+.atal-activity-empty {
+  display: flex;
+  max-width: 900px;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 44px 18px;
+}
+.atal-activity-empty strong { color: var(--ink); font-size: 14px; }
+.atal-activity-empty p { max-width: 48ch; margin: 0; line-height: 1.5; font-size: 12px; }
+.atal-activity-empty button {
+  min-height: 36px;
+  margin-top: 5px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.atal-report-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+.atal-report-quicklinks button { min-height: 37px; }
+.atal-activity-page .atal-view-switch button:focus-visible,
+.atal-activity-page .atal-premium-search button:focus-visible,
+.atal-activity-scope button:focus-visible,
+.atal-activity-empty button:focus-visible,
+.atal-report-quicklinks button:focus-visible,
+.atal-patient-profile .atal-tabbar > button:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 3px;
+}
+@media (max-width: 540px) {
+  .atal-activity-scope { gap: 7px; padding: 10px; }
+  .atal-activity-scope > span { flex-basis: 100%; }
+  .atal-activity-scope button { font-size: 11px; }
+  .atal-report-quicklinks { display: grid; grid-template-columns: 1fr; }
+  .atal-report-quicklinks button { justify-content: center; }
+}
