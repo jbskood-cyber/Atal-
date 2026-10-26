@@ -622,11 +622,15 @@ export function AtalAIGeneralScreen() {
         confirmation,
       });
       if (coreResult.status === 'clarification') {
+        setLegacyConfirmation(null);
+        setDialog(null);
         setNotice(coreResult.clarification.message);
       } else if (coreResult.status === 'confirmation-required') {
         setLegacyConfirmation(coreResult);
         setDialog('legacy-confirmation');
       } else if (coreResult.status === 'blocked' || coreResult.status === 'error') {
+        setLegacyConfirmation(null);
+        setDialog(null);
         setNotice(coreResult.message);
       } else {
         if (coreResult.clientEffect) await executeAtalClientEffect(coreResult.clientEffect, { navigate, conversationId: conversation.id, draftId: draft.id });
@@ -648,6 +652,8 @@ export function AtalAIGeneralScreen() {
         setForceApply(false);
       }
     } catch (cause) {
+      setLegacyConfirmation(null);
+      setDialog(null);
       setNotice(cause instanceof Error ? cause.message : 'No pudimos aplicar los cambios.');
     } finally {
       setApplying(false);
