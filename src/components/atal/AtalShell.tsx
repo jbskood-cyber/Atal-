@@ -41,6 +41,26 @@ const secondary = [
 
 const PersistentShellContext = createContext(false);
 
+function routePresentation(pathname: string): { section: string; title: string; parent?: string; parentHref?: string } {
+  if (pathname === '/') return { section: 'Espacio clínico', title: 'Escritorio maestro' };
+  const routes = [
+    { prefix: '/patients', section: 'Pacientes', title: 'Pacientes', parent: 'Pacientes', parentHref: '/patients' },
+    { prefix: '/plans', section: 'Planes', title: 'Planes', parent: 'Planes', parentHref: '/plans' },
+    { prefix: '/exercises', section: 'Biblioteca', title: 'Ejercicios', parent: 'Ejercicios', parentHref: '/exercises' },
+    { prefix: '/activity', section: 'Seguimiento', title: 'Actividad', parent: 'Actividad', parentHref: '/activity' },
+    { prefix: '/exports', section: 'Herramientas', title: 'Exportaciones' },
+    { prefix: '/settings', section: 'Preferencias', title: 'Ajustes' },
+    { prefix: '/assistant', section: 'Inteligencia', title: 'Atal IA' },
+  ];
+  const current = routes.find(({ prefix }) => pathname === prefix || pathname.startsWith(prefix + '/'));
+  if (!current) return { section: 'Espacio clínico', title: 'Atal' };
+  if (pathname === current.prefix) return { section: current.section, title: current.title };
+  const nestedTitle = pathname.endsWith('/new')
+    ? current.prefix === '/patients' ? 'Nuevo paciente' : current.prefix === '/plans' ? 'Nuevo plan' : 'Nuevo ejercicio'
+    : current.prefix === '/patients' ? 'Expediente' : current.prefix === '/plans' ? 'Detalle del plan' : 'Detalle';
+  return { section: current.section, title: nestedTitle, parent: current.parent, parentHref: current.parentHref };
+}
+
 export function AtalShell({ children, onNew }: { children: ReactNode; onNew?: () => void }) {
   const isPersistent = useContext(PersistentShellContext);
   return isPersistent ? <>{children}</> : <ContextualAIProvider><AtalShellFrame onNew={onNew}>{children}</AtalShellFrame></ContextualAIProvider>;
@@ -121,6 +141,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   }, [workspaceOpen, contextualAI]);
 
   const openNew = onNew ?? (() => setNewOpen(true));
+  const route = routePresentation(pathname);
 
   return <>
     <div
@@ -132,11 +153,16 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
       <aside className="atal-sidebar">
         <AtalLogo />
         <nav className="atal-sidebar__nav" aria-label="Navegación principal">
-          {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
-          <Link href="/activity" className={isActive('/activity') ? 'is-active' : ''}><Activity /><span>Actividad</span></Link>
-          <Link href="/exercises" className={isActive('/exercises') ? 'is-active' : ''}><Dumbbell /><span>Ejercicios</span></Link>
-          <Link href="/exports" className={isActive('/exports') ? 'is-active' : ''}><FileDown /><span>Exportaciones</span></Link>
-          <Link href="/settings" className={isActive('/settings') ? 'is-active' : ''}><Settings /><span>Ajustes</span></Link>
+          <p className="atal-sidebar__section-label">Espacio clínico</p>
+          {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-current={isActive(href) ? 'page' : undefined} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
+          <p className="atal-sidebar__section-label">Trabajo</p>
+          <Link href="/activity" aria-current={isActive('/activity') ? 'page' : undefined} className={isActive('/activity') ? 'is-active' : ''}><Activity /><span>Actividad</span></Link>
+          <Link href="/exercises" aria-current={isActive('/exercises') ? 'page' : undefined} className={isActive('/exercises') ? 'is-active' : ''}><Dumbbell /><span>Ejercicios</span></Link>
+          <Link href="/exports" aria-current={isActive('/exports') ? 'page' : undefined} className={isActive('/exports') ? 'is-active' : ''}><FileDown /><span>Exportaciones</span></Link>
+          <p className="atal-sidebar__section-label">Asistente</p>
+          <Link href="/assistant" aria-current={isActive('/assistant') ? 'page' : undefined} className={isActive('/assistant') ? 'is-active' : ''}><AtalMark /><span>Atal IA</span></Link>
+          <p className="atal-sidebar__section-label">Preferencias</p>
+          <Link href="/settings" aria-current={isActive('/settings') ? 'page' : undefined} className={isActive('/settings') ? 'is-active' : ''}><Settings /><span>Ajustes</span></Link>
         </nav>
         <div className="atal-sidebar__profile"><AvatarMini /><span><strong>{settings.professionalName}</strong><small>{settings.specialty}</small></span></div>
       </aside>
@@ -152,7 +178,12 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         </header>
 
         <header className="atal-desktop-header">
-          <div className="atal-desktop-title">Escritorio maestro</div>
+          <div className="atal-desktop-context" aria-label="Ubicación actual">
+            <div className="atal-desktop-overline">
+              {route.parent && route.parentHref ? <><Link href={route.parentHref}>{route.parent}</Link><ChevronRight aria-hidden="true" /></> : route.section}
+            </div>
+            <div className="atal-desktop-title">{route.title}</div>
+          </div>
           <div className="atal-desktop-actions">
             <button type="button" className="atal-desktop-search" onClick={() => setSearchOpen(true)}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>{isMac ? '⌘ K' : 'Ctrl K'}</kbd></button>
             <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
