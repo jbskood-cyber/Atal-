@@ -891,3 +891,11 @@ html[data-theme="dark"] .atal-sidebar__nav a:hover { color: var(--ink); backgrou
 html[data-theme="dark"] .atal-sidebar__nav a.is-active { color: var(--ink); background: var(--mint); }
 html[data-theme="dark"] .atal-desktop-search { border-color: var(--line); color: var(--muted); background: #19191c; }
 html[data-theme="dark"] .atal-desktop-actions kbd { color: var(--muted); background: #242428; }
+
+
+/* Phase 3A visual QA: legacy list metadata had a light-only hard-coded text color.
+   Restore readable metadata contrast against Graphite Clinical dark surfaces. */
+html[data-theme="dark"] .atal-list-meta { color: var(--muted); }
+@media (max-width: 767px) {
+  .atal-patient-directory .atal-list-meta { font-size: 11px; }
+}
