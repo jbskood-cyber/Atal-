@@ -3,6 +3,7 @@ import { applyUpsertClinicalRecord } from '../../../../domain/actions/clinicalRe
 import { applyCreatePatient, applyUpdatePatient } from '../../../../domain/actions/patientActions';
 import { applyPatientLifecycle } from '../../../../domain/actions/patientLifecycle';
 import { applyCreatePlan } from '../../../../domain/actions/planActions';
+import { normalizePatientBirthDate } from './patientDate';
 import type { ClinicalRecord } from '@/src/features/clinical-record/types';
 import { coreError, type EntityRef, type ToolDefinition } from '../contracts';
 
@@ -119,7 +120,7 @@ function validatePatientCreate(input: unknown): PatientCreateInput {
     name,
     diagnosis: text(patient.diagnosis, 1_000) ?? text(record.providedDiagnosis, 1_000) ?? text(record.reasonForVisit, 1_000) ?? 'Motivo por completar',
     age,
-    birthDate: text(patient.birthDate, 40) ?? '',
+    birthDate: normalizePatientBirthDate(text(patient.birthDate, 40) ?? ''),
     sex: text(patient.sex, 80) ?? '',
     affectedArea: text(patient.affectedArea, 300) ?? text(record.affectedArea, 300) ?? '',
     visitType,
@@ -153,7 +154,7 @@ function validatePatientUpdate(input: unknown): PatientUpdateInput {
   const name = text(patchValue.name, 180); if (name !== undefined) patch.name = name;
   const diagnosis = text(patchValue.diagnosis, 1_000); if (diagnosis !== undefined) patch.diagnosis = diagnosis;
   const age = optionalNumber(patchValue.age, 0, 130); if (age !== undefined) patch.age = age;
-  const birthDate = text(patchValue.birthDate, 40); if (birthDate !== undefined) patch.birthDate = birthDate;
+  const birthDate = text(patchValue.birthDate, 40); if (birthDate !== undefined) patch.birthDate = normalizePatientBirthDate(birthDate);
   const sex = text(patchValue.sex, 80); if (sex !== undefined) patch.sex = sex;
   const affectedArea = text(patchValue.affectedArea, 300); if (affectedArea !== undefined) patch.affectedArea = affectedArea;
   if (patchValue.visitType !== undefined) patch.visitType = patchValue.visitType === 'followup' ? 'followup' : 'first';
