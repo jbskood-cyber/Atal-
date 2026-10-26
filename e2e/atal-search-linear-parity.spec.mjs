@@ -6,8 +6,14 @@ test('global search shortcut opens and closes the filtered dialog', async ({ pag
   await page.goto('/');
   await expect(page.locator('.atal-desktop-search kbd')).toHaveText('Ctrl K');
 
-  await page.keyboard.press('Control+k');
+  // A genuine click demonstrates that React has hydrated before the
+  // keyboard shortcut is exercised (CI startup can otherwise race it).
+  await page.locator('.atal-desktop-search').click();
   const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await page.keyboard.press('Control+k');
   await expect(dialog).toBeVisible();
   const input = dialog.getByRole('textbox', { name: 'Buscar pacientes, planes, ejercicios y reportes' });
   await expect(input).toBeFocused();
