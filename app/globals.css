@@ -982,3 +982,34 @@ html[data-theme="dark"] .atal-plan-segments b { color: var(--ink); background: #
     flex: 0 0 6px;
   }
 }
+
+
+/* Phase 3B layout override. Legacy atal-surgical-qa.css forces a single
+   horizontal scroller with !important; use a scoped, higher-specificity grid
+   so none of the five plan statuses disappears on narrow screens. */
+.atal-plan-directory .atal-segments.atal-plan-segments {
+  display: grid !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: auto !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  overflow-x: visible !important;
+}
+.atal-plan-directory .atal-segments.atal-plan-segments > button {
+  min-width: 0 !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+}
+@media (max-width: 720px) {
+  .atal-plan-directory .atal-segments.atal-plan-segments {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .atal-plan-directory .atal-segments.atal-plan-segments > button {
+    padding: 0 12px !important;
+    font-size: 11px !important;
+  }
+}
+@media (max-width: 540px) {
+  .atal-patient-directory .atal-segments.atal-patient-filters > button {
+    font-size: 9px !important;
+  }
+}
