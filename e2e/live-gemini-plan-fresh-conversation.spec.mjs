@@ -160,6 +160,39 @@ async function approvePreparedAction(page) {
   await waitForSettledAgent(page);
 }
 
+// Reversible tool writes may run immediately for an explicit user request
+// (riskPolicy.ts). Only draft creation or a returned review proposal requires
+// the "Aplicar cambios" path. Never treat an already-applied write as a failed
+// confirmation, and never bypass a visible review dialog.
+async function completeReversibleAction(page, counter, clarificationReply) {
+  const apply = page.getByRole('button', { name: 'Aplicar cambios' });
+  const assistantMessages = page.locator('.atal-command-message.is-assistant');
+  await expect.poll(async () => {
+    const count = (await planSnapshot(page))[counter];
+    if (count > 1) return 'duplicate';
+    if (count === 1) return 'applied';
+    if (await apply.isVisible()) return 'review';
+    const response = await assistantMessages.last().textContent().catch(() => '') ?? '';
+    if (/¿.*(?:quieres|proceda|confirm)|(?:confirmas|autorizas|quieres que proceda)/i.test(response)) return 'clarification';
+    return 'pending';
+  }, { timeout: 120_000 }).not.toBe('pending');
+
+  const currentCount = (await planSnapshot(page))[counter];
+  if (currentCount > 1) throw new Error(`Unexpected duplicate write for ${counter}`);
+  if (currentCount === 1) return;
+
+  if (await apply.isVisible()) {
+    await approvePreparedAction(page);
+  } else {
+    // The provider sometimes asks for additional natural-language permission
+    // instead of calling the available reversible tool on the first turn.
+    await send(page, clarificationReply);
+  }
+
+  await expect.poll(async () => (await planSnapshot(page))[counter], { timeout: 120_000 }).toBe(1);
+  await waitForSettledAgent(page);
+}
+
 test.describe('Live Gemini fresh natural plan creation', () => {
   test('creates the correct patient plan from a completely fresh general conversation, adds and edits an exercise naturally, and survives reload/readback', async ({ page }) => {
     test.setTimeout(420_000);
@@ -187,14 +220,14 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     });
 
     await send(page, 'Agrégale a ese plan el ejercicio Movilidad asistida E2E.');
-    await approvePreparedAction(page);
+    await completeReversibleAction(page, 'membershipSuccesses', 'Sí, procede a agregar Movilidad asistida E2E a Plan hombro Fresh QA. Hazlo ahora.');
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
       exerciseNames: ['Movilidad asistida E2E'],
       membershipSuccesses: 1,
     });
 
     await send(page, 'Ahora cámbiale a ese ejercicio la dosis a 4 series de 10 repeticiones y deja sus demás campos exactamente como están.');
-    await approvePreparedAction(page);
+    await completeReversibleAction(page, 'exerciseUpdateSuccesses', 'Sí, procede a ajustar solo la dosis del ejercicio Movilidad asistida E2E a 4 series de 10 repeticiones. Hazlo ahora.');
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
       exerciseUpdateSuccesses: 1,
     });
