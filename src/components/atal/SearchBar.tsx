@@ -4,7 +4,7 @@ export function SearchBar({ value, onChange, placeholder }: { value: string; onC
   return (
     <label className="atal-search">
       <Search aria-hidden="true" size={22} strokeWidth={1.8} />
-      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+      <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-label={placeholder} />
       <SlidersHorizontal aria-hidden="true" size={22} strokeWidth={1.8} />
     </label>
   );
