@@ -58,11 +58,31 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const setLauncherSuppressed = contextualAI.setLauncherSuppressed;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const shellOverlayOpen = menuOpen || searchOpen || notificationsOpen || newOpen;
   const settings=useAtalStore((state)=>state.settings);const unread=useAtalStore((state)=>state.notifications.filter((item)=>!item.read).length);
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href.split('?')[0]);
+
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform));
+  }, []);
+
+  useEffect(() => {
+    const openSearch = (event: KeyboardEvent) => {
+      if (workspaceOpen || event.altKey || !(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'k') return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+      event.preventDefault();
+      setMenuOpen(false);
+      setNotificationsOpen(false);
+      setNewOpen(false);
+      setSearchOpen(true);
+    };
+    window.addEventListener('keydown', openSearch);
+    return () => window.removeEventListener('keydown', openSearch);
+  }, [workspaceOpen]);
 
   useEffect(() => {
     setLauncherSuppressed(shellOverlayOpen);
@@ -134,7 +154,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         <header className="atal-desktop-header">
           <div className="atal-desktop-title">Escritorio maestro</div>
           <div className="atal-desktop-actions">
-            <button type="button" className="atal-desktop-search" onClick={() => setSearchOpen(true)}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>⌘ K</kbd></button>
+            <button type="button" className="atal-desktop-search" onClick={() => setSearchOpen(true)}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>{isMac ? '⌘ K' : 'Ctrl K'}</kbd></button>
             <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" onClick={openNew} className="atal-desktop-new"><Plus /> Nuevo</button>
           </div>
@@ -175,10 +195,45 @@ function PanelFrame({ title, children, onClose }: { title: string; children: Rea
   return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
 }
 
+const searchCategories = ['Todos', 'Pacientes', 'Planes', 'Ejercicios', 'Reportes'] as const;
+type SearchCategory = typeof searchCategories[number];
+
 function SearchPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
-  const state=useAtalStore((store)=>store);const entries=[...state.patients.map((item)=>({label:item.name,detail:`Paciente · ${item.diagnosis}`,href:`/patients/${item.id}`,icon:UsersRound})),...state.plans.map((item)=>({label:item.title,detail:`Plan · ${state.patients.find((patient)=>patient.id===item.patientId)?.name??''}`,href:`/plans/${item.id}`,icon:ClipboardList})),...state.exercises.map((item)=>({label:item.name,detail:`Ejercicio · ${item.region} · ${item.category}`,href:`/exercises/${item.id}`,icon:Dumbbell})),...state.sessions.map((item)=>({label:`Reporte · ${state.patients.find((patient)=>patient.id===item.patientId)?.name??'Paciente'}`,detail:`Dolor ${item.endPain}/10 · ${item.status}`,href:`/activity/${item.id}`,icon:FileText}))].filter((entry)=>`${entry.label} ${entry.detail}`.toLowerCase().includes(query.toLowerCase())).slice(0,20);
-  return <PanelFrame title="Buscar en Atal" onClose={onClose}><label className="atal-command-search"><Search /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Paciente, plan o ejercicio" /></label><div className="atal-command-results">{entries.map(({ label, detail, href, icon: Icon }) => <Link key={href} href={href}><span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight /></Link>)}{!entries.length && <p>No encontramos resultados.</p>}</div></PanelFrame>;
+  const [category, setCategory] = useState<SearchCategory>('Todos');
+  const state = useAtalStore((store) => store);
+  const term = query.trim().toLocaleLowerCase('es-MX');
+  const entries = [
+    ...state.patients.map((item) => ({ label: item.name, detail: `Paciente · ${item.diagnosis}`, href: `/patients/${item.id}`, icon: UsersRound, kind: 'Pacientes' as const })),
+    ...state.plans.map((item) => ({ label: item.title, detail: `Plan · ${state.patients.find((patient) => patient.id === item.patientId)?.name ?? ''}`, href: `/plans/${item.id}`, icon: ClipboardList, kind: 'Planes' as const })),
+    ...state.exercises.map((item) => ({ label: item.name, detail: `Ejercicio · ${item.region} · ${item.category}`, href: `/exercises/${item.id}`, icon: Dumbbell, kind: 'Ejercicios' as const })),
+    ...state.sessions.map((item) => ({ label: `Reporte · ${state.patients.find((patient) => patient.id === item.patientId)?.name ?? 'Paciente'}`, detail: `Dolor ${item.endPain}/10 · ${item.status}`, href: `/activity/${item.id}`, icon: FileText, kind: 'Reportes' as const })),
+  ].filter((entry) => term && (category === 'Todos' || entry.kind === category) && `${entry.label} ${entry.detail}`.toLocaleLowerCase('es-MX').includes(term)).slice(0, 20);
+
+  const navigate = (href: string) => {
+    onClose();
+    router.push(href);
+  };
+
+  return <PanelFrame title="Buscar en Atal" onClose={onClose}>
+    <label className="atal-command-search">
+      <Search />
+      <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => { if (event.key === 'Enter' && entries[0]) { event.preventDefault(); navigate(entries[0].href); } }}
+        placeholder="Paciente, plan o ejercicio" aria-label="Buscar pacientes, planes, ejercicios y reportes" />
+    </label>
+    <div className="atal-search-filters" role="group" aria-label="Filtrar resultados">
+      {searchCategories.map((kind) => <button type="button" key={kind} aria-pressed={category === kind} onClick={() => setCategory(kind)}>{kind}</button>)}
+    </div>
+    <div className="atal-command-results" aria-live="polite">
+      {!term ? <p>Busca un paciente, plan, ejercicio o reporte.</p>
+        : entries.length ? entries.map(({ label, detail, href, icon: Icon }) => <Link key={href} href={href} onClick={onClose}>
+            <span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight />
+          </Link>)
+          : <p>No encontramos resultados para esta búsqueda.</p>}
+    </div>
+  </PanelFrame>;
 }
 
 function NotificationsPanel({ onClose, onNavigate }: { onClose: () => void; onNavigate: (href: string) => void }) {
