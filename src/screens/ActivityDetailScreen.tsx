@@ -49,8 +49,12 @@ export function ActivityDetailScreen({ patientId: sessionOrPatientId }: { patien
   const planName = plan?.title ?? snapshot?.name ?? 'Plan histórico';
 
   return <AtalShell><main className="atal-content atal-flow-page">
-    <div className="atal-flow-topbar"><button type="button" onClick={() => guard.requestNavigation(() => router.back())}><ArrowLeft /></button><span>Reporte clínico</span><i /></div>
+    <div className="atal-flow-topbar"><button type="button" aria-label="Volver a la pantalla anterior" onClick={() => guard.requestNavigation(() => router.back())}><ArrowLeft /></button><span>Reporte clínico</span><i /></div>
     <div className="atal-report-person"><span className="atal-report-avatar"><Avatar name={patient.name} /></span><span><h1>{patient.name}</h1><small>{new Date(session.completedAt).toLocaleString('es-MX')} · {session.status === 'completed' ? 'Completada' : 'Parcial'}</small></span><i className={attention ? 'is-attention' : ''} /></div>
+    <nav className="atal-report-quicklinks" aria-label="Navegación del reporte clínico">
+      <button type="button" onClick={() => guard.requestNavigation(() => router.push(`/activity?view=reports&patientId=${encodeURIComponent(patient.id)}`))}><ArrowLeft aria-hidden="true" /> Reportes del paciente</button>
+      <button type="button" onClick={() => guard.requestNavigation(() => router.push(`/patients/${patient.id}`))}>Ver expediente del paciente <ClipboardList aria-hidden="true" /></button>
+    </nav>
     {plan ? <button type="button" className="atal-report-plan" onClick={() => router.push(`/plans/${plan.id}`)}><ClipboardList /><span>{planName}</span></button> : <div className="atal-report-plan"><ClipboardList /><span>{planName}</span></div>}
     <section className="atal-report-summary"><h2>Resumen real de la sesión</h2><Metric icon={<Check />} label="Ejercicios completados" value={`${progress.completed}/${progress.total}`} /><Metric icon={<HeartPulse />} label="Dolor" value={`${session.startPain} → ${session.endPain}/10`} /><Metric icon={<Target />} label="Series completadas" value={`${progress.completedSets}/${progress.totalSets}`} /><Metric icon={<Target />} label="Duración" value={`${session.durationMinutes} min`} /></section>
     <section className="atal-report-summary"><h2>Detalle por ejercicio</h2>{exerciseRows.map(({ exerciseId, record, exercise, index }) => {
