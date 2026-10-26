@@ -147,10 +147,11 @@ async function approvePreparedAction(page) {
   const apply = page.getByRole('button', { name: 'Aplicar cambios' });
   await expect(apply).toBeVisible({ timeout: 120_000 });
   await apply.click();
+  // The confirmation dialog is required before any canonical plan write.
+  // isVisible() is a synchronous probe and can race the modal opening.
   const confirmation = page.getByRole('dialog');
-  if (await confirmation.isVisible().catch(() => false)) {
-    await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
-  }
+  await expect(confirmation).toBeVisible({ timeout: 20_000 });
+  await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
   await waitForSettledAgent(page);
 }
 
