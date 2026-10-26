@@ -79,6 +79,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
+  const [isEditingField, setIsEditingField] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const shellOverlayOpen = menuOpen || searchOpen || notificationsOpen || newOpen;
@@ -87,6 +88,28 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform));
+  }, []);
+
+  // Mobile keyboard: floating dock must not cover inputs or clinical notes.
+  // It reappears as soon as the user leaves an editable control.
+  useEffect(() => {
+    let pendingFrame = 0;
+    const syncFocusedControl = () => {
+      const active = document.activeElement;
+      setIsEditingField(active instanceof HTMLElement
+        && (active.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)));
+    };
+    const syncOnBlur = () => {
+      pendingFrame = window.requestAnimationFrame(syncFocusedControl);
+    };
+    document.addEventListener('focusin', syncFocusedControl);
+    document.addEventListener('focusout', syncOnBlur);
+    syncFocusedControl();
+    return () => {
+      document.removeEventListener('focusin', syncFocusedControl);
+      document.removeEventListener('focusout', syncOnBlur);
+      window.cancelAnimationFrame(pendingFrame);
+    };
   }, []);
 
   useEffect(() => {
@@ -204,7 +227,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         </section>
       </>}
 
-      {!workspaceOpen && <div className={`atal-mobile-dock${shellOverlayOpen?' is-hidden':''}`}>
+      {!workspaceOpen && <div className={`atal-mobile-dock${shellOverlayOpen?' is-hidden':''}${isEditingField?' is-editing':''}`}>
         <div className="atal-nav-slot">
           <nav aria-label="Navegación principal" className="atal-primary-nav">
             {primary.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={isActive(href) ? 'is-active' : ''}><Icon /><span>{label}</span></Link>)}
@@ -233,15 +256,34 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<SearchCategory>('Todos');
+  const [activeIndex, setActiveIndex] = useState(0);
   const state = useAtalStore((store) => store);
   const term = query.trim().toLocaleLowerCase('es-MX');
-  const entries = [
+
+  // One command surface for quickly jumping to a clinic workspace or finding
+  // a clinical entity. Commands only navigate; they never edit patient data.
+  const jumpTo = [
+    { label: 'Inicio', detail: 'Ir al escritorio', href: '/', icon: Home, kind: 'Secciones' },
+    { label: 'Pacientes', detail: 'Abrir directorio de pacientes', href: '/patients', icon: UsersRound, kind: 'Secciones' },
+    { label: 'Planes', detail: 'Abrir planes clínicos', href: '/plans', icon: ClipboardList, kind: 'Secciones' },
+    { label: 'Actividad', detail: 'Ver seguimiento y reportes', href: '/activity?view=tracking', icon: Activity, kind: 'Secciones' },
+    { label: 'Ejercicios', detail: 'Abrir biblioteca de ejercicios', href: '/exercises', icon: Dumbbell, kind: 'Secciones' },
+    { label: 'Atal IA', detail: 'Abrir el asistente clínico', href: '/assistant', icon: AtalMark, kind: 'Secciones' },
+  ];
+  const clinicalEntries = [
     ...state.patients.map((item) => ({ label: item.name, detail: `Paciente · ${item.diagnosis}`, href: `/patients/${item.id}`, icon: UsersRound, kind: 'Pacientes' as const })),
     ...state.plans.map((item) => ({ label: item.title, detail: `Plan · ${state.patients.find((patient) => patient.id === item.patientId)?.name ?? ''}`, href: `/plans/${item.id}`, icon: ClipboardList, kind: 'Planes' as const })),
     ...state.exercises.map((item) => ({ label: item.name, detail: `Ejercicio · ${item.region} · ${item.category}`, href: `/exercises/${item.id}`, icon: Dumbbell, kind: 'Ejercicios' as const })),
     ...state.sessions.map((item) => ({ label: `Reporte · ${state.patients.find((patient) => patient.id === item.patientId)?.name ?? 'Paciente'}`, detail: `Dolor ${item.endPain}/10 · ${item.status}`, href: `/activity/${item.id}`, icon: FileText, kind: 'Reportes' as const })),
-  ].filter((entry) => term && (category === 'Todos' || entry.kind === category) && `${entry.label} ${entry.detail}`.toLocaleLowerCase('es-MX').includes(term)).slice(0, 20);
+  ];
+  const entries = !term
+    ? (category === 'Todos' ? jumpTo : [])
+    : [
+      ...(category === 'Todos' ? jumpTo : []),
+      ...clinicalEntries.filter((entry) => category === 'Todos' || entry.kind === category),
+    ].filter((entry) => `${entry.label} ${entry.detail}`.toLocaleLowerCase('es-MX').includes(term)).slice(0, 20);
 
+  const selected = Math.min(activeIndex, Math.max(entries.length - 1, 0));
   const navigate = (href: string) => {
     onClose();
     router.push(href);
@@ -249,21 +291,31 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
 
   return <PanelFrame title="Buscar en Atal" onClose={onClose}>
     <label className="atal-command-search">
-      <Search />
-      <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={(event) => { if (event.key === 'Enter' && entries[0]) { event.preventDefault(); navigate(entries[0].href); } }}
-        placeholder="Paciente, plan o ejercicio" aria-label="Buscar pacientes, planes, ejercicios y reportes" />
+      <Search aria-hidden="true" />
+      <input autoFocus value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' && entries.length) { event.preventDefault(); setActiveIndex((index) => Math.min(index + 1, entries.length - 1)); }
+          if (event.key === 'ArrowUp' && entries.length) { event.preventDefault(); setActiveIndex((index) => Math.max(index - 1, 0)); }
+          if (event.key === 'Enter' && entries[selected]) { event.preventDefault(); navigate(entries[selected].href); }
+        }}
+        placeholder="Buscar o ir a una sección…" aria-label="Buscar pacientes, planes, ejercicios y reportes" />
     </label>
     <div className="atal-search-filters" role="group" aria-label="Filtrar resultados">
-      {searchCategories.map((kind) => <button type="button" key={kind} aria-pressed={category === kind} onClick={() => setCategory(kind)}>{kind}</button>)}
+      {searchCategories.map((kind) => <button type="button" key={kind} aria-pressed={category === kind}
+        onClick={() => { setCategory(kind); setActiveIndex(0); }}>{kind}</button>)}
     </div>
     <div className="atal-command-results" aria-live="polite">
-      {!term ? <p>Busca un paciente, plan, ejercicio o reporte.</p>
-        : entries.length ? entries.map(({ label, detail, href, icon: Icon }) => <Link key={href} href={href} onClick={onClose}>
+      {!term && category === 'Todos' && <p className="atal-command-heading">Ir rápidamente a…</p>}
+      {entries.length
+        ? entries.map(({ label, detail, href, icon: Icon }, index) => (
+          <Link key={href} href={href} onClick={onClose} onMouseEnter={() => setActiveIndex(index)}
+            className={index === selected ? 'is-keyboard-selected' : ''}>
             <span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight />
-          </Link>)
-          : <p>No encontramos resultados para esta búsqueda.</p>}
+          </Link>
+        ))
+        : <p>{!term ? 'Escribe para buscar en esta categoría.' : 'No encontramos resultados para esta búsqueda.'}</p>}
     </div>
+    <div className="atal-command-hint" aria-hidden="true">↑ ↓ Elegir <span>·</span> Enter Abrir <span>·</span> Esc Cerrar</div>
   </PanelFrame>;
 }
 
