@@ -86,9 +86,13 @@ async function send(page, text) {
     }, { capture: true, once: true });
   });
 
+  // The UI may begin streaming before React commits the new user bubble.
+  // A cleared composer plus an active processing indicator is an accepted
+  // dispatch; the subsequent test still waits for the actual saved result.
   const dispatched = async () => (
     (await composer.inputValue()) === ''
-    && (await userMessages.count()) > messageCountBefore
+    && ((await userMessages.count()) > messageCountBefore
+      || (await page.locator('.atal-command-processing').count()) > 0)
   );
 
   await sendButton.click();
@@ -137,7 +141,8 @@ async function planSnapshot(page) {
     focus: plan?.focus,
     status: plan?.status,
     exerciseNames,
-    planCreateSuccesses: state.events.filter((event) => event.toolName === 'plan.create' && event.outcome === 'success').length,
+    // Canonical direct and legacy-draft create tools all audit their respective tool name.
+    planCreateSuccesses: state.events.filter((event) => ['plan.create', 'plan.create_simple', 'plan.create_for_patient'].includes(event.toolName) && event.outcome === 'success').length,
     membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success').length,
     exerciseUpdateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
   };
@@ -147,10 +152,44 @@ async function approvePreparedAction(page) {
   const apply = page.getByRole('button', { name: 'Aplicar cambios' });
   await expect(apply).toBeVisible({ timeout: 120_000 });
   await apply.click();
+  // The confirmation dialog is required before any canonical plan write.
+  // isVisible() is a synchronous probe and can race the modal opening.
   const confirmation = page.getByRole('dialog');
-  if (await confirmation.isVisible().catch(() => false)) {
-    await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
+  await expect(confirmation).toBeVisible({ timeout: 20_000 });
+  await confirmation.getByRole('button', { name: /Continuar|Confirmar y aplicar/ }).click();
+  await waitForSettledAgent(page);
+}
+
+// Reversible tool writes may run immediately for an explicit user request
+// (riskPolicy.ts). Only draft creation or a returned review proposal requires
+// the "Aplicar cambios" path. Never treat an already-applied write as a failed
+// confirmation, and never bypass a visible review dialog.
+async function completeReversibleAction(page, counter, clarificationReply) {
+  const apply = page.getByRole('button', { name: 'Aplicar cambios' });
+  const assistantMessages = page.locator('.atal-command-message.is-assistant');
+  await expect.poll(async () => {
+    const count = (await planSnapshot(page))[counter];
+    if (count > 1) return 'duplicate';
+    if (count === 1) return 'applied';
+    if (await apply.isVisible()) return 'review';
+    const response = await assistantMessages.last().textContent().catch(() => '') ?? '';
+    if (/¿.*(?:quieres|proceda|confirm)|(?:confirmas|autorizas|quieres que proceda)/i.test(response)) return 'clarification';
+    return 'pending';
+  }, { timeout: 120_000 }).not.toBe('pending');
+
+  const currentCount = (await planSnapshot(page))[counter];
+  if (currentCount > 1) throw new Error(`Unexpected duplicate write for ${counter}`);
+  if (currentCount === 1) return;
+
+  if (await apply.isVisible()) {
+    await approvePreparedAction(page);
+  } else {
+    // The provider sometimes asks for additional natural-language permission
+    // instead of calling the available reversible tool on the first turn.
+    await send(page, clarificationReply);
   }
+
+  await expect.poll(async () => (await planSnapshot(page))[counter], { timeout: 120_000 }).toBe(1);
   await waitForSettledAgent(page);
 }
 
@@ -181,14 +220,14 @@ test.describe('Live Gemini fresh natural plan creation', () => {
     });
 
     await send(page, 'Agrégale a ese plan el ejercicio Movilidad asistida E2E.');
-    await approvePreparedAction(page);
+    await completeReversibleAction(page, 'membershipSuccesses', 'Sí, procede a agregar Movilidad asistida E2E a Plan hombro Fresh QA. Hazlo ahora.');
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
       exerciseNames: ['Movilidad asistida E2E'],
       membershipSuccesses: 1,
     });
 
     await send(page, 'Ahora cámbiale a ese ejercicio la dosis a 4 series de 10 repeticiones y deja sus demás campos exactamente como están.');
-    await approvePreparedAction(page);
+    await completeReversibleAction(page, 'exerciseUpdateSuccesses', 'Sí, procede a ajustar solo la dosis del ejercicio Movilidad asistida E2E a 4 series de 10 repeticiones. Hazlo ahora.');
     await expect.poll(() => planSnapshot(page), { timeout: 120_000 }).toMatchObject({
       exerciseUpdateSuccesses: 1,
     });

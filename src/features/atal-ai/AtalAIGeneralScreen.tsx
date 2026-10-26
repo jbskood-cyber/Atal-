@@ -21,6 +21,7 @@ import { clearAIWorkspace, createAIConversation, getAIDraft, getLatestAIConversa
 import { deleteAIArtifact, deleteAIConversationArtifacts, restoreAIArtifactPayloads, saveAIArtifact, updateAIArtifact } from './data/aiArtifactRepository';
 import type { AgentLoopOutcome } from './core/agentic/contracts';
 import { classifyAgentTurn, selectGeneralTurnMode } from './core/agentic/generalTurnMode';
+import { contextForNamedPlanRequest } from './core/agentic/contextForNamedPlanRequest';
 import type { ConfirmationProof, PolicyDecision, ToolInvocation, UndoReceipt } from './core/contracts';
 import { executeLegacyAIAction, executionContext as legacyExecutionContext } from './core/legacyAdapters';
 import { executeUndo } from './core/undoEngine';
@@ -495,15 +496,17 @@ export function AtalAIGeneralScreen() {
       void runAgentRequest(prompt, userMessage);
       return;
     }
-    if (conversation.workContext.patientMode === 'existing' && !conversation.workContext.selectedPatientId) {
+    const nextContext = contextForNamedPlanRequest(prompt, conversation.workContext, store.patients);
+    if (nextContext !== conversation.workContext) patchConversation({ workContext: nextContext });
+    if (nextContext.patientMode === 'existing' && !nextContext.selectedPatientId) {
       setNotice('Selecciona el paciente antes de continuar.');
       return;
     }
-    if (['update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan'].includes(conversation.workContext.intent) && !conversation.workContext.selectedPlanId) {
+    if (['update_existing_plan', 'update_plan_status', 'archive_plan', 'restore_plan', 'replace_active_plan'].includes(nextContext.intent) && !nextContext.selectedPlanId) {
       setNotice('Selecciona el plan antes de continuar.');
       return;
     }
-    if (conversation.workContext.intent === 'update_existing_exercise' && !conversation.workContext.selectedExerciseId) {
+    if (nextContext.intent === 'update_existing_exercise' && !nextContext.selectedExerciseId) {
       setNotice('Selecciona el ejercicio antes de continuar.');
       return;
     }
@@ -514,8 +517,8 @@ export function AtalAIGeneralScreen() {
       transcription,
       attachments,
       currentDraft: draft,
-      workContext: conversation.workContext,
-      existingContext: buildExistingContext(conversation),
+      workContext: nextContext,
+      existingContext: buildExistingContext({ ...conversation, workContext: nextContext }),
     }, userMessage);
   };
 
@@ -622,11 +625,15 @@ export function AtalAIGeneralScreen() {
         confirmation,
       });
       if (coreResult.status === 'clarification') {
+        setLegacyConfirmation(null);
+        setDialog(null);
         setNotice(coreResult.clarification.message);
       } else if (coreResult.status === 'confirmation-required') {
         setLegacyConfirmation(coreResult);
         setDialog('legacy-confirmation');
       } else if (coreResult.status === 'blocked' || coreResult.status === 'error') {
+        setLegacyConfirmation(null);
+        setDialog(null);
         setNotice(coreResult.message);
       } else {
         if (coreResult.clientEffect) await executeAtalClientEffect(coreResult.clientEffect, { navigate, conversationId: conversation.id, draftId: draft.id });
@@ -648,6 +655,8 @@ export function AtalAIGeneralScreen() {
         setForceApply(false);
       }
     } catch (cause) {
+      setLegacyConfirmation(null);
+      setDialog(null);
       setNotice(cause instanceof Error ? cause.message : 'No pudimos aplicar los cambios.');
     } finally {
       setApplying(false);
