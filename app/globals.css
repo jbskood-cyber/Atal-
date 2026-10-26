@@ -1096,3 +1096,45 @@ html[data-theme="dark"] .atal-plan-segments b { color: var(--ink); background: #
   .atal-report-quicklinks { display: grid; grid-template-columns: 1fr; }
   .atal-report-quicklinks button { justify-content: center; }
 }
+
+/* Phase 3C-lite: Linear-inspired command navigation and mobile editor ergonomics. */
+.atal-command-results .atal-command-heading {
+  margin: 4px 9px 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.atal-command-results a.is-keyboard-selected {
+  color: var(--ink);
+  background: var(--mint);
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
+}
+.atal-command-results a:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 2px;
+}
+.atal-command-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 14px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+html[data-theme="dark"] .atal-command-results a.is-keyboard-selected {
+  background: #252c29;
+  outline-color: #3f554a;
+}
+@media (max-width: 1023px) {
+  /* Hide the dock only while a real editable control has focus.
+     Prevents covering the clinical observation editor when the soft keyboard is up. */
+  .atal-mobile-dock.is-editing {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
