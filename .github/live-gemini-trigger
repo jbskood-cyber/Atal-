@@ -6,3 +6,5 @@ Harness checkpoint: fresh-plan fixture remains referentially valid and no determ
 Provider checkpoint: live-gemini-smoke #450 attempt 2 completed secret verification, Action Core compile and real Gemini preflight PASS on gemini-3.6-flash; browser matrix was intentionally skipped because the rerun did not re-arm the trigger. No live full matrix was queued or in progress before this trigger commit.
 
 Run exactly one full Gemini + Chromium matrix. Cover natural conversation; plan create/edit/lifecycle/membership/dose; zero mutation before confirmation; persistence/readback/hard reload; contextual isolation; physiotherapist chain; session summary; report review; patient edit; Undo; and canonical atal:store:v2/audit evidence. Do not treat retries as automatic acceptance and do not alter healthy product logic to force green.
+
+2026-10-26 — Integrated QA checkpoint (Linear search + Gemini fresh-plan approval/audit alias + Spanish birth-date normalization), request FULL live Gemini browser matrix for the combined PR. No production deploy/merge.
