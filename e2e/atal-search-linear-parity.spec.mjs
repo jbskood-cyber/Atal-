@@ -15,12 +15,12 @@ test('global search shortcut opens and closes the filtered dialog', async ({ pag
   await expect(dialog.getByText(/No encontramos resultados/)).toHaveCount(0);
 
   await input.fill('Paciente E2E');
-  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(1);
+  await expect(dialog.locator('a[href="/patients/patient-e2e"]')).toHaveCount(1);
   await dialog.getByRole('button', { name: 'Planes', exact: true }).click();
-  await expect(dialog.getByRole('link', { name: /Plan activo E2E/ })).toBeVisible();
-  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(0);
+  await expect(dialog.locator('a[href="/plans/plan-active-e2e"]')).toBeVisible();
+  await expect(dialog.locator('a[href="/patients/patient-e2e"]')).toHaveCount(0);
   await dialog.getByRole('button', { name: 'Todos', exact: true }).click();
-  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(1);
+  await expect(dialog.locator('a[href="/patients/patient-e2e"]')).toHaveCount(1);
 
   await input.fill('no-existe-qa-2026');
   await expect(dialog.getByText('No encontramos resultados para esta búsqueda.')).toBeVisible();
@@ -35,7 +35,7 @@ test('global search keeps the existing entity links and returns to the selected 
   await page.getByRole('button', { name: /Buscar pacientes, planes, ejercicios/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
   await dialog.getByRole('textbox').fill('Paciente E2E');
-  await dialog.getByRole('link', { name: /Paciente E2E/ }).click();
+  await dialog.locator('a[href="/patients/patient-e2e"]').click();
   await expect(page).toHaveURL(/\/patients\/patient-e2e$/);
   await expect(dialog).toHaveCount(0);
 });
