@@ -137,8 +137,8 @@ async function planSnapshot(page) {
     focus: plan?.focus,
     status: plan?.status,
     exerciseNames,
-    // The agent may choose either canonical plan-create tool; both audit their actual tool name.
-    planCreateSuccesses: state.events.filter((event) => ['plan.create', 'plan.create_simple'].includes(event.toolName) && event.outcome === 'success').length,
+    // Canonical direct and legacy-draft create tools all audit their respective tool name.
+    planCreateSuccesses: state.events.filter((event) => ['plan.create', 'plan.create_simple', 'plan.create_for_patient'].includes(event.toolName) && event.outcome === 'success').length,
     membershipSuccesses: state.events.filter((event) => event.toolName === 'plan.membership' && event.outcome === 'success').length,
     exerciseUpdateSuccesses: state.events.filter((event) => event.toolName === 'exercise.update_fields' && event.outcome === 'success').length,
   };
