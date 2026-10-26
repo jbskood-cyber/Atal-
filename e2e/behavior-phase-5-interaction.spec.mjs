@@ -159,7 +159,7 @@ test.describe('Behavior System phase 5 interaction consistency', () => {
 
     await page.getByRole('button', { name: 'Buscar en Atal' }).click();
     const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
-    const input = page.getByPlaceholder('Paciente, plan o ejercicio');
+    const input = page.getByPlaceholder('Buscar o ir a una sección…');
     await expect(dialog).toBeVisible();
     await expect(input).toBeFocused();
     await expect(page.locator('.atal-mobile-dock')).toHaveClass(/is-hidden/);
