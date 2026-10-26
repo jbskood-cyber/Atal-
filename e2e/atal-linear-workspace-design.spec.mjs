@@ -22,8 +22,9 @@ test('desktop shell groups clinical navigation and reflects the active workspace
 
   await nav.getByRole('link', { name: 'Atal IA' }).click();
   await expect(page).toHaveURL(/\/assistant$/);
-  await expect(page.locator('.atal-desktop-title')).toHaveText('Atal IA');
-  await expect(nav.getByRole('link', { name: 'Atal IA' })).toHaveAttribute('aria-current', 'page');
+  // The full-screen agent may preserve the clinical page under its workspace
+  // overlay, so its background header is not the active screen's title.
+  await expect(page.getByRole('heading', { name: '¿Qué necesitas resolver?' })).toBeVisible();
 });
 
 test('nested clinic routes show breadcrumb context and return to their parent', async ({ page }) => {
