@@ -86,9 +86,13 @@ async function send(page, text) {
     }, { capture: true, once: true });
   });
 
+  // The UI may begin streaming before React commits the new user bubble.
+  // A cleared composer plus an active processing indicator is an accepted
+  // dispatch; the subsequent test still waits for the actual saved result.
   const dispatched = async () => (
     (await composer.inputValue()) === ''
-    && (await userMessages.count()) > messageCountBefore
+    && ((await userMessages.count()) > messageCountBefore
+      || (await page.locator('.atal-command-processing').count()) > 0)
   );
 
   await sendButton.click();
