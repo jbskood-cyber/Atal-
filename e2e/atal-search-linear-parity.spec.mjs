@@ -1,0 +1,52 @@
+import { expect, test } from '@playwright/test';
+import { createState, seedBrowser } from './fixtures.mjs';
+
+test('global search shortcut opens and closes the filtered dialog', async ({ page }) => {
+  await seedBrowser(page, { state: createState() });
+  await page.goto('/');
+  await expect(page.locator('.atal-desktop-search kbd')).toHaveText('Ctrl K');
+
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await expect(dialog).toBeVisible();
+  const input = dialog.getByRole('textbox', { name: 'Buscar pacientes, planes, ejercicios y reportes' });
+  await expect(input).toBeFocused();
+  await expect(dialog.getByText('Busca un paciente, plan, ejercicio o reporte.')).toBeVisible();
+  await expect(dialog.getByText(/No encontramos resultados/)).toHaveCount(0);
+
+  await input.fill('Paciente E2E');
+  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(1);
+  await dialog.getByRole('button', { name: 'Planes', exact: true }).click();
+  await expect(dialog.getByRole('link', { name: /Plan activo E2E/ })).toBeVisible();
+  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Todos', exact: true }).click();
+  await expect(dialog.getByRole('link', { name: /Paciente E2E/ })).toHaveCount(1);
+
+  await input.fill('no-existe-qa-2026');
+  await expect(dialog.getByText('No encontramos resultados para esta búsqueda.')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('global search keeps the existing entity links and returns to the selected patient', async ({ page }) => {
+  await seedBrowser(page, { state: createState() });
+  await page.goto('/');
+  await page.getByRole('button', { name: /Buscar pacientes, planes, ejercicios/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await dialog.getByRole('textbox').fill('Paciente E2E');
+  await dialog.getByRole('link', { name: /Paciente E2E/ }).click();
+  await expect(page).toHaveURL(/\/patients\/patient-e2e$/);
+  await expect(dialog).toHaveCount(0);
+});
+
+test('Enter opens the first matching result and does not interfere with editing fields', async ({ page }) => {
+  await seedBrowser(page, { state: createState() });
+  await page.goto('/');
+  await page.keyboard.press('Control+k');
+  const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await dialog.getByRole('textbox').fill('Movilidad asistida E2E');
+  await dialog.getByRole('textbox').press('Enter');
+  await expect(page).toHaveURL(/\/exercises\/exercise-e2e$/);
+  await expect(dialog).toHaveCount(0);
+});
