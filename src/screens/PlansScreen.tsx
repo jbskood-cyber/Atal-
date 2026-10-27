@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, ChevronRight, Plus, RefreshCw } from 'lucide-react';
+import { CalendarDays, ChevronRight, Eye, Plus, RefreshCw } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { SearchBar } from '@/src/components/atal/SearchBar';
+import { ClinicalQuickPeek } from '@/src/components/atal/ClinicalQuickPeek';
 import { useDirectoryView } from '@/src/hooks/useDirectoryView';
 import { useLocalPlans, type PlanStatus } from '@/src/data/localPlans';
 import { usePatientCatalog } from '@/src/data/localPatients';
@@ -30,6 +31,9 @@ function isPlansDirectoryView(value: unknown): value is PlansDirectoryView {
 
 export function PlansScreen() {
   const router = useRouter();
+  const [peekId, setPeekId] = useState<string | null>(null);
+  const peekTrigger = useRef<HTMLButtonElement | null>(null);
+  const closePeek = () => { setPeekId(null); window.requestAnimationFrame(() => peekTrigger.current?.focus()); };
   const { view, setView, rememberDeparture } = useDirectoryView('plans', DEFAULT_VIEW, isPlansDirectoryView);
   const { query, filter } = view;
   const plans = useLocalPlans();
@@ -63,11 +67,17 @@ export function PlansScreen() {
         </div>
         <div className="atal-dense-list atal-plan-list">
           {visible.map((plan) => (
-            <button key={plan.id} type="button" className="atal-plan-row" onClick={() => openPlan(plan.id)}>
-              <Avatar name={plan.patient} />
-              <span><b>{plan.title}</b><small>{plan.patient}</small><small><CalendarDays size={15} aria-hidden="true" /> {plan.duration}　　<RefreshCw size={15} aria-hidden="true" /> {plan.frequency}</small><em>{plan.updated}</em></span>
-              <ChevronRight size={21} aria-hidden="true" />
-            </button>
+            <div key={plan.id} className="atal-peek-row">
+              <button type="button" className="atal-plan-row" onClick={() => openPlan(plan.id)}>
+                <Avatar name={plan.patient} />
+                <span><b>{plan.title}</b><small>{plan.patient}</small><small><CalendarDays size={15} aria-hidden="true" /> {plan.duration}　　<RefreshCw size={15} aria-hidden="true" /> {plan.frequency}</small><em>{plan.updated}</em></span>
+                <ChevronRight size={21} aria-hidden="true" />
+              </button>
+              <button type="button" className="atal-peek-trigger" aria-label={`Vista rápida de ${plan.title}`}
+                onClick={(event) => { peekTrigger.current = event.currentTarget; setPeekId(plan.id); }}>
+                <Eye aria-hidden="true" />
+              </button>
+            </div>
           ))}
         </div>
         {!visible.length && (
@@ -80,6 +90,8 @@ export function PlansScreen() {
           </div>
         )}
       </main>
+      {peekId && <ClinicalQuickPeek target={{ kind: 'plan', id: peekId }}
+        onClose={closePeek} onOpenDetail={() => openPlan(peekId)} />}
     </AtalShell>
   );
 }
