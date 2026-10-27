@@ -42,6 +42,7 @@ export function formatWorkContextLabel(context: AIWorkContext, patients: Patient
 
 export function AIContextBar({ open, context, patients, plans, exercises, onChange, onClose }: { open: boolean; context: AIWorkContext; patients: PatientEntity[]; plans: PlanEntity[]; exercises: ExerciseEntity[]; onChange: (context: AIWorkContext) => void; onClose: () => void }) {
   const [query, setQuery] = useState('');
+  const [actionQuery, setActionQuery] = useState('');
   const [showAll, setShowAll] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const needsPatient = patientIntents.has(context.intent);
@@ -51,7 +52,8 @@ export function AIContextBar({ open, context, patients, plans, exercises, onChan
   const availablePlans = plans.filter((item) => item.patientId === context.selectedPatientId);
   const commonActions = intentOptions.filter((item) => featuredIntents.has(item.value));
   const otherActions = intentOptions.filter((item) => !featuredIntents.has(item.value));
-  const expanded = showAll || !featuredIntents.has(context.intent);
+  const expanded = showAll || !featuredIntents.has(context.intent) || actionQuery.trim().length > 0;
+  const searchedActions = intentOptions.filter((item) => `${item.label} ${item.group}`.toLocaleLowerCase('es').includes(actionQuery.trim().toLocaleLowerCase('es')));
 
   useEffect(() => {
     if (!open) return;
@@ -78,22 +80,23 @@ export function AIContextBar({ open, context, patients, plans, exercises, onChan
 
   return <div className="atal-command-dialog" role="dialog" aria-modal="true" aria-labelledby="atal-context-title" onMouseDown={onClose}>
     <section className="atal-context-sheet" onMouseDown={(event) => event.stopPropagation()}>
-      <header><div><small>Atal IA</small><h2 id="atal-context-title">¿En qué vamos a trabajar?</h2></div><button ref={closeRef} type="button" aria-label="Cerrar contexto" onClick={onClose}><X /></button></header>
-      <p className="atal-context-guide">No necesitas elegir una acción para conversar. Selecciona una tarea cuando quieras trabajar con datos de la clínica.</p>
-      <h3 className="atal-context-shortcuts-title">Acciones frecuentes</h3>
+      <header><div><small>Atal IA</small><h2 id="atal-context-title">Añadir contexto</h2></div><button ref={closeRef} type="button" aria-label="Cerrar contexto" onClick={onClose}><X /></button></header>
+      <p className="atal-context-guide">Opcional. Puedes conversar sin seleccionar nada.</p>
+      <label className="atal-context-action-search"><Search aria-hidden="true" /><input type="search" aria-label="Buscar una acción" placeholder="Buscar acción o tarea…" value={actionQuery} onChange={(event) => setActionQuery(event.target.value)} /></label>
+      <h3 className="atal-context-shortcuts-title">{actionQuery ? 'Resultados' : 'Acciones frecuentes'}</h3>
       <div className="atal-context-actions">
-        {commonActions.map((item) => <button type="button" key={item.value} className={context.intent === item.value ? 'is-selected' : ''} onClick={() => selectIntent(item.value)}><span>{item.group === 'Crear' ? <ClipboardList /> : item.group === 'Consultar' ? <Search /> : <UserRound />}</span><b>{item.label}</b>{context.intent === item.value && <Check />}</button>)}
+        {(actionQuery ? searchedActions : commonActions).map((item) => <button type="button" key={item.value} className={context.intent === item.value ? 'is-selected' : ''} onClick={() => selectIntent(item.value)}><span>{item.group === 'Crear' ? <ClipboardList /> : item.group === 'Consultar' ? <Search /> : <UserRound />}</span><b>{item.label}</b>{context.intent === item.value && <Check />}</button>)}
       </div>
-      <button type="button" className="atal-context-expand-actions" aria-expanded={expanded} aria-controls="atal-context-more-actions" onClick={() => setShowAll((value) => !value)}>
+      {!actionQuery && <button type="button" className="atal-context-expand-actions" aria-expanded={expanded} aria-controls="atal-context-more-actions" onClick={() => setShowAll((value) => !value)}>
         {expanded ? 'Ocultar acciones adicionales' : `Ver más acciones (${otherActions.length})`}
-      </button>
-      {expanded && <div id="atal-context-more-actions" className="atal-context-actions atal-context-actions--secondary">
+      </button>}
+      {expanded && !actionQuery && <div id="atal-context-more-actions" className="atal-context-actions atal-context-actions--secondary">
         {otherActions.map((item) => <button type="button" key={item.value} className={context.intent === item.value ? 'is-selected' : ''} onClick={() => selectIntent(item.value)}><span>{item.group === 'Crear' ? <ClipboardList /> : item.group === 'Consultar' ? <Search /> : <UserRound />}</span><b>{item.label}</b>{context.intent === item.value && <Check />}</button>)}
       </div>}
       {needsPatient && <div className="atal-context-entity"><label><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar paciente por nombre o motivo" /></label><div>{filteredPatients.map((patient) => <button type="button" key={patient.id} className={patient.id === context.selectedPatientId ? 'is-selected' : ''} onClick={() => onChange({ ...context, patientMode:'existing', selectedPatientId:patient.id, selectedPlanId:'' })}><UserRound /><span><b>{patient.name}</b><small>{patient.diagnosis}</small></span>{patient.id === context.selectedPatientId && <Check />}</button>)}{!filteredPatients.length && <p>No encontramos pacientes.</p>}</div></div>}
       {needsPlan && context.selectedPatientId && <div className="atal-context-entity"><h3>Plan</h3><div>{availablePlans.map((plan) => <button type="button" key={plan.id} className={plan.id === context.selectedPlanId ? 'is-selected' : ''} onClick={() => onChange({ ...context, selectedPlanId:plan.id })}><ClipboardList /><span><b>{plan.title}</b><small>{plan.status}</small></span>{plan.id === context.selectedPlanId && <Check />}</button>)}{!availablePlans.length && <p>Este paciente todavía no tiene planes.</p>}</div></div>}
       {needsExercise && <div className="atal-context-entity"><h3>Ejercicio</h3><div>{exercises.filter((item)=>item.status==='active').map((exercise) => <button type="button" key={exercise.id} className={exercise.id === context.selectedExerciseId ? 'is-selected' : ''} onClick={() => onChange({ ...context, selectedExerciseId:exercise.id })}><Dumbbell /><span><b>{exercise.name}</b><small>{exercise.region} · {exercise.category}</small></span>{exercise.id === context.selectedExerciseId && <Check />}</button>)}{!exercises.length && <p>Todavía no hay ejercicios.</p>}</div></div>}
-      <button type="button" className="atal-context-done" disabled={(needsPatient && !context.selectedPatientId) || (needsPlan && !context.selectedPlanId) || (needsExercise && !context.selectedExerciseId)} onClick={onClose}>Continuar con esta tarea</button>
+      <button type="button" className="atal-context-done" disabled={(needsPatient && !context.selectedPatientId) || (needsPlan && !context.selectedPlanId) || (needsExercise && !context.selectedExerciseId)} onClick={onClose}>Listo</button>
     </section>
   </div>;
 }
