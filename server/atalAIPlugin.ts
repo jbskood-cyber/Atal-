@@ -139,6 +139,12 @@ async function analyze(payload: AtalAIPayload) {
 }
 
 export function atalAIPlugin(): Plugin {
+  // Only expose whether a key is configured, never the value. Does not probe
+  // the provider, spend quota, or claim a successful model connection.
+  const statusHandler = (request: IncomingMessage, response: ServerResponse) => {
+    if (request.method !== 'GET') return sendJson(response, 405, { error: 'Método no permitido.' });
+    sendJson(response, 200, { configured: Boolean(process.env.GEMINI_API_KEY?.trim()) });
+  };
   const legacyHandler = async (request: IncomingMessage, response: ServerResponse) => {
     if (request.method !== 'POST') return sendJson(response, 405, { error: 'Método no permitido.' });
     try {
@@ -150,11 +156,13 @@ export function atalAIPlugin(): Plugin {
   return {
     name: 'atal-ai-secure-endpoint',
     configureServer(server) {
+      server.middlewares.use('/api/atal-ai/status', statusHandler);
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
       server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
     },
     configurePreviewServer(server) {
+      server.middlewares.use('/api/atal-ai/status', statusHandler);
       server.middlewares.use('/api/atal-ai/analyze', legacyHandler);
       server.middlewares.use('/api/atal-ai/agent-turn-stream', atalAIAgentStreamHandler);
       server.middlewares.use('/api/atal-ai/agent-turn', atalAIAgentHandler);
