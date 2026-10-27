@@ -9,6 +9,12 @@ async function openAI(page) {
   }));
   await page.goto('/assistant');
   await expect(page.getByRole('button', { name: 'Nueva conversación' })).toBeVisible();
+  // The mobile header must be one row, never a second line of overflowed actions.
+  const buttons = await page.locator('.atal-command-header.is-minimal').evaluate(el => {
+    const items = ['.atal-command-back', '.atal-command-new-chat', '.atal-command-menu-trigger'];
+    return items.map(s => el.querySelector(s)?.getBoundingClientRect().top ?? -1);
+  });
+  expect(Math.max(...buttons) - Math.min(...buttons)).toBeLessThan(8);
 }
 
 test('mobile context is a compact searchable palette, not a fullscreen wizard', async ({page}, info) => {
