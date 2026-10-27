@@ -1138,3 +1138,218 @@ html[data-theme="dark"] .atal-command-results a.is-keyboard-selected {
     pointer-events: none !important;
   }
 }
+
+
+/* Phase 3B contextual quick peek — Linear-inspired, read-only, scoped styles. */
+.atal-peek-row,
+.atal-command-peek-row {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 7px;
+}
+.atal-peek-row > .atal-dense-row,
+.atal-peek-row > .atal-plan-row,
+.atal-command-peek-row > a {
+  min-width: 0;
+  width: auto;
+  flex: 1;
+}
+.atal-peek-trigger,
+.atal-command-peek-button {
+  display: inline-flex;
+  width: 39px;
+  min-width: 39px;
+  min-height: 39px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+}
+.atal-peek-trigger svg,
+.atal-command-peek-button svg { width: 18px; height: 18px; }
+.atal-peek-trigger:hover,
+.atal-command-peek-button:hover { color: var(--ink); background: var(--mint); }
+.atal-clinical-peek__backdrop {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(8, 17, 18, .45);
+  backdrop-filter: blur(2px);
+}
+.atal-clinical-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(440px, 100%);
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 21px 24px;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: -18px 0 54px rgba(0, 0, 0, .14);
+}
+.atal-native-sheet .atal-clinical-peek {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+.atal-clinical-peek__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid var(--line);
+}
+.atal-clinical-peek__bar > button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.atal-clinical-peek__bar > button svg { width: 16px; height: 16px; }
+.atal-clinical-peek__bar > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.atal-clinical-peek__identity { display: flex; align-items: center; gap: 14px; padding: 23px 0 20px; }
+.atal-clinical-peek__identity > div { min-width: 0; }
+.atal-clinical-peek__eyebrow {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.atal-clinical-peek__identity h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
+.atal-clinical-peek__status {
+  display: inline-block;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--ink);
+  font-size: 11px;
+}
+.atal-clinical-peek__plan-icon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--green-dark);
+  background: var(--mint);
+}
+.atal-clinical-peek__plan-icon svg { width: 25px; height: 25px; }
+.atal-clinical-peek__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.atal-clinical-peek__facts > div {
+  display: flex;
+  min-width: 0;
+  min-height: 80px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--canvas);
+}
+.atal-clinical-peek__facts small { color: var(--muted); font-size: 11px; }
+.atal-clinical-peek__facts strong { font-size: 13px; font-weight: 640; overflow-wrap: anywhere; }
+.atal-clinical-peek__related {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.atal-clinical-peek__related svg { width: 18px; height: 18px; flex: 0 0 18px; }
+.atal-clinical-peek__related strong { color: var(--ink); }
+.atal-clinical-peek__actions { display: grid; gap: 9px; margin-top: 23px; }
+.atal-clinical-peek__actions button,
+.atal-clinical-peek__missing button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.atal-clinical-peek__actions button.is-primary {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+  color: #fff;
+}
+.atal-clinical-peek__actions button svg { width: 16px; height: 16px; }
+.atal-clinical-peek__missing { padding: 20px 0; color: var(--muted); font-size: 13px; }
+.atal-clinical-peek button:focus-visible,
+.atal-peek-trigger:focus-visible,
+.atal-command-peek-button:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .atal-clinical-peek__backdrop { align-items: flex-end; }
+  .atal-clinical-peek__backdrop .atal-clinical-peek {
+    width: 100%;
+    height: auto;
+    max-height: min(92dvh, 740px);
+    padding: 16px 18px max(20px, env(safe-area-inset-bottom));
+    border: 1px solid var(--line);
+    border-radius: 20px 20px 0 0;
+  }
+  .atal-clinical-peek__identity h2 { font-size: 19px; }
+  .atal-command-peek-row { gap: 4px; }
+  .atal-command-peek-button { width: 37px; min-width: 37px; }
+  .atal-peek-trigger { width: 37px; min-width: 37px; }
+}
