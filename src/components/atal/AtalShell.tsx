@@ -81,6 +81,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   const setLauncherSuppressed = contextualAI.setLauncherSuppressed;
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchOpenerRef = useRef<HTMLElement | null>(null);
   const [isMac, setIsMac] = useState(false);
   const [isEditingField, setIsEditingField] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -124,6 +125,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
       setMenuOpen(false);
       setNotificationsOpen(false);
       setNewOpen(false);
+      searchOpenerRef.current = event.target instanceof HTMLElement ? event.target : null;
       setSearchOpen(true);
     };
     window.addEventListener('keydown', openSearch);
@@ -197,7 +199,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         <header className="atal-mobile-header">
           <AtalLogo />
           <div>
-            <button type="button" aria-label="Buscar en Atal" onClick={() => setSearchOpen(true)} className="atal-icon-button"><Search /></button>
+            <button type="button" aria-label="Buscar en Atal" onClick={(event) => { searchOpenerRef.current = event.currentTarget; setSearchOpen(true); }} className="atal-icon-button"><Search /></button>
             <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" aria-label="Crear nuevo" onClick={openNew} className="atal-new-button"><Plus /></button>
           </div>
@@ -211,7 +213,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
             <div className="atal-desktop-title">{route.title}</div>
           </div>
           <div className="atal-desktop-actions">
-            <button type="button" className="atal-desktop-search" onClick={() => setSearchOpen(true)}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>{isMac ? '⌘ K' : 'Ctrl K'}</kbd></button>
+            <button type="button" className="atal-desktop-search" onClick={(event) => { searchOpenerRef.current = event.currentTarget; setSearchOpen(true); }}><Search /><span>Buscar pacientes, planes, ejercicios...</span><kbd>{isMac ? '⌘ K' : 'Ctrl K'}</kbd></button>
             <button type="button" aria-label={`${unread} notificaciones sin leer`} onClick={() => setNotificationsOpen(true)} className="atal-icon-button atal-notification"><Bell />{unread>0&&<i />}</button>
             <button type="button" onClick={openNew} className="atal-desktop-new"><Plus /> Nuevo</button>
           </div>
@@ -240,7 +242,7 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
         <Link href="/assistant" aria-label="Atal IA" className={isActive('/assistant') ? 'atal-ai-button is-active' : 'atal-ai-button'}><AtalMark /><span className="sr-only">Atal IA</span></Link>
       </div>}
 
-      {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} />}
+      {searchOpen && <SearchPanel onClose={() => setSearchOpen(false)} restoreFocusTo={searchOpenerRef.current} />}
       {notificationsOpen && <NotificationsPanel onClose={() => setNotificationsOpen(false)} onNavigate={(href) => { setNotificationsOpen(false); router.push(href); }} />}
       {newOpen && <NewPanel onClose={() => setNewOpen(false)} onNavigate={(href) => { setNewOpen(false); router.push(href); }} />}
     </div>
@@ -248,10 +250,10 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
   </>;
 }
 
-function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+function PanelFrame({ title, children, onClose, restoreFocusTo }: { title: string; children: ReactNode; onClose: () => void; restoreFocusTo?: HTMLElement | null }) {
   const dialogRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    const returnTo = document.activeElement;
+    const returnTo = restoreFocusTo ?? document.activeElement;
     const dialog = dialogRef.current;
     if (dialog && !dialog.contains(document.activeElement)) {
       dialog.querySelector<HTMLElement>('input[autofocus], button:not([disabled])')?.focus();
@@ -283,7 +285,7 @@ function PanelFrame({ title, children, onClose }: { title: string; children: Rea
 const searchCategories = ['Todos', 'Pacientes', 'Planes', 'Ejercicios', 'Reportes'] as const;
 type SearchCategory = typeof searchCategories[number];
 
-function SearchPanel({ onClose }: { onClose: () => void }) {
+function SearchPanel({ onClose, restoreFocusTo }: { onClose: () => void; restoreFocusTo?: HTMLElement | null }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<SearchCategory>('Todos');
@@ -326,7 +328,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     router.push(href);
   };
 
-  return <PanelFrame title="Buscar en Atal" onClose={onClose}>
+  return <PanelFrame title="Buscar en Atal" onClose={onClose} restoreFocusTo={restoreFocusTo}>
     {peek ? <ClinicalQuickPeek inline target={peek} onClose={closePeek}
       onOpenDetail={() => navigate(peek.href)} /> : <>
     <label className="atal-command-search">
