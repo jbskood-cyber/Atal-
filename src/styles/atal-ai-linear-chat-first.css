@@ -202,3 +202,31 @@
 @media (max-height: 620px) {
   .atal-command-dialog .atal-context-sheet { max-height: 88dvh; }
 }
+
+/* Visual QA 390x844: keep the complete header on exactly one row. */
+.atal-command-page .atal-command-header.is-minimal {
+  grid-template-rows: minmax(44px, auto);
+  height: auto;
+  min-height: 60px;
+}
+.atal-command-page .atal-command-header.is-minimal > .atal-command-back,
+.atal-command-page .atal-command-header.is-minimal > .atal-command-identity,
+.atal-command-page .atal-command-header.is-minimal > .atal-command-new-chat,
+.atal-command-page .atal-command-header.is-minimal > .atal-command-menu-trigger {
+  grid-row: 1;
+  align-self: center;
+}
+.atal-command-page .atal-command-header.is-minimal > .atal-command-back { grid-column: 1; }
+.atal-command-page .atal-command-header.is-minimal > .atal-command-identity { grid-column: 2; }
+.atal-command-page .atal-command-header.is-minimal > .atal-command-new-chat { grid-column: 3; }
+.atal-command-page .atal-command-header.is-minimal > .atal-command-menu-trigger { grid-column: 4; }
+.atal-command-page .atal-command-intro p {
+  padding: 0 !important;
+  margin: 5px 0 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--command-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
