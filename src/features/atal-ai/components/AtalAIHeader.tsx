@@ -16,7 +16,7 @@ export function AtalAIHeader({ contextLabel, hasDraft, onBack, onContext, onSave
   const action = (callback: () => void) => { setOpen(false); callback(); };
   return <header className="atal-command-header is-minimal">
     <button type="button" className="atal-command-back" aria-label="Volver" onClick={onBack}><ArrowLeft /></button>
-    <button type="button" className="atal-command-context is-logo-only" onClick={onContext} aria-label={`Cambiar contexto. ${contextLabel}`}><AtalMark className="atal-command-mark" /><span className="sr-only">Atal IA. {contextLabel}</span></button>
+    <button type="button" className="atal-command-context atal-command-context--discoverable" onClick={onContext} aria-label={`Elegir tarea o paciente. ${contextLabel}`}><AtalMark className="atal-command-mark" /><span className="atal-command-context-visible"><b>Atal IA</b><small>{contextLabel === 'Asistente general' ? 'Sin contexto · Elegir tarea' : 'Cambiar tarea o paciente'}</small></span></button>
     <button ref={triggerRef} type="button" className="atal-command-menu-trigger" aria-label="Acciones de la conversación" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}><Ellipsis /></button>
     {open && <><button type="button" className="atal-command-menu-backdrop" aria-label="Cerrar menú" onClick={() => setOpen(false)} /><div ref={menuRef} className="atal-command-menu" role="menu">
       <button type="button" role="menuitem" onClick={() => action(onSave)}><Save /><span><b>Guardar borrador</b><small>Conservar conversación y cambios</small></span></button>
