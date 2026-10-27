@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Dumbbell,
   Ellipsis,
+  Eye,
   FileDown,
   FileText,
   Home,
@@ -22,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { AtalLogo, AtalMark } from './AtalLogo';
+import { ClinicalQuickPeek, type ClinicalPeekTarget } from './ClinicalQuickPeek';
 import { markAllNotificationsRead,markNotificationRead,useAtalStore } from '@/src/data/atalStore';
 import { ContextualAIProvider, useContextualAI } from '@/src/features/atal-ai/contextual/ContextualAIProvider';
 import { ContextualAIWorkspace } from '@/src/features/atal-ai/contextual/ContextualAIWorkspace';
@@ -257,6 +259,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<SearchCategory>('Todos');
   const [activeIndex, setActiveIndex] = useState(0);
+  const [peek, setPeek] = useState<(ClinicalPeekTarget & { href: string }) | null>(null);
   const state = useAtalStore((store) => store);
   const term = query.trim().toLocaleLowerCase('es-MX');
 
@@ -290,6 +293,8 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   };
 
   return <PanelFrame title="Buscar en Atal" onClose={onClose}>
+    {peek ? <ClinicalQuickPeek inline target={peek} onClose={() => setPeek(null)}
+      onOpenDetail={() => navigate(peek.href)} /> : <>
     <label className="atal-command-search">
       <Search aria-hidden="true" />
       <input autoFocus value={query} onChange={(event) => { setQuery(event.target.value); setActiveIndex(0); }}
@@ -307,15 +312,23 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
     <div className="atal-command-results" aria-live="polite">
       {!term && category === 'Todos' && <p className="atal-command-heading">Ir rápidamente a…</p>}
       {entries.length
-        ? entries.map(({ label, detail, href, icon: Icon }, index) => (
-          <Link key={href} href={href} onClick={onClose} onMouseEnter={() => setActiveIndex(index)}
-            className={index === selected ? 'is-keyboard-selected' : ''}>
-            <span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight />
-          </Link>
+        ? entries.map(({ label, detail, href, icon: Icon, kind }, index) => (
+          <div className="atal-command-peek-row" key={href}>
+            <Link href={href} onClick={onClose} onMouseEnter={() => setActiveIndex(index)}
+              className={index === selected ? 'is-keyboard-selected' : ''}>
+              <span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight />
+            </Link>
+            {(kind === 'Pacientes' || kind === 'Planes') && <button type="button"
+              className="atal-command-peek-button" aria-label={`Vista rápida de ${label}`}
+              onClick={() => setPeek({ kind: kind === 'Pacientes' ? 'patient' : 'plan', id: href.split('/').pop() ?? '', href })}>
+              <Eye aria-hidden="true" />
+            </button>}
+          </div>
         ))
         : <p>{!term ? 'Escribe para buscar en esta categoría.' : 'No encontramos resultados para esta búsqueda.'}</p>}
     </div>
     <div className="atal-command-hint" aria-hidden="true">↑ ↓ Elegir <span>·</span> Enter Abrir <span>·</span> Esc Cerrar</div>
+    </>}
   </PanelFrame>;
 }
 
