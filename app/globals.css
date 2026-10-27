@@ -1353,3 +1353,41 @@ html[data-theme="dark"] .atal-command-results a.is-keyboard-selected {
   .atal-command-peek-button { width: 37px; min-width: 37px; }
   .atal-peek-trigger { width: 37px; min-width: 37px; }
 }
+
+
+/* Phase 3B accessibility: explicit mobile drawer handle and comfortable tap sizes. */
+.atal-clinical-peek__drag-handle { display: none; }
+.atal-clinical-peek__bar > button,
+.atal-clinical-peek__actions button,
+.atal-clinical-peek__missing button,
+.atal-peek-trigger,
+.atal-command-peek-button {
+  min-height: 44px;
+}
+.atal-peek-trigger,
+.atal-command-peek-button { width: 44px; min-width: 44px; }
+.atal-clinical-peek__bar > button { padding: 0 12px; }
+.atal-clinical-peek__bar > button:hover { background: var(--mint); }
+@media (max-width: 600px) {
+  .atal-clinical-peek__drag-handle {
+    display: flex;
+    height: 23px;
+    min-height: 23px;
+    align-items: flex-start;
+    justify-content: center;
+    touch-action: pan-y;
+    margin: -2px -8px 2px;
+  }
+  .atal-clinical-peek__drag-handle span {
+    display: block;
+    width: 42px;
+    height: 5px;
+    margin-top: 4px;
+    border-radius: 99px;
+    background: var(--muted);
+    opacity: .5;
+  }
+  .atal-peek-trigger,
+  .atal-command-peek-button { width: 44px; min-width: 44px; min-height: 44px; }
+  .atal-clinical-peek__actions button { min-height: 46px; }
+}
