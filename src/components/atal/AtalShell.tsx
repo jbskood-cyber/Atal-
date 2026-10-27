@@ -255,8 +255,14 @@ function PanelFrame({ title, children, onClose, restoreFocusTo }: { title: strin
   useEffect(() => {
     const returnTo = restoreFocusTo ?? document.activeElement;
     const dialog = dialogRef.current;
-    if (dialog && !dialog.contains(document.activeElement)) {
-      dialog.querySelector<HTMLElement>('input[autofocus], button:not([disabled])')?.focus();
+    if (dialog) {
+      // Search has always opened ready to type. React's autoFocus may run
+      // before the parent effect; never replace it with the close-button focus.
+      const searchInput = dialog.querySelector<HTMLElement>('.atal-command-search input');
+      if (searchInput) searchInput.focus();
+      else if (!dialog.contains(document.activeElement)) {
+        dialog.querySelector<HTMLElement>('button:not([disabled])')?.focus();
+      }
     }
     const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
