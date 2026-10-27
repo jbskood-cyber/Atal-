@@ -71,3 +71,29 @@ test('provider failure is visible but not a large duplicate warning panel', asyn
   expect(box?.height).toBeLessThan(70);
   expect((await readStore(page)).patients).toEqual(original.patients);
 });
+
+
+test('recovered failed Gemini conversation has one error, not a duplicate connection banner', async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await seedBrowser(page,{state:createState(),theme:'light'});
+  const now=new Date().toISOString();
+  await page.addInitScript(({now})=>{
+    localStorage.setItem('atal:ai-conversations:v1',JSON.stringify([{
+      id:'conversation-offline-demo',draftId:'draft-offline-demo',scope:'global',status:'error',
+      createdAt:now,updatedAt:now,composerText:'',transcription:'',attachmentMetadata:[],
+      privateContact:{phone:'',email:'',address:'',emergencyContact:''},
+      workContext:{intent:'create_patient_plan',patientMode:'new',selectedPatientId:'',selectedPlanId:'',selectedExerciseId:''},
+      messages:[
+        {id:'message-user',role:'user',text:'Hola',attachments:[],createdAt:now},
+        {id:'message-error',role:'assistant',text:'Atal IA no está configurada todavía. Añade GEMINI_API_KEY como secreto del proyecto.',attachments:[],createdAt:now},
+      ],
+    }]));
+  },{now});
+  await page.route('**/api/atal-ai/status',route=>route.fulfill({status:200,contentType:'application/json',body:'{"configured":false}'}));
+  await page.goto('/assistant');
+  await expect(page.locator('.atal-command-message.is-user')).toHaveCount(1);
+  await expect(page.locator('.atal-command-message.is-assistant')).toHaveCount(1);
+  await expect(page.getByRole('status',{name:'Estado de conexión de Atal IA'})).toHaveCount(0);
+  await expect(page.getByRole('button',{name:'Nueva conversación'})).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);
+});
