@@ -817,7 +817,7 @@ export function AtalAIGeneralScreen() {
 
     <section className="atal-command-thread" aria-live="polite">
       {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><h1>¿Qué necesitas hacer hoy?</h1><p>Escribe una solicitud o empieza con una acción rápida. El contexto se elige solo cuando haga falta.</p></div></article>}
-      {providerStatus === 'unconfigured' && <aside className="atal-ai-provider-status" role="status" aria-label="Estado de conexión de Atal IA">
+      {providerStatus === 'unconfigured' && !conversation.messages.length && <aside className="atal-ai-provider-status" role="status" aria-label="Estado de conexión de Atal IA">
         <AlertTriangle aria-hidden="true" />
         <div><strong>Gemini aún no está conectado</strong><p>Puedes explorar Atal y preparar mensajes. Para recibir respuestas de IA hace falta configurar la clave en el servidor; no la escribas aquí.</p></div>
       </aside>}
