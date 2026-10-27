@@ -1,0 +1,204 @@
+/* ATAL IA: conversation-first mobile workspace. Derived from documented Linear UX
+   patterns (progressive disclosure, compact command palette), not Linear source. */
+.atal-command-page .atal-command-header.is-minimal {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 42px 42px;
+  gap: 6px;
+  min-height: 64px;
+  padding: 7px 12px;
+}
+.atal-command-identity {
+  display: flex;
+  grid-column: 2;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.atal-command-identity .atal-command-mark { flex: 0 0 30px; width: 30px; height: 30px; }
+.atal-command-identity > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.atal-command-identity b { font-size: 14px; letter-spacing: -.025em; line-height: 1.25; }
+.atal-command-context-shortcut {
+  display: block;
+  width: 100%;
+  max-width: min(188px, 40vw);
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--command-muted);
+  font-size: 10px !important;
+  line-height: 1.25;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.atal-command-context-shortcut:hover { color: var(--green-dark); text-decoration: underline; }
+.atal-command-new-chat {
+  display: grid;
+  grid-column: 3;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ink);
+}
+.atal-command-new-chat svg { width: 20px; height: 20px; }
+.atal-command-new-chat:hover { background: var(--mint); }
+.atal-command-page .atal-command-menu-trigger { grid-column: 4; width: 42px; height: 42px; }
+.atal-command-page .atal-command-header .atal-command-back { grid-column: 1; width: 42px; height: 42px; }
+/* A light command menu should not cover half the conversation. */
+.atal-command-page .atal-command-menu {
+  top: calc(100% - 3px);
+  width: min(286px, calc(100vw - 24px));
+  padding: 5px;
+  border-radius: 14px;
+  gap: 1px;
+  box-shadow: 0 12px 40px rgba(8, 23, 21, .13);
+}
+.atal-command-page .atal-command-menu > button:not(.atal-command-menu-close) {
+  display: flex;
+  min-height: 43px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+}
+.atal-command-page .atal-command-menu > button > svg { flex: 0 0 18px; width: 18px; height: 18px; }
+.atal-command-page .atal-command-menu b { font-size: 12px; font-weight: 600; }
+.atal-command-page .atal-command-menu small { display: none; }
+.atal-command-page .atal-command-menu > button.is-danger { border-top: 1px solid var(--command-border); border-radius: 0 0 9px 9px; }
+/* Replace wizard-like task selection with a small searchable command palette. */
+.atal-command-dialog { padding: 0 10px max(8px, env(safe-area-inset-bottom)); backdrop-filter: blur(3px); background: rgba(9, 20, 17, .24); }
+.atal-command-dialog .atal-context-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  max-height: min(78dvh, 650px);
+  overflow-y: auto;
+  border-radius: 17px 17px 12px 12px;
+  box-shadow: 0 12px 48px rgba(10, 27, 19, .2);
+}
+.atal-context-sheet > header { min-height: 54px; padding: 8px 13px; flex: 0 0 auto; }
+.atal-context-sheet header small { display: none; }
+.atal-context-sheet h2 { font-size: 16px; font-weight: 680; }
+.atal-context-sheet header button { width: 38px; height: 38px; border-radius: 10px; }
+.atal-context-sheet .atal-context-guide { margin: 9px 13px 5px; font-size: 11px; line-height: 1.4; }
+.atal-context-action-search {
+  display: flex;
+  min-height: 43px;
+  align-items: center;
+  gap: 9px;
+  margin: 6px 12px 7px;
+  padding: 0 11px;
+  border: 1px solid var(--command-border);
+  border-radius: 10px;
+  background: var(--command-canvas);
+  color: var(--command-muted);
+}
+.atal-context-action-search > svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.atal-context-action-search input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px !important;
+}
+.atal-context-sheet .atal-context-shortcuts-title { margin: 6px 13px 1px; font-size: 11px; color: var(--command-muted); }
+.atal-context-sheet .atal-context-actions,
+.atal-context-sheet .atal-context-actions--secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  max-height: none;
+  overflow: visible;
+  padding: 7px 11px;
+}
+.atal-context-sheet .atal-context-actions button {
+  display: flex;
+  min-width: 0;
+  min-height: 47px;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: var(--command-surface);
+}
+.atal-context-sheet .atal-context-actions button > span {
+  width: 25px;
+  height: 25px;
+  flex: 0 0 25px;
+  border-radius: 7px;
+  background: var(--mint);
+}
+.atal-context-sheet .atal-context-actions button > span svg { width: 15px; height: 15px; }
+.atal-context-sheet .atal-context-actions button b {
+  min-width: 0;
+  flex: 1;
+  font-size: 10.5px;
+  font-weight: 630;
+  overflow-wrap: anywhere;
+}
+.atal-context-sheet .atal-context-actions button > svg { width: 13px; height: 13px; flex: 0 0 13px; }
+.atal-context-sheet .atal-context-actions button.is-selected { border-color: color-mix(in srgb, var(--green-dark) 35%, var(--command-border)); background: var(--mint); }
+.atal-context-sheet .atal-context-expand-actions {
+  width: calc(100% - 24px);
+  min-height: 36px;
+  margin: 1px 12px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--command-muted);
+  background: transparent;
+}
+.atal-context-sheet .atal-context-entity { padding: 5px 12px 8px; }
+.atal-context-sheet .atal-context-done {
+  position: sticky;
+  bottom: 0;
+  width: calc(100% - 24px);
+  flex: 0 0 auto;
+  min-height: 43px;
+  margin: 2px 12px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.atal-context-sheet .atal-context-actions--secondary { border-top: 1px solid var(--command-border); }
+/* Keep connection problems visible but stop repeating a massive error panel. */
+.atal-command-thread .atal-ai-provider-status {
+  width: min(100%, 720px);
+  min-height: 0;
+  align-items: center;
+  margin: 3px auto 13px;
+  padding: 8px 11px;
+  border: 1px solid var(--command-border);
+  border-left: 3px solid #b8985d;
+  border-radius: 9px;
+  background: var(--command-surface);
+  box-shadow: none;
+}
+.atal-command-thread .atal-ai-provider-status svg { width: 15px; height: 15px; }
+.atal-command-thread .atal-ai-provider-status strong { font-size: 11px; font-weight: 650; }
+.atal-command-thread .atal-ai-provider-status p { display: none; }
+/* Context is a tool, not a prerequisite to messaging. */
+.atal-command-intro { margin-top: auto; }
+.atal-command-intro p { background: transparent; padding: 4px 0; font-size: 12px; color: var(--command-muted); }
+.atal-command-intro h1 { font-size: clamp(20px, 5vw, 27px); }
+.atal-ai-attachment-menu > button { min-height: 49px; }
+.atal-ai-attachment-menu > button div { display: flex; min-width: 0; align-items: center; gap: 5px; }
+.atal-ai-attachment-menu > button b { display: block; flex: 0 1 auto; font-size: 12px; white-space: nowrap; }
+.atal-ai-attachment-menu > button small { display: none !important; }
+@media (max-width: 420px) {
+  .atal-command-page .atal-command-header.is-minimal { grid-template-columns: 41px minmax(0, 1fr) 40px 40px; gap: 3px; padding-inline: 9px; }
+  .atal-command-identity { gap: 5px; }
+  .atal-command-identity .atal-command-mark { width: 27px; height: 27px; flex-basis: 27px; }
+  .atal-context-sheet .atal-context-actions { gap: 5px; }
+}
+@media (max-height: 620px) {
+  .atal-command-dialog .atal-context-sheet { max-height: 88dvh; }
+}
