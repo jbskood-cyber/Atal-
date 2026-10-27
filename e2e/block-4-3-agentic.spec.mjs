@@ -17,7 +17,7 @@ async function openAssistant(page) {
     localStorage.setItem('atal:theme', 'light');
   }, createState());
   await page.goto('/assistant');
-  await expect(page.getByRole('heading', { name: '¿Qué necesitas resolver?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿Qué necesitas hacer hoy?' })).toBeVisible();
 }
 
 function modelContent(id, bridge) {
