@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, Plus } from 'lucide-react';
 import { AtalShell } from '@/src/components/atal/AtalShell';
 import { Avatar } from '@/src/components/atal/Avatar';
 import { SearchBar } from '@/src/components/atal/SearchBar';
+import { ClinicalQuickPeek } from '@/src/components/atal/ClinicalQuickPeek';
 import { useDirectoryView } from '@/src/hooks/useDirectoryView';
 import { statusColor, usePatientCatalog, type PatientStatus } from '@/src/data/localPatients';
 
@@ -24,6 +25,9 @@ function isPatientDirectoryView(value: unknown): value is PatientDirectoryView {
 
 export function PatientsScreen() {
   const router = useRouter();
+  const [peekId, setPeekId] = useState<string | null>(null);
+  const peekTrigger = useRef<HTMLButtonElement | null>(null);
+  const closePeek = () => { setPeekId(null); window.requestAnimationFrame(() => peekTrigger.current?.focus()); };
   const { view, setView, rememberDeparture } = useDirectoryView('patients', DEFAULT_VIEW, isPatientDirectoryView);
   const patientCatalog = usePatientCatalog();
   const { query, filter, ascending } = view;
@@ -67,12 +71,18 @@ export function PatientsScreen() {
         </div>
         <div className="atal-dense-list">
           {visible.map((patient) => (
-            <button key={patient.id} type="button" className="atal-dense-row" onClick={() => openPatient(patient.id)}>
-              <Avatar name={patient.name} />
-              <span><b>{patient.name}</b><small>{patient.diagnosis}</small><small>{patient.progress}% del plan completado</small></span>
-              <i aria-hidden="true" style={{ background: statusColor[patient.status] }} />
-              <ChevronRight size={20} aria-hidden="true" />
-            </button>
+            <div key={patient.id} className="atal-peek-row">
+              <button type="button" className="atal-dense-row" onClick={() => openPatient(patient.id)}>
+                <Avatar name={patient.name} />
+                <span><b>{patient.name}</b><small>{patient.diagnosis}</small><small>{patient.progress}% del plan completado</small></span>
+                <i aria-hidden="true" style={{ background: statusColor[patient.status] }} />
+                <ChevronRight size={20} aria-hidden="true" />
+              </button>
+              <button type="button" className="atal-peek-trigger" aria-label={`Vista rápida de ${patient.name}`}
+                onClick={(event) => { peekTrigger.current = event.currentTarget; setPeekId(patient.id); }}>
+                <Eye aria-hidden="true" />
+              </button>
+            </div>
           ))}
         </div>
         {!visible.length && (
@@ -85,6 +95,8 @@ export function PatientsScreen() {
           </div>
         )}
       </main>
+      {peekId && <ClinicalQuickPeek target={{ kind: 'patient', id: peekId }}
+        onClose={closePeek} onOpenDetail={() => openPatient(peekId)} />}
     </AtalShell>
   );
 }
