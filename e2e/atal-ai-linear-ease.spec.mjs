@@ -29,7 +29,7 @@ test('shortcuts navigate directly or fill a prompt without sending or editing cl
   const original=await openAssistant(page);
   await page.getByRole('button',{name:/Preparar un plan/}).click();
   const composer=page.getByLabel('Mensaje para Atal IA');
-  await expect(composer).toContainText('preparar un plan de tratamiento');
+  await expect(composer).toHaveValue(/preparar un plan de tratamiento/);
   await expect(composer).toBeFocused();
   await expect(page.locator('.atal-command-message.is-user')).toHaveCount(0);
   expect((await readStore(page)).patients).toEqual(original.patients);
