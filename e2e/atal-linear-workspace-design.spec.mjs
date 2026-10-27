@@ -24,7 +24,7 @@ test('desktop shell groups clinical navigation and reflects the active workspace
   await expect(page).toHaveURL(/\/assistant$/);
   // The full-screen agent may preserve the clinical page under its workspace
   // overlay, so its background header is not the active screen's title.
-  await expect(page.getByRole('heading', { name: '¿Qué necesitas resolver?' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿Qué necesitas hacer hoy?' })).toBeVisible();
 });
 
 test('nested clinic routes show breadcrumb context and return to their parent', async ({ page }) => {
