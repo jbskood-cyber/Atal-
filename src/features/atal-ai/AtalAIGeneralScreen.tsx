@@ -33,6 +33,7 @@ import { AudioRecorder } from './components/AudioRecorder';
 import { ConversationalDraftCard } from './components/ConversationalDraftCard';
 import { AssistantMessageContent } from './components/AssistantMessageContent';
 import { SuggestionBar } from './components/SuggestionBar';
+import { AIQuickStarts } from './components/AIQuickStarts';
 import type { AIAttachmentPayload, AIConversation, AIMessage, AtalAIDraft, AtalAIAnalyzeRequest, AIWorkContext } from './types';
 
 const MAX_FILES = 8;
@@ -126,6 +127,7 @@ export function AtalAIGeneralScreen() {
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [audioOpen, setAudioOpen] = useState(false);
   const [contextOpen, setContextOpen] = useState(false);
+  const [providerStatus, setProviderStatus] = useState<'checking' | 'configured' | 'unconfigured' | 'unknown'>('checking');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [dialog, setDialog] = useState<'discard' | 'restart' | 'legacy-confirmation' | 'agent-confirmation' | null>(null);
   const [legacyConfirmation, setLegacyConfirmation] = useState<{ decision: PolicyDecision; invocation: ToolInvocation } | null>(null);
@@ -170,6 +172,20 @@ export function AtalAIGeneralScreen() {
       saveAIConversation(next);
       return next;
     });
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/atal-ai/status', { signal: controller.signal, cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error('Status endpoint unavailable');
+        return response.json() as Promise<{ configured?: boolean }>;
+      })
+      .then((result) => setProviderStatus(result.configured === true ? 'configured' : 'unconfigured'))
+      .catch(() => {
+        if (!controller.signal.aborted) setProviderStatus('unknown');
+      });
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -800,7 +816,15 @@ export function AtalAIGeneralScreen() {
     />
 
     <section className="atal-command-thread" aria-live="polite">
-      {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><h1>¿Qué necesitas resolver?</h1><p>Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.</p></div></article>}
+      {!conversation.messages.length && <article className="atal-command-intro"><AtalMark /><div><b>Atal IA</b><h1>¿Qué necesitas hacer hoy?</h1><p>Escribe una solicitud o empieza con una acción rápida. El contexto se elige solo cuando haga falta.</p></div></article>}
+      {providerStatus === 'unconfigured' && !conversation.messages.length && <aside className="atal-ai-provider-status" role="status" aria-label="Estado de conexión de Atal IA">
+        <AlertTriangle aria-hidden="true" />
+        <div><strong>Gemini aún no está conectado</strong><p>Puedes explorar Atal y preparar mensajes. Para recibir respuestas de IA hace falta configurar la clave en el servidor; no la escribas aquí.</p></div>
+      </aside>}
+      {!conversation.messages.length && !draft && <AIQuickStarts onNavigate={navigate} onPrompt={(prompt) => {
+        setText(prompt);
+        window.requestAnimationFrame(() => composerRef.current?.focus());
+      }} />}
       {conversation.messages.map((item) => <article key={item.id} className={`atal-command-message is-${item.role}`}>
         <span>{item.role === 'assistant' ? <AtalMark /> : <UserRound />}</span>
         <div><header><b>{item.role === 'assistant' ? 'Atal IA' : 'Tú'}</b><time>{new Date(item.createdAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</time></header>{item.role === 'assistant' ? <AssistantMessageContent text={item.text} /> : <p>{item.text}</p>}{item.attachments.length > 0 && <div className="atal-command-message-files">{item.attachments.map((file) => <small key={file.id}><Paperclip />{file.name}</small>)}</div>}</div>

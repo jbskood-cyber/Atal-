@@ -27,6 +27,18 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
     settings: store.settings,
   }));
   const [tab, setTab] = useState<Tab>('summary');
+  // Return to the same section after reading a session or plan. This stores
+  // only the section identifier, never the clinical notes or patient record.
+  const tabKey = `atal:patient-profile-tab:v1:${patientId}`;
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = window.sessionStorage.getItem(tabKey); } catch {}
+    setTab(saved === 'summary' || saved === 'history' || saved === 'notes' || saved === 'metrics' ? saved : 'summary');
+  }, [tabKey]);
+  const changeTab = (next: Tab) => {
+    setTab(next);
+    try { window.sessionStorage.setItem(tabKey, next); } catch {}
+  };
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: patient?.name ?? '', diagnosis: patient?.diagnosis ?? '', age: patient?.age?.toString() ?? '', birthDate: patient?.birthDate ?? '', sex: patient?.sex ?? '', affectedArea: patient?.affectedArea ?? '',
@@ -91,9 +103,9 @@ export function PatientProfileScreen({ patientId }: { patientId: string }) {
   const recentSessions = [...state.sessions].sort((a, b) => b.completedAt.localeCompare(a.completedAt)).slice(0, 3);
 
   return <AtalShell onNew={archived ? undefined : () => router.push(`/plans/new?patientId=${patient.id}`)}><main className="atal-content atal-flow-page atal-patient-profile">
-    <div className="atal-flow-topbar"><button type="button" onClick={() => router.push('/patients')}><ArrowLeft /></button><span>Expediente del paciente</span><button type="button" onClick={toggleArchive} aria-label={archived ? 'Restaurar paciente' : 'Archivar paciente'}>{archived ? <RotateCcw /> : <Archive />}</button></div>
+    <div className="atal-flow-topbar"><button type="button" aria-label="Volver a pacientes" onClick={() => router.push('/patients')}><ArrowLeft /></button><span>Expediente del paciente</span><button type="button" onClick={toggleArchive} aria-label={archived ? 'Restaurar paciente' : 'Archivar paciente'}>{archived ? <RotateCcw /> : <Archive />}</button></div>
     <section className="atal-profile-hero"><Avatar name={patient.name} size="lg" /><div><h1>{patient.name}</h1><p>{patient.age !== null ? `${patient.age} años · ` : ''}{archived ? 'Archivado' : patient.status === 'attention' ? 'Requiere atención' : 'Paciente activo'}</p><small>ID: {patient.id.toUpperCase()}</small></div></section>
-    <nav className="atal-tabbar">{([['summary', 'Resumen'], ['history', 'Historial'], ['notes', 'Notas'], ['metrics', 'Métricas']] as const).map(([value, label]) => <button type="button" key={value} className={tab === value ? 'is-active' : ''} onClick={() => setTab(value)}>{label}</button>)}</nav>
+    <nav className="atal-tabbar" aria-label="Secciones del expediente">{([['summary', 'Resumen'], ['history', 'Historial'], ['notes', 'Notas'], ['metrics', 'Métricas']] as const).map(([value, label]) => <button type="button" key={value} aria-pressed={tab === value} className={tab === value ? 'is-active' : ''} onClick={() => changeTab(value)}>{label}</button>)}</nav>
     {message && <p className="atal-action-message" role="status">{message}</p>}
     {tab === 'summary' && <div className="atal-profile-body">
       <button type="button" disabled={archived} className="atal-patient-preview-cta" onClick={() => router.push(`/patients/${patient.id}/portal-preview`)}><Eye /><span><b>Vista del paciente</b><small>{archived ? 'Restaura al paciente para abrir su plan' : activePlan ? 'Consulta su plan activo y sesión guiada' : 'No tiene un plan activo'}</small></span><ChevronRight /></button>

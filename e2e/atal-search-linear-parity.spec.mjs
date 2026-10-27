@@ -6,12 +6,22 @@ test('global search shortcut opens and closes the filtered dialog', async ({ pag
   await page.goto('/');
   await expect(page.locator('.atal-desktop-search kbd')).toHaveText('Ctrl K');
 
-  await page.keyboard.press('Control+k');
+  // A genuine click demonstrates that React has hydrated before the
+  // keyboard shortcut is exercised (CI startup can otherwise race it).
+  await page.locator('.atal-desktop-search').click();
   const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await page.keyboard.press('Control+k');
   await expect(dialog).toBeVisible();
   const input = dialog.getByRole('textbox', { name: 'Buscar pacientes, planes, ejercicios y reportes' });
   await expect(input).toBeFocused();
-  await expect(dialog.getByText('Busca un paciente, plan, ejercicio o reporte.')).toBeVisible();
+  // Like Linear's command menu, the empty query now offers useful destinations
+  // immediately, without requiring the user to type a clinical identifier.
+  await expect(dialog.getByText('Ir rápidamente a…')).toBeVisible();
+  await expect(dialog.locator('a[href="/patients"]')).toBeVisible();
+  await expect(dialog.locator('a[href="/plans"]')).toBeVisible();
   await expect(dialog.getByText(/No encontramos resultados/)).toHaveCount(0);
 
   await input.fill('Paciente E2E');
@@ -43,8 +53,11 @@ test('global search keeps the existing entity links and returns to the selected 
 test('Enter opens the first matching result and does not interfere with editing fields', async ({ page }) => {
   await seedBrowser(page, { state: createState() });
   await page.goto('/');
+  // Route hydration installs the global keyboard listener.
+  await expect(page.locator('.atal-desktop-search')).toBeVisible();
   await page.keyboard.press('Control+k');
   const dialog = page.getByRole('dialog', { name: 'Buscar en Atal' });
+  await expect(dialog).toBeVisible();
   await dialog.getByRole('textbox').fill('Movilidad asistida E2E');
   await dialog.getByRole('textbox').press('Enter');
   await expect(page).toHaveURL(/\/exercises\/exercise-e2e$/);

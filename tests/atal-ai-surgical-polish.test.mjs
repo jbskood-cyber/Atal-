@@ -91,9 +91,10 @@ test('uses stable official Atal controls without emerald pulse or glow', () => {
 test('uses a compact attachment popover without redundant heading copy', () => {
   assert.doesNotMatch(attachmentMenu, /Agregar información/i);
   assert.doesNotMatch(attachmentMenu, /Adjuntar a Atal IA/);
-  for (const action of ['Cámara', 'Fotos', 'Archivo', 'Escanear archivo']) {
+  for (const action of ['Cámara', 'Fotos', 'Archivo']) {
     assert.match(attachmentMenu, new RegExp(action));
   }
+  assert.doesNotMatch(attachmentMenu, /Escanear archivo/);
   assert.match(css, /\.atal-ai-attachment-menu[^}]*width:\s*min\(280px/s);
   assert.match(css, /\.atal-ai-attachment-backdrop[^}]*backdrop-filter:\s*none/s);
 });

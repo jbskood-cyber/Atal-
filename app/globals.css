@@ -739,3 +739,655 @@ html[data-theme="dark"] .atal-settings-row > i.is-on em { background: #0d0d0f; }
 
 /* Route feedback stays subtle; navigation itself is immediate. */
 .atal-route-content .atal-content { animation-duration: .16s; }
+
+
+/* Phase 3A — Atal workspace hierarchy: compact, contextual and keyboard-accessible.
+   Inspired by observed Linear navigation patterns, not a copy of Linear's visual assets. */
+@media (min-width: 1024px) {
+  .atal-sidebar {
+    width: 226px;
+    padding: 24px 12px 16px;
+    background: var(--surface);
+  }
+  .atal-sidebar .atal-logo { padding-left: 10px; transform: scale(.77); }
+  .atal-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 21px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .atal-sidebar__section-label {
+    margin: 17px 9px 6px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .075em;
+    line-height: 1.5;
+    text-transform: uppercase;
+  }
+  .atal-sidebar__section-label:first-child { margin-top: 0; }
+  .atal-sidebar__nav a {
+    position: relative;
+    min-height: 37px;
+    flex-shrink: 0;
+    gap: 11px;
+    padding: 0 11px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 550;
+    transition: background-color 140ms ease, color 140ms ease;
+  }
+  .atal-sidebar__nav a > svg { width: 17px; height: 17px; flex-shrink: 0; stroke-width: 1.8; }
+  .atal-sidebar__nav a:hover { color: var(--ink); background: var(--canvas); }
+  .atal-sidebar__nav a.is-active { color: var(--ink); background: var(--mint); font-weight: 670; }
+  .atal-sidebar__nav a.is-active::before {
+    position: absolute;
+    inset: 8px auto 8px 0;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--green-dark);
+    content: '';
+  }
+  .atal-sidebar__nav a:focus-visible,
+  .atal-desktop-overline a:focus-visible,
+  .atal-desktop-search:focus-visible {
+    outline: 2px solid var(--green-dark);
+    outline-offset: 2px;
+  }
+  .atal-sidebar__profile {
+    gap: 8px;
+    min-width: 0;
+    margin-top: auto;
+    padding: 11px 8px;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+  }
+  .atal-workspace { margin-left: 226px; min-width: 0; }
+  .atal-desktop-header {
+    height: 72px;
+    gap: 18px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .atal-desktop-context { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+  .atal-desktop-overline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 14px;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 550;
+  }
+  .atal-desktop-overline a { color: inherit; text-decoration: none; }
+  .atal-desktop-overline a:hover { color: var(--ink); text-decoration: underline; }
+  .atal-desktop-overline svg { width: 11px; height: 11px; }
+  .atal-desktop-title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 690;
+    letter-spacing: -.025em;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .atal-desktop-actions { height: 36px; gap: 8px; }
+  .atal-desktop-actions::before { display: none; }
+  .atal-desktop-search {
+    display: inline-flex;
+    width: clamp(180px, 23vw, 340px);
+    min-width: 0;
+    height: 36px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    color: var(--muted);
+    background: var(--canvas);
+    text-align: left;
+  }
+  .atal-desktop-search > span {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .atal-desktop-search > svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .atal-desktop-actions kbd {
+    margin-left: 0;
+    padding: 3px 5px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--muted);
+    background: var(--surface);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .atal-desktop-actions .atal-notification { margin-left: 0; }
+  .atal-desktop-new { min-width: 84px; height: 36px; border-radius: 8px; font-size: 12px; }
+  .atal-content { padding-right: 24px; padding-left: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atal-sidebar__nav a { transition: none; }
+}
+html[data-theme="dark"] .atal-sidebar,
+html[data-theme="dark"] .atal-desktop-header {
+  color: var(--ink);
+  background: var(--surface);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .atal-sidebar__nav a { color: var(--muted); }
+html[data-theme="dark"] .atal-sidebar__nav a:hover { color: var(--ink); background: #1d1d21; }
+html[data-theme="dark"] .atal-sidebar__nav a.is-active { color: var(--ink); background: var(--mint); }
+html[data-theme="dark"] .atal-desktop-search { border-color: var(--line); color: var(--muted); background: #19191c; }
+html[data-theme="dark"] .atal-desktop-actions kbd { color: var(--muted); background: #242428; }
+
+
+/* Phase 3A visual QA: legacy list metadata had a light-only hard-coded text color.
+   Restore readable metadata contrast against Graphite Clinical dark surfaces. */
+html[data-theme="dark"] .atal-list-meta { color: var(--muted); }
+@media (max-width: 767px) {
+  .atal-patient-directory .atal-list-meta { font-size: 11px; }
+}
+
+/* Phase 3B — patient/plan directory continuity (original Atal components). */
+.atal-patient-filters { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.atal-directory-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 42px 16px;
+}
+.atal-directory-empty strong { color: var(--ink); font-size: 14px; }
+.atal-directory-empty p { margin: 0; max-width: 38ch; line-height: 1.5; font-size: 12px; }
+.atal-directory-empty button {
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.atal-directory-empty button:focus-visible { outline: 2px solid var(--green-dark); outline-offset: 3px; }
+.atal-directory-empty button:hover { background: var(--mint); }
+html[data-theme="dark"] .atal-segments button { color: var(--muted); background: #19191c; border-color: var(--line); }
+html[data-theme="dark"] .atal-segments button.is-active { color: var(--ink); background: var(--mint); }
+html[data-theme="dark"] .atal-plan-segments b { color: var(--ink); background: #2a2a2e; }
+@media (max-width: 540px) {
+  .atal-patient-filters { gap: 4px; }
+  .atal-patient-filters button { padding: 0 3px; font-size: 10px; }
+  .atal-directory-empty { padding: 30px 10px; }
+}
+
+
+/* Phase 3B screenshot QA: show every plan state without clipped tab labels.
+   Desktop uses a compact 5-column matrix; small screens wrap into two columns. */
+.atal-plan-directory .atal-plan-segments {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+  max-width: 940px;
+  overflow: visible;
+  gap: 8px;
+}
+.atal-plan-directory .atal-plan-segments button {
+  min-width: 0;
+  min-height: 40px;
+  gap: 5px;
+  padding: 0 8px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+@media (max-width: 720px) {
+  .atal-plan-directory .atal-plan-segments {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .atal-plan-directory .atal-plan-segments button {
+    justify-content: space-between;
+    min-height: 35px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 540px) {
+  .atal-patient-directory .atal-patient-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .atal-patient-directory .atal-patient-filters button {
+    min-width: 0;
+    gap: 3px;
+    padding: 0 3px;
+    white-space: nowrap;
+    font-size: 9px;
+  }
+  .atal-patient-directory .atal-patient-filters button i {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 6px;
+  }
+}
+
+
+/* Phase 3B layout override. Legacy atal-surgical-qa.css forces a single
+   horizontal scroller with !important; use a scoped, higher-specificity grid
+   so none of the five plan statuses disappears on narrow screens. */
+.atal-plan-directory .atal-segments.atal-plan-segments {
+  display: grid !important;
+  grid-auto-flow: row !important;
+  grid-auto-columns: auto !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  overflow-x: visible !important;
+}
+.atal-plan-directory .atal-segments.atal-plan-segments > button {
+  min-width: 0 !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+}
+@media (max-width: 720px) {
+  .atal-plan-directory .atal-segments.atal-plan-segments {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .atal-plan-directory .atal-segments.atal-plan-segments > button {
+    padding: 0 12px !important;
+    font-size: 11px !important;
+  }
+}
+@media (max-width: 540px) {
+  .atal-patient-directory .atal-segments.atal-patient-filters > button {
+    font-size: 9px !important;
+  }
+}
+
+
+/* Phase 3B-2 — contextual clinic navigation and activity return states.
+   Scope to the patient profile, timeline and report; no clinical store edits. */
+.atal-activity-scope {
+  display: flex;
+  max-width: 900px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px 15px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+}
+.atal-activity-scope > span { flex: 1; min-width: 170px; }
+.atal-activity-scope strong { color: var(--ink); }
+.atal-activity-scope button,
+.atal-report-quicklinks button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 580;
+  cursor: pointer;
+}
+.atal-activity-scope button:hover,
+.atal-report-quicklinks button:hover { background: var(--mint); }
+.atal-activity-scope button svg,
+.atal-report-quicklinks button svg { width: 14px; height: 14px; }
+.atal-activity-empty {
+  display: flex;
+  max-width: 900px;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 44px 18px;
+}
+.atal-activity-empty strong { color: var(--ink); font-size: 14px; }
+.atal-activity-empty p { max-width: 48ch; margin: 0; line-height: 1.5; font-size: 12px; }
+.atal-activity-empty button {
+  min-height: 36px;
+  margin-top: 5px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.atal-report-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+.atal-report-quicklinks button { min-height: 37px; }
+.atal-activity-page .atal-view-switch button:focus-visible,
+.atal-activity-page .atal-premium-search button:focus-visible,
+.atal-activity-scope button:focus-visible,
+.atal-activity-empty button:focus-visible,
+.atal-report-quicklinks button:focus-visible,
+.atal-patient-profile .atal-tabbar > button:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 3px;
+}
+@media (max-width: 540px) {
+  .atal-activity-scope { gap: 7px; padding: 10px; }
+  .atal-activity-scope > span { flex-basis: 100%; }
+  .atal-activity-scope button { font-size: 11px; }
+  .atal-report-quicklinks { display: grid; grid-template-columns: 1fr; }
+  .atal-report-quicklinks button { justify-content: center; }
+}
+
+/* Phase 3C-lite: Linear-inspired command navigation and mobile editor ergonomics. */
+.atal-command-results .atal-command-heading {
+  margin: 4px 9px 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.atal-command-results a.is-keyboard-selected {
+  color: var(--ink);
+  background: var(--mint);
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
+}
+.atal-command-results a:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 2px;
+}
+.atal-command-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 14px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+html[data-theme="dark"] .atal-command-results a.is-keyboard-selected {
+  background: #252c29;
+  outline-color: #3f554a;
+}
+@media (max-width: 1023px) {
+  /* Hide the dock only while a real editable control has focus.
+     Prevents covering the clinical observation editor when the soft keyboard is up. */
+  .atal-mobile-dock.is-editing {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+
+/* Phase 3B contextual quick peek — Linear-inspired, read-only, scoped styles. */
+.atal-peek-row,
+.atal-command-peek-row {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 7px;
+}
+.atal-peek-row > .atal-dense-row,
+.atal-peek-row > .atal-plan-row,
+.atal-command-peek-row > a {
+  min-width: 0;
+  width: auto;
+  flex: 1;
+}
+.atal-peek-trigger,
+.atal-command-peek-button {
+  display: inline-flex;
+  width: 39px;
+  min-width: 39px;
+  min-height: 39px;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  background: var(--surface);
+  cursor: pointer;
+}
+.atal-peek-trigger svg,
+.atal-command-peek-button svg { width: 18px; height: 18px; }
+.atal-peek-trigger:hover,
+.atal-command-peek-button:hover { color: var(--ink); background: var(--mint); }
+.atal-clinical-peek__backdrop {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(8, 17, 18, .45);
+  backdrop-filter: blur(2px);
+}
+.atal-clinical-peek {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(440px, 100%);
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 21px 24px;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: -18px 0 54px rgba(0, 0, 0, .14);
+}
+.atal-native-sheet .atal-clinical-peek {
+  width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+.atal-clinical-peek__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding-bottom: 17px;
+  border-bottom: 1px solid var(--line);
+}
+.atal-clinical-peek__bar > button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  cursor: pointer;
+}
+.atal-clinical-peek__bar > button svg { width: 16px; height: 16px; }
+.atal-clinical-peek__bar > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.atal-clinical-peek__identity { display: flex; align-items: center; gap: 14px; padding: 23px 0 20px; }
+.atal-clinical-peek__identity > div { min-width: 0; }
+.atal-clinical-peek__eyebrow {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.atal-clinical-peek__identity h2 {
+  margin: 0 0 8px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
+.atal-clinical-peek__status {
+  display: inline-block;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--ink);
+  font-size: 11px;
+}
+.atal-clinical-peek__plan-icon {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--green-dark);
+  background: var(--mint);
+}
+.atal-clinical-peek__plan-icon svg { width: 25px; height: 25px; }
+.atal-clinical-peek__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.atal-clinical-peek__facts > div {
+  display: flex;
+  min-width: 0;
+  min-height: 80px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--canvas);
+}
+.atal-clinical-peek__facts small { color: var(--muted); font-size: 11px; }
+.atal-clinical-peek__facts strong { font-size: 13px; font-weight: 640; overflow-wrap: anywhere; }
+.atal-clinical-peek__related {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.atal-clinical-peek__related svg { width: 18px; height: 18px; flex: 0 0 18px; }
+.atal-clinical-peek__related strong { color: var(--ink); }
+.atal-clinical-peek__actions { display: grid; gap: 9px; margin-top: 23px; }
+.atal-clinical-peek__actions button,
+.atal-clinical-peek__missing button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.atal-clinical-peek__actions button.is-primary {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+  color: #fff;
+}
+.atal-clinical-peek__actions button svg { width: 16px; height: 16px; }
+.atal-clinical-peek__missing { padding: 20px 0; color: var(--muted); font-size: 13px; }
+.atal-clinical-peek button:focus-visible,
+.atal-peek-trigger:focus-visible,
+.atal-command-peek-button:focus-visible {
+  outline: 2px solid var(--green-dark);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .atal-clinical-peek__backdrop { align-items: flex-end; }
+  .atal-clinical-peek__backdrop .atal-clinical-peek {
+    width: 100%;
+    height: auto;
+    max-height: min(92dvh, 740px);
+    padding: 16px 18px max(20px, env(safe-area-inset-bottom));
+    border: 1px solid var(--line);
+    border-radius: 20px 20px 0 0;
+  }
+  .atal-clinical-peek__identity h2 { font-size: 19px; }
+  .atal-command-peek-row { gap: 4px; }
+  .atal-command-peek-button { width: 37px; min-width: 37px; }
+  .atal-peek-trigger { width: 37px; min-width: 37px; }
+}
+
+
+/* Phase 3B accessibility: explicit mobile drawer handle and comfortable tap sizes. */
+.atal-clinical-peek__drag-handle { display: none; }
+.atal-clinical-peek__bar > button,
+.atal-clinical-peek__actions button,
+.atal-clinical-peek__missing button,
+.atal-peek-trigger,
+.atal-command-peek-button {
+  min-height: 44px;
+}
+.atal-peek-trigger,
+.atal-command-peek-button { width: 44px; min-width: 44px; }
+.atal-clinical-peek__bar > button { padding: 0 12px; }
+.atal-clinical-peek__bar > button:hover { background: var(--mint); }
+@media (max-width: 600px) {
+  .atal-clinical-peek__drag-handle {
+    display: flex;
+    height: 23px;
+    min-height: 23px;
+    align-items: flex-start;
+    justify-content: center;
+    touch-action: pan-y;
+    margin: -2px -8px 2px;
+  }
+  .atal-clinical-peek__drag-handle span {
+    display: block;
+    width: 42px;
+    height: 5px;
+    margin-top: 4px;
+    border-radius: 99px;
+    background: var(--muted);
+    opacity: .5;
+  }
+  .atal-peek-trigger,
+  .atal-command-peek-button { width: 44px; min-width: 44px; min-height: 44px; }
+  .atal-clinical-peek__actions button { min-height: 46px; }
+}
