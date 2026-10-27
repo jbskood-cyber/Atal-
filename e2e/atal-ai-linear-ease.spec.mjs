@@ -39,8 +39,8 @@ test('shortcuts navigate directly or fill a prompt without sending or editing cl
 
 test('context chooser starts with frequent tasks and reveals advanced actions on request', async ({page})=>{
   await openAssistant(page);
-  await page.getByRole('button',{name:/Elegir tarea o paciente/}).click();
-  const dialog=page.getByRole('dialog',{name:/¿En qué vamos a trabajar/});
+  await page.getByRole('button',{name:/Elegir contexto/}).click();
+  const dialog=page.getByRole('dialog',{name:'Añadir contexto'});
   await expect(dialog.getByText('Acciones frecuentes')).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Crear paciente y plan'})).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Actualizar expediente'})).toBeVisible();
@@ -58,7 +58,7 @@ test('attachment menu offers only distinct actions, no redundant scan choice', a
   const dialog=page.getByRole('dialog',{name:'Opciones para adjuntar'});
   await expect(dialog.getByRole('button',{name:'Cámara'})).toBeVisible();
   await expect(dialog.getByRole('button',{name:'Fotos'})).toBeVisible();
-  await expect(dialog.getByRole('button',{name:/Archivo/})).toContainText('PDF o imagen');
+  await expect(dialog.getByRole('button',{name:'Archivo PDF o imagen'})).toContainText('Archivo');
   await expect(dialog.getByRole('button',{name:'Escanear archivo'})).toHaveCount(0);
 });
 
