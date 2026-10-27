@@ -16,7 +16,7 @@ async function openAssistant(page) {
   }, createState());
   await page.goto('/assistant');
   await expect(page.locator('[data-assistant-scope="global"]')).toBeVisible();
-  await expect(page.getByText('Pregunta cualquier cosa sobre Atal o prepara un cambio revisable.')).toBeVisible();
+  await expect(page.getByText('Escribe una solicitud o empieza con una acción rápida. El contexto se elige solo cuando haga falta.')).toBeVisible();
 }
 
 async function send(page, text) {
