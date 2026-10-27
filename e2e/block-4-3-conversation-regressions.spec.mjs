@@ -173,7 +173,7 @@ test.describe('Block 4.3 conversational regressions', () => {
     await expect(page.getByText('Mensaje exclusivo del asistente general.')).toBeVisible();
     await expect(page.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
     await page.getByRole('button', { name: 'Acciones de la conversación' }).click();
-    await page.getByRole('menuitem', { name: /Ver conversaciones/ }).click();
+    await page.getByRole('menuitem', { name: 'Historial' }).click();
     const dialog = page.getByRole('dialog', { name: 'Conversaciones generales' });
     await expect(dialog.getByText('Mensaje exclusivo del asistente general.')).toBeVisible();
     await expect(dialog.getByText('Mensaje que solo pertenece al paciente.')).toHaveCount(0);
