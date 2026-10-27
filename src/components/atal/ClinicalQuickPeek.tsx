@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { keepDialogTabFocus } from './dialogKeyboard';
 import { ArrowLeft, ArrowUpRight, CalendarDays, ClipboardList, Eye, FileText, X } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { usePatientCatalog } from '@/src/data/localPatients';
@@ -40,6 +41,8 @@ export function ClinicalQuickPeek({
   const patients = usePatientCatalog();
   const plans = useLocalPlans();
   const backRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const touchStartY = useRef<number | null>(null);
   const patient = target.kind === 'patient' ? patients.find((item) => item.id === target.id) : undefined;
   const plan = target.kind === 'plan' ? plans.find((item) => item.id === target.id) : undefined;
   const relatedPatient = plan ? patients.find((item) => item.id === plan.patientId) : undefined;
@@ -51,30 +54,30 @@ export function ClinicalQuickPeek({
     if (inline) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown, true);
-    };
-  }, [inline, onClose]);
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [inline]);
 
   const content = (
-    <section className="atal-clinical-peek" role={inline ? 'region' : 'dialog'}
-      aria-modal={inline ? undefined : true} aria-label={`Vista rápida: ${name}`}
-      onKeyDown={inline ? (event) => {
+    <section ref={panelRef} className="atal-clinical-peek" role={inline ? 'region' : 'dialog'}
+      tabIndex={-1} aria-modal={inline ? undefined : true} aria-label={`Vista rápida: ${name}`}
+      onKeyDown={(event) => {
         if (event.key === 'Escape') {
           event.preventDefault();
           event.stopPropagation();
           onClose();
+        } else if (!inline && panelRef.current) {
+          keepDialogTabFocus(event, panelRef.current);
         }
-      } : undefined}>
+      }}>
+      <div className="atal-clinical-peek__drag-handle" aria-hidden="true"
+        onTouchStart={(event) => { touchStartY.current = event.touches[0]?.clientY ?? null; }}
+        onTouchEnd={(event) => {
+          const start = touchStartY.current;
+          touchStartY.current = null;
+          if (!inline && start !== null && event.changedTouches[0]?.clientY - start > 72) onClose();
+        }}>
+        <span />
+      </div>
       <header className="atal-clinical-peek__bar">
         <button ref={backRef} type="button" aria-label={inline ? 'Volver a resultados' : 'Cerrar vista rápida'} onClick={onClose}>
           {inline ? <ArrowLeft aria-hidden="true" /> : <X aria-hidden="true" />}
