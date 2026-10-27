@@ -1,0 +1,141 @@
+/* Linear-informed Atal IA ease-of-use increment: clear entry, shallow context and status. */
+.atal-command-page .atal-command-header.is-minimal {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+}
+.atal-command-header .atal-command-context--discoverable {
+  grid-column: 2;
+  justify-self: center;
+  display: inline-flex;
+  max-width: min(265px, calc(100vw - 132px));
+  gap: 9px;
+  align-items: center;
+  min-height: 44px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.atal-command-header .atal-command-context--discoverable:hover,
+.atal-command-header .atal-command-context--discoverable:focus-visible {
+  background: var(--mint);
+}
+.atal-command-header .atal-command-context-visible {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  overflow: hidden;
+}
+.atal-command-context-visible b {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+.atal-command-context-visible small {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  color: var(--command-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.atal-command-page .atal-command-menu-trigger {
+  grid-column: 3;
+  justify-self: end;
+}
+.atal-ai-quick-starts {
+  width: min(520px, 100%);
+  margin: 3px auto 24px;
+  padding: 0 11px;
+}
+.atal-ai-quick-starts > p {
+  margin: 0 0 11px;
+  color: var(--command-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.atal-ai-quick-starts > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.atal-ai-quick-starts button {
+  display: flex;
+  min-height: 82px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 11px;
+  border: 1px solid var(--command-border);
+  border-radius: 15px;
+  background: var(--command-surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.atal-ai-quick-starts button:active { transform: translateY(1px); }
+.atal-ai-quick-starts button:hover { border-color: var(--green-dark); background: var(--mint); }
+.atal-ai-quick-starts button > svg { width: 19px; height: 19px; flex: 0 0 auto; color: var(--green-dark); }
+.atal-ai-quick-starts button span { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.atal-ai-quick-starts button strong { font-size: 12px; line-height: 1.3; }
+.atal-ai-quick-starts button small { color: var(--command-muted); font-size: 10px; line-height: 1.3; }
+.atal-ai-provider-status {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  width: min(520px, 100%);
+  margin: 12px auto 20px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, #bd9251 45%, var(--command-border));
+  border-radius: 14px;
+  background: color-mix(in srgb, #e3ac61 9%, var(--command-surface));
+  color: var(--ink);
+}
+.atal-ai-provider-status > svg { width: 18px; height: 18px; flex: 0 0 auto; color: #a17837; }
+.atal-ai-provider-status strong { font-size: 12px; }
+.atal-ai-provider-status p { margin: 5px 0 0; color: var(--command-muted); font-size: 11px; line-height: 1.5; }
+.atal-context-guide {
+  margin: 14px 14px 8px;
+  color: var(--command-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.atal-context-shortcuts-title {
+  margin: 12px 15px 3px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.atal-context-sheet .atal-context-actions { max-height: none; overflow: visible; }
+.atal-context-sheet .atal-context-actions--secondary { max-height: 235px; overflow-y: auto; }
+.atal-context-expand-actions {
+  display: block;
+  width: calc(100% - 20px);
+  min-height: 44px;
+  margin: 2px 10px 10px;
+  border: 1px solid var(--command-border);
+  border-radius: 11px;
+  background: var(--command-surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.atal-context-sheet .atal-context-actions b { font-size: 11px; line-height: 1.3; }
+.atal-context-sheet .atal-context-actions button { min-height: 56px; }
+.atal-context-sheet .atal-context-done { min-height: 48px; font-size: 12px; }
+.atal-ai-attachment-menu button { min-height: 64px; }
+.atal-ai-attachment-menu button small { color: var(--command-muted); font-size: 11px; }
+@media (max-width: 430px) {
+  .atal-command-header .atal-command-context--discoverable { gap: 5px; padding: 2px 4px; }
+  .atal-command-header .atal-command-mark { width: 28px; height: 28px; }
+  .atal-ai-quick-starts { padding: 0 2px; }
+  .atal-ai-quick-starts > div { gap: 7px; }
+  .atal-ai-quick-starts button { min-height: 84px; padding: 12px 9px; gap: 7px; }
+  .atal-ai-quick-starts button strong { font-size: 11px; }
+  .atal-command-header .atal-command-context-visible small { max-width: 145px; }
+}
