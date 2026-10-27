@@ -22,7 +22,7 @@ export function AttachmentMenu({ open, onClose, onFiles }: { open: boolean; onCl
     {open && <div className="atal-ai-attachment-backdrop" onMouseDown={onClose}><section className="atal-ai-attachment-menu" role="dialog" aria-modal="true" aria-label="Opciones para adjuntar" onMouseDown={(event) => event.stopPropagation()}>
       <button ref={firstActionRef} type="button" onClick={() => pick(cameraRef)}><span><Camera /></span><div><b>Cámara</b></div></button>
       <button type="button" onClick={() => pick(photosRef)}><span><Images /></span><div><b>Fotos</b></div></button>
-      <button type="button" onClick={() => pick(filesRef)}><span><FileText /></span><div><b>Archivo</b><small>PDF o imagen</small></div></button>
+      <button type="button" aria-label="Archivo PDF o imagen" onClick={() => pick(filesRef)}><span><FileText /></span><div><b>Archivo</b></div></button>
     </section></div>}
   </>;
 }
