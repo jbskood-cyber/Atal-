@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Activity,
   Bell,
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { AtalLogo, AtalMark } from './AtalLogo';
 import { ClinicalQuickPeek, type ClinicalPeekTarget } from './ClinicalQuickPeek';
+import { keepDialogTabFocus } from './dialogKeyboard';
 import { markAllNotificationsRead,markNotificationRead,useAtalStore } from '@/src/data/atalStore';
 import { ContextualAIProvider, useContextualAI } from '@/src/features/atal-ai/contextual/ContextualAIProvider';
 import { ContextualAIWorkspace } from '@/src/features/atal-ai/contextual/ContextualAIWorkspace';
@@ -248,7 +249,35 @@ function AtalShellFrame({ children, onNew }: { children: ReactNode; onNew?: () =
 }
 
 function PanelFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return <div className="atal-overlay" onMouseDown={onClose}><section className="atal-native-sheet" role="dialog" aria-modal="true" aria-label={title} onMouseDown={(event) => event.stopPropagation()}><header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>{children}</section></div>;
+  const dialogRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const returnTo = document.activeElement;
+    const dialog = dialogRef.current;
+    if (dialog && !dialog.contains(document.activeElement)) {
+      dialog.querySelector<HTMLElement>('input[autofocus], button:not([disabled])')?.focus();
+    }
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = oldOverflow;
+      if (returnTo instanceof HTMLElement && returnTo.isConnected) returnTo.focus();
+    };
+  }, []);
+  return <div className="atal-overlay" onMouseDown={(event) => {
+    if (event.target === event.currentTarget) onClose();
+  }}>
+    <section ref={dialogRef} className="atal-native-sheet" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        } else if (dialogRef.current) keepDialogTabFocus(event, dialogRef.current);
+      }}>
+      <header><h2>{title}</h2><button type="button" onClick={onClose} aria-label="Cerrar"><X /></button></header>
+      {children}
+    </section>
+  </div>;
 }
 
 const searchCategories = ['Todos', 'Pacientes', 'Planes', 'Ejercicios', 'Reportes'] as const;
@@ -260,6 +289,11 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   const [category, setCategory] = useState<SearchCategory>('Todos');
   const [activeIndex, setActiveIndex] = useState(0);
   const [peek, setPeek] = useState<(ClinicalPeekTarget & { href: string }) | null>(null);
+  const peekTrigger = useRef<HTMLButtonElement | null>(null);
+  const closePeek = () => {
+    setPeek(null);
+    window.requestAnimationFrame(() => peekTrigger.current?.focus());
+  };
   const state = useAtalStore((store) => store);
   const term = query.trim().toLocaleLowerCase('es-MX');
 
@@ -293,7 +327,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   };
 
   return <PanelFrame title="Buscar en Atal" onClose={onClose}>
-    {peek ? <ClinicalQuickPeek inline target={peek} onClose={() => setPeek(null)}
+    {peek ? <ClinicalQuickPeek inline target={peek} onClose={closePeek}
       onOpenDetail={() => navigate(peek.href)} /> : <>
     <label className="atal-command-search">
       <Search aria-hidden="true" />
@@ -320,7 +354,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
             </Link>
             {(kind === 'Pacientes' || kind === 'Planes') && <button type="button"
               className="atal-command-peek-button" aria-label={`Vista rápida de ${label}`}
-              onClick={() => setPeek({ kind: kind === 'Pacientes' ? 'patient' : 'plan', id: href.split('/').pop() ?? '', href })}>
+              onClick={(event) => {
+                peekTrigger.current = event.currentTarget;
+                setPeek({ kind: kind === 'Pacientes' ? 'patient' : 'plan', id: href.split('/').pop() ?? '', href });
+              }}>
               <Eye aria-hidden="true" />
             </button>}
           </div>
