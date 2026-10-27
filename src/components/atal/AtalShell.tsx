@@ -291,10 +291,15 @@ function SearchPanel({ onClose, restoreFocusTo }: { onClose: () => void; restore
   const [category, setCategory] = useState<SearchCategory>('Todos');
   const [activeIndex, setActiveIndex] = useState(0);
   const [peek, setPeek] = useState<(ClinicalPeekTarget & { href: string }) | null>(null);
-  const peekTrigger = useRef<HTMLButtonElement | null>(null);
   const closePeek = () => {
+    const returnHref = peek?.href;
     setPeek(null);
-    window.requestAnimationFrame(() => peekTrigger.current?.focus());
+    // Inline previews replace the search results in the DOM. Find the newly
+    // mounted trigger, not the disconnected element that originally opened it.
+    window.requestAnimationFrame(() => {
+      const triggers = document.querySelectorAll<HTMLButtonElement>('.atal-command-peek-button');
+      [...triggers].find((button) => button.dataset.peekHref === returnHref)?.focus();
+    });
   };
   const state = useAtalStore((store) => store);
   const term = query.trim().toLocaleLowerCase('es-MX');
@@ -355,9 +360,8 @@ function SearchPanel({ onClose, restoreFocusTo }: { onClose: () => void; restore
               <span><Icon /></span><span><b>{label}</b><small>{detail}</small></span><ChevronRight />
             </Link>
             {(kind === 'Pacientes' || kind === 'Planes') && <button type="button"
-              className="atal-command-peek-button" aria-label={`Vista rápida de ${label}`}
-              onClick={(event) => {
-                peekTrigger.current = event.currentTarget;
+              className="atal-command-peek-button" data-peek-href={href} aria-label={`Vista rápida de ${label}`}
+              onClick={() => {
                 setPeek({ kind: kind === 'Pacientes' ? 'patient' : 'plan', id: href.split('/').pop() ?? '', href });
               }}>
               <Eye aria-hidden="true" />
